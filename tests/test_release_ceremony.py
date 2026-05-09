@@ -192,6 +192,37 @@ class ReleaseCeremonyTests(unittest.TestCase):
 
         assert_failure_contains(self, result, "schema schemas/claim.schema.json is not valid JSON")
 
+    def test_metadata_rejects_duplicate_release_headings_for_one_version(self) -> None:
+        fixture = self.add_fixture("metadata-duplicate-release-heading", "1.2.3-rc.1")
+        fixture.write(
+            "CHANGELOG.md",
+            """
+            # Changelog
+
+            ## [Unreleased]
+
+            ## [1.2.3-rc.1] — 2026-05-06
+
+            ### Changed
+
+            - Candidate notes from a later section.
+
+            ## [1.2.3-rc.1] — 2026-05-05
+
+            ### Added
+
+            - Candidate notes from an earlier section.
+            """,
+        )
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(
+            self,
+            result,
+            "CHANGELOG.md has duplicate release heading for [1.2.3-rc.1]",
+        )
+
     def test_notes_emit_matching_changelog_section_without_outer_blank_lines(self) -> None:
         fixture = self.add_fixture("notes-success", "1.2.3-rc.1")
 
@@ -273,6 +304,11 @@ class ReleaseCeremonyTests(unittest.TestCase):
     def test_release_cut_creates_stable_release_commit_and_annotated_tag(self) -> None:
         fixture = self.add_fixture("release-cut-stable", "1.2.2")
         remote = fixture.init_git_with_remote()
+        reviewed_main = run(
+            ["git", "--git-dir", str(remote), "rev-parse", "refs/heads/main"],
+            fixture.root,
+            check=True,
+        ).stdout.strip()
 
         result = fixture.run_release_cut("v1.2.3")
 
@@ -286,6 +322,21 @@ class ReleaseCeremonyTests(unittest.TestCase):
         self.assertTrue(
             run(["git", "--git-dir", str(remote), "rev-parse", "--verify", "refs/tags/v1.2.3"], fixture.root).returncode
             == 0
+        )
+        self.assertEqual(
+            "1",
+            run(
+                [
+                    "git",
+                    "--git-dir",
+                    str(remote),
+                    "rev-list",
+                    "--count",
+                    f"{reviewed_main}..refs/heads/main",
+                ],
+                fixture.root,
+                check=True,
+            ).stdout.strip(),
         )
         assert_success(self, fixture.run_release_check("release", "v1.2.3"))
 
@@ -324,6 +375,33 @@ class ReleaseCeremonyTests(unittest.TestCase):
         self.assertEqual(
             before,
             run(["git", "rev-parse", "v1.2.3^{commit}"], fixture.root, check=True).stdout,
+        )
+
+    def test_release_cut_rejects_clean_main_with_local_commits_ahead_of_origin(self) -> None:
+        fixture = self.add_fixture("release-cut-local-ahead-main", "1.2.2")
+        remote = fixture.init_git_with_remote()
+        remote_before = run(
+            ["git", "--git-dir", str(remote), "rev-parse", "refs/heads/main"],
+            fixture.root,
+            check=True,
+        ).stdout
+        fixture.write("README.md", "# Groundwork\n\nLocal unreleased work.\n")
+        run(["git", "add", "README.md"], fixture.root, check=True)
+        run(["git", "commit", "-q", "-m", "test: local unreviewed work"], fixture.root, check=True)
+        local_before = run(["git", "rev-parse", "HEAD"], fixture.root, check=True).stdout
+
+        result = fixture.run_release_cut("v1.2.3")
+
+        assert_failure_contains(self, result, "main is 1 commit ahead of origin/main")
+        self.assertEqual(local_before, run(["git", "rev-parse", "HEAD"], fixture.root, check=True).stdout)
+        self.assertEqual("", run(["git", "status", "--short"], fixture.root, check=True).stdout)
+        self.assertEqual(
+            remote_before,
+            run(["git", "--git-dir", str(remote), "rev-parse", "refs/heads/main"], fixture.root, check=True).stdout,
+        )
+        self.assertNotEqual(
+            0,
+            run(["git", "show-ref", "--verify", "--quiet", "refs/tags/v1.2.3"], fixture.root).returncode,
         )
 
 

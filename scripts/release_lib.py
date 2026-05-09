@@ -87,6 +87,7 @@ def check_changelog_structure(root: Path) -> None:
         die("CHANGELOG.md must contain exactly one ## [Unreleased] heading")
 
     seen_release = False
+    seen_versions: set[str] = set()
     for line in lines:
         if not line.startswith("## "):
             continue
@@ -96,6 +97,10 @@ def check_changelog_structure(root: Path) -> None:
             continue
         if not RELEASE_HEADING_RE.fullmatch(line):
             die(f"CHANGELOG.md release heading is malformed: {line}")
+        version = line[len("## [") : line.index("]")]
+        if version in seen_versions:
+            die(f"CHANGELOG.md has duplicate release heading for [{version}]")
+        seen_versions.add(version)
         seen_release = True
 
 
@@ -297,6 +302,29 @@ def require_clean_main(root: Path) -> None:
     status = git(root, "status", "--short").stdout.strip()
     if status:
         die("release-cut requires a clean working tree")
+    git(root, "fetch", "origin", "main")
+    head = git(root, "rev-parse", "HEAD").stdout.strip()
+    origin_main = git(root, "rev-parse", "FETCH_HEAD").stdout.strip()
+    if head == origin_main:
+        return
+
+    behind, ahead = (
+        int(count)
+        for count in git(root, "rev-list", "--left-right", "--count", "FETCH_HEAD...HEAD").stdout.split()
+    )
+
+    def commits(count: int) -> str:
+        return f"{count} commit" if count == 1 else f"{count} commits"
+
+    if ahead and behind:
+        divergence = f"main has diverged from origin/main ({commits(ahead)} ahead, {commits(behind)} behind)"
+    elif ahead:
+        divergence = f"main is {commits(ahead)} ahead of origin/main"
+    elif behind:
+        divergence = f"main is {commits(behind)} behind origin/main"
+    else:
+        divergence = "main does not match origin/main"
+    die(f"release-cut requires main to equal origin/main; {divergence}")
 
 
 def local_tag_exists(root: Path, tag: str) -> bool:
