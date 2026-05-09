@@ -12,7 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `manifest.toml` is now the version-of-record, `scripts/release-check`
   verifies release metadata and tag identity, `scripts/release-cut` performs
   the atomic release operation, and GitHub Actions publish tag-backed releases
-  from changelog notes (closes #301).
+  from changelog notes. The verifier rejects tag-time releases with pending
+  Unreleased entries, validates manifest-declared schemas as JSON, and
+  preserves pre-existing local tags during release-cut failures (closes #301).
 
 ## [0.1.2-rc.1] — 2026-05-05
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as _dt
+import json
 import re
 import subprocess
 import sys
@@ -108,6 +109,21 @@ def require_release_heading(root: Path, version: str) -> None:
     die(f"CHANGELOG.md has no release heading for [{version}]")
 
 
+def require_unreleased_empty(root: Path) -> None:
+    lines = changelog_path(root).read_text(encoding="utf-8").splitlines()
+    start = lines.index("## [Unreleased]") + 1
+    end = len(lines)
+    for index in range(start, len(lines)):
+        if lines[index].startswith("## "):
+            end = index
+            break
+
+    for line in lines[start:end]:
+        if line == "" or line.startswith("### "):
+            continue
+        die("Unreleased contains entries; roll them into the release section before tagging")
+
+
 def emit_notes(root: Path, version: str) -> str:
     prefix = release_heading_for(version)
     lines = changelog_path(root).read_text(encoding="utf-8").splitlines()
@@ -151,6 +167,10 @@ def check_methodology_integrity(root: Path) -> None:
         schema = root / "schemas" / f"{name}.schema.json"
         if not schema.is_file():
             die(f"artifact type {name} has no schema at schemas/{name}.schema.json")
+        try:
+            json.loads(schema.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as error:
+            die(f"schema schemas/{name}.schema.json is not valid JSON: {error}")
 
     for entry in protocols:
         if not isinstance(entry, dict):
@@ -207,6 +227,7 @@ def run_release(root: Path, tag: str) -> None:
     if current != version:
         die(f"manifest version {current} does not match tag version {version}")
     require_release_heading(root, version)
+    require_unreleased_empty(root)
 
 
 def replace_manifest_version(root: Path, version: str) -> None:
@@ -278,12 +299,23 @@ def require_clean_main(root: Path) -> None:
         die("release-cut requires a clean working tree")
 
 
+def local_tag_exists(root: Path, tag: str) -> bool:
+    result = subprocess.run(
+        ["git", "show-ref", "--verify", "--quiet", f"refs/tags/{tag}"],
+        cwd=root,
+    )
+    return result.returncode == 0
+
+
 def release_cut(root: Path, tag: str) -> None:
     version = version_from_tag(tag)
     require_clean_main(root)
+    if local_tag_exists(root, tag):
+        die(f"local tag {tag} already exists")
     run_metadata(root)
 
     before = git(root, "rev-parse", "HEAD").stdout.strip()
+    created_tag = False
     try:
         replace_manifest_version(root, version)
         roll_changelog(root, version)
@@ -291,6 +323,7 @@ def release_cut(root: Path, tag: str) -> None:
         git(root, "add", "manifest.toml", "CHANGELOG.md")
         git(root, "commit", "-m", f"chore(release): {version}", "-m", f"Release {tag}.")
         git(root, "tag", "-a", tag, "-m", f"groundwork {tag}")
+        created_tag = True
         push = subprocess.run(
             ["git", "push", "--atomic", "origin", "main", tag],
             cwd=root,
@@ -301,7 +334,8 @@ def release_cut(root: Path, tag: str) -> None:
         if push.returncode != 0:
             raise ReleaseError(f"atomic push failed: {push.stderr.strip() or push.stdout.strip()}")
     except Exception:
-        subprocess.run(["git", "tag", "-d", tag], cwd=root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if created_tag:
+            subprocess.run(["git", "tag", "-d", tag], cwd=root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.run(["git", "reset", "--hard", before], cwd=root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         raise
 

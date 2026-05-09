@@ -184,6 +184,14 @@ class ReleaseCeremonyTests(unittest.TestCase):
 
         assert_failure_contains(self, result, "artifact type claim has no schema")
 
+    def test_metadata_rejects_malformed_schema_json(self) -> None:
+        fixture = self.add_fixture("metadata-malformed-schema")
+        fixture.write("schemas/claim.schema.json", '{"type": "object"\n')
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(self, result, "schema schemas/claim.schema.json is not valid JSON")
+
     def test_notes_emit_matching_changelog_section_without_outer_blank_lines(self) -> None:
         fixture = self.add_fixture("notes-success", "1.2.3-rc.1")
 
@@ -198,6 +206,60 @@ class ReleaseCeremonyTests(unittest.TestCase):
         result = fixture.run_release_check("release", "v1.2.4")
 
         assert_failure_contains(self, result, "manifest version 1.2.3 does not match tag version 1.2.4")
+
+    def test_release_rejects_tag_with_non_empty_unreleased_entries(self) -> None:
+        fixture = self.add_fixture("release-unreleased-entries", "1.2.3")
+        fixture.write(
+            "CHANGELOG.md",
+            """
+            # Changelog
+
+            ## [Unreleased]
+
+            ### Added
+
+            - Pending release note.
+
+            ## [1.2.3] — 2026-05-05
+
+            ### Added
+
+            - Release ceremony tooling.
+            """,
+        )
+
+        result = fixture.run_release_check("release", "v1.2.3")
+
+        assert_failure_contains(
+            self,
+            result,
+            "Unreleased contains entries; roll them into the release section before tagging",
+        )
+
+    def test_release_allows_unreleased_structural_placeholders(self) -> None:
+        fixture = self.add_fixture("release-unreleased-placeholders", "1.2.3")
+        fixture.write(
+            "CHANGELOG.md",
+            """
+            # Changelog
+
+            ## [Unreleased]
+
+            ### Added
+
+            ### Changed
+
+            ## [1.2.3] — 2026-05-05
+
+            ### Added
+
+            - Release ceremony tooling.
+            """,
+        )
+
+        result = fixture.run_release_check("release", "v1.2.3")
+
+        assert_success(self, result)
 
     def test_release_heading_lookup_uses_literal_version_matching(self) -> None:
         fixture = self.add_fixture("release-literal-heading", "1.2.3-rc.1")
@@ -248,6 +310,20 @@ class ReleaseCeremonyTests(unittest.TestCase):
         self.assertEqual(
             run(["git", "--git-dir", str(remote), "rev-parse", "refs/heads/main"], fixture.root, check=True).stdout,
             run(["git", "--git-dir", str(remote), "rev-parse", "v1.2.3"], fixture.root, check=True).stdout,
+        )
+
+    def test_release_cut_preserves_pre_existing_local_tag(self) -> None:
+        fixture = self.add_fixture("release-cut-existing-local-tag", "1.2.2")
+        fixture.init_git_with_remote()
+        run(["git", "tag", "v1.2.3", "HEAD"], fixture.root, check=True)
+        before = run(["git", "rev-parse", "v1.2.3^{commit}"], fixture.root, check=True).stdout
+
+        result = fixture.run_release_cut("v1.2.3")
+
+        assert_failure_contains(self, result, "local tag v1.2.3 already exists")
+        self.assertEqual(
+            before,
+            run(["git", "rev-parse", "v1.2.3^{commit}"], fixture.root, check=True).stdout,
         )
 
 

@@ -88,9 +88,11 @@ gh release create "vX.Y.Z-rc.N" \
 
 ## Failure Modes
 
-If `release-cut` fails before the atomic push, fix the source issue and rerun
-the command. If the atomic push fails, the helper removes the local tag and
-resets the release commit so the remote branch and tag remain unchanged.
+If `release-cut` reports that the local tag already exists, it has not changed
+source state; inspect or remove the local tag before rerunning. If
+`release-cut` fails before the atomic push, fix the source issue and rerun the
+command. If the atomic push fails, the helper removes the local tag it created
+and resets the release commit so the remote branch and tag remain unchanged.
 
 If a published tag points at source that violates the release identity checks
 and no external consumers have used it, delete the tag locally and remotely and
