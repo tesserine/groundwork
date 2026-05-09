@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Release ceremony tooling for the Groundwork methodology release surface:
+  `manifest.toml` is now the version-of-record, `scripts/release-check`
+  verifies release metadata and tag identity, `scripts/release-cut` performs
+  the atomic release operation, and GitHub Actions publish tag-backed releases
+  from changelog notes (closes #301).
+
+## [0.1.2-rc.1] — 2026-05-05
+
+### Added
+
 - New authoring guide `docs/authoring/skills.md` for the `SKILL.md`
   frontmatter convention. Compiles the post-audit convention
   (settled in #245) into follow-direct form so a methodology author

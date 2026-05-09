@@ -4,6 +4,7 @@
 # Topology emerges from the graph of requires/produces relationships.
 
 name = "groundwork"
+version = "0.1.2-rc.1"
 
 # --- Artifact Types ---
 

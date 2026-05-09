@@ -1,0 +1,333 @@
+from __future__ import annotations
+
+import argparse
+import datetime as _dt
+import re
+import subprocess
+import sys
+import tomllib
+from dataclasses import dataclass
+from pathlib import Path
+
+
+VERSION_RE = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-rc\.[1-9][0-9]*)?$")
+TAG_RE = re.compile(r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-rc\.[1-9][0-9]*)?$")
+RELEASE_HEADING_RE = re.compile(
+    r"^## \[(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-rc\.[1-9][0-9]*)?\] — [0-9]{4}-[0-9]{2}-[0-9]{2}$"
+)
+
+
+class ReleaseError(RuntimeError):
+    pass
+
+
+@dataclass(frozen=True)
+class CommandResult:
+    stdout: str
+    stderr: str
+
+
+def die(message: str) -> None:
+    raise ReleaseError(message)
+
+
+def repo_root_from_script(script_file: str) -> Path:
+    return Path(script_file).resolve().parents[1]
+
+
+def version_from_tag(tag: str) -> str:
+    match = TAG_RE.fullmatch(tag)
+    if not match:
+        die(f"release tag must look like vX.Y.Z or vX.Y.Z-rc.N per ADR-0012: {tag}")
+    return tag[1:]
+
+
+def check_version_shape(version: str) -> None:
+    if not VERSION_RE.fullmatch(version):
+        die(f"version must look like X.Y.Z or X.Y.Z-rc.N per ADR-0012: {version}")
+
+
+def read_manifest(root: Path) -> dict:
+    manifest = root / "manifest.toml"
+    if not manifest.is_file():
+        die("manifest.toml not found")
+    try:
+        return tomllib.loads(manifest.read_text(encoding="utf-8"))
+    except tomllib.TOMLDecodeError as error:
+        die(f"manifest.toml is invalid TOML: {error}")
+
+
+def manifest_version(root: Path) -> str:
+    manifest = read_manifest(root)
+    version = manifest.get("version")
+    if not isinstance(version, str) or not version:
+        die("manifest.toml top-level version not found")
+    check_version_shape(version)
+    return version
+
+
+def changelog_path(root: Path) -> Path:
+    path = root / "CHANGELOG.md"
+    if not path.is_file():
+        die("CHANGELOG.md not found")
+    return path
+
+
+def release_heading_for(version: str) -> str | None:
+    prefix = f"## [{version}] — "
+    return prefix
+
+
+def check_changelog_structure(root: Path) -> None:
+    changelog = changelog_path(root)
+    lines = changelog.read_text(encoding="utf-8").splitlines()
+    unreleased_count = sum(1 for line in lines if line == "## [Unreleased]")
+    if unreleased_count != 1:
+        die("CHANGELOG.md must contain exactly one ## [Unreleased] heading")
+
+    seen_release = False
+    for line in lines:
+        if not line.startswith("## "):
+            continue
+        if line == "## [Unreleased]":
+            if seen_release:
+                die("CHANGELOG.md places ## [Unreleased] after a release heading")
+            continue
+        if not RELEASE_HEADING_RE.fullmatch(line):
+            die(f"CHANGELOG.md release heading is malformed: {line}")
+        seen_release = True
+
+
+def require_release_heading(root: Path, version: str) -> None:
+    prefix = release_heading_for(version)
+    for line in changelog_path(root).read_text(encoding="utf-8").splitlines():
+        if prefix and line.startswith(prefix):
+            date = line[len(prefix) :]
+            if re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", date):
+                return
+    die(f"CHANGELOG.md has no release heading for [{version}]")
+
+
+def emit_notes(root: Path, version: str) -> str:
+    prefix = release_heading_for(version)
+    lines = changelog_path(root).read_text(encoding="utf-8").splitlines()
+    start: int | None = None
+    for index, line in enumerate(lines):
+        if prefix and line.startswith(prefix):
+            start = index + 1
+            break
+    if start is None:
+        die(f"CHANGELOG.md has no release heading for [{version}]")
+
+    end = len(lines)
+    for index in range(start, len(lines)):
+        if lines[index].startswith("## "):
+            end = index
+            break
+
+    section = lines[start:end]
+    while section and section[0] == "":
+        section.pop(0)
+    while section and section[-1] == "":
+        section.pop()
+    return "\n".join(section) + ("\n" if section else "")
+
+
+def check_methodology_integrity(root: Path) -> None:
+    manifest = read_manifest(root)
+    artifact_types = manifest.get("artifact_types")
+    protocols = manifest.get("protocols")
+    if not isinstance(artifact_types, list):
+        die("manifest.toml artifact_types must be an array")
+    if not isinstance(protocols, list):
+        die("manifest.toml protocols must be an array")
+
+    artifacts: set[str] = set()
+    for entry in artifact_types:
+        name = entry.get("name") if isinstance(entry, dict) else None
+        if not isinstance(name, str) or not name:
+            die("manifest.toml artifact_types entries must declare name")
+        artifacts.add(name)
+        schema = root / "schemas" / f"{name}.schema.json"
+        if not schema.is_file():
+            die(f"artifact type {name} has no schema at schemas/{name}.schema.json")
+
+    for entry in protocols:
+        if not isinstance(entry, dict):
+            die("manifest.toml protocols entries must be tables")
+        name = entry.get("name")
+        if not isinstance(name, str) or not name:
+            die("manifest.toml protocols entries must declare name")
+        protocol_file = root / "protocols" / name / "PROTOCOL.md"
+        if not protocol_file.is_file():
+            die(f"protocol {name} has no file at protocols/{name}/PROTOCOL.md")
+        for field in ["requires", "accepts", "produces", "may_produce"]:
+            values = entry.get(field, [])
+            if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
+                die(f"protocol {name} field {field} must be an array of artifact names")
+            for artifact in values:
+                if artifact not in artifacts:
+                    die(f"protocol {name} references undeclared artifact {artifact} in {field}")
+        trigger = entry.get("trigger")
+        if isinstance(trigger, dict) and trigger.get("type") == "on_artifact":
+            artifact = trigger.get("name")
+            if artifact not in artifacts:
+                die(f"protocol {name} trigger references undeclared artifact {artifact}")
+
+    skills_dir = root / "skills"
+    if skills_dir.is_dir():
+        for skill in sorted(path for path in skills_dir.iterdir() if path.is_dir()):
+            if not (skill / "SKILL.md").is_file():
+                die(f"skill {skill.name} has no SKILL.md")
+
+
+def check_release_surface_files(root: Path) -> None:
+    for relative in [
+        "RELEASING.md",
+        "scripts/release-check",
+        "scripts/release-cut",
+        ".github/workflows/release.yml",
+        ".github/workflows/release-metadata.yml",
+    ]:
+        if not (root / relative).is_file():
+            die(f"{relative} not found")
+
+
+def run_metadata(root: Path) -> None:
+    manifest_version(root)
+    check_changelog_structure(root)
+    check_methodology_integrity(root)
+    check_release_surface_files(root)
+
+
+def run_release(root: Path, tag: str) -> None:
+    version = version_from_tag(tag)
+    run_metadata(root)
+    current = manifest_version(root)
+    if current != version:
+        die(f"manifest version {current} does not match tag version {version}")
+    require_release_heading(root, version)
+
+
+def replace_manifest_version(root: Path, version: str) -> None:
+    manifest = root / "manifest.toml"
+    text = manifest.read_text(encoding="utf-8")
+    pattern = re.compile(r'(?m)^version\s*=\s*"[^"]+"\s*$')
+    replacement = f'version = "{version}"'
+    if pattern.search(text):
+        text = pattern.sub(replacement, text, count=1)
+    else:
+        name_match = re.search(r'(?m)^name\s*=\s*"[^"]+"\s*$', text)
+        if not name_match:
+            die("manifest.toml must declare name before release-cut can insert version")
+        insert_at = name_match.end()
+        text = text[:insert_at] + "\n" + replacement + text[insert_at:]
+    manifest.write_text(text, encoding="utf-8")
+
+
+def roll_changelog(root: Path, version: str) -> None:
+    changelog = changelog_path(root)
+    lines = changelog.read_text(encoding="utf-8").splitlines()
+    try:
+        unreleased = lines.index("## [Unreleased]")
+    except ValueError:
+        die("CHANGELOG.md must contain ## [Unreleased]")
+
+    next_heading = len(lines)
+    for index in range(unreleased + 1, len(lines)):
+        if lines[index].startswith("## "):
+            next_heading = index
+            break
+
+    unreleased_body = lines[unreleased + 1 : next_heading]
+    while unreleased_body and unreleased_body[0] == "":
+        unreleased_body.pop(0)
+    while unreleased_body and unreleased_body[-1] == "":
+        unreleased_body.pop()
+
+    today = _dt.date.today().isoformat()
+    release_section = [f"## [{version}] — {today}"]
+    if unreleased_body:
+        release_section.extend(["", *unreleased_body])
+
+    new_lines = lines[: unreleased + 1] + [""] + release_section
+    if next_heading < len(lines):
+        new_lines.extend(["", *lines[next_heading:]])
+    changelog.write_text("\n".join(new_lines).rstrip() + "\n", encoding="utf-8")
+
+
+def git(root: Path, *args: str, check: bool = True) -> CommandResult:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=root,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if check and result.returncode != 0:
+        die(f"git {' '.join(args)} failed: {result.stderr.strip() or result.stdout.strip()}")
+    return CommandResult(result.stdout, result.stderr)
+
+
+def require_clean_main(root: Path) -> None:
+    branch = git(root, "branch", "--show-current").stdout.strip()
+    if branch != "main":
+        die(f"release-cut must run on main, not {branch or 'detached HEAD'}")
+    status = git(root, "status", "--short").stdout.strip()
+    if status:
+        die("release-cut requires a clean working tree")
+
+
+def release_cut(root: Path, tag: str) -> None:
+    version = version_from_tag(tag)
+    require_clean_main(root)
+    run_metadata(root)
+
+    before = git(root, "rev-parse", "HEAD").stdout.strip()
+    try:
+        replace_manifest_version(root, version)
+        roll_changelog(root, version)
+        run_release(root, tag)
+        git(root, "add", "manifest.toml", "CHANGELOG.md")
+        git(root, "commit", "-m", f"chore(release): {version}", "-m", f"Release {tag}.")
+        git(root, "tag", "-a", tag, "-m", f"groundwork {tag}")
+        push = subprocess.run(
+            ["git", "push", "--atomic", "origin", "main", tag],
+            cwd=root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if push.returncode != 0:
+            raise ReleaseError(f"atomic push failed: {push.stderr.strip() or push.stdout.strip()}")
+    except Exception:
+        subprocess.run(["git", "tag", "-d", tag], cwd=root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["git", "reset", "--hard", before], cwd=root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        raise
+
+
+def release_check_main(root: Path, argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="release-check")
+    subcommands = parser.add_subparsers(dest="command", required=True)
+    subcommands.add_parser("metadata")
+    notes = subcommands.add_parser("notes")
+    notes.add_argument("tag")
+    release = subcommands.add_parser("release")
+    release.add_argument("tag")
+    args = parser.parse_args(argv)
+
+    if args.command == "metadata":
+        run_metadata(root)
+    elif args.command == "notes":
+        sys.stdout.write(emit_notes(root, version_from_tag(args.tag)))
+    elif args.command == "release":
+        run_release(root, args.tag)
+    return 0
+
+
+def release_cut_main(root: Path, argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="release-cut")
+    parser.add_argument("tag")
+    args = parser.parse_args(argv)
+    release_cut(root, args.tag)
+    return 0
