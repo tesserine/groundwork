@@ -126,7 +126,12 @@ refactor that preserves the behavior.
 ### deliver-behavior-contract
 
 The capstone is delivery of the `behavior-contract` artifact. Invoke the
-`behavior-contract` MCP tool:
+`behavior-contract` MCP tool. The object below is MCP tool input, not artifact
+body. `instance_id` is a tool parameter that names the artifact instance; it is
+extracted before validating artifact content, becomes the workspace filename,
+and must not appear in the artifact body. Runa injects `work_unit` from session
+context; the agent does not supply `work_unit`. Do not write the workspace JSON
+file directly:
 
 ```
 behavior-contract({
@@ -142,9 +147,9 @@ behavior-contract({
 })
 ```
 
-Runa injects `work_unit` from session context, validates the payload against
-the behavior-contract schema, persists the artifact, and records it in the
-artifact store.
+Runa validates the remaining artifact body fields against the
+behavior-contract schema, persists the artifact, and records it in the artifact
+store.
 
 ## Corruption Modes
 

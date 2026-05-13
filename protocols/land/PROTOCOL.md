@@ -234,7 +234,12 @@ If any comment or close operation fails, continue processing remaining work-unit
 #### 1f. Deliver `completion-record`
 
 The capstone is delivery of the `completion-record` artifact — the terminal
-archival record for the work-unit. Invoke the `completion-record` MCP tool:
+archival record for the work-unit. Invoke the `completion-record` MCP tool. The
+object below is MCP tool input, not artifact body. `instance_id` is a tool
+parameter that names the artifact instance; it is extracted before validating
+artifact content, becomes the workspace filename, and must not appear in the
+artifact body. Runa injects `work_unit` from session context; the agent does
+not supply `work_unit`. Do not write the workspace JSON file directly:
 
 ```
 completion-record({
@@ -246,9 +251,8 @@ completion-record({
 })
 ```
 
-Runa injects `work_unit` from session context, validates the payload
-against the completion-record schema, persists the artifact, and records
-it in the artifact store.
+Runa validates the remaining artifact body fields against the completion-record
+schema, persists the artifact, and records it in the artifact store.
 
 If work-units could not be closed in the tracker (e.g., `gh` unavailable
 in step 1e), include those IDs and the reason in `gaps` so the manual

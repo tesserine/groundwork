@@ -57,7 +57,12 @@ Fires after verification, before `submit`.
 6. **Apply audience test.** For each updated or created doc: "Would the
    intended reader know what to do after reading this?"
 7. **Deliver `documentation-record`.** Invoke the
-   `documentation-record` MCP tool:
+   `documentation-record` MCP tool. The object below is MCP tool input, not
+   artifact body. `instance_id` is a tool parameter that names the artifact
+   instance; it is extracted before validating artifact content, becomes the
+   workspace filename, and must not appear in the artifact body. Runa injects
+   `work_unit` from session context; the agent does not supply `work_unit`. Do
+   not write the workspace JSON file directly:
 
    ```
    documentation-record({
@@ -68,9 +73,9 @@ Fires after verification, before `submit`.
    })
    ```
 
-   Runa injects `work_unit` from session context, validates the payload
-   against the documentation-record schema, persists the artifact, and
-   records it in the artifact store.
+   Runa validates the remaining artifact body fields against the
+   documentation-record schema, persists the artifact, and records it in the
+   artifact store.
 
 ### evaluate-existing-docs
 

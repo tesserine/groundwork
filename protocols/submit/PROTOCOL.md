@@ -291,7 +291,12 @@ gh pr edit <pr-number-or-url> --body-file /tmp/pr-body.md
 
 The capstone is delivery of the `patch` artifact via the `patch` MCP tool.
 `patch` is the complete latest PR state snapshot after submission, with the
-same shape for both a newly opened PR and an updated existing PR:
+same shape for both a newly opened PR and an updated existing PR. The object
+below is MCP tool input, not artifact body. `instance_id` is a tool parameter
+that names the artifact instance; it is extracted before validating artifact
+content, becomes the workspace filename, and must not appear in the artifact
+body. Runa injects `work_unit` from session context; the agent does not supply
+`work_unit`. Do not write the workspace JSON file directly:
 
 ```
 patch({
@@ -302,10 +307,10 @@ patch({
 })
 ```
 
-Runa injects `work_unit` from session context, validates the payload
-against the patch schema, persists the artifact, and records it in the
-artifact store. Do not emit a partial update artifact that assumes the operator
-already knows the surrounding PR context.
+Runa validates the remaining artifact body fields against the patch schema,
+persists the artifact, and records it in the artifact store. Do not emit a
+partial update artifact that assumes the operator already knows the surrounding
+PR context.
 
 ### 8. Report
 

@@ -196,6 +196,11 @@ judgment about what should move forward first.
 ### deliver-requirements
 
 Deliver the `requirements` artifact by invoking the `requirements` MCP tool:
+the object below is MCP tool input, not artifact body. `instance_id` is a
+tool parameter that names the artifact instance; it is extracted before
+validating artifact content, becomes the workspace filename, and must not
+appear in the artifact body. This planning-phase artifact is unscoped; runa
+does not inject `work_unit`. Do not write the workspace JSON file directly.
 
 ```
 requirements({
@@ -209,8 +214,9 @@ requirements({
 })
 ```
 
-Runa validates the payload against the requirements schema, persists the
-artifact under the given `instance_id`, and records it in the artifact store.
+Runa validates the remaining artifact body fields against the requirements
+schema, persists the artifact under the given `instance_id`, and records it in
+the artifact store.
 
 Delivery is successful when the tool returns without error; the survey is
 transmitted when the payload preserves the inquiry that produced it. Schema
