@@ -171,7 +171,14 @@ surfaces. Full runa-native `decompose` — where work-units live as runa
 artifacts with tracker as an optional sync target — is separate future work.
 
 Deliver each `work-unit` artifact by invoking the `work-unit` MCP tool once
-per delivered artifact. Use a fresh `instance_id` when creating a new
+per delivered artifact. The object below is MCP tool input, not artifact body.
+`instance_id` is a tool parameter that names the artifact instance; it is
+extracted before validating artifact content, becomes the workspace filename,
+and must not appear in the artifact body. `work-unit` is a planning-phase
+artifact: the agent supplies the schema fields shown below, and runa does not
+inject `work_unit`. Do not write the workspace JSON file directly.
+
+Use a fresh `instance_id` when creating a new
 work-unit. Reuse the existing `instance_id` when refining an already-delivered
 work-unit artifact so artifact identity and inbound dependency references
 remain stable. For a work-unit that exists in the tracker but has not
@@ -215,17 +222,16 @@ Choosing a new slug during refinement creates a duplicate artifact and leaves
 inbound `dependencies` pointing at the stale work-unit instead of the refined
 one.
 
-Runa validates the payload against the `work-unit` schema, persists the
-artifact under the given `instance_id`, and records it in the artifact store.
+Runa validates the remaining artifact body fields against the `work-unit`
+schema, persists the artifact under the given `instance_id`, and records it in
+the artifact store.
 The `dependencies` field takes the target work-units' exact `instance_id`
 values, not tracker references such as `#123`. For tracker-backed
 dependencies, first delivery uses the same reversible
 `work-unit-<N>-<short-slug>` convention, so later sessions can recover the
 tracker identifier directly from the artifact identifier without maintaining a
 separate mapping. For non-tracker-backed dependencies, use the dependency's
-bare `<short-slug>` `instance_id`. `work-unit` is a planning-phase artifact:
-the agent supplies the schema fields shown above, and runa does not inject
-`work_unit`.
+bare `<short-slug>` `instance_id`.
 
 ## Triggers
 

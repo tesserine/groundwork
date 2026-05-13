@@ -149,8 +149,12 @@ downstream artifact (behavior-contract, implementation-plan, test-evidence,
 completion-evidence, documentation-record, patch, completion-record) to
 the active work-unit.
 
-Invoke the `claim` MCP tool. Runa injects `work_unit` from session context;
-the agent supplies `instance_id` and `scope`:
+Invoke the `claim` MCP tool. The object below is MCP tool input, not artifact
+body. `instance_id` is a tool parameter that names the artifact instance; it is
+extracted before validating artifact content, becomes the workspace filename,
+and must not appear in the artifact body. Runa injects `work_unit` from session
+context; the agent does not supply `work_unit`. Do not write the workspace JSON
+file directly. The agent supplies `instance_id` and `scope`:
 
 ```
 claim({
@@ -164,9 +168,9 @@ agent intends to accomplish from this work-unit. It is a direction, not a
 rigid prediction; implementation will sharpen it. Name nearby work
 intentionally excluded inline in the scope statement.
 
-Runa validates the payload against the `claim` schema, persists the
-artifact, and records it in the artifact store. The agent does not write
-files, construct filenames, or supply `work_unit`.
+Runa validates the remaining artifact body fields against the `claim` schema,
+persists the artifact, and records it in the artifact store. The agent does not
+write files, construct filenames, or supply `work_unit`.
 
 ### session-close
 

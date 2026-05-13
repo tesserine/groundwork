@@ -240,7 +240,12 @@ long run.
 ### deliver-test-evidence
 
 The capstone is delivery of the `test-evidence` artifact. Invoke the
-`test-evidence` MCP tool:
+`test-evidence` MCP tool. The object below is MCP tool input, not artifact
+body. `instance_id` is a tool parameter that names the artifact instance; it is
+extracted before validating artifact content, becomes the workspace filename,
+and must not appear in the artifact body. Runa injects `work_unit` from session
+context; the agent does not supply `work_unit`. Do not write the workspace JSON
+file directly:
 
 ```
 test-evidence({
@@ -254,9 +259,8 @@ test-evidence({
 })
 ```
 
-Runa injects `work_unit` from session context, validates the payload against
-the test-evidence schema, persists the artifact, and records it in the
-artifact store.
+Runa validates the remaining artifact body fields against the test-evidence
+schema, persists the artifact, and records it in the artifact store.
 
 ## Anti-Rationalization
 
