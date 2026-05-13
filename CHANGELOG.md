@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   examples still show the flat MCP input shape, including `instance_id`, while
   clarifying that runa extracts routing parameters before schema validation,
   injects `work_unit` for scoped protocols, and requires delivery through the
-  MCP tool rather than direct workspace writes (closes #299, closes #300).
+  MCP tool rather than direct workspace writes (refs #299, closes #300).
 
 ## [0.1.2-rc.1] — 2026-05-05
 
