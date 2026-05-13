@@ -222,8 +222,9 @@ Choosing a new slug during refinement creates a duplicate artifact and leaves
 inbound `dependencies` pointing at the stale work-unit instead of the refined
 one.
 
-Runa validates the payload against the `work-unit` schema, persists the
-artifact under the given `instance_id`, and records it in the artifact store.
+Runa validates the remaining artifact body fields against the `work-unit`
+schema, persists the artifact under the given `instance_id`, and records it in
+the artifact store.
 The `dependencies` field takes the target work-units' exact `instance_id`
 values, not tracker references such as `#123`. For tracker-backed
 dependencies, first delivery uses the same reversible

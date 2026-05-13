@@ -67,6 +67,22 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
                 else:
                     self.assertIn("runa does not inject `work_unit`", body.lower())
 
+    def test_artifact_validation_sentences_name_post_extraction_body_scope(self) -> None:
+        producers = [protocol for protocol in manifest_protocols() if protocol["produces"]]
+
+        for protocol in producers:
+            protocol_name = protocol["name"]
+            body = normalized_protocol(protocol_name)
+            validation_sentence = re.search(r"Runa validates [^.]+\.", body)
+
+            with self.subTest(protocol=protocol_name):
+                self.assertIsNotNone(validation_sentence)
+                self.assertIn(
+                    "remaining artifact body fields against",
+                    validation_sentence.group(0),
+                )
+                self.assertNotIn("validates the payload against", validation_sentence.group(0))
+
 
 if __name__ == "__main__":
     unittest.main()
