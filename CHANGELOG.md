@@ -21,8 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Release publication now restores annotated tag refs after checkout, verifies
   the restored tag target still matches the triggering event commit before
   trusting the tag, and rejects future release workflow edits that run
-  repository scripts before tag trust is established (refs tesserine/commons#34,
-  closes #304).
+  repository scripts before tag trust is established. The metadata verifier also
+  rejects event-identity checks split across multiple `run:` steps, where GitHub
+  Actions shell isolation would discard the captured tag target (refs
+  tesserine/commons#34, closes #304).
 - Protocol artifact-delivery sections now distinguish MCP tool input from
   artifact body content across all ten artifact-producing protocols. The
   examples still show the flat MCP input shape, including `instance_id`, while

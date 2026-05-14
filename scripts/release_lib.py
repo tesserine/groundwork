@@ -31,6 +31,7 @@ class CommandResult:
 @dataclass(frozen=True)
 class WorkflowCommand:
     line_number: int
+    step_index: int
     text: str
 
 
@@ -242,16 +243,21 @@ def _strip_shell_comment(value: str) -> str:
     return re.sub(r"(^|\s)#.*", "", value)
 
 
-def _emit_workflow_command(commands: list[WorkflowCommand], line_number: int, command: str) -> None:
+def _starts_workflow_step(stripped: str) -> bool:
+    return re.match(r"^-\s*(?:name|run|uses):(?:\s|$)", stripped) is not None
+
+
+def _emit_workflow_command(commands: list[WorkflowCommand], line_number: int, step_index: int, command: str) -> None:
     command = _trim(_strip_shell_comment(command))
     if command:
-        commands.append(WorkflowCommand(line_number, command))
+        commands.append(WorkflowCommand(line_number, step_index, command))
 
 
 def workflow_executable_lines(workflow: Path) -> list[WorkflowCommand]:
     commands: list[WorkflowCommand] = []
     in_run_block = False
     run_indent = 0
+    current_step_index = -1
 
     for line_number, raw_line in enumerate(workflow.read_text(encoding="utf-8").splitlines(), start=1):
         line = raw_line.rstrip("\r")
@@ -262,11 +268,13 @@ def workflow_executable_lines(workflow: Path) -> list[WorkflowCommand]:
             if stripped and indent <= run_indent:
                 in_run_block = False
             else:
-                _emit_workflow_command(commands, line_number, line)
+                _emit_workflow_command(commands, line_number, current_step_index, line)
                 continue
 
         if stripped.startswith("#"):
             continue
+        if _starts_workflow_step(stripped):
+            current_step_index += 1
 
         match = re.match(r"^\s*(?:-\s*)?run:\s*(.*)$", line)
         if not match:
@@ -278,18 +286,21 @@ def workflow_executable_lines(workflow: Path) -> list[WorkflowCommand]:
             run_indent = indent
             continue
 
-        _emit_workflow_command(commands, line_number, _unquote(value))
+        _emit_workflow_command(commands, line_number, current_step_index, _unquote(value))
 
     return commands
 
 
 def workflow_uses_lines(workflow: Path) -> list[WorkflowCommand]:
     commands: list[WorkflowCommand] = []
+    current_step_index = -1
     for line_number, raw_line in enumerate(workflow.read_text(encoding="utf-8").splitlines(), start=1):
         line = raw_line.rstrip("\r")
         stripped = _trim(line)
         if stripped.startswith("#"):
             continue
+        if _starts_workflow_step(stripped):
+            current_step_index += 1
 
         match = re.match(r"^\s*(?:-\s*)?uses:\s*(.*)$", line)
         if not match:
@@ -297,7 +308,7 @@ def workflow_uses_lines(workflow: Path) -> list[WorkflowCommand]:
 
         value = _trim(re.sub(r"\s+#.*", "", match.group(1)))
         if value:
-            commands.append(WorkflowCommand(line_number, _unquote(value)))
+            commands.append(WorkflowCommand(line_number, current_step_index, _unquote(value)))
     return commands
 
 
@@ -308,15 +319,18 @@ def _first_line(commands: list[WorkflowCommand], predicate) -> int | None:
     return None
 
 
-def _event_identity_lines(commands: list[WorkflowCommand]) -> tuple[int | None, int | None]:
-    assignment_line: int | None = None
+def _event_identity_lines(commands: list[WorkflowCommand]) -> tuple[int | None, int | None, bool]:
+    assignment_command: WorkflowCommand | None = None
+    saw_split_identity = False
     for command in commands:
         if command.text == 'restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")':
-            assignment_line = command.line_number
+            assignment_command = command
             continue
-        if assignment_line is not None and command.text == 'if [ "$restored_commit" != "$GITHUB_SHA" ]; then':
-            return assignment_line, command.line_number
-    return None, None
+        if assignment_command is not None and command.text == 'if [ "$restored_commit" != "$GITHUB_SHA" ]; then':
+            if assignment_command.step_index == command.step_index:
+                return assignment_command.line_number, command.line_number, False
+            saw_split_identity = True
+    return None, None, saw_split_identity
 
 
 def check_release_workflow_surface(root: Path) -> None:
@@ -329,7 +343,7 @@ def check_release_workflow_surface(root: Path) -> None:
 
     checkout_line = _first_line(uses_lines, lambda text: re.match(r"^actions/checkout(@|$)", text) is not None)
     tag_ref_restore_line = _first_line(executable_lines, lambda text: text == "git fetch --tags --force origin")
-    event_assignment_line, event_if_line = _event_identity_lines(executable_lines)
+    event_assignment_line, event_if_line, split_event_identity = _event_identity_lines(executable_lines)
     annotated_tag_line = _first_line(executable_lines, lambda text: "git cat-file -t" in text)
     main_ancestry_line = _first_line(executable_lines, lambda text: "git merge-base --is-ancestor" in text)
     repository_code_line = _first_line(executable_lines, lambda text: "./scripts/" in text)
@@ -342,6 +356,11 @@ def check_release_workflow_surface(root: Path) -> None:
         die(".github/workflows/release.yml must restore annotated tag refs before checking tag type")
 
     if event_assignment_line is None or event_if_line is None:
+        if split_event_identity:
+            die(
+                ".github/workflows/release.yml event identity commands must run in one workflow step; "
+                "GitHub Actions shell-state isolation prevents variables from crossing steps"
+            )
         die(".github/workflows/release.yml must verify the restored tag matches the triggering event before checking tag type")
     if tag_ref_restore_line >= event_assignment_line or tag_ref_restore_line >= event_if_line:
         die(".github/workflows/release.yml must capture the restored tag target after restoring annotated tag refs")

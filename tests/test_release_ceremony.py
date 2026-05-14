@@ -339,6 +339,54 @@ class ReleaseCeremonyTests(unittest.TestCase):
             "must verify the restored tag matches the triggering event before checking tag type",
         )
 
+    def test_metadata_rejects_release_workflow_that_splits_event_identity_across_run_steps(self) -> None:
+        fixture = self.add_fixture("metadata-workflow-split-event-identity")
+        fixture.write_release_workflow(
+            """
+            name: Release
+
+            on:
+              push:
+                tags:
+                  - "v*"
+
+            jobs:
+              publish:
+                steps:
+                  - name: Checkout
+                    uses: actions/checkout@v4
+
+                  - name: Restore annotated tag refs
+                    run: git fetch --tags --force origin
+
+                  - name: Capture restored tag target
+                    run: restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+
+                  - name: Verify restored tag matches event
+                    run: |
+                      if [ "$restored_commit" != "$GITHUB_SHA" ]; then
+                        exit 1
+                      fi
+
+                  - name: Require annotated tag
+                    run: test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag
+
+                  - name: Require tag target on main
+                    run: git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main
+
+                  - name: Verify release identity
+                    run: ./scripts/release-check release "$GITHUB_REF_NAME"
+            """
+        )
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(
+            self,
+            result,
+            "GitHub Actions shell-state isolation prevents variables from crossing steps",
+        )
+
     def test_metadata_rejects_release_workflow_that_captures_event_identity_before_restore(self) -> None:
         fixture = self.add_fixture("metadata-workflow-event-assignment-before-restore")
         fixture.write_release_workflow(
@@ -356,14 +404,10 @@ class ReleaseCeremonyTests(unittest.TestCase):
                   - name: Checkout
                     uses: actions/checkout@v4
 
-                  - name: Capture stale tag target
-                    run: restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
-
-                  - name: Restore annotated tag refs
-                    run: git fetch --tags --force origin
-
-                  - name: Verify restored tag matches event
+                  - name: Verify stale tag target matches event
                     run: |
+                      restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+                      git fetch --tags --force origin
                       if [ "$restored_commit" != "$GITHUB_SHA" ]; then
                         exit 1
                       fi
@@ -407,14 +451,10 @@ class ReleaseCeremonyTests(unittest.TestCase):
                   - name: Restore annotated tag refs
                     run: git fetch --tags --force origin
 
-                  - name: Capture restored tag target
-                    run: restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
-
-                  - name: Require annotated tag
-                    run: test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag
-
-                  - name: Compare restored tag target
+                  - name: Compare restored tag target after tag type
                     run: |
+                      restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+                      test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag
                       if [ "$restored_commit" != "$GITHUB_SHA" ]; then
                         exit 1
                       fi
