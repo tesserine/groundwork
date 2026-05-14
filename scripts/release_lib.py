@@ -28,6 +28,12 @@ class CommandResult:
     stderr: str
 
 
+@dataclass(frozen=True)
+class WorkflowCommand:
+    line_number: int
+    text: str
+
+
 def die(message: str) -> None:
     raise ReleaseError(message)
 
@@ -218,11 +224,148 @@ def check_release_surface_files(root: Path) -> None:
             die(f"{relative} not found")
 
 
+def _indent_of(line: str) -> int:
+    return len(line) - len(line.lstrip(" "))
+
+
+def _trim(value: str) -> str:
+    return value.strip()
+
+
+def _unquote(value: str) -> str:
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+        return value[1:-1]
+    return value
+
+
+def _strip_shell_comment(value: str) -> str:
+    return re.sub(r"(^|\s)#.*", "", value)
+
+
+def _emit_workflow_command(commands: list[WorkflowCommand], line_number: int, command: str) -> None:
+    command = _trim(_strip_shell_comment(command))
+    if command:
+        commands.append(WorkflowCommand(line_number, command))
+
+
+def workflow_executable_lines(workflow: Path) -> list[WorkflowCommand]:
+    commands: list[WorkflowCommand] = []
+    in_run_block = False
+    run_indent = 0
+
+    for line_number, raw_line in enumerate(workflow.read_text(encoding="utf-8").splitlines(), start=1):
+        line = raw_line.rstrip("\r")
+        indent = _indent_of(line)
+        stripped = _trim(line)
+
+        if in_run_block:
+            if stripped and indent <= run_indent:
+                in_run_block = False
+            else:
+                _emit_workflow_command(commands, line_number, line)
+                continue
+
+        if stripped.startswith("#"):
+            continue
+
+        match = re.match(r"^\s*(?:-\s*)?run:\s*(.*)$", line)
+        if not match:
+            continue
+
+        value = _trim(match.group(1))
+        if value.startswith("|") or value.startswith(">"):
+            in_run_block = True
+            run_indent = indent
+            continue
+
+        _emit_workflow_command(commands, line_number, _unquote(value))
+
+    return commands
+
+
+def workflow_uses_lines(workflow: Path) -> list[WorkflowCommand]:
+    commands: list[WorkflowCommand] = []
+    for line_number, raw_line in enumerate(workflow.read_text(encoding="utf-8").splitlines(), start=1):
+        line = raw_line.rstrip("\r")
+        stripped = _trim(line)
+        if stripped.startswith("#"):
+            continue
+
+        match = re.match(r"^\s*(?:-\s*)?uses:\s*(.*)$", line)
+        if not match:
+            continue
+
+        value = _trim(re.sub(r"\s+#.*", "", match.group(1)))
+        if value:
+            commands.append(WorkflowCommand(line_number, _unquote(value)))
+    return commands
+
+
+def _first_line(commands: list[WorkflowCommand], predicate) -> int | None:
+    for command in commands:
+        if predicate(command.text):
+            return command.line_number
+    return None
+
+
+def _event_identity_lines(commands: list[WorkflowCommand]) -> tuple[int | None, int | None]:
+    assignment_line: int | None = None
+    for command in commands:
+        if command.text == 'restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")':
+            assignment_line = command.line_number
+            continue
+        if assignment_line is not None and command.text == 'if [ "$restored_commit" != "$GITHUB_SHA" ]; then':
+            return assignment_line, command.line_number
+    return None, None
+
+
+def check_release_workflow_surface(root: Path) -> None:
+    workflow = root / ".github" / "workflows" / "release.yml"
+    if not workflow.is_file():
+        die(".github/workflows/release.yml not found")
+
+    executable_lines = workflow_executable_lines(workflow)
+    uses_lines = workflow_uses_lines(workflow)
+
+    checkout_line = _first_line(uses_lines, lambda text: re.match(r"^actions/checkout(@|$)", text) is not None)
+    tag_ref_restore_line = _first_line(executable_lines, lambda text: text == "git fetch --tags --force origin")
+    event_assignment_line, event_if_line = _event_identity_lines(executable_lines)
+    annotated_tag_line = _first_line(executable_lines, lambda text: "git cat-file -t" in text)
+    main_ancestry_line = _first_line(executable_lines, lambda text: "git merge-base --is-ancestor" in text)
+    repository_code_line = _first_line(executable_lines, lambda text: "./scripts/" in text)
+
+    if tag_ref_restore_line is None:
+        die(".github/workflows/release.yml must restore annotated tag refs before checking tag type")
+    if checkout_line is None or checkout_line >= tag_ref_restore_line:
+        die(".github/workflows/release.yml must restore annotated tag refs after checkout and before checking tag type")
+    if annotated_tag_line is not None and tag_ref_restore_line >= annotated_tag_line:
+        die(".github/workflows/release.yml must restore annotated tag refs before checking tag type")
+
+    if event_assignment_line is None or event_if_line is None:
+        die(".github/workflows/release.yml must verify the restored tag matches the triggering event before checking tag type")
+    if tag_ref_restore_line >= event_assignment_line or tag_ref_restore_line >= event_if_line:
+        die(".github/workflows/release.yml must capture the restored tag target after restoring annotated tag refs")
+    if annotated_tag_line is not None and (
+        event_assignment_line >= annotated_tag_line or event_if_line >= annotated_tag_line
+    ):
+        die(".github/workflows/release.yml must compare the restored tag target before checking tag type")
+
+    if (
+        annotated_tag_line is None
+        or main_ancestry_line is None
+        or repository_code_line is None
+        or annotated_tag_line >= repository_code_line
+        or main_ancestry_line >= repository_code_line
+    ):
+        die(".github/workflows/release.yml must establish tag trust before running repository code")
+
+
 def run_metadata(root: Path) -> None:
     manifest_version(root)
     check_changelog_structure(root)
     check_methodology_integrity(root)
     check_release_surface_files(root)
+    check_release_workflow_surface(root)
 
 
 def run_release(root: Path, tag: str) -> None:

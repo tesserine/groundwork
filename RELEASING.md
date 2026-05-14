@@ -59,7 +59,10 @@ the release, creates an annotated tag, verifies the tag identity, and pushes
 ## Post-Release Gate
 
 The tag push runs `.github/workflows/release.yml`. That workflow verifies the
-annotated tag, requires the tag target to be reachable from `main`, runs
+release tag's git-local identity before any repository script runs: it restores
+annotated tag refs after checkout, verifies the restored tag target still
+matches the triggering GitHub event commit, verifies the tag is annotated, and
+requires the tag target to be reachable from `main`. It then runs
 `release-check release`, extracts release notes from `CHANGELOG.md`, and
 publishes the GitHub Release.
 

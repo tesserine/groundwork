@@ -120,8 +120,46 @@ class ReleaseFixture:
         self.write("skills/orient/SKILL.md", "# Orient\n")
         self.write("README.md", "# Groundwork\n")
         self.write("RELEASING.md", "scripts/release-cut vX.Y.Z\nADR-0012\n")
-        self.write(".github/workflows/release.yml", "name: Release\n")
+        self.write_release_workflow(
+            """
+            name: Release
+
+            on:
+              push:
+                tags:
+                  - "v*"
+
+            jobs:
+              publish:
+                steps:
+                  - name: Checkout
+                    uses: actions/checkout@v4
+
+                  - name: Restore annotated tag refs
+                    run: git fetch --tags --force origin
+
+                  - name: Verify restored tag matches event
+                    run: |
+                      restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+                      if [ "$restored_commit" != "$GITHUB_SHA" ]; then
+                        echo "Tag $GITHUB_REF_NAME moved since trigger: expected $GITHUB_SHA, got $restored_commit" >&2
+                        exit 1
+                      fi
+
+                  - name: Require annotated tag
+                    run: test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag
+
+                  - name: Require tag target on main
+                    run: git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main
+
+                  - name: Verify release identity
+                    run: ./scripts/release-check release "$GITHUB_REF_NAME"
+            """
+        )
         self.write(".github/workflows/release-metadata.yml", "name: Release Metadata\n")
+
+    def write_release_workflow(self, contents: str) -> None:
+        self.write(".github/workflows/release.yml", contents)
 
     def run_release_check(self, *args: str) -> subprocess.CompletedProcess[str]:
         return run([sys.executable, "scripts/release-check", *args], self.root)
@@ -222,6 +260,251 @@ class ReleaseCeremonyTests(unittest.TestCase):
             result,
             "CHANGELOG.md has duplicate release heading for [1.2.3-rc.1]",
         )
+
+    def test_metadata_rejects_release_workflow_without_tag_ref_restore(self) -> None:
+        fixture = self.add_fixture("metadata-workflow-missing-tag-ref-restore")
+        fixture.write_release_workflow(
+            """
+            name: Release
+
+            on:
+              push:
+                tags:
+                  - "v*"
+
+            jobs:
+              publish:
+                steps:
+                  - name: Checkout
+                    uses: actions/checkout@v4
+
+                  - name: Verify restored tag matches event
+                    run: |
+                      restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+                      if [ "$restored_commit" != "$GITHUB_SHA" ]; then
+                        exit 1
+                      fi
+
+                  - name: Require annotated tag
+                    run: test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag
+
+                  - name: Require tag target on main
+                    run: git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main
+
+                  - name: Verify release identity
+                    run: ./scripts/release-check release "$GITHUB_REF_NAME"
+            """
+        )
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(self, result, "must restore annotated tag refs before checking tag type")
+
+    def test_metadata_rejects_release_workflow_without_event_identity_verification(self) -> None:
+        fixture = self.add_fixture("metadata-workflow-missing-event-identity")
+        fixture.write_release_workflow(
+            """
+            name: Release
+
+            on:
+              push:
+                tags:
+                  - "v*"
+
+            jobs:
+              publish:
+                steps:
+                  - name: Checkout
+                    uses: actions/checkout@v4
+
+                  - name: Restore annotated tag refs
+                    run: git fetch --tags --force origin
+
+                  - name: Require annotated tag
+                    run: test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag
+
+                  - name: Require tag target on main
+                    run: git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main
+
+                  - name: Verify release identity
+                    run: ./scripts/release-check release "$GITHUB_REF_NAME"
+            """
+        )
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(
+            self,
+            result,
+            "must verify the restored tag matches the triggering event before checking tag type",
+        )
+
+    def test_metadata_rejects_release_workflow_that_captures_event_identity_before_restore(self) -> None:
+        fixture = self.add_fixture("metadata-workflow-event-assignment-before-restore")
+        fixture.write_release_workflow(
+            """
+            name: Release
+
+            on:
+              push:
+                tags:
+                  - "v*"
+
+            jobs:
+              publish:
+                steps:
+                  - name: Checkout
+                    uses: actions/checkout@v4
+
+                  - name: Capture stale tag target
+                    run: restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+
+                  - name: Restore annotated tag refs
+                    run: git fetch --tags --force origin
+
+                  - name: Verify restored tag matches event
+                    run: |
+                      if [ "$restored_commit" != "$GITHUB_SHA" ]; then
+                        exit 1
+                      fi
+
+                  - name: Require annotated tag
+                    run: test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag
+
+                  - name: Require tag target on main
+                    run: git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main
+
+                  - name: Verify release identity
+                    run: ./scripts/release-check release "$GITHUB_REF_NAME"
+            """
+        )
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(
+            self,
+            result,
+            "must capture the restored tag target after restoring annotated tag refs",
+        )
+
+    def test_metadata_rejects_release_workflow_that_compares_event_identity_after_tag_type(self) -> None:
+        fixture = self.add_fixture("metadata-workflow-event-comparison-after-tag-type")
+        fixture.write_release_workflow(
+            """
+            name: Release
+
+            on:
+              push:
+                tags:
+                  - "v*"
+
+            jobs:
+              publish:
+                steps:
+                  - name: Checkout
+                    uses: actions/checkout@v4
+
+                  - name: Restore annotated tag refs
+                    run: git fetch --tags --force origin
+
+                  - name: Capture restored tag target
+                    run: restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+
+                  - name: Require annotated tag
+                    run: test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag
+
+                  - name: Compare restored tag target
+                    run: |
+                      if [ "$restored_commit" != "$GITHUB_SHA" ]; then
+                        exit 1
+                      fi
+
+                  - name: Require tag target on main
+                    run: git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main
+
+                  - name: Verify release identity
+                    run: ./scripts/release-check release "$GITHUB_REF_NAME"
+            """
+        )
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(self, result, "must compare the restored tag target before checking tag type")
+
+    def test_metadata_rejects_release_workflow_that_runs_repository_code_before_tag_trust(self) -> None:
+        fixture = self.add_fixture("metadata-workflow-repository-code-before-tag-trust")
+        fixture.write_release_workflow(
+            """
+            name: Release
+
+            on:
+              push:
+                tags:
+                  - "v*"
+
+            jobs:
+              publish:
+                steps:
+                  - name: Checkout
+                    uses: actions/checkout@v4
+
+                  - name: Restore annotated tag refs
+                    run: git fetch --tags --force origin
+
+                  - name: Verify restored tag matches event
+                    run: |
+                      restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+                      if [ "$restored_commit" != "$GITHUB_SHA" ]; then
+                        exit 1
+                      fi
+
+                  - name: Verify release identity
+                    run: ./scripts/release-check release "$GITHUB_REF_NAME"
+
+                  - name: Require annotated tag
+                    run: test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag
+
+                  - name: Require tag target on main
+                    run: git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main
+            """
+        )
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(self, result, "must establish tag trust before running repository code")
+
+    def test_metadata_ignores_workflow_comments_when_validating_release_trust_shape(self) -> None:
+        fixture = self.add_fixture("metadata-workflow-comment-only-trust")
+        fixture.write_release_workflow(
+            """
+            name: Release
+
+            on:
+              push:
+                tags:
+                  - "v*"
+
+            jobs:
+              publish:
+                steps:
+                  - name: Checkout
+                    uses: actions/checkout@v4
+
+                  # run: git fetch --tags --force origin
+                  # run: ./scripts/release-check release "$GITHUB_REF_NAME"
+                  - name: Commented checks
+                    run: |
+                      true  # git cat-file -t "refs/tags/$GITHUB_REF_NAME"
+                      true  # git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main
+
+                  - name: Verify release identity
+                    run: ./scripts/release-check release "$GITHUB_REF_NAME"
+            """
+        )
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(self, result, "must restore annotated tag refs before checking tag type")
 
     def test_notes_emit_matching_changelog_section_without_outer_blank_lines(self) -> None:
         fixture = self.add_fixture("notes-success", "1.2.3-rc.1")
@@ -415,6 +698,9 @@ class ReleaseRepositoryContractTests(unittest.TestCase):
     def test_release_workflow_verifies_annotated_tags_and_has_no_path_filter(self) -> None:
         workflow = self.read(".github/workflows/release.yml")
 
+        self.assertIn("git fetch --tags --force origin", workflow)
+        self.assertIn('restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")', workflow)
+        self.assertIn('if [ "$restored_commit" != "$GITHUB_SHA" ]; then', workflow)
         self.assertIn("refs/tags/$GITHUB_REF_NAME", workflow)
         self.assertIn("./scripts/release-check release \"$GITHUB_REF_NAME\"", workflow)
         self.assertIn("./scripts/release-check notes \"$GITHUB_REF_NAME\"", workflow)
