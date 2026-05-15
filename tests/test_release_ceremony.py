@@ -387,6 +387,53 @@ class ReleaseCeremonyTests(unittest.TestCase):
             "GitHub Actions shell-state isolation prevents variables from crossing steps",
         )
 
+    def test_metadata_rejects_release_workflow_with_intervening_event_identity_command(self) -> None:
+        fixture = self.add_fixture("metadata-workflow-intervening-event-identity-command")
+        fixture.write_release_workflow(
+            """
+            name: Release
+
+            on:
+              push:
+                tags:
+                  - "v*"
+
+            jobs:
+              publish:
+                steps:
+                  - name: Checkout
+                    uses: actions/checkout@v4
+
+                  - name: Restore annotated tag refs
+                    run: git fetch --tags --force origin
+
+                  - name: Verify restored tag matches event
+                    run: |
+                      restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+                      restored_commit="$GITHUB_SHA"
+                      if [ "$restored_commit" != "$GITHUB_SHA" ]; then
+                        exit 1
+                      fi
+
+                  - name: Require annotated tag
+                    run: test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag
+
+                  - name: Require tag target on main
+                    run: git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main
+
+                  - name: Verify release identity
+                    run: ./scripts/release-check release "$GITHUB_REF_NAME"
+            """
+        )
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(
+            self,
+            result,
+            "must verify the restored tag matches the triggering event before checking tag type",
+        )
+
     def test_metadata_rejects_release_workflow_that_captures_event_identity_before_restore(self) -> None:
         fixture = self.add_fixture("metadata-workflow-event-assignment-before-restore")
         fixture.write_release_workflow(
@@ -428,7 +475,7 @@ class ReleaseCeremonyTests(unittest.TestCase):
         assert_failure_contains(
             self,
             result,
-            "must capture the restored tag target after restoring annotated tag refs",
+            "must verify the restored tag matches the triggering event before checking tag type",
         )
 
     def test_metadata_rejects_release_workflow_that_compares_event_identity_after_tag_type(self) -> None:
@@ -469,7 +516,11 @@ class ReleaseCeremonyTests(unittest.TestCase):
 
         result = fixture.run_release_check("metadata")
 
-        assert_failure_contains(self, result, "must compare the restored tag target before checking tag type")
+        assert_failure_contains(
+            self,
+            result,
+            "must verify the restored tag matches the triggering event before checking tag type",
+        )
 
     def test_metadata_rejects_release_workflow_that_runs_repository_code_before_tag_trust(self) -> None:
         fixture = self.add_fixture("metadata-workflow-repository-code-before-tag-trust")
@@ -557,6 +608,53 @@ class ReleaseCeremonyTests(unittest.TestCase):
         result = fixture.run_release_check("metadata")
 
         assert_failure_contains(self, result, "must establish tag trust before running repository code")
+
+    def test_metadata_rejects_release_workflow_that_runs_wrapped_local_script_before_tag_trust(self) -> None:
+        for wrapper in ("bash", "sh"):
+            with self.subTest(wrapper=wrapper):
+                fixture = self.add_fixture(f"metadata-workflow-{wrapper}-wrapped-local-script-before-tag-trust")
+                fixture.write_release_workflow(
+                    f"""
+                    name: Release
+
+                    on:
+                      push:
+                        tags:
+                          - "v*"
+
+                    jobs:
+                      publish:
+                        steps:
+                          - name: Checkout
+                            uses: actions/checkout@v4
+
+                          - name: Restore annotated tag refs
+                            run: git fetch --tags --force origin
+
+                          - name: Verify restored tag matches event
+                            run: |
+                              restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{{commit}}")
+                              if [ "$restored_commit" != "$GITHUB_SHA" ]; then
+                                exit 1
+                              fi
+
+                          - name: Verify release identity through shell
+                            run: {wrapper} ./scripts/release-check release "$GITHUB_REF_NAME"
+
+                          - name: Require annotated tag
+                            run: test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag
+
+                          - name: Require tag target on main
+                            run: git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main
+
+                          - name: Verify release identity
+                            run: ./scripts/release-check release "$GITHUB_REF_NAME"
+                    """
+                )
+
+                result = fixture.run_release_check("metadata")
+
+                assert_failure_contains(self, result, "must establish tag trust before running repository code")
 
     def test_metadata_rejects_noncanonical_annotated_tag_command_mentions(self) -> None:
         fixture = self.add_fixture("metadata-workflow-noncanonical-annotated-tag")

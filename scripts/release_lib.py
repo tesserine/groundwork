@@ -326,11 +326,27 @@ def _event_identity_lines(commands: list[WorkflowCommand]) -> tuple[int | None, 
         if command.text == 'restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")':
             assignment_command = command
             continue
-        if assignment_command is not None and command.text == 'if [ "$restored_commit" != "$GITHUB_SHA" ]; then':
-            if assignment_command.step_index == command.step_index:
+        if assignment_command is not None:
+            if (
+                command.step_index == assignment_command.step_index
+                and command.text == 'if [ "$restored_commit" != "$GITHUB_SHA" ]; then'
+            ):
                 return assignment_command.line_number, command.line_number, False
+            if command.step_index == assignment_command.step_index:
+                assignment_command = None
+                continue
             saw_split_identity = True
+            assignment_command = None
     return None, None, saw_split_identity
+
+
+def _is_local_script_invocation(text: str) -> bool:
+    if text.startswith("./scripts/"):
+        return True
+    for wrapper in ("bash", "sh"):
+        if text.startswith(f"{wrapper} ./scripts/"):
+            return True
+    return False
 
 
 def check_release_workflow_surface(root: Path) -> None:
@@ -354,7 +370,7 @@ def check_release_workflow_surface(root: Path) -> None:
     )
     repository_code_line = _first_line(
         executable_lines,
-        lambda text: text.startswith("./scripts/"),
+        _is_local_script_invocation,
     )
 
     if tag_ref_restore_line is None:
