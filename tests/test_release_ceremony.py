@@ -513,6 +513,132 @@ class ReleaseCeremonyTests(unittest.TestCase):
 
         assert_failure_contains(self, result, "must establish tag trust before running repository code")
 
+    def test_metadata_rejects_noncanonical_annotated_tag_command_mentions(self) -> None:
+        fixture = self.add_fixture("metadata-workflow-noncanonical-annotated-tag")
+        fixture.write_release_workflow(
+            """
+            name: Release
+
+            on:
+              push:
+                tags:
+                  - "v*"
+
+            jobs:
+              publish:
+                steps:
+                  - name: Checkout
+                    uses: actions/checkout@v4
+
+                  - name: Restore annotated tag refs
+                    run: git fetch --tags --force origin
+
+                  - name: Verify restored tag matches event
+                    run: |
+                      restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+                      if [ "$restored_commit" != "$GITHUB_SHA" ]; then
+                        exit 1
+                      fi
+
+                  - name: Mention annotated tag check
+                    run: echo "Running git cat-file -t before release"
+
+                  - name: Require tag target on main
+                    run: git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main
+
+                  - name: Verify release identity
+                    run: ./scripts/release-check release "$GITHUB_REF_NAME"
+            """
+        )
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(self, result, "must establish tag trust before running repository code")
+
+    def test_metadata_rejects_noncanonical_main_ancestry_command_mentions(self) -> None:
+        fixture = self.add_fixture("metadata-workflow-noncanonical-main-ancestry")
+        fixture.write_release_workflow(
+            """
+            name: Release
+
+            on:
+              push:
+                tags:
+                  - "v*"
+
+            jobs:
+              publish:
+                steps:
+                  - name: Checkout
+                    uses: actions/checkout@v4
+
+                  - name: Restore annotated tag refs
+                    run: git fetch --tags --force origin
+
+                  - name: Verify restored tag matches event
+                    run: |
+                      restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+                      if [ "$restored_commit" != "$GITHUB_SHA" ]; then
+                        exit 1
+                      fi
+
+                  - name: Require annotated tag
+                    run: test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag
+
+                  - name: Mention main ancestry check
+                    run: echo "Running git merge-base --is-ancestor before release"
+
+                  - name: Verify release identity
+                    run: ./scripts/release-check release "$GITHUB_REF_NAME"
+            """
+        )
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(self, result, "must establish tag trust before running repository code")
+
+    def test_metadata_rejects_noncanonical_repository_code_command_mentions(self) -> None:
+        fixture = self.add_fixture("metadata-workflow-noncanonical-repository-code")
+        fixture.write_release_workflow(
+            """
+            name: Release
+
+            on:
+              push:
+                tags:
+                  - "v*"
+
+            jobs:
+              publish:
+                steps:
+                  - name: Checkout
+                    uses: actions/checkout@v4
+
+                  - name: Restore annotated tag refs
+                    run: git fetch --tags --force origin
+
+                  - name: Verify restored tag matches event
+                    run: |
+                      restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+                      if [ "$restored_commit" != "$GITHUB_SHA" ]; then
+                        exit 1
+                      fi
+
+                  - name: Require annotated tag
+                    run: test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag
+
+                  - name: Require tag target on main
+                    run: git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main
+
+                  - name: Mention release check
+                    run: echo "Running ./scripts/release-check release before release"
+            """
+        )
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(self, result, "must establish tag trust before running repository code")
+
     def test_metadata_ignores_workflow_comments_when_validating_release_trust_shape(self) -> None:
         fixture = self.add_fixture("metadata-workflow-comment-only-trust")
         fixture.write_release_workflow(

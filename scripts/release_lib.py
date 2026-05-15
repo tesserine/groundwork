@@ -344,9 +344,18 @@ def check_release_workflow_surface(root: Path) -> None:
     checkout_line = _first_line(uses_lines, lambda text: re.match(r"^actions/checkout(@|$)", text) is not None)
     tag_ref_restore_line = _first_line(executable_lines, lambda text: text == "git fetch --tags --force origin")
     event_assignment_line, event_if_line, split_event_identity = _event_identity_lines(executable_lines)
-    annotated_tag_line = _first_line(executable_lines, lambda text: "git cat-file -t" in text)
-    main_ancestry_line = _first_line(executable_lines, lambda text: "git merge-base --is-ancestor" in text)
-    repository_code_line = _first_line(executable_lines, lambda text: "./scripts/" in text)
+    annotated_tag_line = _first_line(
+        executable_lines,
+        lambda text: text == 'test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag',
+    )
+    main_ancestry_line = _first_line(
+        executable_lines,
+        lambda text: text == 'git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main',
+    )
+    repository_code_line = _first_line(
+        executable_lines,
+        lambda text: text == './scripts/release-check release "$GITHUB_REF_NAME"',
+    )
 
     if tag_ref_restore_line is None:
         die(".github/workflows/release.yml must restore annotated tag refs before checking tag type")
