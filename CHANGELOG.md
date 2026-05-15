@@ -25,9 +25,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   requires the canonical trust-check commands exactly and also rejects
   event-identity checks split across multiple `run:` steps, same-step
   event-identity checks with intervening executable commands, and named
-  `bash ./scripts/...` / `sh ./scripts/...` wrapper forms before tag trust. More
-  exotic indirect script execution remains a known limit of the current
-  line-scanner validator architecture (refs tesserine/commons#34, closes #304).
+  `bash ./scripts/...` / `sh ./scripts/...` wrapper forms before tag trust.
+  The current metadata verifier validates the single-job release workflow shape
+  used by the lockstep release repos; it does not enforce trust-before-repo-code
+  across multi-job workflow boundaries. More exotic indirect script execution
+  and multi-job handling remain known limits of the current line-scanner
+  validator architecture pending the validator-family ADR at
+  tesserine/commons#36 (refs tesserine/commons#34, closes #304).
 - Protocol artifact-delivery sections now distinguish MCP tool input from
   artifact body content across all ten artifact-producing protocols. The
   examples still show the flat MCP input shape, including `instance_id`, while

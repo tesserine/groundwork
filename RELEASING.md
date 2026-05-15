@@ -66,6 +66,11 @@ requires the tag target to be reachable from `main`. It then runs
 `release-check release`, extracts release notes from `CHANGELOG.md`, and
 publishes the GitHub Release.
 
+Known limit: the metadata verifier currently validates this single-job release
+workflow shape. If you add a second job to `release.yml`, the verifier does not
+yet enforce trust-before-repository-code across job boundaries; multi-job
+handling is pending the validator-family ADR at tesserine/commons#36.
+
 Only `vX.Y.Z-rc.N` tags are published as GitHub prereleases.
 
 Manual stable GitHub Release recovery, when needed after a workflow failure:

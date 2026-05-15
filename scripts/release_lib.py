@@ -354,6 +354,8 @@ def check_release_workflow_surface(root: Path) -> None:
     if not workflow.is_file():
         die(".github/workflows/release.yml not found")
 
+    # This line scanner validates the current single-job release workflow shape;
+    # multi-job trust ordering is deferred to tesserine/commons#36.
     executable_lines = workflow_executable_lines(workflow)
     uses_lines = workflow_uses_lines(workflow)
 
