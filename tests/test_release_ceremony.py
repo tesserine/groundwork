@@ -513,6 +513,51 @@ class ReleaseCeremonyTests(unittest.TestCase):
 
         assert_failure_contains(self, result, "must establish tag trust before running repository code")
 
+    def test_metadata_rejects_release_workflow_that_runs_any_local_script_before_tag_trust(self) -> None:
+        fixture = self.add_fixture("metadata-workflow-local-script-before-tag-trust")
+        fixture.write_release_workflow(
+            """
+            name: Release
+
+            on:
+              push:
+                tags:
+                  - "v*"
+
+            jobs:
+              publish:
+                steps:
+                  - name: Checkout
+                    uses: actions/checkout@v4
+
+                  - name: Restore annotated tag refs
+                    run: git fetch --tags --force origin
+
+                  - name: Verify restored tag matches event
+                    run: |
+                      restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")
+                      if [ "$restored_commit" != "$GITHUB_SHA" ]; then
+                        exit 1
+                      fi
+
+                  - name: Extract release notes
+                    run: ./scripts/release-check notes "$GITHUB_REF_NAME" > release-notes.md
+
+                  - name: Require annotated tag
+                    run: test "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" = tag
+
+                  - name: Require tag target on main
+                    run: git merge-base --is-ancestor "$tag_commit" refs/remotes/origin/main
+
+                  - name: Verify release identity
+                    run: ./scripts/release-check release "$GITHUB_REF_NAME"
+            """
+        )
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(self, result, "must establish tag trust before running repository code")
+
     def test_metadata_rejects_noncanonical_annotated_tag_command_mentions(self) -> None:
         fixture = self.add_fixture("metadata-workflow-noncanonical-annotated-tag")
         fixture.write_release_workflow(

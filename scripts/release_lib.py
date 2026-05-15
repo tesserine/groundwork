@@ -354,7 +354,7 @@ def check_release_workflow_surface(root: Path) -> None:
     )
     repository_code_line = _first_line(
         executable_lines,
-        lambda text: text == './scripts/release-check release "$GITHUB_REF_NAME"',
+        lambda text: text.startswith("./scripts/"),
     )
 
     if tag_ref_restore_line is None:
