@@ -66,8 +66,10 @@ copies the pinned methodology into
 `${XDG_STATE_HOME:-$HOME/.local/state}/groundwork-sync`, then creates
 discoverable entries under both `$HOME/.claude/skills/` and
 `$HOME/.agents/skills/` for every directory in `skills/` and `protocols/`.
-Protocols are projected as skill-shaped entries whose `SKILL.md` is copied
-from `PROTOCOL.md`.
+The installed snapshot mirrors the source checkout so relative links from
+protocols, skills, docs, and schemas resolve the same way they do in the
+pinned source. Protocols are exposed as skill-shaped entries by copying each
+`PROTOCOL.md` to an adjacent `SKILL.md` inside the snapshot.
 
 Re-run `./scripts/groundwork-sync install` from a different clean detached
 checkout to sync to that pinned source. Existing unmanaged entries with the
@@ -78,8 +80,8 @@ command:
 ./scripts/groundwork-sync uninstall
 ```
 
-The command uses Bash, coreutils-compatible filesystem tools, and Git. Fedora
-CoreOS operators should ensure Git is installed before use.
+The command uses Bash, Git, `tar`, and coreutils-compatible filesystem tools.
+Fedora CoreOS operators should ensure Git is installed before use.
 
 ## What Groundwork Believes
 

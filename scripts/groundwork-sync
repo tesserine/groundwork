@@ -4,6 +4,7 @@ shopt -s nullglob
 
 COMMAND_NAME="groundwork-sync"
 STATE_FILE_NAME="state-v1.tsv"
+SNAPSHOT_LAYOUT_MARKER="source-tree-layout-v2"
 
 die() {
     printf '%s: %s\n' "$COMMAND_NAME" "$1" >&2
@@ -122,59 +123,38 @@ register_source() {
     RELATIVE_DIRS["$name"]=$relative
 }
 
-replace_dir() {
-    local src=$1 dest=$2 tmp
-    mkdir -p "$(dirname "$dest")" "$STATE_DIR/.tmp"
-    tmp=$(mktemp -d "$STATE_DIR/.tmp/replace.XXXXXX")
-    cp -a "$src/." "$tmp/"
-    rm -rf "$dest"
-    mv "$tmp" "$dest"
-}
-
 materialize_snapshot() {
     SNAPSHOT_ROOT="$STATE_DIR/snapshots/$COMMIT"
     SNAPSHOT_SOURCE="$SNAPSHOT_ROOT/source"
-    PROJECTION_ROOT="$STATE_DIR/projections/$COMMIT"
+    local marker old_projection_root
+    marker="$SNAPSHOT_ROOT/$SNAPSHOT_LAYOUT_MARKER"
+    old_projection_root="$STATE_DIR/projections/$COMMIT"
 
-    if [[ -d "$SNAPSHOT_SOURCE" && -d "$PROJECTION_ROOT" ]]; then
+    if [[ -d "$SNAPSHOT_SOURCE" && -f "$marker" ]]; then
+        rm -rf "$old_projection_root"
         return
     fi
 
-    rm -rf "$SNAPSHOT_ROOT" "$PROJECTION_ROOT"
-    mkdir -p "$SNAPSHOT_SOURCE" "$PROJECTION_ROOT"
-    if [[ -d "$SOURCE/skills" ]]; then
-        mkdir -p "$SNAPSHOT_SOURCE/skills"
-        replace_dir "$SOURCE/skills" "$SNAPSHOT_SOURCE/skills"
-    fi
-    if [[ -d "$SOURCE/protocols" ]]; then
-        mkdir -p "$SNAPSHOT_SOURCE/protocols"
-        replace_dir "$SOURCE/protocols" "$SNAPSHOT_SOURCE/protocols"
-    fi
+    rm -rf "$SNAPSHOT_ROOT" "$old_projection_root"
+    mkdir -p "$SNAPSHOT_SOURCE"
+    git -C "$SOURCE" archive --format=tar "$COMMIT" | tar -x -f - -C "$SNAPSHOT_SOURCE"
+    materialize_protocol_skills
+    : > "$marker"
 }
 
-build_protocol_projection() {
-    local name=$1 source_dir projection_dir item base
-    source_dir="$SNAPSHOT_SOURCE/protocols/$name"
-    projection_dir="$PROJECTION_ROOT/$name"
-    rm -rf "$projection_dir"
-    mkdir -p "$projection_dir"
-    cp "$source_dir/PROTOCOL.md" "$projection_dir/SKILL.md"
-    for item in "$source_dir"/*; do
-        [[ -e "$item" ]] || continue
-        base=$(basename "$item")
-        [[ "$base" == "PROTOCOL.md" ]] && continue
-        ln -s "$item" "$projection_dir/$base"
+materialize_protocol_skills() {
+    local name kind protocol_dir
+    for name in "${NAMES[@]}"; do
+        kind=${KINDS[$name]}
+        [[ "$kind" == "protocol" ]] || continue
+        protocol_dir="$SNAPSHOT_SOURCE/protocols/$name"
+        cp "$protocol_dir/PROTOCOL.md" "$protocol_dir/SKILL.md"
     done
 }
 
 desired_target_for() {
-    local name=$1 kind=${KINDS[$name]}
-    if [[ "$kind" == "protocol" ]]; then
-        build_protocol_projection "$name"
-        printf '%s\n' "$PROJECTION_ROOT/$name"
-    else
-        printf '%s\n' "$SNAPSHOT_SOURCE/${RELATIVE_DIRS[$name]}"
-    fi
+    local name=$1
+    printf '%s\n' "$SNAPSHOT_SOURCE/${RELATIVE_DIRS[$name]}"
 }
 
 read_state() {

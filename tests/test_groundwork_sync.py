@@ -84,6 +84,9 @@ class GroundworkFixture:
         run(["git", "commit", "-q", "-m", message], self.root, check=True)
         return run(["git", "rev-parse", "HEAD"], self.root, check=True).stdout.strip()
 
+    def current_commit(self) -> str:
+        return run(["git", "rev-parse", "HEAD"], self.root, check=True).stdout.strip()
+
     def remove(self, relative: str) -> None:
         path = self.root / relative
         if path.is_dir():
@@ -160,9 +163,16 @@ class GroundworkSyncTests(unittest.TestCase):
 
         take_skill = fixture.home / ".agents" / "skills" / "take" / "SKILL.md"
         self.assertEqual(take_skill.read_text(encoding="utf-8"), "# Take\n")
+        take_entry = fixture.home / ".agents" / "skills" / "take"
+        expected_take_target = (
+            fixture.state / "snapshots" / fixture.current_commit() / "source" / "protocols" / "take"
+        )
+        self.assertEqual(take_entry.resolve(), expected_take_target)
         state = (fixture.state / "state-v1.tsv").read_text(encoding="utf-8")
         self.assertIn("\t.claude/skills\torient\t", state)
         self.assertIn("\t.agents/skills\ttake\t", state)
+        self.assertIn(str(expected_take_target), state)
+        self.assertNotIn("/projections/", state)
 
     def test_reinstalling_same_source_state_is_idempotent(self) -> None:
         fixture = self.add_fixture("idempotent")
@@ -182,6 +192,75 @@ class GroundworkSyncTests(unittest.TestCase):
         fixture.write("skills/orient/SKILL.md", "# Mutated orient\n")
 
         self.assertEqual(installed.read_text(encoding="utf-8"), "# Orient\n")
+
+    def test_installed_protocol_relative_paths_resolve_to_source_content(self) -> None:
+        fixture = self.add_fixture("protocol-relative-paths")
+        fixture.write("docs/architecture/work-unit-model.md", "# Work unit model\n")
+        fixture.write("schemas/work-unit.schema.json", '{"title": "Work unit"}\n')
+        fixture.write("manifest.toml", 'name = "groundwork-test"\n')
+        fixture.write(
+            "protocols/take/PROTOCOL.md",
+            """
+            # Take
+
+            Read [work-unit model](../../docs/architecture/work-unit-model.md).
+            Validate against [schema](../../schemas/work-unit.schema.json).
+            Coordinate with [orient](../../skills/orient/SKILL.md).
+            Check [manifest](../../manifest.toml).
+            """,
+        )
+        fixture.commit_detached("test: add protocol references")
+
+        result = fixture.install()
+
+        assert_success(self, result)
+        installed_protocol = (fixture.home / ".agents" / "skills" / "take").resolve()
+        installed_skill = installed_protocol / "SKILL.md"
+        self.assertEqual(
+            installed_skill.read_text(encoding="utf-8"),
+            (fixture.root / "protocols" / "take" / "PROTOCOL.md").read_text(encoding="utf-8"),
+        )
+        for relative in [
+            "../../docs/architecture/work-unit-model.md",
+            "../../schemas/work-unit.schema.json",
+            "../../skills/orient/SKILL.md",
+            "../../manifest.toml",
+        ]:
+            installed_reference = (installed_skill.parent / relative).resolve()
+            source_reference = (fixture.root / "protocols" / "take" / relative).resolve()
+            self.assertTrue(
+                installed_reference.is_file(),
+                f"{relative} should resolve from the installed protocol",
+            )
+            self.assertEqual(
+                installed_reference.read_text(encoding="utf-8"),
+                source_reference.read_text(encoding="utf-8"),
+                f"{relative} should resolve to the pinned source content",
+            )
+
+    def test_install_replaces_recorded_projection_target_with_source_shaped_target(self) -> None:
+        fixture = self.add_fixture("projection-migration")
+        commit = fixture.current_commit()
+        old_projection = fixture.state / "projections" / commit / "take"
+        old_projection.mkdir(parents=True)
+        (old_projection / "SKILL.md").write_text("# Take\n", encoding="utf-8")
+        managed = fixture.home / ".agents" / "skills" / "take"
+        managed.parent.mkdir(parents=True)
+        managed.symlink_to(old_projection)
+        (fixture.state / "state-v1.tsv").write_text(
+            f"{commit}\t.agents/skills\ttake\tprotocol\t{managed}\t{old_projection}\n",
+            encoding="utf-8",
+        )
+
+        result = fixture.install()
+
+        assert_success(self, result)
+        expected = fixture.state / "snapshots" / commit / "source" / "protocols" / "take"
+        self.assertEqual(managed.resolve(), expected)
+        self.assertFalse(old_projection.exists())
+        state = (fixture.state / "state-v1.tsv").read_text(encoding="utf-8")
+        self.assertIn(f"\t.agents/skills\ttake\tprotocol\t{managed}\t{expected}", state)
+        self.assertNotIn("/projections/", state)
 
     def test_reinstalling_new_pinned_ref_adds_and_removes_entries(self) -> None:
         fixture = self.add_fixture("sync-new-ref")
