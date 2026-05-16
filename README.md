@@ -49,6 +49,50 @@ not completeness.
 For how runa orchestrates this topology at runtime, see the
 [interface contract](https://github.com/tesserine/runa/blob/main/docs/interface-contract.md).
 
+## Interactive Installation
+
+Runa-served agents consume Groundwork through the methodology mount. Interactive
+Claude Code and Codex sessions can install the same skills and protocols into
+their local discovery directories from a pinned Groundwork checkout:
+
+```bash
+git checkout --detach v0.1.2-rc.1
+scripts/groundwork-install install
+```
+
+The installer writes user-owned entries only, with no root or sudo requirement:
+
+- `~/.claude/skills/{name}/`
+- `~/.agents/skills/{name}/`
+
+Every directory under `skills/` is copied as a skill entry. Every directory
+under `protocols/` is copied as a skill-shaped entry with `PROTOCOL.md`
+projected to `SKILL.md`, so protocol names are discoverable in the same way as
+skills. Installed entries are copies, not source-checkout symlinks, so later
+changes to the checkout do not drift into the active discovery surface.
+
+The source checkout must be clean and pinned at a tag or full commit SHA. The
+command refuses branch checkouts because a branch is a moving source. To update
+to a different pinned Groundwork version, check out that ref and run:
+
+```bash
+scripts/groundwork-install sync
+```
+
+`sync` converges the discovery directories to the new pinned source, including
+removing entries that no longer exist upstream. `scripts/groundwork-install
+status` reports the recorded install state, and `scripts/groundwork-install
+uninstall` removes only entries the command created.
+
+Ownership is tracked in both a per-entry marker file and an XDG state file at
+`${XDG_STATE_HOME:-~/.local/state}/groundwork-install/interactive-install.tsv`.
+Pre-existing entries, including unofficial symlinks with the same names, are
+reported as unmanaged conflicts rather than overwritten or adopted.
+
+Prerequisites are the stock command-line tools expected on Fedora CoreOS for
+this workflow: `bash`, `git`, and POSIX file utilities such as `cp`, `find`,
+`mkdir`, `mv`, and `rm`.
+
 ## What Groundwork Believes
 
 These are the methodology choices embedded in groundwork's protocols and skills.

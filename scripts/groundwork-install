@@ -1,0 +1,257 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROGRAM="groundwork-install"
+MARKER=".groundwork-install"
+STATE_FILE_NAME="interactive-install.tsv"
+
+usage() {
+  cat <<'EOF'
+usage: groundwork-install [install|sync|status|uninstall] [--source PATH] [--home PATH] [--state-dir PATH]
+
+Installs this pinned Groundwork checkout into Claude Code and Codex skill
+discovery directories. The default subcommand is install.
+EOF
+}
+
+die() {
+  printf '%s: %s\n' "$PROGRAM" "$*" >&2
+  exit 1
+}
+
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+abs_path() {
+  local path="$1"
+  if [[ -d "$path" ]]; then
+    (cd "$path" && pwd -P)
+  else
+    local dir
+    dir="$(dirname "$path")"
+    local base
+    base="$(basename "$path")"
+    (cd "$dir" && printf '%s/%s\n' "$(pwd -P)" "$base")
+  fi
+}
+
+mode="install"
+source_path="."
+home_path="${HOME:-}"
+state_dir="${XDG_STATE_HOME:-${HOME:-}/.local/state}/groundwork-install"
+
+if [[ "${1:-}" == "install" || "${1:-}" == "sync" || "${1:-}" == "status" || "${1:-}" == "uninstall" ]]; then
+  mode="$1"
+  shift
+fi
+
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    --source)
+      [[ "$#" -ge 2 ]] || die "--source requires a path"
+      source_path="$2"
+      shift 2
+      ;;
+    --home)
+      [[ "$#" -ge 2 ]] || die "--home requires a path"
+      home_path="$2"
+      shift 2
+      ;;
+    --state-dir)
+      [[ "$#" -ge 2 ]] || die "--state-dir requires a path"
+      state_dir="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      die "unknown argument: $1"
+      ;;
+  esac
+done
+
+[[ -n "$home_path" ]] || die "HOME is not set; pass --home"
+command_exists git || die "git is required"
+
+source_path="$(abs_path "$source_path")"
+home_path="$(abs_path "$home_path")"
+mkdir -p "$state_dir"
+state_dir="$(abs_path "$state_dir")"
+state_file="$state_dir/$STATE_FILE_NAME"
+
+validate_source() {
+  [[ -d "$source_path" ]] || die "source not found: $source_path"
+  git -C "$source_path" rev-parse --show-toplevel >/dev/null 2>&1 || die "source must be a git checkout"
+  local root
+  root="$(git -C "$source_path" rev-parse --show-toplevel)"
+  [[ "$(abs_path "$root")" == "$source_path" ]] || die "source must be the groundwork checkout root"
+  [[ -d "$source_path/skills" ]] || die "source has no skills directory"
+  [[ -d "$source_path/protocols" ]] || die "source has no protocols directory"
+  [[ -z "$(git -C "$source_path" status --porcelain)" ]] || die "source checkout is dirty; install from a pinned clean checkout"
+  if git -C "$source_path" symbolic-ref -q --short HEAD >/dev/null; then
+    die "source must be a pinned checkout at a tag or full commit SHA, not a branch"
+  fi
+}
+
+source_sha() {
+  git -C "$source_path" rev-parse HEAD
+}
+
+target_roots() {
+  printf '%s\n' "$home_path/.claude/skills" "$home_path/.agents/skills"
+}
+
+desired_entries() {
+  local dir name
+  if [[ -d "$source_path/skills" ]]; then
+    while IFS= read -r dir; do
+      name="$(basename "$dir")"
+      [[ -f "$dir/SKILL.md" ]] && printf 'skill\t%s\t%s\n' "$name" "$dir"
+    done < <(find "$source_path/skills" -mindepth 1 -maxdepth 1 -type d | sort)
+  fi
+  if [[ -d "$source_path/protocols" ]]; then
+    while IFS= read -r dir; do
+      name="$(basename "$dir")"
+      [[ -f "$dir/PROTOCOL.md" ]] && printf 'protocol\t%s\t%s\n' "$name" "$dir"
+    done < <(find "$source_path/protocols" -mindepth 1 -maxdepth 1 -type d | sort)
+  fi
+}
+
+is_managed_entry() {
+  [[ -f "$1/$MARKER" ]]
+}
+
+preflight_conflicts() {
+  local kind name src root target conflict=0
+  while IFS=$'\t' read -r kind name src; do
+    while IFS= read -r root; do
+      target="$root/$name"
+      if [[ -e "$target" || -L "$target" ]]; then
+        if ! is_managed_entry "$target"; then
+          printf '%s: unmanaged conflict at %s\n' "$PROGRAM" "$target" >&2
+          conflict=1
+        fi
+      fi
+    done < <(target_roots)
+  done < <(desired_entries)
+  [[ "$conflict" -eq 0 ]] || exit 1
+}
+
+remove_obsolete_entries() {
+  [[ -f "$state_file" ]] || return 0
+  local old_target old_name old_kind old_sha old_root target_still_desired
+  local desired_kind desired_name desired_src
+  while IFS=$'\t' read -r old_target old_name old_kind old_sha old_root; do
+    target_still_desired=0
+    while IFS=$'\t' read -r desired_kind desired_name desired_src; do
+      if [[ "$old_name" == "$desired_name" ]]; then
+        target_still_desired=1
+      fi
+    done < <(desired_entries)
+    if [[ "$target_still_desired" -eq 0 && -d "$old_target" && -f "$old_target/$MARKER" ]]; then
+      rm -rf "$old_target"
+    fi
+  done < "$state_file"
+}
+
+copy_entry() {
+  local kind="$1"
+  local name="$2"
+  local src="$3"
+  local target="$4"
+  local sha="$5"
+  local tmp
+  tmp="$(mktemp -d "${target}.tmp.XXXXXX")"
+  rm -rf "$tmp"
+  mkdir -p "$tmp"
+  cp -R "$src/." "$tmp/"
+  if [[ "$kind" == "protocol" ]]; then
+    rm -f "$tmp/SKILL.md"
+    mv "$tmp/PROTOCOL.md" "$tmp/SKILL.md"
+  fi
+  cat > "$tmp/$MARKER" <<EOF
+managed-by=$PROGRAM
+source=$source_path
+source-sha=$sha
+name=$name
+kind=$kind
+EOF
+  rm -rf "$target"
+  mv "$tmp" "$target"
+}
+
+write_state() {
+  local tmp="$state_file.tmp"
+  local kind name src root sha target
+  mkdir -p "$state_dir"
+  : > "$tmp"
+  sha="$(source_sha)"
+  while IFS=$'\t' read -r kind name src; do
+    while IFS= read -r root; do
+      target="$root/$name"
+      printf '%s\t%s\t%s\t%s\t%s\n' "$target" "$name" "$kind" "$sha" "$root" >> "$tmp"
+    done < <(target_roots)
+  done < <(desired_entries)
+  mv "$tmp" "$state_file"
+}
+
+install_or_sync() {
+  validate_source
+  preflight_conflicts
+  remove_obsolete_entries
+  local sha kind name src root target
+  sha="$(source_sha)"
+  while IFS=$'\t' read -r kind name src; do
+    while IFS= read -r root; do
+      mkdir -p "$root"
+      target="$root/$name"
+      copy_entry "$kind" "$name" "$src" "$target" "$sha"
+    done < <(target_roots)
+  done < <(desired_entries)
+  write_state
+  printf '%s: installed %s\n' "$PROGRAM" "$sha"
+}
+
+status_install() {
+  if [[ ! -f "$state_file" ]]; then
+    die "not installed"
+  fi
+  local missing=0 target name kind sha root
+  while IFS=$'\t' read -r target name kind sha root; do
+    if [[ ! -f "$target/$MARKER" ]]; then
+      printf '%s: missing managed entry %s\n' "$PROGRAM" "$target" >&2
+      missing=1
+    fi
+  done < "$state_file"
+  [[ "$missing" -eq 0 ]] || exit 1
+  printf '%s: installed\n' "$PROGRAM"
+}
+
+uninstall() {
+  if [[ ! -f "$state_file" ]]; then
+    die "not installed"
+  fi
+  local target name kind sha root
+  while IFS=$'\t' read -r target name kind sha root; do
+    if [[ -d "$target" && -f "$target/$MARKER" ]]; then
+      rm -rf "$target"
+    fi
+  done < "$state_file"
+  rm -f "$state_file"
+  printf '%s: uninstalled\n' "$PROGRAM"
+}
+
+case "$mode" in
+  install|sync)
+    install_or_sync
+    ;;
+  status)
+    status_install
+    ;;
+  uninstall)
+    uninstall
+    ;;
+esac

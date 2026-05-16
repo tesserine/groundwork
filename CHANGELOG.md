@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Official interactive install tooling for Claude Code and Codex:
+  `scripts/groundwork-install` installs, syncs, reports status for, and
+  uninstalls Groundwork skills and protocols from a clean pinned checkout into
+  `~/.claude/skills/` and `~/.agents/skills/`. Installed entries are copied
+  rather than symlinked, protocols are projected as skill-shaped entries, and
+  ownership tracking prevents uninstall from removing operator-managed entries
+  (closes #306).
 - Release ceremony tooling for the Groundwork methodology release surface:
   `manifest.toml` is now the version-of-record, `scripts/release-check`
   verifies release metadata and tag identity, `scripts/release-cut` performs
