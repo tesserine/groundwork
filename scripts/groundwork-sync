@@ -1,0 +1,333 @@
+#!/usr/bin/env bash
+set -euo pipefail
+shopt -s nullglob
+
+COMMAND_NAME="groundwork-sync"
+STATE_FILE_NAME="state-v1.tsv"
+
+die() {
+    printf '%s: %s\n' "$COMMAND_NAME" "$1" >&2
+    exit 1
+}
+
+usage() {
+    cat >&2 <<'EOF'
+usage:
+  groundwork-sync install [--source PATH] [--home PATH] [--state-dir PATH]
+  groundwork-sync uninstall [--home PATH] [--state-dir PATH]
+EOF
+}
+
+abs_dir() {
+    local path=$1
+    [[ -d "$path" ]] || die "directory not found: $path"
+    (cd "$path" && pwd -P)
+}
+
+script_root() {
+    local script_dir
+    script_dir=$(dirname "${BASH_SOURCE[0]}")
+    (cd "$script_dir/.." && pwd -P)
+}
+
+default_state_dir() {
+    if [[ -n "${XDG_STATE_HOME:-}" ]]; then
+        printf '%s\n' "$XDG_STATE_HOME/groundwork-sync"
+    else
+        printf '%s\n' "$HOME/.local/state/groundwork-sync"
+    fi
+}
+
+parse_common_args() {
+    SOURCE=$(script_root)
+    TARGET_HOME=${HOME:?HOME is required}
+    STATE_DIR=$(default_state_dir)
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --source)
+                [[ $# -ge 2 ]] || die "--source requires a path"
+                SOURCE=$2
+                shift 2
+                ;;
+            --home)
+                [[ $# -ge 2 ]] || die "--home requires a path"
+                TARGET_HOME=$2
+                shift 2
+                ;;
+            --state-dir)
+                [[ $# -ge 2 ]] || die "--state-dir requires a path"
+                STATE_DIR=$2
+                shift 2
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                die "unknown argument: $1"
+                ;;
+        esac
+    done
+
+    TARGET_HOME=$(abs_dir "$TARGET_HOME")
+    mkdir -p "$STATE_DIR"
+    STATE_DIR=$(abs_dir "$STATE_DIR")
+}
+
+require_pinned_clean_source() {
+    SOURCE=$(abs_dir "$SOURCE")
+    git -C "$SOURCE" rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "source is not a Git checkout: $SOURCE"
+
+    if git -C "$SOURCE" symbolic-ref -q HEAD >/dev/null; then
+        local branch
+        branch=$(git -C "$SOURCE" branch --show-current)
+        die "source must be a detached checkout at a tag or full commit SHA, not branch: ${branch:-unknown}"
+    fi
+
+    local status
+    status=$(git -C "$SOURCE" status --porcelain=v1 --untracked-files=all)
+    [[ -z "$status" ]] || die "source checkout must be clean"
+    COMMIT=$(git -C "$SOURCE" rev-parse HEAD)
+}
+
+collect_sources() {
+    NAMES=()
+    declare -gA KINDS
+    declare -gA RELATIVE_DIRS
+
+    local dir name
+    for dir in "$SOURCE"/skills/*; do
+        [[ -d "$dir" && -f "$dir/SKILL.md" ]] || continue
+        name=$(basename "$dir")
+        register_source "$name" "skill" "skills/$name"
+    done
+
+    for dir in "$SOURCE"/protocols/*; do
+        [[ -d "$dir" && -f "$dir/PROTOCOL.md" ]] || continue
+        name=$(basename "$dir")
+        register_source "$name" "protocol" "protocols/$name"
+    done
+
+    [[ ${#NAMES[@]} -gt 0 ]] || die "no skills or protocols found in source"
+}
+
+register_source() {
+    local name=$1 kind=$2 relative=$3
+    if [[ -n "${KINDS[$name]+x}" ]]; then
+        die "duplicate skill/protocol name: $name"
+    fi
+    NAMES+=("$name")
+    KINDS["$name"]=$kind
+    RELATIVE_DIRS["$name"]=$relative
+}
+
+replace_dir() {
+    local src=$1 dest=$2 tmp
+    mkdir -p "$(dirname "$dest")" "$STATE_DIR/.tmp"
+    tmp=$(mktemp -d "$STATE_DIR/.tmp/replace.XXXXXX")
+    cp -a "$src/." "$tmp/"
+    rm -rf "$dest"
+    mv "$tmp" "$dest"
+}
+
+materialize_snapshot() {
+    SNAPSHOT_ROOT="$STATE_DIR/snapshots/$COMMIT"
+    SNAPSHOT_SOURCE="$SNAPSHOT_ROOT/source"
+    PROJECTION_ROOT="$STATE_DIR/projections/$COMMIT"
+
+    if [[ -d "$SNAPSHOT_SOURCE" && -d "$PROJECTION_ROOT" ]]; then
+        return
+    fi
+
+    rm -rf "$SNAPSHOT_ROOT" "$PROJECTION_ROOT"
+    mkdir -p "$SNAPSHOT_SOURCE" "$PROJECTION_ROOT"
+    if [[ -d "$SOURCE/skills" ]]; then
+        mkdir -p "$SNAPSHOT_SOURCE/skills"
+        replace_dir "$SOURCE/skills" "$SNAPSHOT_SOURCE/skills"
+    fi
+    if [[ -d "$SOURCE/protocols" ]]; then
+        mkdir -p "$SNAPSHOT_SOURCE/protocols"
+        replace_dir "$SOURCE/protocols" "$SNAPSHOT_SOURCE/protocols"
+    fi
+}
+
+build_protocol_projection() {
+    local name=$1 source_dir projection_dir item base
+    source_dir="$SNAPSHOT_SOURCE/protocols/$name"
+    projection_dir="$PROJECTION_ROOT/$name"
+    rm -rf "$projection_dir"
+    mkdir -p "$projection_dir"
+    cp "$source_dir/PROTOCOL.md" "$projection_dir/SKILL.md"
+    for item in "$source_dir"/*; do
+        [[ -e "$item" ]] || continue
+        base=$(basename "$item")
+        [[ "$base" == "PROTOCOL.md" ]] && continue
+        ln -s "$item" "$projection_dir/$base"
+    done
+}
+
+desired_target_for() {
+    local name=$1 kind=${KINDS[$name]}
+    if [[ "$kind" == "protocol" ]]; then
+        build_protocol_projection "$name"
+        printf '%s\n' "$PROJECTION_ROOT/$name"
+    else
+        printf '%s\n' "$SNAPSHOT_SOURCE/${RELATIVE_DIRS[$name]}"
+    fi
+}
+
+read_state() {
+    declare -gA RECORDED_TARGETS
+    RECORDED_TARGETS=()
+
+    local state_file=$STATE_DIR/$STATE_FILE_NAME
+    [[ -f "$state_file" ]] || return 0
+
+    local commit target_root name kind dest link_target
+    while IFS=$'\t' read -r commit target_root name kind dest link_target; do
+        [[ -n "${commit:-}" && -n "${dest:-}" ]] || continue
+        RECORDED_TARGETS["$dest"]=$link_target
+    done < "$state_file"
+}
+
+is_recorded_current_link() {
+    local dest=$1 expected=${RECORDED_TARGETS[$dest]:-} current
+    [[ -n "$expected" && -L "$dest" ]] || return 1
+    current=$(readlink "$dest")
+    [[ "$current" == "$expected" ]]
+}
+
+check_conflicts() {
+    local target_root name dest
+    for target_root in ".claude/skills" ".agents/skills"; do
+        for name in "${NAMES[@]}"; do
+            dest="$TARGET_HOME/$target_root/$name"
+            [[ ! -e "$dest" && ! -L "$dest" ]] && continue
+            if is_recorded_current_link "$dest"; then
+                continue
+            fi
+            die "existing unmanaged entry conflicts with install target: $dest"
+        done
+    done
+}
+
+is_desired_dest() {
+    local dest=$1 target_root name
+    for target_root in ".claude/skills" ".agents/skills"; do
+        for name in "${NAMES[@]}"; do
+            [[ "$dest" == "$TARGET_HOME/$target_root/$name" ]] && return 0
+        done
+    done
+    return 1
+}
+
+check_stale_recorded_entries() {
+    local dest expected
+    for dest in "${!RECORDED_TARGETS[@]}"; do
+        is_desired_dest "$dest" && continue
+        expected=${RECORDED_TARGETS[$dest]}
+        [[ ! -e "$dest" && ! -L "$dest" ]] && continue
+        if [[ -L "$dest" && "$(readlink "$dest")" == "$expected" ]]; then
+            continue
+        fi
+        die "managed entry was modified; refusing to remove: $dest"
+    done
+}
+
+install_entries() {
+    local new_state=$STATE_DIR/$STATE_FILE_NAME.tmp
+    : > "$new_state"
+
+    local target_root target name dest desired kind
+    for target_root in ".claude/skills" ".agents/skills"; do
+        target="$TARGET_HOME/$target_root"
+        mkdir -p "$target"
+        for name in "${NAMES[@]}"; do
+            kind=${KINDS[$name]}
+            dest="$target/$name"
+            desired=$(desired_target_for "$name")
+            if [[ -L "$dest" || -e "$dest" ]]; then
+                rm -f "$dest"
+            fi
+            ln -s "$desired" "$dest"
+            printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$COMMIT" "$target_root" "$name" "$kind" "$dest" "$desired" >> "$new_state"
+        done
+    done
+
+    cleanup_stale_entries "$new_state"
+    mv "$new_state" "$STATE_DIR/$STATE_FILE_NAME"
+}
+
+cleanup_stale_entries() {
+    local new_state=$1 dest expected
+    for dest in "${!RECORDED_TARGETS[@]}"; do
+        if grep -F -q $'\t'"$dest"$'\t' "$new_state"; then
+            continue
+        fi
+        expected=${RECORDED_TARGETS[$dest]}
+        if [[ -L "$dest" && "$(readlink "$dest")" == "$expected" ]]; then
+            rm -f "$dest"
+            continue
+        fi
+        if [[ -e "$dest" || -L "$dest" ]]; then
+            die "managed entry was modified; refusing to remove: $dest"
+        fi
+    done
+}
+
+install_command() {
+    parse_common_args "$@"
+    require_pinned_clean_source
+    collect_sources
+    read_state
+    check_conflicts
+    check_stale_recorded_entries
+    materialize_snapshot
+    install_entries
+    printf 'installed %d entries from %s\n' "${#NAMES[@]}" "$COMMIT"
+}
+
+uninstall_command() {
+    parse_common_args "$@"
+    read_state
+
+    local dest expected removed=0
+    for dest in "${!RECORDED_TARGETS[@]}"; do
+        expected=${RECORDED_TARGETS[$dest]}
+        if [[ -L "$dest" && "$(readlink "$dest")" == "$expected" ]]; then
+            rm -f "$dest"
+            removed=$((removed + 1))
+            continue
+        fi
+        if [[ -e "$dest" || -L "$dest" ]]; then
+            die "managed entry was modified; refusing to remove: $dest"
+        fi
+    done
+
+    rm -f "$STATE_DIR/$STATE_FILE_NAME"
+    printf 'uninstalled %d entries\n' "$removed"
+}
+
+main() {
+    [[ $# -gt 0 ]] || { usage; exit 2; }
+    local subcommand=$1
+    shift
+    case "$subcommand" in
+        install)
+            install_command "$@"
+            ;;
+        uninstall)
+            uninstall_command "$@"
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            usage
+            die "unknown subcommand: $subcommand"
+            ;;
+    esac
+}
+
+main "$@"

@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Official `scripts/groundwork-sync` install command for interactive Claude
+  Code and Codex use. It installs from a clean detached Groundwork checkout,
+  snapshots the pinned methodology into user-owned state, projects protocols
+  as skill-shaped entries, detects unmanaged discovery conflicts, and supports
+  uninstall of only entries it created (closes #306).
 - Release ceremony tooling for the Groundwork methodology release surface:
   `manifest.toml` is now the version-of-record, `scripts/release-check`
   verifies release metadata and tag identity, `scripts/release-cut` performs

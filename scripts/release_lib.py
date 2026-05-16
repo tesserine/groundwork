@@ -209,6 +209,7 @@ def check_methodology_integrity(root: Path) -> None:
 def check_release_surface_files(root: Path) -> None:
     for relative in [
         "RELEASING.md",
+        "scripts/groundwork-sync",
         "scripts/release-check",
         "scripts/release-cut",
         ".github/workflows/release.yml",

@@ -49,6 +49,38 @@ not completeness.
 For how runa orchestrates this topology at runtime, see the
 [interface contract](https://github.com/tesserine/runa/blob/main/docs/interface-contract.md).
 
+## Using Groundwork Interactively
+
+Interactive operators can install Groundwork for Claude Code and Codex with:
+
+```sh
+git clone https://github.com/tesserine/groundwork.git
+cd groundwork
+git checkout vX.Y.Z
+./scripts/groundwork-sync install
+```
+
+`groundwork-sync install` requires a clean detached checkout at a tag or full
+commit SHA. It refuses branch checkouts because branches move. The command
+copies the pinned methodology into
+`${XDG_STATE_HOME:-$HOME/.local/state}/groundwork-sync`, then creates
+discoverable entries under both `$HOME/.claude/skills/` and
+`$HOME/.agents/skills/` for every directory in `skills/` and `protocols/`.
+Protocols are projected as skill-shaped entries whose `SKILL.md` is copied
+from `PROTOCOL.md`.
+
+Re-run `./scripts/groundwork-sync install` from a different clean detached
+checkout to sync to that pinned source. Existing unmanaged entries with the
+same names are reported as conflicts. To remove only entries created by the
+command:
+
+```sh
+./scripts/groundwork-sync uninstall
+```
+
+The command uses Bash, coreutils-compatible filesystem tools, and Git. Fedora
+CoreOS operators should ensure Git is installed before use.
+
 ## What Groundwork Believes
 
 These are the methodology choices embedded in groundwork's protocols and skills.

@@ -75,7 +75,7 @@ class ReleaseFixture:
     def install_scripts(self) -> None:
         scripts = self.root / "scripts"
         scripts.mkdir(exist_ok=True)
-        for name in ["release_lib.py", "release-check", "release-cut"]:
+        for name in ["groundwork-sync", "release_lib.py", "release-check", "release-cut"]:
             source = ROOT / "scripts" / name
             destination = scripts / name
             shutil.copy(source, destination)
@@ -433,6 +433,13 @@ class ReleaseRepositoryContractTests(unittest.TestCase):
         self.assertIn("pull_request:", workflow)
         self.assertIn("paths:", workflow)
         self.assertIn("./scripts/release-check metadata", workflow)
+
+    def test_release_metadata_tracks_groundwork_sync_command(self) -> None:
+        workflow = self.read(".github/workflows/release-metadata.yml")
+        release_lib = self.read("scripts/release_lib.py")
+
+        self.assertIn("scripts/groundwork-sync", workflow)
+        self.assertIn('"scripts/groundwork-sync"', release_lib)
 
     def test_releasing_documentation_matches_verifier_contract(self) -> None:
         releasing = self.read("RELEASING.md")
