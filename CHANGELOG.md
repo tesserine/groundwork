@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Official interactive install tooling for Claude Code and Codex:
+  `scripts/groundwork-install` installs, syncs, reports status for, and
+  uninstalls Groundwork skills and protocols from a clean pinned checkout into
+  `~/.claude/skills/` and `~/.agents/skills/`. Installed entries are copied
+  rather than symlinked, protocols are projected as skill-shaped entries, and
+  ownership tracking prevents uninstall from removing operator-managed entries.
+  Re-running install against the same unchanged pinned source leaves current
+  managed entries untouched while still restoring managed target drift
+  (closes #306).
 - Release ceremony tooling for the Groundwork methodology release surface:
   `manifest.toml` is now the version-of-record, `scripts/release-check`
   verifies release metadata and tag identity, `scripts/release-cut` performs
@@ -18,6 +27,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Interactive install now prepares every discovery root before mutating managed
+  entries, so a non-preparable later root cannot leave earlier roots with
+  marker-bearing entries that lack an install state record.
+- Interactive install now derives installed skill and protocol payloads from the
+  pinned commit content instead of the checkout working tree, so ignored local
+  artifacts under `skills/` or `protocols/` cannot leak into discovery
+  directories.
 - Protocol artifact-delivery sections now distinguish MCP tool input from
   artifact body content across all ten artifact-producing protocols. The
   examples still show the flat MCP input shape, including `instance_id`, while
