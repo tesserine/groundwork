@@ -112,18 +112,21 @@ target_roots() {
 }
 
 desired_entries() {
-  local dir name
+  local sha name rel
+  sha="$(source_sha)"
   if [[ -d "$source_path/skills" ]]; then
-    while IFS= read -r dir; do
-      name="$(basename "$dir")"
-      [[ -f "$dir/SKILL.md" ]] && printf 'skill\t%s\t%s\n' "$name" "$dir"
-    done < <(find "$source_path/skills" -mindepth 1 -maxdepth 1 -type d | sort)
+    while IFS= read -r name; do
+      rel="skills/$name"
+      git -C "$source_path" cat-file -e "$sha:$rel/SKILL.md" 2>/dev/null &&
+        printf 'skill\t%s\t%s\n' "$name" "$rel"
+    done < <(git -C "$source_path" ls-tree -d --name-only "$sha:skills" | sort)
   fi
   if [[ -d "$source_path/protocols" ]]; then
-    while IFS= read -r dir; do
-      name="$(basename "$dir")"
-      [[ -f "$dir/PROTOCOL.md" ]] && printf 'protocol\t%s\t%s\n' "$name" "$dir"
-    done < <(find "$source_path/protocols" -mindepth 1 -maxdepth 1 -type d | sort)
+    while IFS= read -r name; do
+      rel="protocols/$name"
+      git -C "$source_path" cat-file -e "$sha:$rel/PROTOCOL.md" 2>/dev/null &&
+        printf 'protocol\t%s\t%s\n' "$name" "$rel"
+    done < <(git -C "$source_path" ls-tree -d --name-only "$sha:protocols" | sort)
   fi
 }
 
@@ -215,7 +218,7 @@ project_entry() {
   local target="$4"
   local sha="$5"
   mkdir -p "$target"
-  cp -R "$src/." "$target/"
+  git -C "$source_path" archive --format=tar "$sha:$src" | tar -xf - -C "$target"
   if [[ "$kind" == "protocol" ]]; then
     rm -f "$target/SKILL.md"
     mv "$target/PROTOCOL.md" "$target/SKILL.md"

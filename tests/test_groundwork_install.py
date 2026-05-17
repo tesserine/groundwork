@@ -387,6 +387,35 @@ class GroundworkInstallTests(unittest.TestCase):
 
         assert_failure_contains(self, result, "dirty")
 
+    def test_install_omits_ignored_files_inside_entry_directories(self) -> None:
+        fixture = self.add_fixture("ignored-entry-files")
+        fixture.write(".gitignore", "*.swp\n")
+        fixture.commit_new_ref("v2")
+        fixture.write("skills/orient/local.swp", "ignored skill artifact\n")
+        fixture.write("protocols/take/local.swp", "ignored protocol artifact\n")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        for root in [".claude", ".agents"]:
+            self.assertFalse((install.target(root, "orient") / "local.swp").exists())
+            self.assertFalse((install.target(root, "take") / "local.swp").exists())
+
+    def test_install_omits_ignored_top_level_files_under_skills(self) -> None:
+        fixture = self.add_fixture("ignored-top-level-skill-files")
+        fixture.write(".gitignore", "*.swp\n")
+        fixture.commit_new_ref("v2")
+        fixture.write("skills/local.swp", "ignored top-level artifact\n")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
+        for root in [".claude", ".agents"]:
+            self.assertFalse((install.home / root / "skills" / "local.swp").exists())
+
     def test_status_reports_missing_install_state_without_modifying_targets(self) -> None:
         fixture = self.add_fixture("status-empty")
         install = InstallRun(self, fixture.root)

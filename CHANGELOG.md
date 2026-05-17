@@ -27,6 +27,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Interactive install now derives installed skill and protocol payloads from the
+  pinned commit content instead of the checkout working tree, so ignored local
+  artifacts under `skills/` or `protocols/` cannot leak into discovery
+  directories.
 - Protocol artifact-delivery sections now distinguish MCP tool input from
   artifact body content across all ten artifact-producing protocols. The
   examples still show the flat MCP input shape, including `instance_id`, while
