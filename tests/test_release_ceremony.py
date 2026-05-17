@@ -415,6 +415,20 @@ class ReleaseRepositoryContractTests(unittest.TestCase):
     def test_release_workflow_verifies_annotated_tags_and_has_no_path_filter(self) -> None:
         workflow = self.read(".github/workflows/release.yml")
 
+        self.assertIn("- name: Restore annotated tag refs", workflow)
+        self.assertIn("- name: Verify restored tag matches event", workflow)
+        self.assertIn("- name: Require annotated tag", workflow)
+        checkout = workflow.index("- name: Checkout")
+        restore = workflow.index("- name: Restore annotated tag refs")
+        verify = workflow.index("- name: Verify restored tag matches event")
+        require = workflow.index("- name: Require annotated tag")
+
+        self.assertLess(checkout, restore)
+        self.assertLess(restore, verify)
+        self.assertLess(verify, require)
+        self.assertIn("git fetch --tags --force origin", workflow)
+        self.assertIn('restored_commit=$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")', workflow)
+        self.assertIn('if [ "$restored_commit" != "$GITHUB_SHA" ]; then', workflow)
         self.assertIn("refs/tags/$GITHUB_REF_NAME", workflow)
         self.assertIn("./scripts/release-check release \"$GITHUB_REF_NAME\"", workflow)
         self.assertIn("./scripts/release-check notes \"$GITHUB_REF_NAME\"", workflow)
