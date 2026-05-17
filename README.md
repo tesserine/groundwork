@@ -89,7 +89,10 @@ uninstall` removes only entries the command created.
 Ownership is tracked in both a per-entry marker file and an XDG state file at
 `${XDG_STATE_HOME:-~/.local/state}/groundwork-install/interactive-install.tsv`.
 Pre-existing entries, including unofficial symlinks with the same names, are
-reported as unmanaged conflicts rather than overwritten or adopted.
+reported as unmanaged conflicts rather than overwritten or adopted. When the
+state file records ownership but the marker is missing at a deletion boundary,
+the command fails and leaves state intact so the operator can inspect the
+disagreement before anything irreversible happens.
 
 Prerequisites are the stock command-line tools expected on Fedora CoreOS for
 this workflow: `bash`, `git`, and POSIX file utilities such as `cp`, `find`,

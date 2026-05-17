@@ -131,18 +131,27 @@ target_has_marker() {
   [[ -f "$1/$MARKER" ]]
 }
 
-state_records_entry() {
+target_exists() {
+  [[ -e "$1" || -L "$1" ]]
+}
+
+desired_name_exists() {
+  local expected_name="$1"
+  local kind name src
+  while IFS=$'\t' read -r kind name src; do
+    if [[ "$name" == "$expected_name" ]]; then
+      return 0
+    fi
+  done < <(desired_entries)
+  return 1
+}
+
+state_owns_target() {
   [[ -f "$state_file" ]] || return 1
   local expected_target="$1"
-  local expected_name="$2"
-  local expected_kind="$3"
-  local expected_root="$4"
   local target name kind sha root
   while IFS=$'\t' read -r target name kind sha root; do
-    if [[ "$target" == "$expected_target" &&
-      "$name" == "$expected_name" &&
-      "$kind" == "$expected_kind" &&
-      "$root" == "$expected_root" ]]; then
+    if [[ "$target" == "$expected_target" ]]; then
       return 0
     fi
   done < "$state_file"
@@ -154,8 +163,8 @@ preflight_conflicts() {
   while IFS=$'\t' read -r kind name src; do
     while IFS= read -r root; do
       target="$root/$name"
-      if [[ -e "$target" || -L "$target" ]]; then
-        if ! state_records_entry "$target" "$name" "$kind" "$root"; then
+      if target_exists "$target"; then
+        if ! state_owns_target "$target"; then
           printf '%s: unmanaged conflict at %s\n' "$PROGRAM" "$target" >&2
           conflict=1
         fi
@@ -167,16 +176,19 @@ preflight_conflicts() {
 
 remove_obsolete_entries() {
   [[ -f "$state_file" ]] || return 0
-  local old_target old_name old_kind old_sha old_root target_still_desired
-  local desired_kind desired_name desired_src
+  local old_target old_name old_kind old_sha old_root missing_marker=0
   while IFS=$'\t' read -r old_target old_name old_kind old_sha old_root; do
-    target_still_desired=0
-    while IFS=$'\t' read -r desired_kind desired_name desired_src; do
-      if [[ "$old_name" == "$desired_name" ]]; then
-        target_still_desired=1
-      fi
-    done < <(desired_entries)
-    if [[ "$target_still_desired" -eq 0 && -d "$old_target" ]] && target_has_marker "$old_target"; then
+    if ! desired_name_exists "$old_name" &&
+      target_exists "$old_target" &&
+      ! target_has_marker "$old_target"; then
+      printf '%s: missing marker on obsolete managed entry %s\n' "$PROGRAM" "$old_target" >&2
+      missing_marker=1
+    fi
+  done < "$state_file"
+  [[ "$missing_marker" -eq 0 ]] || exit 1
+
+  while IFS=$'\t' read -r old_target old_name old_kind old_sha old_root; do
+    if ! desired_name_exists "$old_name" && [[ -d "$old_target" ]] && target_has_marker "$old_target"; then
       rm -rf "$old_target"
     fi
   done < "$state_file"
@@ -244,20 +256,39 @@ state_records_current_sha() {
   return 1
 }
 
-target_matches_source() {
+target_payload_matches_source() {
   local kind="$1"
   local name="$2"
   local src="$3"
   local target="$4"
   local sha="$5"
-  local snapshot
+  local snapshot target_snapshot
   snapshot="$(mktemp -d "${target}.snapshot.XXXXXX")"
+  target_snapshot="$(mktemp -d "${target}.target.XXXXXX")"
   project_entry "$kind" "$name" "$src" "$snapshot" "$sha"
-  if git diff --no-index --quiet "$snapshot" "$target" >/dev/null 2>&1; then
-    rm -rf "$snapshot"
+  cp -R "$target/." "$target_snapshot/"
+  rm -f "$snapshot/$MARKER" "$target_snapshot/$MARKER"
+  if git diff --no-index --quiet "$snapshot" "$target_snapshot" >/dev/null 2>&1; then
+    rm -rf "$snapshot" "$target_snapshot"
     return 0
   fi
-  rm -rf "$snapshot"
+  rm -rf "$snapshot" "$target_snapshot"
+  return 1
+}
+
+marker_matches_current() {
+  local target="$1"
+  local kind="$2"
+  local name="$3"
+  local sha="$4"
+  local marker
+  marker="$(mktemp "${target}.marker.XXXXXX")"
+  write_marker "$marker" "$kind" "$name" "$sha"
+  if cmp -s "$marker" "$target/$MARKER"; then
+    rm -f "$marker"
+    return 0
+  fi
+  rm -f "$marker"
   return 1
 }
 
@@ -271,7 +302,18 @@ entry_is_current() {
   state_records_current_sha "$target" "$name" "$kind" "$sha" "$root" || return 1
   [[ -d "$target" ]] || return 1
   target_has_marker "$target" || return 1
-  target_matches_source "$kind" "$name" "$src" "$target" "$sha"
+  marker_matches_current "$target" "$kind" "$name" "$sha" || return 1
+  target_payload_matches_source "$kind" "$name" "$src" "$target" "$sha"
+}
+
+entry_payload_is_current() {
+  local kind="$1"
+  local name="$2"
+  local src="$3"
+  local target="$4"
+  local sha="$5"
+  [[ -d "$target" ]] || return 1
+  target_payload_matches_source "$kind" "$name" "$src" "$target" "$sha"
 }
 
 write_state() {
@@ -300,7 +342,12 @@ install_or_sync() {
       mkdir -p "$root"
       target="$root/$name"
       if ! entry_is_current "$kind" "$name" "$src" "$root" "$target" "$sha"; then
-        copy_entry "$kind" "$name" "$src" "$target" "$sha"
+        if state_owns_target "$target" &&
+          entry_payload_is_current "$kind" "$name" "$src" "$target" "$sha"; then
+          write_marker "$target/$MARKER" "$kind" "$name" "$sha"
+        else
+          copy_entry "$kind" "$name" "$src" "$target" "$sha"
+        fi
       fi
     done < <(target_roots)
   done < <(desired_entries)
@@ -327,7 +374,15 @@ uninstall() {
   if [[ ! -f "$state_file" ]]; then
     die "not installed"
   fi
-  local target name kind sha root
+  local target name kind sha root missing_marker=0
+  while IFS=$'\t' read -r target name kind sha root; do
+    if target_exists "$target" && ! target_has_marker "$target"; then
+      printf '%s: missing marker on managed entry %s\n' "$PROGRAM" "$target" >&2
+      missing_marker=1
+    fi
+  done < "$state_file"
+  [[ "$missing_marker" -eq 0 ]] || exit 1
+
   while IFS=$'\t' read -r target name kind sha root; do
     if [[ -d "$target" ]] && target_has_marker "$target"; then
       rm -rf "$target"

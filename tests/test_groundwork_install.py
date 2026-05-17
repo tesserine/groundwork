@@ -240,6 +240,78 @@ class GroundworkInstallTests(unittest.TestCase):
         self.assert_installed_inventory(install, {"orient", "take", "submit", "verify"})
         self.assertFalse(install.target(".claude", "reckon").exists())
 
+    def test_sync_upgrades_state_owned_entry_when_kind_changes(self) -> None:
+        fixture = self.add_fixture("kind-change")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        fixture.remove("skills/orient")
+        fixture.write("protocols/orient/PROTOCOL.md", "---\nname: orient\n---\n# Orient Protocol\n")
+        fixture.commit_new_ref("v2")
+
+        result = install.run_installer("sync")
+
+        assert_success(self, result)
+        self.assertEqual(
+            (install.target(".agents", "orient") / "SKILL.md").read_text(encoding="utf-8"),
+            "---\nname: orient\n---\n# Orient Protocol\n",
+        )
+        self.assertIn("kind=protocol\n", (install.target(".agents", "orient") / ".groundwork-install").read_text(encoding="utf-8"))
+        self.assertIn("\torient\tprotocol\t", install.state_file().read_text(encoding="utf-8"))
+
+    def test_sync_fails_and_retains_state_when_obsolete_entry_is_missing_marker(self) -> None:
+        fixture = self.add_fixture("obsolete-missing-marker")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        (install.target(".agents", "reckon") / ".groundwork-install").unlink()
+        before_state = install.state_file().read_text(encoding="utf-8")
+        fixture.remove("skills/reckon")
+        fixture.commit_new_ref("v2")
+
+        result = install.run_installer("sync")
+
+        assert_failure_contains(self, result, "missing marker")
+        self.assertTrue(install.target(".claude", "reckon").is_dir())
+        self.assertTrue(install.target(".agents", "reckon").is_dir())
+        self.assertEqual(install.state_file().read_text(encoding="utf-8"), before_state)
+
+    def test_sync_fails_and_preserves_drift_when_obsolete_entry_is_missing_marker(self) -> None:
+        fixture = self.add_fixture("obsolete-missing-marker-drift")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        agents_entry = install.target(".agents", "reckon")
+        (agents_entry / ".groundwork-install").unlink()
+        (agents_entry / "SKILL.md").write_text("# local drift\n", encoding="utf-8")
+        before_state = install.state_file().read_text(encoding="utf-8")
+        fixture.remove("skills/reckon")
+        fixture.commit_new_ref("v2")
+
+        result = install.run_installer("sync")
+
+        assert_failure_contains(self, result, "missing marker")
+        self.assertTrue(install.target(".claude", "reckon").is_dir())
+        self.assertEqual((agents_entry / "SKILL.md").read_text(encoding="utf-8"), "# local drift\n")
+        self.assertEqual(install.state_file().read_text(encoding="utf-8"), before_state)
+
+    def test_sync_refreshes_stale_sha_metadata_without_rewriting_matching_payload(self) -> None:
+        fixture = self.add_fixture("stale-sha-matching-payload")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        entry = install.target(".agents", "orient")
+        payload = entry / "SKILL.md"
+        before_entry_stat = (entry.stat().st_ino, entry.stat().st_mtime_ns)
+        before_payload_stat = (payload.stat().st_ino, payload.stat().st_mtime_ns)
+        fixture.write("README.md", "source-only change\n")
+        fixture.commit_new_ref("v2")
+        new_sha = run(["git", "rev-parse", "HEAD"], fixture.root, check=True).stdout.strip()
+
+        result = install.run_installer("sync")
+
+        assert_success(self, result)
+        self.assertEqual((entry.stat().st_ino, entry.stat().st_mtime_ns), before_entry_stat)
+        self.assertEqual((payload.stat().st_ino, payload.stat().st_mtime_ns), before_payload_stat)
+        self.assertIn(f"source-sha={new_sha}\n", (entry / ".groundwork-install").read_text(encoding="utf-8"))
+        self.assertIn(new_sha, install.state_file().read_text(encoding="utf-8"))
+
     def test_uninstall_removes_only_entries_owned_by_groundwork_install(self) -> None:
         fixture = self.add_fixture("uninstall")
         install = InstallRun(self, fixture.root)
@@ -254,6 +326,20 @@ class GroundworkInstallTests(unittest.TestCase):
         self.assertTrue((unrelated / "SKILL.md").is_file())
         self.assertFalse(install.target(".agents", "orient").exists())
         self.assertFalse(install.target(".claude", "take").exists())
+
+    def test_uninstall_fails_and_retains_state_when_managed_entry_is_missing_marker(self) -> None:
+        fixture = self.add_fixture("uninstall-missing-marker")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        (install.target(".agents", "orient") / ".groundwork-install").unlink()
+        before_state = install.state_file().read_text(encoding="utf-8")
+
+        result = install.run_installer("uninstall")
+
+        assert_failure_contains(self, result, "missing marker")
+        self.assertTrue(install.target(".claude", "orient").is_dir())
+        self.assertTrue(install.target(".agents", "orient").is_dir())
+        self.assertEqual(install.state_file().read_text(encoding="utf-8"), before_state)
 
     def test_install_rejects_unmanaged_conflicts_before_changing_targets(self) -> None:
         fixture = self.add_fixture("conflict")
