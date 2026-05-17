@@ -1,3 +1,4 @@
+import os
 import shutil
 import subprocess
 import tempfile
@@ -15,10 +16,12 @@ def run(
     cwd: Path,
     *,
     check: bool = False,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     result = subprocess.run(
         args,
         cwd=cwd,
+        env=env,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -102,24 +105,30 @@ class InstallRun:
         test.addCleanup(lambda: shutil.rmtree(self.home, ignore_errors=True))
         test.addCleanup(lambda: shutil.rmtree(self.state, ignore_errors=True))
 
-    def run_installer(self, *args: str) -> subprocess.CompletedProcess[str]:
+    def run_installer(
+        self,
+        *args: str,
+        include_state_dir: bool = True,
+        env: dict[str, str] | None = None,
+    ) -> subprocess.CompletedProcess[str]:
         self.test.assertTrue(INSTALLER.is_file(), f"installer missing at {INSTALLER}")
-        return run(
-            [
-                str(INSTALLER),
-                *args,
-                "--source",
-                str(self.source),
-                "--home",
-                str(self.home),
-                "--state-dir",
-                str(self.state),
-            ],
-            self.source,
-        )
+        command = [
+            str(INSTALLER),
+            *args,
+            "--source",
+            str(self.source),
+            "--home",
+            str(self.home),
+        ]
+        if include_state_dir:
+            command.extend(["--state-dir", str(self.state)])
+        return run(command, self.source, env=env)
 
     def target(self, root: str, name: str) -> Path:
         return self.home / root / "skills" / name
+
+    def default_state_file(self) -> Path:
+        return self.home / ".local" / "state" / "groundwork-install" / "interactive-install.tsv"
 
 
 class GroundworkInstallTests(unittest.TestCase):
@@ -263,6 +272,24 @@ class GroundworkInstallTests(unittest.TestCase):
 
         assert_failure_contains(self, result, "not installed")
         self.assertFalse((install.home / ".agents").exists())
+
+    def test_home_option_supplies_default_state_dir_when_home_environment_is_unset(self) -> None:
+        fixture = self.add_fixture("unset-home")
+        install = InstallRun(self, fixture.root)
+        env = os.environ.copy()
+        env.pop("HOME", None)
+        env.pop("XDG_STATE_HOME", None)
+
+        install_result = install.run_installer("install", include_state_dir=False, env=env)
+
+        assert_success(self, install_result)
+        self.assertTrue(install.default_state_file().is_file())
+        status_result = install.run_installer("status", include_state_dir=False, env=env)
+        assert_success(self, status_result)
+        uninstall_result = install.run_installer("uninstall", include_state_dir=False, env=env)
+        assert_success(self, uninstall_result)
+        self.assertFalse(install.default_state_file().exists())
+        self.assertFalse(install.target(".agents", "orient").exists())
 
 
 if __name__ == "__main__":
