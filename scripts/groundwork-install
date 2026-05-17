@@ -157,6 +157,35 @@ remove_obsolete_entries() {
   done < "$state_file"
 }
 
+write_marker() {
+  local marker_path="$1"
+  local kind="$2"
+  local name="$3"
+  local sha="$4"
+  cat > "$marker_path" <<EOF
+managed-by=$PROGRAM
+source=$source_path
+source-sha=$sha
+name=$name
+kind=$kind
+EOF
+}
+
+project_entry() {
+  local kind="$1"
+  local name="$2"
+  local src="$3"
+  local target="$4"
+  local sha="$5"
+  mkdir -p "$target"
+  cp -R "$src/." "$target/"
+  if [[ "$kind" == "protocol" ]]; then
+    rm -f "$target/SKILL.md"
+    mv "$target/PROTOCOL.md" "$target/SKILL.md"
+  fi
+  write_marker "$target/$MARKER" "$kind" "$name" "$sha"
+}
+
 copy_entry() {
   local kind="$1"
   local name="$2"
@@ -165,22 +194,59 @@ copy_entry() {
   local sha="$5"
   local tmp
   tmp="$(mktemp -d "${target}.tmp.XXXXXX")"
-  rm -rf "$tmp"
-  mkdir -p "$tmp"
-  cp -R "$src/." "$tmp/"
-  if [[ "$kind" == "protocol" ]]; then
-    rm -f "$tmp/SKILL.md"
-    mv "$tmp/PROTOCOL.md" "$tmp/SKILL.md"
-  fi
-  cat > "$tmp/$MARKER" <<EOF
-managed-by=$PROGRAM
-source=$source_path
-source-sha=$sha
-name=$name
-kind=$kind
-EOF
+  project_entry "$kind" "$name" "$src" "$tmp" "$sha"
   rm -rf "$target"
   mv "$tmp" "$target"
+}
+
+state_records_current_sha() {
+  [[ -f "$state_file" ]] || return 1
+  local expected_target="$1"
+  local expected_name="$2"
+  local expected_kind="$3"
+  local expected_sha="$4"
+  local expected_root="$5"
+  local target name kind sha root
+  while IFS=$'\t' read -r target name kind sha root; do
+    if [[ "$target" == "$expected_target" &&
+      "$name" == "$expected_name" &&
+      "$kind" == "$expected_kind" &&
+      "$sha" == "$expected_sha" &&
+      "$root" == "$expected_root" ]]; then
+      return 0
+    fi
+  done < "$state_file"
+  return 1
+}
+
+target_matches_source() {
+  local kind="$1"
+  local name="$2"
+  local src="$3"
+  local target="$4"
+  local sha="$5"
+  local snapshot
+  snapshot="$(mktemp -d "${target}.snapshot.XXXXXX")"
+  project_entry "$kind" "$name" "$src" "$snapshot" "$sha"
+  if git diff --no-index --quiet "$snapshot" "$target" >/dev/null 2>&1; then
+    rm -rf "$snapshot"
+    return 0
+  fi
+  rm -rf "$snapshot"
+  return 1
+}
+
+entry_is_current() {
+  local kind="$1"
+  local name="$2"
+  local src="$3"
+  local root="$4"
+  local target="$5"
+  local sha="$6"
+  state_records_current_sha "$target" "$name" "$kind" "$sha" "$root" || return 1
+  [[ -d "$target" ]] || return 1
+  [[ -f "$target/$MARKER" ]] || return 1
+  target_matches_source "$kind" "$name" "$src" "$target" "$sha"
 }
 
 write_state() {
@@ -208,7 +274,9 @@ install_or_sync() {
     while IFS= read -r root; do
       mkdir -p "$root"
       target="$root/$name"
-      copy_entry "$kind" "$name" "$src" "$target" "$sha"
+      if ! entry_is_current "$kind" "$name" "$src" "$root" "$target" "$sha"; then
+        copy_entry "$kind" "$name" "$src" "$target" "$sha"
+      fi
     done < <(target_roots)
   done < <(desired_entries)
   write_state

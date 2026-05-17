@@ -56,9 +56,11 @@ Claude Code and Codex sessions can install the same skills and protocols into
 their local discovery directories from a pinned Groundwork checkout:
 
 ```bash
-git checkout --detach v0.1.2-rc.1
+git checkout --detach v0.2.0
 scripts/groundwork-install install
 ```
+
+The first release containing `scripts/groundwork-install` is v0.2.0.
 
 The installer writes user-owned entries only, with no root or sudo requirement:
 

@@ -13,7 +13,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   uninstalls Groundwork skills and protocols from a clean pinned checkout into
   `~/.claude/skills/` and `~/.agents/skills/`. Installed entries are copied
   rather than symlinked, protocols are projected as skill-shaped entries, and
-  ownership tracking prevents uninstall from removing operator-managed entries
+  ownership tracking prevents uninstall from removing operator-managed entries.
+  Re-running install against the same unchanged pinned source leaves current
+  managed entries untouched while still restoring managed target drift
   (closes #306).
 - Release ceremony tooling for the Groundwork methodology release surface:
   `manifest.toml` is now the version-of-record, `scripts/release-check`

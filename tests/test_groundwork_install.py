@@ -138,6 +138,22 @@ class GroundworkInstallTests(unittest.TestCase):
                 self.assertFalse((entry / "SKILL.md").is_symlink(), entry)
                 self.assertTrue((entry / ".groundwork-install").is_file(), entry)
 
+    def installed_entry_stats(self, install: InstallRun) -> dict[str, tuple[int, int]]:
+        stats = {}
+        for root in [".claude", ".agents"]:
+            skills_dir = install.home / root / "skills"
+            for entry in sorted(skills_dir.iterdir()):
+                marker = entry / ".groundwork-install"
+                stats[str(entry.relative_to(install.home))] = (
+                    entry.stat().st_ino,
+                    entry.stat().st_mtime_ns,
+                )
+                stats[str(marker.relative_to(install.home))] = (
+                    marker.stat().st_ino,
+                    marker.stat().st_mtime_ns,
+                )
+        return stats
+
     def test_install_projects_skills_and_protocols_into_both_discovery_roots(self) -> None:
         fixture = self.add_fixture("clean-install")
         install = InstallRun(self, fixture.root)
@@ -154,13 +170,29 @@ class GroundworkInstallTests(unittest.TestCase):
         fixture = self.add_fixture("idempotent")
         install = InstallRun(self, fixture.root)
         assert_success(self, install.run_installer("install"))
-        marker = install.target(".agents", "orient") / ".groundwork-install"
-        before = marker.read_text(encoding="utf-8")
+        before = self.installed_entry_stats(install)
 
         result = install.run_installer("install")
 
         assert_success(self, result)
-        self.assertEqual(marker.read_text(encoding="utf-8"), before)
+        self.assertEqual(self.installed_entry_stats(install), before)
+        self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
+
+    def test_install_restores_same_sha_managed_target_drift(self) -> None:
+        fixture = self.add_fixture("same-sha-drift")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        entry = install.target(".agents", "orient")
+        skill = entry / "SKILL.md"
+        expected = skill.read_text(encoding="utf-8")
+        skill.write_text("# drifted\n", encoding="utf-8")
+        (entry / "local-only.md").write_text("local drift\n", encoding="utf-8")
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        self.assertEqual(skill.read_text(encoding="utf-8"), expected)
+        self.assertFalse((entry / "local-only.md").exists())
         self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
 
     def test_sync_converges_to_a_different_pinned_source_state(self) -> None:
