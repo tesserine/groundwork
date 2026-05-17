@@ -130,6 +130,9 @@ class InstallRun:
     def default_state_file(self) -> Path:
         return self.home / ".local" / "state" / "groundwork-install" / "interactive-install.tsv"
 
+    def state_file(self) -> Path:
+        return self.state / "interactive-install.tsv"
+
 
 class GroundworkInstallTests(unittest.TestCase):
     def add_fixture(self, name: str) -> MethodologyFixture:
@@ -204,6 +207,25 @@ class GroundworkInstallTests(unittest.TestCase):
         self.assertFalse((entry / "local-only.md").exists())
         self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
 
+    def test_install_restores_state_recorded_target_when_marker_is_missing(self) -> None:
+        fixture = self.add_fixture("missing-marker-drift")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        entry = install.target(".agents", "orient")
+        skill = entry / "SKILL.md"
+        expected = skill.read_text(encoding="utf-8")
+        (entry / ".groundwork-install").unlink()
+        skill.write_text("# drifted\n", encoding="utf-8")
+        (entry / "local-only.md").write_text("local drift\n", encoding="utf-8")
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        self.assertTrue((entry / ".groundwork-install").is_file())
+        self.assertEqual(skill.read_text(encoding="utf-8"), expected)
+        self.assertFalse((entry / "local-only.md").exists())
+        self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
+
     def test_sync_converges_to_a_different_pinned_source_state(self) -> None:
         fixture = self.add_fixture("sync")
         install = InstallRun(self, fixture.root)
@@ -245,6 +267,21 @@ class GroundworkInstallTests(unittest.TestCase):
         assert_failure_contains(self, result, "unmanaged conflict")
         self.assertEqual((conflict / "SKILL.md").read_text(encoding="utf-8"), "# Mine\n")
         self.assertFalse((install.home / ".agents" / "skills" / "take").exists())
+
+    def test_install_rejects_marker_only_targets_as_unmanaged_conflicts(self) -> None:
+        fixture = self.add_fixture("marker-only-conflict")
+        install = InstallRun(self, fixture.root)
+        conflict = install.target(".claude", "orient")
+        conflict.mkdir(parents=True)
+        (conflict / "SKILL.md").write_text("# Mine\n", encoding="utf-8")
+        (conflict / ".groundwork-install").write_text("managed-by=groundwork-install\n", encoding="utf-8")
+
+        result = install.run_installer("install")
+
+        assert_failure_contains(self, result, "unmanaged conflict")
+        self.assertEqual((conflict / "SKILL.md").read_text(encoding="utf-8"), "# Mine\n")
+        self.assertFalse((install.home / ".agents" / "skills" / "take").exists())
+        self.assertFalse(install.state_file().exists())
 
     def test_install_rejects_branch_checkouts(self) -> None:
         fixture = self.add_fixture("branch")
