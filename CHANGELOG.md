@@ -27,6 +27,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Release tag-push workflows now restore annotated tag refs after checkout and
+  verify the restored tag still matches the triggering event before enforcing
+  annotated-tag trust (closes #308).
 - Interactive install now prepares every discovery root before mutating managed
   entries, so a non-preparable later root cannot leave earlier roots with
   marker-bearing entries that lack an install state record.
