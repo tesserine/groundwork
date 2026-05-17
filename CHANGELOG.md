@@ -27,6 +27,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Interactive install now prepares every discovery root before mutating managed
+  entries, so a non-preparable later root cannot leave earlier roots with
+  marker-bearing entries that lack an install state record.
 - Interactive install now derives installed skill and protocol payloads from the
   pinned commit content instead of the checkout working tree, so ignored local
   artifacts under `skills/` or `protocols/` cannot leak into discovery

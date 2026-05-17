@@ -177,6 +177,16 @@ preflight_conflicts() {
   [[ "$conflict" -eq 0 ]] || exit 1
 }
 
+prepare_target_roots() {
+  local root probe
+  while IFS= read -r root; do
+    mkdir -p "$root" || die "target root is not preparable: $root"
+    probe="$(mktemp -d "$root/.groundwork-install-preflight.XXXXXX")" ||
+      die "target root is not writable: $root"
+    rmdir "$probe" || die "target root preflight cleanup failed: $probe"
+  done < <(target_roots)
+}
+
 remove_obsolete_entries() {
   [[ -f "$state_file" ]] || return 0
   local old_target old_name old_kind old_sha old_root missing_marker=0
@@ -337,12 +347,12 @@ write_state() {
 install_or_sync() {
   validate_source
   preflight_conflicts
+  prepare_target_roots
   remove_obsolete_entries
   local sha kind name src root target
   sha="$(source_sha)"
   while IFS=$'\t' read -r kind name src; do
     while IFS= read -r root; do
-      mkdir -p "$root"
       target="$root/$name"
       if ! entry_is_current "$kind" "$name" "$src" "$root" "$target" "$sha"; then
         if state_owns_target "$target" &&

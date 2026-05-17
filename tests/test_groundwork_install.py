@@ -369,6 +369,23 @@ class GroundworkInstallTests(unittest.TestCase):
         self.assertFalse((install.home / ".agents" / "skills" / "take").exists())
         self.assertFalse(install.state_file().exists())
 
+    def test_install_fails_without_writing_entries_when_any_target_root_is_not_preparable(self) -> None:
+        fixture = self.add_fixture("target-root-file")
+        install = InstallRun(self, fixture.root)
+        first_root = install.home / ".claude" / "skills"
+        first_root.mkdir(parents=True)
+        before_first_root = sorted(path.name for path in first_root.iterdir())
+        blocked_root = install.home / ".agents" / "skills"
+        blocked_root.parent.mkdir(parents=True)
+        blocked_root.write_text("not a directory\n", encoding="utf-8")
+
+        result = install.run_installer("install")
+
+        self.assertNotEqual(result.returncode, 0, "command unexpectedly succeeded")
+        self.assertEqual(sorted(path.name for path in first_root.iterdir()), before_first_root)
+        self.assertEqual(blocked_root.read_text(encoding="utf-8"), "not a directory\n")
+        self.assertFalse(install.state_file().exists())
+
     def test_install_rejects_branch_checkouts(self) -> None:
         fixture = self.add_fixture("branch")
         fixture.checkout_branch()
