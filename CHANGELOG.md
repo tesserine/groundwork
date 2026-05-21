@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Interactive install now projects the artifact delivery adapter into every
+  protocol entry without depending on protocol prose formatting, so wrapped MCP
+  delivery text cannot omit the adapter from installed protocol skills.
+
 ## [0.2.0] — 2026-05-17
 
 ### Added

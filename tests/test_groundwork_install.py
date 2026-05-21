@@ -173,6 +173,10 @@ class GroundworkInstallTests(unittest.TestCase):
     def adapter_text(self, fixture: MethodologyFixture) -> str:
         return (fixture.root / ADAPTER_RELATIVE_PATH).read_text(encoding="utf-8")
 
+    def assert_adapter_projected_once(self, body: str) -> None:
+        self.assertEqual(body.count(ADAPTER_BEGIN), 1)
+        self.assertEqual(body.count(ADAPTER_END), 1)
+
     def test_install_projects_skills_and_protocols_into_both_discovery_roots(self) -> None:
         fixture = self.add_fixture("clean-install")
         install = InstallRun(self, fixture.root)
@@ -181,10 +185,8 @@ class GroundworkInstallTests(unittest.TestCase):
 
         assert_success(self, result)
         self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
-        self.assertEqual(
-            (install.target(".claude", "take") / "SKILL.md").read_text(encoding="utf-8"),
-            "---\nname: take\n---\n# Take\n",
-        )
+        take_body = (install.target(".claude", "take") / "SKILL.md").read_text(encoding="utf-8")
+        self.assert_adapter_projected_once(take_body)
         self.assertTrue((install.target(".agents", "take") / "references" / "example.md").is_file())
         self.assertTrue((install.target(".agents", "reckon") / "references" / "example.md").is_file())
 
@@ -213,8 +215,7 @@ class GroundworkInstallTests(unittest.TestCase):
 
                 ## Procedures
 
-                Deliver the artifact by invoking the MCP tool.
-                The object below is MCP tool input, not artifact body.
+                Follow the protocol.
                 """,
             )
         fixture.commit_new_ref("v2")
@@ -228,11 +229,28 @@ class GroundworkInstallTests(unittest.TestCase):
             for protocol in producer_protocols:
                 body = (install.target(root, protocol) / "SKILL.md").read_text(encoding="utf-8")
                 with self.subTest(root=root, protocol=protocol):
-                    self.assertEqual(body.count(ADAPTER_BEGIN), 1)
-                    self.assertEqual(body.count(ADAPTER_END), 1)
+                    self.assert_adapter_projected_once(body)
                     self.assertIn(adapter, body)
                     self.assertLess(body.index("# "), body.index(ADAPTER_BEGIN))
                     self.assertLess(body.index(ADAPTER_END), body.index("## Procedures"))
+
+    def test_install_projects_interactive_adapter_into_every_real_protocol_entry(self) -> None:
+        source = Path(tempfile.mkdtemp(prefix="groundwork-install-real-source-"))
+        self.addCleanup(lambda: shutil.rmtree(source, ignore_errors=True))
+        run(["git", "clone", "-q", str(ROOT), str(source)], ROOT, check=True)
+        run(["git", "checkout", "-q", "--detach", "HEAD"], source, check=True)
+        protocol_names = sorted(path.parent.name for path in source.glob("protocols/*/PROTOCOL.md"))
+        self.assertNotEqual(protocol_names, [])
+        install = InstallRun(self, source)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        for root in [".claude", ".agents"]:
+            for protocol in protocol_names:
+                body = (install.target(root, protocol) / "SKILL.md").read_text(encoding="utf-8")
+                with self.subTest(root=root, protocol=protocol):
+                    self.assert_adapter_projected_once(body)
 
     def test_install_does_not_project_interactive_adapter_into_skill_entries(self) -> None:
         fixture = self.add_fixture("adapter-skills")
@@ -340,10 +358,8 @@ class GroundworkInstallTests(unittest.TestCase):
         result = install.run_installer("sync")
 
         assert_success(self, result)
-        self.assertEqual(
-            (install.target(".agents", "orient") / "SKILL.md").read_text(encoding="utf-8"),
-            "---\nname: orient\n---\n# Orient Protocol\n",
-        )
+        orient_body = (install.target(".agents", "orient") / "SKILL.md").read_text(encoding="utf-8")
+        self.assert_adapter_projected_once(orient_body)
         self.assertIn("kind=protocol\n", (install.target(".agents", "orient") / ".groundwork-install").read_text(encoding="utf-8"))
         self.assertIn("\torient\tprotocol\t", install.state_file().read_text(encoding="utf-8"))
 

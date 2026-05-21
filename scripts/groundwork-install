@@ -279,10 +279,6 @@ insert_interactive_adapter() {
   rm -f "$adapter_tmp"
 }
 
-protocol_uses_runa_delivery() {
-  grep -q "MCP tool input, not artifact body" "$1"
-}
-
 project_entry() {
   local kind="$1"
   local name="$2"
@@ -294,9 +290,7 @@ project_entry() {
   if [[ "$kind" == "protocol" ]]; then
     rm -f "$target/SKILL.md"
     mv "$target/PROTOCOL.md" "$target/SKILL.md"
-    if protocol_uses_runa_delivery "$target/SKILL.md"; then
-      insert_interactive_adapter "$target/SKILL.md" "$sha"
-    fi
+    insert_interactive_adapter "$target/SKILL.md" "$sha"
   fi
   write_marker "$target/$MARKER" "$kind" "$name" "$sha"
 }
