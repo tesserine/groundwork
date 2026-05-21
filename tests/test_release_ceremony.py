@@ -410,7 +410,7 @@ class ReleaseRepositoryContractTests(unittest.TestCase):
         return (ROOT / relative).read_text(encoding="utf-8")
 
     def test_manifest_declares_current_methodology_version(self) -> None:
-        self.assertIn('version = "0.1.2-rc.1"', self.read("manifest.toml"))
+        self.assertIn('version = "0.2.0"', self.read("manifest.toml"))
 
     def test_release_workflow_verifies_annotated_tags_and_has_no_path_filter(self) -> None:
         workflow = self.read(".github/workflows/release.yml")

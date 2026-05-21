@@ -9,6 +9,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "scripts" / "groundwork-install"
+ADAPTER_RELATIVE_PATH = "scripts/interactive-artifact-delivery-adapter.md"
+ADAPTER_BEGIN = "<!-- groundwork-install:interactive-artifact-delivery-adapter begin -->"
+ADAPTER_END = "<!-- groundwork-install:interactive-artifact-delivery-adapter end -->"
 
 
 def run(
@@ -65,6 +68,7 @@ class MethodologyFixture:
             path.unlink()
 
     def write_initial_surface(self) -> None:
+        self.write(ADAPTER_RELATIVE_PATH, (ROOT / ADAPTER_RELATIVE_PATH).read_text(encoding="utf-8"))
         self.write("skills/orient/SKILL.md", "---\nname: orient\n---\n# Orient\n")
         self.write("skills/reckon/SKILL.md", "---\nname: reckon\n---\n# Reckon\n")
         self.write("skills/reckon/references/example.md", "reckon reference\n")
@@ -166,6 +170,13 @@ class GroundworkInstallTests(unittest.TestCase):
                 )
         return stats
 
+    def adapter_text(self, fixture: MethodologyFixture) -> str:
+        return (fixture.root / ADAPTER_RELATIVE_PATH).read_text(encoding="utf-8")
+
+    def assert_adapter_projected_once(self, body: str) -> None:
+        self.assertEqual(body.count(ADAPTER_BEGIN), 1)
+        self.assertEqual(body.count(ADAPTER_END), 1)
+
     def test_install_projects_skills_and_protocols_into_both_discovery_roots(self) -> None:
         fixture = self.add_fixture("clean-install")
         install = InstallRun(self, fixture.root)
@@ -174,9 +185,105 @@ class GroundworkInstallTests(unittest.TestCase):
 
         assert_success(self, result)
         self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
-        self.assertEqual((install.target(".claude", "take") / "SKILL.md").read_text(), "---\nname: take\n---\n# Take\n")
+        take_body = (install.target(".claude", "take") / "SKILL.md").read_text(encoding="utf-8")
+        self.assert_adapter_projected_once(take_body)
         self.assertTrue((install.target(".agents", "take") / "references" / "example.md").is_file())
         self.assertTrue((install.target(".agents", "reckon") / "references" / "example.md").is_file())
+
+    def test_install_projects_interactive_adapter_into_every_protocol_entry(self) -> None:
+        fixture = self.add_fixture("adapter-all-protocols")
+        producer_protocols = [
+            "survey",
+            "decompose",
+            "take",
+            "specify",
+            "plan",
+            "implement",
+            "verify",
+            "document",
+            "submit",
+            "land",
+        ]
+        for protocol in producer_protocols:
+            fixture.write(
+                f"protocols/{protocol}/PROTOCOL.md",
+                f"""
+                ---
+                name: {protocol}
+                ---
+                # {protocol.title()}
+
+                ## Procedures
+
+                Follow the protocol.
+                """,
+            )
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        adapter = self.adapter_text(fixture)
+        for root in [".claude", ".agents"]:
+            for protocol in producer_protocols:
+                body = (install.target(root, protocol) / "SKILL.md").read_text(encoding="utf-8")
+                with self.subTest(root=root, protocol=protocol):
+                    self.assert_adapter_projected_once(body)
+                    self.assertIn(adapter, body)
+                    self.assertLess(body.index("# "), body.index(ADAPTER_BEGIN))
+                    self.assertLess(body.index(ADAPTER_END), body.index("## Procedures"))
+
+    def test_install_projects_interactive_adapter_into_every_real_protocol_entry(self) -> None:
+        source = Path(tempfile.mkdtemp(prefix="groundwork-install-real-source-"))
+        self.addCleanup(lambda: shutil.rmtree(source, ignore_errors=True))
+        run(["git", "clone", "-q", str(ROOT), str(source)], ROOT, check=True)
+        run(["git", "checkout", "-q", "--detach", "HEAD"], source, check=True)
+        protocol_names = sorted(path.parent.name for path in source.glob("protocols/*/PROTOCOL.md"))
+        self.assertNotEqual(protocol_names, [])
+        install = InstallRun(self, source)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        for root in [".claude", ".agents"]:
+            for protocol in protocol_names:
+                body = (install.target(root, protocol) / "SKILL.md").read_text(encoding="utf-8")
+                with self.subTest(root=root, protocol=protocol):
+                    self.assert_adapter_projected_once(body)
+
+    def test_install_does_not_project_interactive_adapter_into_skill_entries(self) -> None:
+        fixture = self.add_fixture("adapter-skills")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        for root in [".claude", ".agents"]:
+            for skill in ["orient", "reckon"]:
+                body = (install.target(root, skill) / "SKILL.md").read_text(encoding="utf-8")
+                with self.subTest(root=root, skill=skill):
+                    self.assertNotIn(ADAPTER_BEGIN, body)
+                    self.assertNotIn(ADAPTER_END, body)
+
+    def test_interactive_adapter_prose_carries_delivery_substitution_commitments(self) -> None:
+        fixture = self.add_fixture("adapter-prose")
+        adapter = " ".join(self.adapter_text(fixture).split())
+
+        for expected in [
+            "complete runa-served artifact delivery transform",
+            "produced artifact body",
+            "not the MCP tool-input object",
+            "`instance_id`",
+            "must not appear inside the artifact body",
+            "`work_unit`",
+            "scoped",
+            "unscoped",
+            "ask the human",
+            "does not persist artifacts",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, adapter)
 
     def test_install_is_idempotent_for_the_same_pinned_source(self) -> None:
         fixture = self.add_fixture("idempotent")
@@ -251,10 +358,8 @@ class GroundworkInstallTests(unittest.TestCase):
         result = install.run_installer("sync")
 
         assert_success(self, result)
-        self.assertEqual(
-            (install.target(".agents", "orient") / "SKILL.md").read_text(encoding="utf-8"),
-            "---\nname: orient\n---\n# Orient Protocol\n",
-        )
+        orient_body = (install.target(".agents", "orient") / "SKILL.md").read_text(encoding="utf-8")
+        self.assert_adapter_projected_once(orient_body)
         self.assertIn("kind=protocol\n", (install.target(".agents", "orient") / ".groundwork-install").read_text(encoding="utf-8"))
         self.assertIn("\torient\tprotocol\t", install.state_file().read_text(encoding="utf-8"))
 

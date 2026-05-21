@@ -4,6 +4,7 @@ set -euo pipefail
 PROGRAM="groundwork-install"
 MARKER=".groundwork-install"
 STATE_FILE_NAME="interactive-install.tsv"
+INTERACTIVE_ADAPTER_PATH="scripts/interactive-artifact-delivery-adapter.md"
 
 usage() {
   cat <<'EOF'
@@ -101,6 +102,8 @@ validate_source() {
   if git -C "$source_path" symbolic-ref -q --short HEAD >/dev/null; then
     die "source must be a pinned checkout at a tag or full commit SHA, not a branch"
   fi
+  git -C "$source_path" cat-file -e "$(source_sha):$INTERACTIVE_ADAPTER_PATH" 2>/dev/null ||
+    die "source has no interactive artifact delivery adapter at $INTERACTIVE_ADAPTER_PATH"
 }
 
 source_sha() {
@@ -221,6 +224,61 @@ kind=$kind
 EOF
 }
 
+insert_interactive_adapter() {
+  local skill_path="$1"
+  local sha="$2"
+  local adapter_tmp output_tmp
+  adapter_tmp="$(mktemp "${skill_path}.adapter.XXXXXX")"
+  output_tmp="$(mktemp "${skill_path}.projected.XXXXXX")"
+  git -C "$source_path" show "$sha:$INTERACTIVE_ADAPTER_PATH" > "$adapter_tmp" ||
+    die "source has no interactive artifact delivery adapter at $INTERACTIVE_ADAPTER_PATH"
+
+  awk -v adapter="$adapter_tmp" '
+    function print_adapter(  line) {
+      while ((getline line < adapter) > 0) {
+        print line
+      }
+      close(adapter)
+    }
+
+    NR == 1 && $0 == "---" {
+      in_frontmatter = 1
+      print
+      next
+    }
+
+    in_frontmatter {
+      print
+      if ($0 == "---") {
+        in_frontmatter = 0
+      }
+      next
+    }
+
+    !inserted && /^# / {
+      print
+      print ""
+      print_adapter()
+      inserted = 1
+      next
+    }
+
+    {
+      print
+    }
+
+    END {
+      if (!inserted) {
+        print ""
+        print_adapter()
+      }
+    }
+  ' "$skill_path" > "$output_tmp"
+
+  mv "$output_tmp" "$skill_path"
+  rm -f "$adapter_tmp"
+}
+
 project_entry() {
   local kind="$1"
   local name="$2"
@@ -232,6 +290,7 @@ project_entry() {
   if [[ "$kind" == "protocol" ]]; then
     rm -f "$target/SKILL.md"
     mv "$target/PROTOCOL.md" "$target/SKILL.md"
+    insert_interactive_adapter "$target/SKILL.md" "$sha"
   fi
   write_marker "$target/$MARKER" "$kind" "$name" "$sha"
 }
