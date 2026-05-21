@@ -73,6 +73,14 @@ projected to `SKILL.md`, so protocol names are discoverable in the same way as
 skills. Installed entries are copies, not source-checkout symlinks, so later
 changes to the checkout do not drift into the active discovery surface.
 
+Projected protocol entries also receive one installer-supplied interactive IO
+adapter. Source protocols remain written for runa: their artifact capstones
+deliver through runa MCP tools, which validate, persist, and thread artifacts.
+Interactive Claude Code and Codex sessions do not have that artifact store or
+autonomous downstream runtime, so the adapter supplies the single substitution:
+the produced artifact is rendered in the terminal for the human to read and
+carry forward. The protocol bodies under `protocols/` are not rewritten.
+
 The source checkout must be clean and pinned at a tag or full commit SHA. The
 command refuses branch checkouts because a branch is a moving source. To update
 to a different pinned Groundwork version, check out that ref and run:

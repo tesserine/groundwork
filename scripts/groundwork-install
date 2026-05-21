@@ -4,6 +4,7 @@ set -euo pipefail
 PROGRAM="groundwork-install"
 MARKER=".groundwork-install"
 STATE_FILE_NAME="interactive-install.tsv"
+INTERACTIVE_IO_ADAPTER_REL="scripts/groundwork-install-interactive-io-adapter.md"
 
 usage() {
   cat <<'EOF'
@@ -101,6 +102,8 @@ validate_source() {
   if git -C "$source_path" symbolic-ref -q --short HEAD >/dev/null; then
     die "source must be a pinned checkout at a tag or full commit SHA, not a branch"
   fi
+  git -C "$source_path" cat-file -e "$(source_sha):$INTERACTIVE_IO_ADAPTER_REL" 2>/dev/null ||
+    die "source has no interactive IO adapter at $INTERACTIVE_IO_ADAPTER_REL"
 }
 
 source_sha() {
@@ -221,6 +224,39 @@ kind=$kind
 EOF
 }
 
+inject_interactive_io_adapter() {
+  local skill_path="$1"
+  local sha="$2"
+  local adapter tmp
+  adapter="$(mktemp "${skill_path}.adapter.XXXXXX")"
+  tmp="$(mktemp "${skill_path}.tmp.XXXXXX")"
+  git -C "$source_path" show "$sha:$INTERACTIVE_IO_ADAPTER_REL" > "$adapter" ||
+    die "source has no interactive IO adapter at $INTERACTIVE_IO_ADAPTER_REL"
+  if ! awk -v adapter="$adapter" '
+    BEGIN { inserted = 0; fence_count = 0 }
+    {
+      print
+      if ($0 == "---") {
+        fence_count += 1
+        if (fence_count == 2 && inserted == 0) {
+          while ((getline line < adapter) > 0) {
+            print line
+          }
+          close(adapter)
+          print ""
+          inserted = 1
+        }
+      }
+    }
+    END { exit inserted ? 0 : 1 }
+  ' "$skill_path" > "$tmp"; then
+    rm -f "$adapter" "$tmp"
+    die "protocol entry has no frontmatter boundary for interactive IO adapter: $skill_path"
+  fi
+  mv "$tmp" "$skill_path"
+  rm -f "$adapter"
+}
+
 project_entry() {
   local kind="$1"
   local name="$2"
@@ -232,6 +268,7 @@ project_entry() {
   if [[ "$kind" == "protocol" ]]; then
     rm -f "$target/SKILL.md"
     mv "$target/PROTOCOL.md" "$target/SKILL.md"
+    inject_interactive_io_adapter "$target/SKILL.md" "$sha"
   fi
   write_marker "$target/$MARKER" "$kind" "$name" "$sha"
 }

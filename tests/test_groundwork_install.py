@@ -3,12 +3,15 @@ import shutil
 import subprocess
 import tempfile
 import textwrap
+import tomllib
 import unittest
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "scripts" / "groundwork-install"
+ADAPTER_SOURCE = ROOT / "scripts" / "groundwork-install-interactive-io-adapter.md"
+MANIFEST_PATH = ROOT / "manifest.toml"
 
 
 def run(
@@ -65,6 +68,10 @@ class MethodologyFixture:
             path.unlink()
 
     def write_initial_surface(self) -> None:
+        self.write(
+            "scripts/groundwork-install-interactive-io-adapter.md",
+            ADAPTER_SOURCE.read_text(encoding="utf-8"),
+        )
         self.write("skills/orient/SKILL.md", "---\nname: orient\n---\n# Orient\n")
         self.write("skills/reckon/SKILL.md", "---\nname: reckon\n---\n# Reckon\n")
         self.write("skills/reckon/references/example.md", "reckon reference\n")
@@ -166,6 +173,29 @@ class GroundworkInstallTests(unittest.TestCase):
                 )
         return stats
 
+    def producer_protocols(self) -> list[tuple[str, str]]:
+        manifest = tomllib.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        return [
+            (protocol["name"], protocol["produces"][0])
+            for protocol in manifest["protocols"]
+            if protocol["produces"]
+        ]
+
+    def adapter_text(self) -> str:
+        return ADAPTER_SOURCE.read_text(encoding="utf-8")
+
+    def assert_protocol_has_interactive_adapter(self, skill_text: str) -> None:
+        adapter = self.adapter_text()
+        self.assertEqual(skill_text.count(adapter), 1)
+        self.assertIn("render the same tool-input object", skill_text)
+        self.assertIn("terminal for the human", skill_text)
+        self.assertIn("Do not require runa or MCP tools in interactive mode.", skill_text)
+        self.assertIn("Interactive delivery is complete", skill_text)
+        self.assertIn("produced artifact is visible in the", skill_text)
+        self.assertLess(skill_text.index(adapter), skill_text.rindex("# "))
+        if "MCP tool" in skill_text:
+            self.assertLess(skill_text.index(adapter), skill_text.rindex("MCP tool"))
+
     def test_install_projects_skills_and_protocols_into_both_discovery_roots(self) -> None:
         fixture = self.add_fixture("clean-install")
         install = InstallRun(self, fixture.root)
@@ -174,9 +204,62 @@ class GroundworkInstallTests(unittest.TestCase):
 
         assert_success(self, result)
         self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
-        self.assertEqual((install.target(".claude", "take") / "SKILL.md").read_text(), "---\nname: take\n---\n# Take\n")
+        take_skill = (install.target(".claude", "take") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertTrue(take_skill.startswith("---\nname: take\n---\n"))
+        self.assertTrue(take_skill.endswith("# Take\n"))
+        self.assert_protocol_has_interactive_adapter(take_skill)
         self.assertTrue((install.target(".agents", "take") / "references" / "example.md").is_file())
         self.assertTrue((install.target(".agents", "reckon") / "references" / "example.md").is_file())
+
+    def test_install_supplies_one_shared_interactive_adapter_to_each_protocol_only(self) -> None:
+        fixture = self.add_fixture("interactive-adapter")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        for root in [".claude", ".agents"]:
+            for protocol_name in ["take", "submit"]:
+                skill_text = (install.target(root, protocol_name) / "SKILL.md").read_text(
+                    encoding="utf-8"
+                )
+                self.assert_protocol_has_interactive_adapter(skill_text)
+
+            for skill_name in ["orient", "reckon"]:
+                skill_text = (install.target(root, skill_name) / "SKILL.md").read_text(
+                    encoding="utf-8"
+                )
+                self.assertNotIn(self.adapter_text(), skill_text)
+                self.assertNotIn("Interactive IO Adapter", skill_text)
+
+    def test_install_supplies_interactive_adapter_to_all_producer_protocols(self) -> None:
+        fixture = self.add_fixture("all-producer-protocols")
+        for protocol_name, artifact in self.producer_protocols():
+            fixture.write(
+                f"protocols/{protocol_name}/PROTOCOL.md",
+                f"""
+                ---
+                name: {protocol_name}
+                ---
+                # {protocol_name.title()}
+
+                Invoke the `{artifact}` MCP tool.
+                """,
+            )
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        expected = {"orient", "reckon"} | {name for name, _artifact in self.producer_protocols()}
+        self.assert_installed_inventory(install, expected)
+        for root in [".claude", ".agents"]:
+            for protocol_name, _artifact in self.producer_protocols():
+                skill_text = (install.target(root, protocol_name) / "SKILL.md").read_text(
+                    encoding="utf-8"
+                )
+                self.assert_protocol_has_interactive_adapter(skill_text)
 
     def test_install_is_idempotent_for_the_same_pinned_source(self) -> None:
         fixture = self.add_fixture("idempotent")
@@ -253,7 +336,9 @@ class GroundworkInstallTests(unittest.TestCase):
         assert_success(self, result)
         self.assertEqual(
             (install.target(".agents", "orient") / "SKILL.md").read_text(encoding="utf-8"),
-            "---\nname: orient\n---\n# Orient Protocol\n",
+            "---\nname: orient\n---\n"
+            f"{self.adapter_text()}\n"
+            "# Orient Protocol\n",
         )
         self.assertIn("kind=protocol\n", (install.target(".agents", "orient") / ".groundwork-install").read_text(encoding="utf-8"))
         self.assertIn("\torient\tprotocol\t", install.state_file().read_text(encoding="utf-8"))
