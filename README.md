@@ -69,9 +69,12 @@ The installer writes user-owned entries only, with no root or sudo requirement:
 
 Every directory under `skills/` is copied as a skill entry. Every directory
 under `protocols/` is copied as a skill-shaped entry with `PROTOCOL.md`
-projected to `SKILL.md`, so protocol names are discoverable in the same way as
-skills. Installed entries are copies, not source-checkout symlinks, so later
-changes to the checkout do not drift into the active discovery surface.
+projected to `SKILL.md` and an interactive artifact delivery adapter inserted
+near the top of the installed protocol. The adapter tells an interactive agent
+how to present the produced artifact body to the human instead of calling the
+runa MCP artifact tool. Installed entries are copies, not source-checkout
+symlinks, so later changes to the checkout do not drift into the active
+discovery surface.
 
 The source checkout must be clean and pinned at a tag or full commit SHA. The
 command refuses branch checkouts because a branch is a moving source. To update
