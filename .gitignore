@@ -1,2 +1,5 @@
 .codex/
 assets/logo/dist/
+__pycache__/
+*.py[cod]
+.pytest_cache/
