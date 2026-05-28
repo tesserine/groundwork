@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
+import re
 import tomllib
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, FormatChecker
 
 from tooling.mechanics import MechanicRegistry
 
@@ -13,6 +16,9 @@ from tooling.mechanics import MechanicRegistry
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMAS = ROOT / "schemas"
 MANIFEST = ROOT / "manifest.toml"
+DATE_TIME_PATTERN = re.compile(
+    r"^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[Zz]|[+-]\d{2}:\d{2})$"
+)
 
 
 class ArtifactSchemaError(ValueError):
@@ -72,7 +78,7 @@ def _schema_errors(artifact_type: str, artifact: dict[str, Any]) -> list[tuple[s
     except FileNotFoundError as error:
         raise ArtifactSchemaError([(str(schema_path.relative_to(ROOT)), "artifact schema does not exist")]) from error
 
-    validator = Draft202012Validator(schema)
+    validator = Draft202012Validator(schema, format_checker=_format_checker())
     errors: list[tuple[str, str]] = []
     for error in sorted(validator.iter_errors(artifact), key=lambda item: list(item.path)):
         path = "/".join(str(part) for part in error.path)
@@ -81,6 +87,43 @@ def _schema_errors(artifact_type: str, artifact: dict[str, Any]) -> list[tuple[s
             path = f"{path}/{missing}" if path else missing
         errors.append((path or "<root>", error.message))
     return errors
+
+
+def _format_checker() -> FormatChecker:
+    checker = FormatChecker()
+
+    if "date-time" not in checker.checkers:
+        checker.checks("date-time")(_is_date_time)
+    if "uri" not in checker.checkers:
+        checker.checks("uri")(_is_uri)
+
+    return checker
+
+
+def _is_date_time(instance: object) -> bool:
+    if not isinstance(instance, str):
+        return True
+    if not DATE_TIME_PATTERN.fullmatch(instance):
+        return False
+
+    timestamp = instance[:-1] + "+00:00" if instance[-1] in {"Z", "z"} else instance
+    try:
+        datetime.fromisoformat(timestamp)
+    except ValueError:
+        return False
+    return True
+
+
+def _is_uri(instance: object) -> bool:
+    if not isinstance(instance, str):
+        return True
+    if any(character.isspace() for character in instance):
+        return False
+
+    parsed = urlparse(instance)
+    if parsed.scheme in {"http", "https"} and not parsed.netloc:
+        return False
+    return bool(parsed.scheme and instance.split(":", 1)[1])
 
 
 def _registry_errors(

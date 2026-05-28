@@ -13,6 +13,25 @@ from tooling.mechanics import MechanicRegistry
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "tests" / "fixtures" / "artifacts"
+SCHEMAS = ROOT / "schemas"
+
+
+def artifact_type_for_fixture(name: str) -> str:
+    stem = name.removesuffix(".json")
+    for prefix in ("valid-", "invalid-"):
+        if stem.startswith(prefix):
+            stem = stem.removeprefix(prefix)
+            break
+
+    artifact_types = sorted(
+        (path.name.removesuffix(".schema.json") for path in SCHEMAS.glob("*.schema.json")),
+        key=len,
+        reverse=True,
+    )
+    for artifact_type in artifact_types:
+        if stem == artifact_type or stem.startswith(f"{artifact_type}-"):
+            return artifact_type
+    raise AssertionError(f"Could not infer artifact type for fixture {name}")
 
 
 class ArtifactSchemaTests(unittest.TestCase):
@@ -88,6 +107,35 @@ class ArtifactSchemaTests(unittest.TestCase):
             load_artifact("review-findings", self.fixture("invalid-review-findings-unclassified.json"))
 
         self.assertIn("findings/0/classification", context.exception.paths)
+
+    def test_review_findings_schema_rejects_approved_with_blocking_findings(self) -> None:
+        with self.assertRaises(ArtifactSchemaError) as context:
+            load_artifact("review-findings", self.fixture("invalid-review-findings-approved-with-blocking.json"))
+
+        self.assertIn("findings", context.exception.paths)
+
+    def test_review_findings_schema_rejects_needs_revision_without_blocking_findings(self) -> None:
+        with self.assertRaises(ArtifactSchemaError) as context:
+            load_artifact("review-findings", self.fixture("invalid-review-findings-needs-revision-without-blocking.json"))
+
+        self.assertIn("findings", context.exception.paths)
+
+    def test_review_findings_schema_rejects_bad_review_timestamp(self) -> None:
+        with self.assertRaises(ArtifactSchemaError) as context:
+            load_artifact("review-findings", self.fixture("invalid-review-findings-bad-timestamp.json"))
+
+        self.assertIn("reviewed_at", context.exception.paths)
+
+    def test_valid_artifact_fixtures_pass(self) -> None:
+        for fixture in sorted(FIXTURES.glob("valid-*.json")):
+            with self.subTest(fixture=fixture.name):
+                load_artifact(artifact_type_for_fixture(fixture.name), fixture)
+
+    def test_invalid_artifact_fixtures_reject(self) -> None:
+        for fixture in sorted(FIXTURES.glob("invalid-*.json")):
+            with self.subTest(fixture=fixture.name):
+                with self.assertRaises(ArtifactSchemaError):
+                    load_artifact(artifact_type_for_fixture(fixture.name), fixture)
 
     def test_patch_schema_is_marked_superseded(self) -> None:
         schema = json.loads((ROOT / "schemas" / "patch.schema.json").read_text(encoding="utf-8"))

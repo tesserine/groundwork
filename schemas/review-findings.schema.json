@@ -6,6 +6,48 @@
   "type": "object",
   "required": ["work_unit", "against_version", "reviewer", "reviewed_at", "disposition", "findings"],
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "approved"
+          }
+        },
+        "required": ["disposition"]
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "not": {
+              "contains": {
+                "$ref": "#/$defs/blocking-finding"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "needs_revision"
+          }
+        },
+        "required": ["disposition"]
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "contains": {
+              "$ref": "#/$defs/blocking-finding"
+            }
+          }
+        }
+      }
+    }
+  ],
   "properties": {
     "work_unit": {
       "type": "string",
@@ -42,6 +84,15 @@
     }
   },
   "$defs": {
+    "blocking-finding": {
+      "type": "object",
+      "required": ["classification"],
+      "properties": {
+        "classification": {
+          "const": "blocking"
+        }
+      }
+    },
     "finding": {
       "type": "object",
       "required": ["observation", "classification"],

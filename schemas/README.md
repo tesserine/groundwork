@@ -16,7 +16,9 @@ artifact type in `manifest.toml`.
 artifact schemas from ADR-0002 Revision 2026-05-28. `change-proposal` replaces
 the old PR-shaped `patch` artifact with a forge-neutral envelope plus a
 forge-tagged handle. `review-findings` records the review disposition and
-classified observations against an immutable proposal version.
+classified observations against an immutable proposal version: approved reviews
+cannot carry blocking findings, and reviews needing revision must carry at
+least one blocking finding.
 
 Change-proposal handle forge tags resolve against the declarative
 `[[forge_tags]]` registry in `manifest.toml`. The symmetric check for
