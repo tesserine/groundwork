@@ -51,6 +51,20 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("nodes/1", context.exception.paths)
         self.assertIn("node `orphaned` is not reachable from start_node `inspect`", str(context.exception))
 
+    def test_parser_rejects_reachable_dead_end_nodes(self) -> None:
+        with self.assertRaises(WorkflowContractError) as context:
+            load_workflow_contract(self.fixture("invalid-dead-end.toml"))
+
+        self.assertIn("nodes/2", context.exception.paths)
+        self.assertIn("node `push-new-pr` cannot reach any terminal", str(context.exception))
+
+    def test_parser_rejects_node_terminal_name_collisions(self) -> None:
+        with self.assertRaises(WorkflowContractError) as context:
+            load_workflow_contract(self.fixture("invalid-name-collision.toml"))
+
+        self.assertIn("terminals/0/name", context.exception.paths)
+        self.assertIn("name `review` is declared as both a node and a terminal", str(context.exception))
+
     def test_parser_rejects_overlapping_conditions_from_one_node(self) -> None:
         with self.assertRaises(WorkflowContractError) as context:
             load_workflow_contract(self.fixture("invalid-overlapping-conditions.toml"))

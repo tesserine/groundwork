@@ -1,0 +1,48 @@
+name = "submit-dead-end"
+purpose = "Demonstrate reachable dead-end validation."
+session_role = "submission"
+preconditions = ["completion evidence exists"]
+start_node = "resolve-pr-delivery-path"
+failure_modes = ["a delivery branch cannot terminate"]
+corruption_modes = ["implicit terminal"]
+
+[[nodes]]
+name = "resolve-pr-delivery-path"
+intent = "Decide whether to update an existing proposal or open a new one."
+disciplines = ["orient"]
+mechanics = ["inspect-change-proposals"]
+outcomes = ["delivery_path is selected"]
+
+[[nodes]]
+name = "push-existing-pr"
+intent = "Deliver to an existing proposal."
+disciplines = []
+mechanics = ["deliver-change-proposal"]
+outcomes = ["existing proposal is updated"]
+
+[[nodes]]
+name = "push-new-pr"
+intent = "Deliver to a new proposal."
+disciplines = []
+mechanics = ["deliver-change-proposal"]
+outcomes = ["new proposal is opened"]
+
+[[edges]]
+from = "resolve-pr-delivery-path"
+to = "push-existing-pr"
+condition = { type = "case", field = "delivery_path", equals = "existing" }
+
+[[edges]]
+from = "resolve-pr-delivery-path"
+to = "push-new-pr"
+condition = { type = "default", field = "delivery_path" }
+
+[[edges]]
+from = "push-existing-pr"
+to = "submitted"
+condition = { type = "always" }
+
+[[terminals]]
+name = "submitted"
+outcome = "A change proposal exists for review."
+artifact_produced = "patch"

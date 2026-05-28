@@ -84,6 +84,7 @@ def _graph_errors(contract: dict[str, Any]) -> list[tuple[str, str]]:
 
     errors.extend(_duplicate_name_errors("nodes", node_names))
     errors.extend(_duplicate_name_errors("terminals", terminal_names))
+    errors.extend(_name_collision_errors(node_name_set, terminal_names))
 
     if start_node not in node_name_set:
         errors.append(("start_node", f"start_node `{start_node}` does not reference a declared node"))
@@ -108,7 +109,9 @@ def _graph_errors(contract: dict[str, Any]) -> list[tuple[str, str]]:
 
     errors.extend(_condition_errors(edges))
 
-    if not any(path.startswith("edges/") for path, _message in errors) and start_node in node_name_set:
+    graph_names_are_unambiguous = not any(path.endswith("/name") for path, _message in errors)
+    graph_edges_are_resolved = not any(path.startswith("edges/") for path, _message in errors)
+    if graph_names_are_unambiguous and graph_edges_are_resolved and start_node in node_name_set:
         errors.extend(_reachability_errors(contract, node_name_set, terminal_name_set))
         errors.extend(_loop_errors(edges, node_names))
 
@@ -122,6 +125,14 @@ def _duplicate_name_errors(collection: str, names: list[str]) -> list[tuple[str,
         if name in seen:
             errors.append((f"{collection}/{index}/name", f"duplicate {collection[:-1]} name `{name}`"))
         seen.add(name)
+    return errors
+
+
+def _name_collision_errors(node_names: set[str], terminal_names: list[str]) -> list[tuple[str, str]]:
+    errors: list[tuple[str, str]] = []
+    for index, name in enumerate(terminal_names):
+        if name in node_names:
+            errors.append((f"terminals/{index}/name", f"name `{name}` is declared as both a node and a terminal"))
     return errors
 
 
@@ -195,8 +206,10 @@ def _reachability_errors(
     terminal_names: set[str],
 ) -> list[tuple[str, str]]:
     adjacency: dict[str, list[str]] = {node: [] for node in node_names}
+    reverse_adjacency: dict[str, list[str]] = {name: [] for name in node_names | terminal_names}
     for edge in contract["edges"]:
         adjacency[edge["from"]].append(edge["to"])
+        reverse_adjacency[edge["to"]].append(edge["from"])
 
     reachable: set[str] = set()
     stack = [contract["start_node"]]
@@ -207,15 +220,27 @@ def _reachability_errors(
         reachable.add(current)
         stack.extend(adjacency.get(current, []))
 
+    terminal_reaching: set[str] = set()
+    stack = list(terminal_names)
+    while stack:
+        current = stack.pop()
+        if current in terminal_reaching:
+            continue
+        terminal_reaching.add(current)
+        stack.extend(reverse_adjacency.get(current, []))
+
     errors: list[tuple[str, str]] = []
     for index, node in enumerate(contract["nodes"]):
-        if node["name"] not in reachable:
+        node_name = node["name"]
+        if node_name not in reachable:
             errors.append(
                 (
                     f"nodes/{index}",
-                    f"node `{node['name']}` is not reachable from start_node `{contract['start_node']}`",
+                    f"node `{node_name}` is not reachable from start_node `{contract['start_node']}`",
                 )
             )
+        elif node_name not in terminal_reaching:
+            errors.append((f"nodes/{index}", f"node `{node_name}` cannot reach any terminal"))
     for index, terminal in enumerate(contract["terminals"]):
         if terminal["name"] not in reachable:
             errors.append(
