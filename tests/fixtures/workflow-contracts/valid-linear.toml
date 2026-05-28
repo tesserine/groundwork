@@ -1,0 +1,24 @@
+name = "verify"
+purpose = "Confirm completion evidence satisfies the behavior contract."
+session_role = "verification gate"
+preconditions = ["behavior contract and test evidence exist"]
+start_node = "inspect-evidence"
+failure_modes = ["test evidence is incomplete"]
+corruption_modes = ["evidence-before-assertion loss"]
+
+[[nodes]]
+name = "inspect-evidence"
+intent = "Compare supplied evidence against required behavior coverage."
+disciplines = ["orient"]
+mechanics = ["read-artifact"]
+outcomes = ["coverage decision is available"]
+
+[[edges]]
+from = "inspect-evidence"
+to = "verified"
+condition = { type = "always" }
+
+[[terminals]]
+name = "verified"
+outcome = "Completion evidence can be produced."
+artifact_produced = "completion-evidence"

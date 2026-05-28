@@ -1,0 +1,31 @@
+name = "disconnected"
+purpose = "Demonstrate reachability validation."
+session_role = "test"
+preconditions = ["input exists"]
+start_node = "inspect"
+failure_modes = ["node is unreachable"]
+corruption_modes = ["dead node"]
+
+[[nodes]]
+name = "inspect"
+intent = "Inspect input."
+disciplines = []
+mechanics = []
+outcomes = ["input inspected"]
+
+[[nodes]]
+name = "orphaned"
+intent = "Never reached."
+disciplines = []
+mechanics = []
+outcomes = ["nothing"]
+
+[[edges]]
+from = "inspect"
+to = "done"
+condition = { type = "always" }
+
+[[terminals]]
+name = "done"
+outcome = "Done."
+artifact_produced = "patch"

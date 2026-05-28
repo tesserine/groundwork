@@ -170,7 +170,8 @@ becomes a work-unit.
 | [`manifest.toml`](manifest.toml) | Manifest: artifact types, protocol topology, trigger conditions |
 | [`protocols/`](protocols/) | 10 protocol definitions — one per stage |
 | [`skills/`](skills/) | 6 skills — orientation and cross-cutting disciplines |
-| [`schemas/`](schemas/) | JSON Schema contracts for each artifact type |
+| [`schemas/`](schemas/) | JSON Schema contracts for artifacts and authoring substrates |
+| [`tooling/`](tooling/) | Authoring-time parsers and validators |
 | [`docs/architecture/`](docs/architecture/) | Topology design rationale and work-unit state model |
 | [`docs/authoring/`](docs/authoring/) | Follow-direct guides for methodology authors |
 

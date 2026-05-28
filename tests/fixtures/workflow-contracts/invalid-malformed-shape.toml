@@ -1,0 +1,23 @@
+name = "bad-shape"
+purpose = "Demonstrate schema validation failure."
+session_role = "test"
+preconditions = ["input exists"]
+start_node = "inspect"
+failure_modes = ["shape is malformed"]
+corruption_modes = ["shape drift"]
+
+[[nodes]]
+intent = "This node has no name."
+disciplines = []
+mechanics = []
+outcomes = ["schema rejects it"]
+
+[[edges]]
+from = "inspect"
+to = "done"
+condition = { type = "always" }
+
+[[terminals]]
+name = "done"
+outcome = "Done."
+artifact_produced = "patch"

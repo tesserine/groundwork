@@ -1,0 +1,53 @@
+name = "implement"
+purpose = "Drive behavior through red-green-refactor."
+session_role = "implementation"
+preconditions = ["implementation plan exists"]
+start_node = "red"
+failure_modes = ["test never becomes green"]
+corruption_modes = ["production-before-test"]
+
+[[nodes]]
+name = "red"
+intent = "Write a failing behavior test."
+disciplines = ["implement"]
+mechanics = ["run-test"]
+outcomes = ["test fails for the expected reason"]
+
+[[nodes]]
+name = "green"
+intent = "Write enough implementation to pass the behavior test."
+disciplines = ["implement"]
+mechanics = ["run-test"]
+outcomes = ["test result is known"]
+
+[[nodes]]
+name = "refactor"
+intent = "Clean implementation while preserving green tests."
+disciplines = ["implement"]
+mechanics = ["run-test"]
+outcomes = ["implementation is clean and green"]
+
+[[edges]]
+from = "red"
+to = "green"
+condition = { type = "always" }
+
+[[edges]]
+from = "green"
+to = "red"
+condition = { type = "case", field = "test_result", equals = "failed" }
+
+[[edges]]
+from = "green"
+to = "refactor"
+condition = { type = "case", field = "test_result", equals = "passed" }
+
+[[edges]]
+from = "refactor"
+to = "implemented"
+condition = { type = "always" }
+
+[[terminals]]
+name = "implemented"
+outcome = "Test evidence can be produced."
+artifact_produced = "test-evidence"

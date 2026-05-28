@@ -1,8 +1,12 @@
 # Schemas
 
-This directory contains the JSON Schemas that groundwork exposes at runtime.
-Most of these schemas are methodology-private and are defined only in this
-repository.
+This directory contains JSON Schemas for groundwork runtime artifacts and
+authoring substrates. Most of these schemas are methodology-private and are
+defined only in this repository.
+
+`workflow-contract.schema.json` is an authoring substrate for C-2 workflow
+contracts from ADR-0002. It is validated by `tooling.workflow_contracts`, not
+declared as a runtime artifact type in `manifest.toml`.
 
 `request.schema.json` is different: it is a vendored copy of the canonical
 request contract maintained by `tesserine/commons`. Groundwork keeps the runtime

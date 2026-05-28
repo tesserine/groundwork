@@ -1,0 +1,107 @@
+import tempfile
+import unittest
+from pathlib import Path
+
+from tooling.workflow_contracts import (
+    WorkflowContractError,
+    WorkflowRegistry,
+    load_workflow_contract,
+    validate_workflow_contract,
+)
+
+
+ROOT = Path(__file__).resolve().parents[1]
+FIXTURES = ROOT / "tests" / "fixtures" / "workflow-contracts"
+
+
+class WorkflowContractTests(unittest.TestCase):
+    def fixture(self, name: str) -> Path:
+        return FIXTURES / name
+
+    def test_schema_accepts_linear_branching_loop_and_multi_terminal_contracts(self) -> None:
+        for name in [
+            "valid-linear.toml",
+            "valid-branching.toml",
+            "valid-loop.toml",
+            "valid-multiple-terminals.toml",
+        ]:
+            with self.subTest(fixture=name):
+                contract = load_workflow_contract(self.fixture(name))
+
+                self.assertIsInstance(contract, dict)
+
+    def test_schema_rejects_malformed_shape_with_field_path(self) -> None:
+        with self.assertRaises(WorkflowContractError) as context:
+            load_workflow_contract(self.fixture("invalid-malformed-shape.toml"))
+
+        self.assertIn("nodes/0/name", context.exception.paths)
+        self.assertIn("nodes/0/name", str(context.exception))
+
+    def test_parser_rejects_unknown_edge_endpoint_with_graph_message(self) -> None:
+        with self.assertRaises(WorkflowContractError) as context:
+            load_workflow_contract(self.fixture("invalid-unknown-endpoint.toml"))
+
+        self.assertIn("edges/0/to", context.exception.paths)
+        self.assertIn("edge `inspect -> missing-terminal` references unknown target `missing-terminal`", str(context.exception))
+
+    def test_parser_rejects_disconnected_nodes(self) -> None:
+        with self.assertRaises(WorkflowContractError) as context:
+            load_workflow_contract(self.fixture("invalid-disconnected.toml"))
+
+        self.assertIn("nodes/1", context.exception.paths)
+        self.assertIn("node `orphaned` is not reachable from start_node `inspect`", str(context.exception))
+
+    def test_parser_rejects_overlapping_conditions_from_one_node(self) -> None:
+        with self.assertRaises(WorkflowContractError) as context:
+            load_workflow_contract(self.fixture("invalid-overlapping-conditions.toml"))
+
+        self.assertIn("edges/1/condition", context.exception.paths)
+        self.assertIn(
+            "node `resolve-pr-delivery-path` has overlapping conditions on outgoing edges",
+            str(context.exception),
+        )
+
+    def test_parser_rejects_loop_without_termination_edge(self) -> None:
+        with self.assertRaises(WorkflowContractError) as context:
+            load_workflow_contract(self.fixture("invalid-unterminated-loop.toml"))
+
+        self.assertIn("edges", context.exception.paths)
+        self.assertIn("loop `red, green` has no termination edge", str(context.exception))
+
+    def test_registry_resolution_can_be_deferred_when_no_registry_is_loaded(self) -> None:
+        contract = load_workflow_contract(self.fixture("valid-linear.toml"), registry=None)
+
+        self.assertEqual(contract["name"], "verify")
+
+    def test_registry_resolution_rejects_unknown_references_when_registry_is_loaded(self) -> None:
+        registry = WorkflowRegistry(
+            disciplines={"orient"},
+            mechanics={"read-artifact"},
+            artifact_schemas={"completion-evidence"},
+        )
+
+        with self.assertRaises(WorkflowContractError) as context:
+            load_workflow_contract(self.fixture("invalid-registry-reference.toml"), registry=registry)
+
+        self.assertIn("nodes/0/disciplines/1", context.exception.paths)
+        self.assertIn("discipline `missing-discipline` does not resolve in registry", str(context.exception))
+
+    def test_validate_workflow_contract_accepts_already_loaded_toml_data(self) -> None:
+        contract = load_workflow_contract(self.fixture("valid-linear.toml"))
+
+        validate_workflow_contract(contract)
+
+    def test_invalid_toml_reports_source_path(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "bad.toml"
+            path.write_text("name = [\n", encoding="utf-8")
+
+            with self.assertRaises(WorkflowContractError) as context:
+                load_workflow_contract(path)
+
+        self.assertEqual(["<toml>"], context.exception.paths)
+        self.assertIn("bad.toml is invalid TOML", str(context.exception))
+
+
+if __name__ == "__main__":
+    unittest.main()
