@@ -1,0 +1,8 @@
+name = "broken-mechanic"
+purpose = 42
+parameters = "branch"
+default_invocation = "git push {branch}"
+examples = ["git push origin branch"]
+
+[outcome]
+description = "The branch exists on the remote."

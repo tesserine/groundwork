@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   TOML parser, graph invariant checks, registry-reference validation, and
   fixture coverage for linear, branching, loop, and multi-terminal contracts
   (closes #293).
+- Mechanic authoring substrate: a C-3 JSON Schema, TOML parser, optional
+  forge-tag validation, registry-reference validation, and fixture coverage for
+  forge-neutral, forge-tagged, and runtime-tool mechanics (closes #294).
 
 ### Fixed
 

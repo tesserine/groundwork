@@ -8,6 +8,10 @@ defined only in this repository.
 contracts from ADR-0002. It is validated by `tooling.workflow_contracts`, not
 declared as a runtime artifact type in `manifest.toml`.
 
+`mechanic.schema.json` is an authoring substrate for C-3 mechanics from
+ADR-0002. It is validated by `tooling.mechanics`, not declared as a runtime
+artifact type in `manifest.toml`.
+
 `request.schema.json` is different: it is a vendored copy of the canonical
 request contract maintained by `tesserine/commons`. Groundwork keeps the runtime
 copy here so runtime consumers still read schemas from groundwork, not from

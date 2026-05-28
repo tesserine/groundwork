@@ -1,0 +1,21 @@
+name = "deliver-change-proposal"
+purpose = "Create a GitHub-hosted change proposal."
+forge_tag = "github"
+default_invocation = "gh pr create --title {title} --body-file {body_file}"
+examples = [
+  "gh pr create --title 'Add mechanic parser' --body-file /tmp/body.md",
+]
+
+[[parameters]]
+name = "title"
+purpose = "Change proposal title."
+required = true
+
+[[parameters]]
+name = "body_file"
+purpose = "Path to a file containing the proposal body."
+required = true
+
+[outcome]
+description = "A GitHub pull request exists."
+artifact_type = "change-proposal"

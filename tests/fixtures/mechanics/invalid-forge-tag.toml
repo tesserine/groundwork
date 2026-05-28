@@ -1,0 +1,9 @@
+name = "create-change-proposal"
+purpose = "Create a change proposal on a forge."
+forge_tag = "GitHub"
+parameters = []
+default_invocation = "gh pr create --title {title}"
+examples = ["gh pr create --title example"]
+
+[outcome]
+description = "A change proposal exists on the forge."
