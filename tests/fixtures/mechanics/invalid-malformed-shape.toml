@@ -6,4 +6,3 @@ examples = ["git push origin branch"]
 
 [outcome]
 description = "The branch exists on the remote."
-

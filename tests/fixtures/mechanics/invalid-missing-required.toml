@@ -2,4 +2,3 @@ name = "missing-fields"
 parameters = []
 default_invocation = "true"
 examples = ["true"]
-

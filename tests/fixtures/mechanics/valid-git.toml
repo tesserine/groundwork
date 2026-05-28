@@ -17,4 +17,3 @@ required = true
 
 [outcome]
 description = "The named branch exists on the remote."
-

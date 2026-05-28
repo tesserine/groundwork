@@ -12,4 +12,3 @@ schema_ref = "missing-schema"
 [outcome]
 description = "The artifact is persisted."
 artifact_type = "missing-artifact"
-
