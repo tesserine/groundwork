@@ -1,0 +1,53 @@
+name = "overlapping-conditions"
+purpose = "Demonstrate conditional edge exclusivity."
+session_role = "test"
+preconditions = ["input exists"]
+start_node = "resolve-pr-delivery-path"
+failure_modes = ["branch conditions overlap"]
+corruption_modes = ["condition drift"]
+
+[[nodes]]
+name = "resolve-pr-delivery-path"
+intent = "Choose a delivery path."
+disciplines = []
+mechanics = []
+outcomes = ["delivery_path is known"]
+
+[[nodes]]
+name = "push-existing-pr"
+intent = "Update existing proposal."
+disciplines = []
+mechanics = []
+outcomes = ["proposal updated"]
+
+[[nodes]]
+name = "push-new-pr"
+intent = "Open new proposal."
+disciplines = []
+mechanics = []
+outcomes = ["proposal opened"]
+
+[[edges]]
+from = "resolve-pr-delivery-path"
+to = "push-existing-pr"
+condition = { type = "case", field = "delivery_path", equals = "existing" }
+
+[[edges]]
+from = "resolve-pr-delivery-path"
+to = "push-new-pr"
+condition = { type = "case", field = "delivery_path", equals = "existing" }
+
+[[edges]]
+from = "push-existing-pr"
+to = "submitted"
+condition = { type = "always" }
+
+[[edges]]
+from = "push-new-pr"
+to = "submitted"
+condition = { type = "always" }
+
+[[terminals]]
+name = "submitted"
+outcome = "Done."
+artifact_produced = "patch"

@@ -1,0 +1,24 @@
+name = "unknown-endpoint"
+purpose = "Demonstrate edge reference validation."
+session_role = "test"
+preconditions = ["input exists"]
+start_node = "inspect"
+failure_modes = ["edge target is unknown"]
+corruption_modes = ["graph drift"]
+
+[[nodes]]
+name = "inspect"
+intent = "Inspect input."
+disciplines = []
+mechanics = []
+outcomes = ["input inspected"]
+
+[[edges]]
+from = "inspect"
+to = "missing-terminal"
+condition = { type = "always" }
+
+[[terminals]]
+name = "done"
+outcome = "Done."
+artifact_produced = "patch"

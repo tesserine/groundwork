@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Workflow contract authoring substrate: a C-2 directed-graph JSON Schema,
+  TOML parser, graph invariant checks, registry-reference validation, and
+  fixture coverage for linear, branching, loop, and multi-terminal contracts
+  (closes #293).
+
 ### Fixed
 
 - Interactive install now projects the artifact delivery adapter into every

@@ -1,0 +1,31 @@
+name = "name-collision"
+purpose = "Demonstrate node and terminal namespace separation."
+session_role = "test"
+preconditions = ["input exists"]
+start_node = "inspect"
+failure_modes = ["endpoint identity is ambiguous"]
+corruption_modes = ["namespace drift"]
+
+[[nodes]]
+name = "inspect"
+intent = "Inspect input."
+disciplines = []
+mechanics = []
+outcomes = ["input inspected"]
+
+[[nodes]]
+name = "review"
+intent = "Review input."
+disciplines = []
+mechanics = []
+outcomes = ["input reviewed"]
+
+[[edges]]
+from = "inspect"
+to = "review"
+condition = { type = "always" }
+
+[[terminals]]
+name = "review"
+outcome = "Review complete."
+artifact_produced = "patch"

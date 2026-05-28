@@ -1,0 +1,44 @@
+name = "submit-clean-branch"
+purpose = "Finish submission with distinct terminal outcomes."
+session_role = "submission"
+preconditions = ["documentation record exists"]
+start_node = "inspect-branch"
+failure_modes = ["branch cannot be packaged"]
+corruption_modes = ["open-loop-close"]
+
+[[nodes]]
+name = "inspect-branch"
+intent = "Determine whether the branch has changes to submit."
+disciplines = ["orient"]
+mechanics = ["inspect-worktree"]
+outcomes = ["branch_state is known"]
+
+[[edges]]
+from = "inspect-branch"
+to = "submitted"
+condition = { type = "case", field = "branch_state", equals = "changed" }
+
+[[edges]]
+from = "inspect-branch"
+to = "clean-branch"
+condition = { type = "case", field = "branch_state", equals = "clean" }
+
+[[edges]]
+from = "inspect-branch"
+to = "aborted"
+condition = { type = "default", field = "branch_state" }
+
+[[terminals]]
+name = "submitted"
+outcome = "A change proposal exists."
+artifact_produced = "patch"
+
+[[terminals]]
+name = "clean-branch"
+outcome = "No change proposal is needed."
+artifact_produced = "patch"
+
+[[terminals]]
+name = "aborted"
+outcome = "Submission stopped with a clear reason."
+artifact_produced = "patch"

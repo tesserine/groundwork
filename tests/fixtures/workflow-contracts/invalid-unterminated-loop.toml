@@ -1,0 +1,36 @@
+name = "unterminated-loop"
+purpose = "Demonstrate loop termination validation."
+session_role = "test"
+preconditions = ["input exists"]
+start_node = "red"
+failure_modes = ["loop never exits"]
+corruption_modes = ["open loop"]
+
+[[nodes]]
+name = "red"
+intent = "Write a failing test."
+disciplines = []
+mechanics = []
+outcomes = ["test is red"]
+
+[[nodes]]
+name = "green"
+intent = "Make the test pass."
+disciplines = []
+mechanics = []
+outcomes = ["test is green"]
+
+[[edges]]
+from = "red"
+to = "green"
+condition = { type = "always" }
+
+[[edges]]
+from = "green"
+to = "red"
+condition = { type = "always" }
+
+[[terminals]]
+name = "done"
+outcome = "Done."
+artifact_produced = "test-evidence"

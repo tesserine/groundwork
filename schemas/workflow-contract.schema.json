@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/workflow-contract.schema.json",
+  "title": "Workflow Contract",
+  "description": "Validates C-2 workflow contracts: TOML-authored directed graphs with conditional edges and explicit terminals.",
+  "type": "object",
+  "required": [
+    "name",
+    "purpose",
+    "session_role",
+    "preconditions",
+    "start_node",
+    "nodes",
+    "edges",
+    "terminals",
+    "failure_modes",
+    "corruption_modes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "session_role": {
+      "type": "string",
+      "minLength": 1
+    },
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "start_node": {
+      "type": "string",
+      "minLength": 1
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "terminals": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/terminal"
+      }
+    },
+    "failure_modes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "corruption_modes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["name", "intent", "disciplines", "mechanics", "outcomes"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "intent": {
+          "type": "string",
+          "minLength": 1
+        },
+        "disciplines": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "mechanics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "outcomes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["from", "to", "condition"],
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1
+        },
+        "condition": {
+          "$ref": "#/$defs/condition"
+        }
+      }
+    },
+    "condition": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type"],
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "always"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "field", "equals"],
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "case"
+            },
+            "field": {
+              "type": "string",
+              "minLength": 1
+            },
+            "equals": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "field"],
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "default"
+            },
+            "field": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "terminal": {
+      "type": "object",
+      "required": ["name", "outcome", "artifact_produced"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outcome": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_produced": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
