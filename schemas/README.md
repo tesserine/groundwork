@@ -12,6 +12,16 @@ declared as a runtime artifact type in `manifest.toml`.
 ADR-0002. It is validated by `tooling.mechanics`, not declared as a runtime
 artifact type in `manifest.toml`.
 
+`change-proposal.schema.json` and `review-findings.schema.json` are the C-4
+artifact schemas from ADR-0002 Revision 2026-05-28. `change-proposal` replaces
+the old PR-shaped `patch` artifact with a forge-neutral envelope plus a
+forge-tagged handle. `review-findings` records the review disposition and
+classified observations against an immutable proposal version.
+
+Change-proposal handle forge tags resolve against the declarative
+`[[forge_tags]]` registry in `manifest.toml`. The symmetric check for
+mechanic-authored `forge_tag` values is tracked separately in #322.
+
 `request.schema.json` is different: it is a vendored copy of the canonical
 request contract maintained by `tesserine/commons`. Groundwork keeps the runtime
 copy here so runtime consumers still read schemas from groundwork, not from

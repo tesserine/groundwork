@@ -27,6 +27,7 @@ class MechanicError(ValueError):
 class MechanicRegistry:
     artifact_schemas: set[str] = field(default_factory=set)
     artifact_types: set[str] = field(default_factory=set)
+    forge_tags: set[str] = field(default_factory=set)
 
 
 def load_mechanic(path: Path | str, registry: MechanicRegistry | None = None) -> dict[str, Any]:

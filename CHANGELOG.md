@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Mechanic authoring substrate: a C-3 JSON Schema, TOML parser, optional
   forge-tag validation, registry-reference validation, and fixture coverage for
   forge-neutral, forge-tagged, and runtime-tool mechanics (closes #294).
+- Change proposal review substrate: C-4 `change-proposal` and
+  `review-findings` artifact schemas, fixture coverage for GitHub and SourceHut
+  handles, manifest-declared forge tags, and `patch` schema supersession
+  metadata (closes #316).
 
 ### Fixed
 

@@ -1,0 +1,13 @@
+{
+  "work_unit": "issue-316",
+  "branch": "issue-316/feat-architecture-step-1-change-proposal",
+  "commit": "5ef2870a5958971f84ec33b46d389dd920d4933a",
+  "base": "main",
+  "summary": "Malformed forge tag should fail.",
+  "version": 1,
+  "handle": {
+    "forge_tag": "GitHub",
+    "url": "https://github.com/tesserine/groundwork/pull/323",
+    "number": 323
+  }
+}

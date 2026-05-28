@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/change-proposal.schema.json",
+  "title": "Change Proposal",
+  "description": "Validates the content of a change-proposal artifact. A forge-neutral envelope for submitted changes with an immutable review-round version and forge-tagged handle.",
+  "type": "object",
+  "required": ["work_unit", "branch", "commit", "base", "summary", "version", "handle"],
+  "additionalProperties": false,
+  "properties": {
+    "work_unit": {
+      "type": "string",
+      "description": "Common envelope - threads to work unit.",
+      "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
+    },
+    "branch": {
+      "type": "string",
+      "description": "Feature branch name carrying the proposed change.",
+      "minLength": 1
+    },
+    "commit": {
+      "type": "string",
+      "description": "Head commit SHA or stable commit identifier at proposal time.",
+      "minLength": 1
+    },
+    "base": {
+      "type": "string",
+      "description": "Base branch or revision the proposal targets.",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "description": "Human-readable summary of the proposed change.",
+      "minLength": 1
+    },
+    "version": {
+      "type": "integer",
+      "description": "Immutable review-round version, starting at 1.",
+      "minimum": 1
+    },
+    "handle": {
+      "description": "Forge-specific reference to where reviewers inspect this version.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/github-handle"
+        },
+        {
+          "$ref": "#/$defs/sourcehut-handle"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "github-handle": {
+      "type": "object",
+      "required": ["forge_tag", "url", "number"],
+      "additionalProperties": false,
+      "properties": {
+        "forge_tag": {
+          "const": "github"
+        },
+        "url": {
+          "type": "string",
+          "description": "GitHub pull request URL.",
+          "pattern": "^https://github\\.com/[^/]+/[^/]+/pull/[0-9]+$"
+        },
+        "number": {
+          "type": "integer",
+          "description": "GitHub pull request number.",
+          "minimum": 1
+        }
+      }
+    },
+    "sourcehut-handle": {
+      "type": "object",
+      "required": ["forge_tag", "mbox"],
+      "additionalProperties": false,
+      "properties": {
+        "forge_tag": {
+          "const": "sourcehut"
+        },
+        "mbox": {
+          "type": "string",
+          "description": "Artifact-store path or URI for the mbox carrier.",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

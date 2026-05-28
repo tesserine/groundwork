@@ -1,0 +1,12 @@
+{
+  "work_unit": "issue-316",
+  "branch": "issue-316/feat-architecture-step-1-change-proposal",
+  "commit": "5ef2870a5958971f84ec33b46d389dd920d4933a",
+  "base": "main",
+  "summary": "Missing version should fail.",
+  "handle": {
+    "forge_tag": "github",
+    "url": "https://github.com/tesserine/groundwork/pull/323",
+    "number": 323
+  }
+}
