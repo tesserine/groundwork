@@ -1,0 +1,23 @@
+name = "produce-artifact"
+purpose = "Invoke a runa-exposed artifact tool."
+forge_tag = "generic"
+default_invocation = "call {tool_name} with {payload}"
+examples = [
+  "call completion-evidence with validated payload",
+]
+
+[[parameters]]
+name = "payload"
+purpose = "Artifact payload matching the referenced schema."
+required = true
+schema_ref = "completion-evidence"
+
+[[parameters]]
+name = "tool_name"
+purpose = "Artifact tool name exposed by runa."
+required = true
+
+[outcome]
+description = "The artifact is validated and written."
+artifact_type = "completion-evidence"
+

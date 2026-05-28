@@ -1,0 +1,20 @@
+name = "git-push"
+purpose = "Push a local branch to a remote repository."
+default_invocation = "git push {remote} {branch}"
+examples = [
+  "git push origin issue-294/feat-architecture-step-1-mechanic-schema",
+]
+
+[[parameters]]
+name = "remote"
+purpose = "Remote repository name."
+required = true
+
+[[parameters]]
+name = "branch"
+purpose = "Local branch name."
+required = true
+
+[outcome]
+description = "The named branch exists on the remote."
+
