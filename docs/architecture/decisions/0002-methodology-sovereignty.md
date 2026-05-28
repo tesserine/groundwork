@@ -1,8 +1,78 @@
 # ADR-0002: Methodology Sovereignty
 
-**Status:** Provisional \
-**Date:** 2026-05-02 \
+**Status:** Provisional — revised 2026-05-28 (regrounded on a second forge; see Revision below) \
+**Date:** 2026-05-02 (revised 2026-05-28) \
 **Traces to:** `tesserine/commons` PRINCIPLES.md P1 (Sovereignty); `tesserine/commons` ADR-0001 (Sovereignty).
+
+## Revision (2026-05-28): regrounded on two forges
+
+The original decision was reckoned against a single forge (GitHub). Its
+WHAT/HOW separation is sound, but the *placement* of the line leaked
+forge-specifics into the WHAT layer, and a one-forge derivation cannot prove
+forge-neutrality. This revision re-derives the line against two
+topologically-different forges — GitHub (branch + PR + platform merge) and
+SourceHut (patch-series / mbox + `git am` + push, no platform merge, status as
+metadata) — and resequences the rollout so the forge-touching arc proves the
+architecture rather than trailing it.
+
+**What stands unchanged:** the Methodology Sovereignty principle (each *unit* is
+single-shape; units reference, never embed); the six content categories and
+per-category formats (C-1…C-6); the directed-graph C-2 contract; two-tier
+verification; fresh-authoring migration; and the epic + per-phase-deferral
+vehicle.
+
+**Correction 1 — articulation.** Unit-purity is the *constraint*; the *structure*
+it yields is a two-layer protocol: a WHAT contract (C-2) that composes shared
+HOW mechanics (C-3) **by reference**. The protocol-as-experienced carries both
+layers; no single document mixes them; one HOW unit serves every protocol that
+references it.
+
+**Correction 2 — the line, re-placed.** A unit is WHAT only if it is invariant
+across two topologically-different forges. The arc's invariant operations are
+therefore *deliver-change-proposal*, *review*, *revise*, *apply-approved-change*,
+*reflect-disposition*, and *close-out* — **not** `create-pr` or `pr-merge`. "PR"
+and "merge" are HOW and never appear in a workflow contract. This supersedes the
+`create-pr` example in *Per-category formats* below.
+
+**Correction 3 — the artifact layer.** The `patch` artifact becomes
+**`change-proposal`**: a forge-neutral envelope (`work_unit`, `branch`, `commit`,
+`base`, `summary`) plus a **required `version`** (each review round is an
+immutable version on both forges; GitHub's mutable PR is the degenerate case)
+and a **forge-tagged `handle` variant** (`oneOf` keyed by `forge_tag`: GitHub →
+PR URL, a pointer outward to a server object; SourceHut → an mbox reference, a
+carrier we own — under the no-lists decision there is no server pointer). A new
+**`review-findings`** artifact carries the review disposition, and `land`
+triggers on that disposition, not on the raw proposal (folds #243). The
+`patch.pr_reference`-required schema is retired.
+
+**Correction 4 — two orthogonal HOW axes.** HOW varies by *forge* (PR vs patch
+mechanics, apply mechanic, status target) and independently by *mode*
+(autonomous → runa artifact store; interactive → session working file, already
+handled by the interactive-artifact-delivery adapter). Forge mechanics compose
+with the mode adapter; no mechanic is authored per (forge × mode) cell.
+Status-reflection is a forge-tagged mechanic invoked at stage edges (GitHub →
+PR/issue state; SourceHut → tracker-ticket state), mandatory in practice but
+producing no artifact, so it stays HOW. lists.sr.ht / patchset submission for
+external contributor teams is a named, deliberate deferral.
+
+**Resequenced rollout** (supersedes *Migration shape* below):
+
+0. **Reground** — this revision. Establishes the corrected line and the
+   `change-proposal` / `review-findings` artifacts. Cheap; comes first.
+1. **Minimal substrate for the arc** — the C-2 contract schema+parser, the C-3
+   mechanic schema+parser (with `forge_tag`), the C-4 `change-proposal` and
+   `review-findings` schemas, and a conformance runner narrowed to those
+   categories. Closes with R1: the C-2 format exercised once on a simple,
+   already-forge-neutral protocol (`verify` or `take`) before the arc.
+2. **Reference arc** — author `submit → review → land` on both forges (contracts
+   + forge-tagged mechanics + mode-adapter composition) and dogfood it. This is
+   the two-forge proof.
+3. **Generalize** — remaining mechanics; the other seven protocols; discipline
+   and ADR conformance; the body-pattern linter; CI gate; verification migration
+   (folds #255); cleanup and authoring guides; the README articulation upgrade.
+
+Per-phase decomposition deferral and the per-phase
+`decomposition-assumption-update` gate carry over: only Step 1 is decomposed now.
 
 ## Context
 
@@ -99,9 +169,11 @@ are mutually exclusive (parser-enforced); loops require a typed exit
 condition; every terminal is reachable from a designated start node.
 
 The `forge_tag` on C-3 mechanics structurally encodes forge-neutrality: a
-workflow contract references an operation (e.g., `create-pr`); methodology
-configuration selects which forge-tagged mechanic resolves the reference.
-Forge substitution lives at config time, not at workflow-contract time.
+workflow contract references a forge-invariant operation (e.g.,
+`deliver-change-proposal` — **not** `create-pr`; see Revision 2026-05-28);
+methodology configuration selects which forge-tagged mechanic resolves the
+reference. Forge substitution lives at config time, not at workflow-contract
+time.
 
 ### Two-tier verification deployment
 
@@ -123,6 +195,10 @@ left for a later decision if drift between PR-merge and activation surfaces
 as a defect.
 
 ### Migration shape
+
+> **Superseded by the Revision (2026-05-28) resequenced rollout above.** The
+> phased rollout below is retained for record; the active sequence is the
+> four-step plan in the Revision.
 
 Existing `protocols/*/PROTOCOL.md` files do not parse as C-2 workflow
 contracts and are not editable into them. Migration is **fresh authoring
