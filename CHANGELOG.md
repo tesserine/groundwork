@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Step 1 conformance now validates C-2 workflow registry references and reports
+  explicit path read failures as aggregate failures instead of aborting.
 - Mechanic substrate validation now rejects empty `examples` arrays and
   registry-loaded mechanics whose `forge_tag` is not declared in
   `manifest.toml`; generic runtime mechanics remain forge-neutral by omitting

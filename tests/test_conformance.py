@@ -53,6 +53,27 @@ class ConformanceTests(unittest.TestCase):
         self.assertIn("purpose", " ".join(results[1].errors))
         self.assertIn("version", results[2].errors[0])
 
+    def test_workflow_registry_references_are_validated_by_runner(self) -> None:
+        results = run_conformance([WORKFLOW_FIXTURES / "invalid-registry-reference.toml"])
+
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-2 workflow-contract", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("discipline `missing-discipline` does not resolve in registry", " ".join(results[0].errors))
+
+    def test_missing_explicit_path_fails_without_aborting_remaining_units(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            missing = Path(directory) / "missing.schema.json"
+
+            results = run_conformance([missing, WORKFLOW_FIXTURES / "valid-linear.toml"])
+
+        self.assertEqual(2, len(results))
+        self.assertEqual("C-4 schema-definition", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("cannot read conformance unit", " ".join(results[0].errors))
+        self.assertEqual("C-2 workflow-contract", results[1].category)
+        self.assertTrue(results[1].passed)
+
     def test_invalid_schema_definition_returns_failure_result(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             schema = Path(directory) / "broken.schema.json"

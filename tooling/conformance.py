@@ -11,7 +11,7 @@ from jsonschema.exceptions import SchemaError
 
 from tooling.artifact_schemas import ArtifactSchemaError, load_artifact, registry_from_manifest
 from tooling.mechanics import MechanicError, load_mechanic
-from tooling.workflow_contracts import WorkflowContractError, load_workflow_contract
+from tooling.workflow_contracts import WorkflowContractError, load_workflow_contract, workflow_registry_from_manifest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -91,14 +91,22 @@ def _expand_paths(paths: Iterable[Path | str]) -> list[Path]:
 
 def _check_unit(path: Path) -> ConformanceResult:
     category = _classify(path)
-    if category == CATEGORY_WORKFLOW:
-        return _check_workflow_contract(path)
-    if category == CATEGORY_MECHANIC:
-        return _check_mechanic(path)
-    if category == CATEGORY_SCHEMA:
-        return _check_schema_definition(path)
-    if category == CATEGORY_ARTIFACT:
-        return _check_artifact_instance(path)
+    try:
+        if category == CATEGORY_WORKFLOW:
+            return _check_workflow_contract(path)
+        if category == CATEGORY_MECHANIC:
+            return _check_mechanic(path)
+        if category == CATEGORY_SCHEMA:
+            return _check_schema_definition(path)
+        if category == CATEGORY_ARTIFACT:
+            return _check_artifact_instance(path)
+    except OSError as error:
+        return ConformanceResult(
+            path=path,
+            category=category,
+            passed=False,
+            errors=[f"cannot read conformance unit: {error}"],
+        )
     return ConformanceResult(path=path, category=CATEGORY_UNKNOWN, passed=False, errors=["unsupported conformance unit"])
 
 
@@ -116,7 +124,7 @@ def _classify(path: Path) -> str:
 
 def _check_workflow_contract(path: Path) -> ConformanceResult:
     try:
-        load_workflow_contract(path, registry=None)
+        load_workflow_contract(path, registry=workflow_registry_from_manifest())
     except WorkflowContractError as error:
         return ConformanceResult(path=path, category=CATEGORY_WORKFLOW, passed=False, errors=_exception_errors(error))
     return ConformanceResult(path=path, category=CATEGORY_WORKFLOW, passed=True, errors=[])
