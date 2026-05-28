@@ -20,9 +20,8 @@ classified observations against an immutable proposal version: approved reviews
 cannot carry blocking findings, and reviews needing revision must carry at
 least one blocking finding.
 
-Change-proposal handle forge tags resolve against the declarative
-`[[forge_tags]]` registry in `manifest.toml`. The symmetric check for
-mechanic-authored `forge_tag` values is tracked separately in #322.
+Change-proposal handle forge tags and mechanic-authored `forge_tag` values
+resolve against the declarative `[[forge_tags]]` registry in `manifest.toml`.
 
 `request.schema.json` is different: it is a vendored copy of the canonical
 request contract maintained by `tesserine/commons`. Groundwork keeps the runtime

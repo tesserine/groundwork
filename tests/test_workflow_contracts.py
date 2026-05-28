@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tooling.mechanics import load_mechanic
 from tooling.workflow_contracts import (
     WorkflowContractError,
     WorkflowRegistry,
@@ -12,6 +13,7 @@ from tooling.workflow_contracts import (
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "tests" / "fixtures" / "workflow-contracts"
+MECHANIC_FIXTURES = ROOT / "tests" / "fixtures" / "mechanics"
 
 
 class WorkflowContractTests(unittest.TestCase):
@@ -99,6 +101,29 @@ class WorkflowContractTests(unittest.TestCase):
 
         self.assertIn("nodes/0/disciplines/1", context.exception.paths)
         self.assertIn("discipline `missing-discipline` does not resolve in registry", str(context.exception))
+
+    def test_parser_registries_resolve_mechanic_names_across_parsers(self) -> None:
+        mechanic = load_mechanic(MECHANIC_FIXTURES / "valid-github.toml")
+        registry = WorkflowRegistry(
+            disciplines={"orient"},
+            mechanics={mechanic["name"]},
+            artifact_schemas={"change-proposal"},
+        )
+
+        contract = load_workflow_contract(self.fixture("valid-mechanic-smoke.toml"), registry=registry)
+
+        self.assertEqual("submit-smoke", contract["name"])
+
+        renamed_registry = WorkflowRegistry(
+            disciplines={"orient"},
+            mechanics={f"{mechanic['name']}-renamed"},
+            artifact_schemas={"change-proposal"},
+        )
+        with self.assertRaises(WorkflowContractError) as context:
+            load_workflow_contract(self.fixture("valid-mechanic-smoke.toml"), registry=renamed_registry)
+
+        self.assertIn("nodes/0/mechanics/0", context.exception.paths)
+        self.assertIn("mechanic `deliver-change-proposal` does not resolve in registry", str(context.exception))
 
     def test_validate_workflow_contract_accepts_already_loaded_toml_data(self) -> None:
         contract = load_workflow_contract(self.fixture("valid-linear.toml"))

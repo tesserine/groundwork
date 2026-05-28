@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tooling.artifact_schemas import registry_from_manifest
 from tooling.mechanics import (
     MechanicError,
     MechanicRegistry,
@@ -31,7 +32,7 @@ class MechanicTests(unittest.TestCase):
     def test_schema_accepts_generic_runtime_mcp_tool_mechanic(self) -> None:
         mechanic = load_mechanic(self.fixture("valid-mcp-tool.toml"))
 
-        self.assertEqual(mechanic["forge_tag"], "generic")
+        self.assertNotIn("forge_tag", mechanic)
 
     def test_schema_rejects_malformed_shape_with_field_paths(self) -> None:
         with self.assertRaises(MechanicError) as context:
@@ -54,6 +55,12 @@ class MechanicTests(unittest.TestCase):
 
         self.assertIn("forge_tag", context.exception.paths)
 
+    def test_schema_rejects_empty_examples_with_field_path(self) -> None:
+        with self.assertRaises(MechanicError) as context:
+            load_mechanic(self.fixture("invalid-empty-examples.toml"))
+
+        self.assertIn("examples", context.exception.paths)
+
     def test_registry_resolution_can_be_deferred_when_no_registry_is_loaded(self) -> None:
         mechanic = load_mechanic(self.fixture("invalid-registry-reference.toml"), registry=None)
 
@@ -71,6 +78,37 @@ class MechanicTests(unittest.TestCase):
         self.assertIn("parameters/0/schema_ref", context.exception.paths)
         self.assertIn("outcome/artifact_type", context.exception.paths)
         self.assertIn("artifact schema `missing-schema` does not resolve in registry", str(context.exception))
+
+    def test_registry_resolution_accepts_known_forge_tag_when_registry_is_loaded(self) -> None:
+        registry = MechanicRegistry(
+            artifact_types={"change-proposal"},
+            forge_tags={"github"},
+        )
+
+        mechanic = load_mechanic(self.fixture("valid-github.toml"), registry=registry)
+
+        self.assertEqual(mechanic["forge_tag"], "github")
+
+    def test_registry_resolution_accepts_manifest_backed_artifact_declaring_mechanic(self) -> None:
+        mechanic = load_mechanic(self.fixture("valid-github.toml"), registry=registry_from_manifest())
+
+        self.assertEqual(mechanic["outcome"]["artifact_type"], "change-proposal")
+        self.assertEqual(mechanic["forge_tag"], "github")
+
+    def test_registry_resolution_accepts_manifest_backed_schema_ref_declaring_mechanic(self) -> None:
+        mechanic = load_mechanic(self.fixture("valid-mcp-tool.toml"), registry=registry_from_manifest())
+
+        self.assertEqual(mechanic["parameters"][0]["schema_ref"], "completion-evidence")
+        self.assertEqual(mechanic["outcome"]["artifact_type"], "completion-evidence")
+
+    def test_registry_resolution_rejects_unknown_forge_tag_when_registry_is_loaded(self) -> None:
+        registry = MechanicRegistry(forge_tags={"github"})
+
+        with self.assertRaises(MechanicError) as context:
+            load_mechanic(self.fixture("invalid-forge-tag-unregistered.toml"), registry=registry)
+
+        self.assertIn("forge_tag", context.exception.paths)
+        self.assertIn("forge tag `sourcehut-lists` does not resolve in registry", str(context.exception))
 
     def test_validate_mechanic_accepts_already_loaded_toml_data(self) -> None:
         mechanic = load_mechanic(self.fixture("valid-git.toml"))

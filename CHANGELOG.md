@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Mechanic substrate validation now rejects empty `examples` arrays and
+  registry-loaded mechanics whose `forge_tag` is not declared in
+  `manifest.toml`; generic runtime mechanics remain forge-neutral by omitting
+  `forge_tag` (closes #322).
 - Interactive install now projects the artifact delivery adapter into every
   protocol entry without depending on protocol prose formatting, so wrapped MCP
   delivery text cannot omit the adapter from installed protocol skills.
