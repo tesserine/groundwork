@@ -87,4 +87,8 @@ def _registry_errors(mechanic: dict[str, Any], registry: MechanicRegistry) -> li
             )
         )
 
+    forge_tag = mechanic.get("forge_tag")
+    if forge_tag is not None and forge_tag not in registry.forge_tags:
+        errors.append(("forge_tag", f"forge tag `{forge_tag}` does not resolve in registry"))
+
     return errors

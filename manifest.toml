@@ -51,8 +51,7 @@ name = "research-record"
 
 # --- Forge Tags ---
 #
-# Canonical forge tags used by forge-tagged artifact handles. Mechanics carry
-# their own symmetric forge_tag registry check in follow-up work (#322).
+# Canonical forge tags used by forge-tagged artifact handles and mechanics.
 
 [[forge_tags]]
 name = "github"

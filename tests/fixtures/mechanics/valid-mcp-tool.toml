@@ -1,6 +1,5 @@
 name = "produce-artifact"
 purpose = "Invoke a runa-exposed artifact tool."
-forge_tag = "generic"
 default_invocation = "call {tool_name} with {payload}"
 examples = [
   "call completion-evidence with validated payload",

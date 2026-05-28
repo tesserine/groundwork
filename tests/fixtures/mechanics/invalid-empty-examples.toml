@@ -1,0 +1,8 @@
+name = "empty-examples"
+purpose = "Demonstrate non-vacuous mechanic examples."
+parameters = []
+default_invocation = "true"
+examples = []
+
+[outcome]
+description = "The command succeeds."
