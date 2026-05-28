@@ -101,6 +101,19 @@ Prerequisites are the stock command-line tools expected on Fedora CoreOS for
 this workflow: `bash`, `git`, and POSIX file utilities such as `cp`, `find`,
 `mkdir`, `mv`, and `rm`.
 
+## Conformance Checks
+
+Run the narrowed Step 1 methodology conformance runner with:
+
+```bash
+python -m tooling.conformance
+```
+
+By default it checks source-tree workflow contracts and mechanics when those
+directories exist, and all JSON Schema definitions under `schemas/`. Pass files
+or directories as arguments to check explicit C-2/C-3/C-4 units and aggregate
+all failures before returning a non-zero exit status.
+
 ## What Groundwork Believes
 
 These are the methodology choices embedded in groundwork's protocols and skills.

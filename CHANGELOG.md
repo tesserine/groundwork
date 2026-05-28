@@ -20,6 +20,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   handles, disposition/blocking-finding consistency, manifest-declared forge
   tags, format-enforced artifact validation, and `patch` schema supersession
   metadata (closes #316).
+- Narrowed Step 1 conformance runner for C-2 workflow contracts, C-3
+  mechanics, C-4 artifact instances, and JSON Schema definitions, with
+  aggregate pass/fail reporting and non-zero exit on failure (closes #297).
 
 ### Fixed
 
