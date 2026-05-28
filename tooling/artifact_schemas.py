@@ -33,7 +33,14 @@ class ArtifactSchemaError(ValueError):
 
 def registry_from_manifest(path: Path | str = MANIFEST) -> MechanicRegistry:
     manifest = tomllib.loads(Path(path).read_text(encoding="utf-8"))
+    artifact_types = {
+        entry["name"]
+        for entry in manifest.get("artifact_types", [])
+        if isinstance(entry, dict) and isinstance(entry.get("name"), str)
+    }
     return MechanicRegistry(
+        artifact_schemas=set(artifact_types),
+        artifact_types=artifact_types,
         forge_tags={
             entry["name"]
             for entry in manifest.get("forge_tags", [])

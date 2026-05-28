@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tooling.artifact_schemas import registry_from_manifest
 from tooling.mechanics import (
     MechanicError,
     MechanicRegistry,
@@ -87,6 +88,18 @@ class MechanicTests(unittest.TestCase):
         mechanic = load_mechanic(self.fixture("valid-github.toml"), registry=registry)
 
         self.assertEqual(mechanic["forge_tag"], "github")
+
+    def test_registry_resolution_accepts_manifest_backed_artifact_declaring_mechanic(self) -> None:
+        mechanic = load_mechanic(self.fixture("valid-github.toml"), registry=registry_from_manifest())
+
+        self.assertEqual(mechanic["outcome"]["artifact_type"], "change-proposal")
+        self.assertEqual(mechanic["forge_tag"], "github")
+
+    def test_registry_resolution_accepts_manifest_backed_schema_ref_declaring_mechanic(self) -> None:
+        mechanic = load_mechanic(self.fixture("valid-mcp-tool.toml"), registry=registry_from_manifest())
+
+        self.assertEqual(mechanic["parameters"][0]["schema_ref"], "completion-evidence")
+        self.assertEqual(mechanic["outcome"]["artifact_type"], "completion-evidence")
 
     def test_registry_resolution_rejects_unknown_forge_tag_when_registry_is_loaded(self) -> None:
         registry = MechanicRegistry(forge_tags={"github"})
