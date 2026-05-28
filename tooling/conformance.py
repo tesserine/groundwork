@@ -33,7 +33,7 @@ class ConformanceResult:
 
 
 def discover_units(root: Path | str = ROOT) -> list[Path]:
-    root_path = Path(root)
+    root_path = Path(root).resolve()
     units: list[Path] = []
 
     for directory_name in ("workflow-contracts", "mechanics"):
@@ -75,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
 def _expand_paths(paths: Iterable[Path | str]) -> list[Path]:
     units: list[Path] = []
     for path_like in paths:
-        path = Path(path_like)
+        path = Path(path_like).resolve()
         if path.is_dir():
             units.extend(
                 sorted(
@@ -111,6 +111,8 @@ def _check_unit(path: Path) -> ConformanceResult:
 
 
 def _classify(path: Path) -> str:
+    # C-2 and C-3 TOML units are directory-scoped in Step 1; TOML files outside
+    # those directories intentionally remain unknown.
     if path.name.endswith(".schema.json"):
         return CATEGORY_SCHEMA
     if path.suffix == ".toml" and "workflow-contracts" in path.parts:

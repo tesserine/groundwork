@@ -1,6 +1,7 @@
 import contextlib
 import io
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -129,6 +130,25 @@ class ConformanceTests(unittest.TestCase):
             results = run_conformance(discovered)
 
         self.assertEqual([contract], discovered)
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-2 workflow-contract", results[0].category)
+        self.assertTrue(results[0].passed)
+
+    def test_bare_relative_workflow_contract_validates_from_contract_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            contracts = root / "workflow-contracts"
+            contracts.mkdir()
+            contract = contracts / "verify.toml"
+            contract.write_text((WORKFLOW_FIXTURES / "valid-linear.toml").read_text(encoding="utf-8"), encoding="utf-8")
+
+            original_cwd = Path.cwd()
+            try:
+                os.chdir(contracts)
+                results = run_conformance([Path("verify.toml")])
+            finally:
+                os.chdir(original_cwd)
+
         self.assertEqual(1, len(results))
         self.assertEqual("C-2 workflow-contract", results[0].category)
         self.assertTrue(results[0].passed)
