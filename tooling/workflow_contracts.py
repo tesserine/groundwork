@@ -94,7 +94,7 @@ def _mechanic_names_from_directory(directory: Path) -> set[str]:
         return set()
 
     names: set[str] = set()
-    for path in directory.glob("*.toml"):
+    for path in directory.rglob("*.toml"):
         try:
             mechanic = tomllib.loads(path.read_text(encoding="utf-8"))
         except (OSError, tomllib.TOMLDecodeError):

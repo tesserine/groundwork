@@ -8,6 +8,7 @@ from tooling.workflow_contracts import (
     WorkflowRegistry,
     load_workflow_contract,
     validate_workflow_contract,
+    workflow_registry_from_manifest,
 )
 
 
@@ -124,6 +125,31 @@ class WorkflowContractTests(unittest.TestCase):
 
         self.assertIn("nodes/0/mechanics/0", context.exception.paths)
         self.assertIn("mechanic `deliver-change-proposal` does not resolve in registry", str(context.exception))
+
+    def test_registry_from_manifest_resolves_nested_mechanic_directory_names(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "skills" / "orient").mkdir(parents=True)
+            nested_mechanics = root / "mechanics" / "delivery"
+            nested_mechanics.mkdir(parents=True)
+            (nested_mechanics / "valid-github.toml").write_text(
+                (MECHANIC_FIXTURES / "valid-github.toml").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+            manifest = root / "manifest.toml"
+            manifest.write_text(
+                """
+[[artifact_types]]
+name = "change-proposal"
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            registry = workflow_registry_from_manifest(manifest, root=root)
+            self.assertIn("deliver-change-proposal", registry.mechanics)
+            contract = load_workflow_contract(self.fixture("valid-mechanic-smoke.toml"), registry=registry)
+
+        self.assertEqual("submit-smoke", contract["name"])
 
     def test_validate_workflow_contract_accepts_already_loaded_toml_data(self) -> None:
         contract = load_workflow_contract(self.fixture("valid-linear.toml"))
