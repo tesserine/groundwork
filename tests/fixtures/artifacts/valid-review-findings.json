@@ -1,0 +1,18 @@
+{
+  "work_unit": "issue-316",
+  "against_version": 1,
+  "reviewer": "governance",
+  "reviewed_at": "2026-05-28T12:00:00Z",
+  "disposition": "needs_revision",
+  "findings": [
+    {
+      "observation": "SourceHut handle must name its mbox carrier field.",
+      "classification": "blocking",
+      "location": "handle"
+    },
+    {
+      "observation": "PR body should call out the disposition enum decision.",
+      "classification": "non-blocking"
+    }
+  ]
+}

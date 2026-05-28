@@ -35,6 +35,12 @@ name = "completion-evidence"
 name = "documentation-record"
 
 [[artifact_types]]
+name = "change-proposal"
+
+[[artifact_types]]
+name = "review-findings"
+
+[[artifact_types]]
 name = "patch"
 
 [[artifact_types]]
@@ -42,6 +48,17 @@ name = "completion-record"
 
 [[artifact_types]]
 name = "research-record"
+
+# --- Forge Tags ---
+#
+# Canonical forge tags used by forge-tagged artifact handles. Mechanics carry
+# their own symmetric forge_tag registry check in follow-up work (#322).
+
+[[forge_tags]]
+name = "github"
+
+[[forge_tags]]
+name = "sourcehut"
 
 # --- Protocols ---
 #
