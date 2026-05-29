@@ -23,6 +23,8 @@ CATEGORY_ARTIFACT = "C-4 artifact-instance"
 CATEGORY_SCHEMA = "C-4 schema-definition"
 CATEGORY_UNKNOWN = "unknown"
 
+DIRECT_UNIT_DIRECTORY_NAMES = {"workflow-contracts", "mechanics", "schemas"}
+
 
 @dataclass(frozen=True)
 class ConformanceResult:
@@ -77,10 +79,24 @@ def _expand_paths(paths: Iterable[Path | str]) -> list[Path]:
     for path_like in paths:
         path = Path(path_like).resolve()
         if path.is_dir():
-            units.extend(discover_units(path))
+            units.extend(_discover_directory_argument_units(path))
         else:
             units.append(path)
     return units
+
+
+def _discover_directory_argument_units(path: Path) -> list[Path]:
+    if path.name in DIRECT_UNIT_DIRECTORY_NAMES:
+        return _discover_direct_unit_directory(path)
+    if list(path.glob("*.schema.json")):
+        return sorted(path.glob("*.schema.json"))
+    return discover_units(path)
+
+
+def _discover_direct_unit_directory(path: Path) -> list[Path]:
+    if path.name == "schemas":
+        return sorted(path.glob("*.schema.json"))
+    return sorted(path.rglob("*.toml"))
 
 
 def _check_unit(path: Path) -> ConformanceResult:

@@ -129,6 +129,33 @@ class ConformanceTests(unittest.TestCase):
         self.assertEqual("C-2 workflow-contract", results[0].category)
         self.assertTrue(results[0].passed)
 
+    def test_direct_schema_directory_argument_validates_schema_definitions(self) -> None:
+        results = run_conformance([SCHEMAS])
+
+        self.assertGreater(len(results), 0)
+        self.assertTrue(all(result.path.parent == SCHEMAS for result in results))
+        self.assertTrue(all(result.category == "C-4 schema-definition" for result in results))
+        self.assertTrue(all(result.passed for result in results))
+
+    def test_direct_unit_directory_argument_reports_invalid_units(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            contracts = root / "workflow-contracts"
+            contracts.mkdir()
+            invalid = contracts / "invalid.toml"
+            invalid.write_text(
+                (WORKFLOW_FIXTURES / "invalid-malformed-shape.toml").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([contracts])
+
+        self.assertEqual(1, len(results))
+        self.assertEqual(invalid.resolve(), results[0].path)
+        self.assertEqual("C-2 workflow-contract", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertTrue(results[0].errors)
+
     def test_explicit_non_unit_toml_path_fails_instead_of_silently_skipping(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             manifest = Path(directory) / "manifest.toml"
