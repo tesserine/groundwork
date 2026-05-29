@@ -10,6 +10,7 @@ from jsonschema import Draft202012Validator
 
 
 ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = ROOT / "manifest.toml"
 WORKFLOW_CONTRACT_SCHEMA = ROOT / "schemas" / "workflow-contract.schema.json"
 
 
@@ -28,6 +29,33 @@ class WorkflowRegistry:
     disciplines: set[str] = field(default_factory=set)
     mechanics: set[str] = field(default_factory=set)
     artifact_schemas: set[str] = field(default_factory=set)
+
+
+def workflow_registry_from_manifest(
+    path: Path | str = MANIFEST,
+    root: Path | str | None = None,
+) -> WorkflowRegistry:
+    manifest_path = Path(path)
+    root_path = Path(root) if root is not None else manifest_path.parent
+    manifest = tomllib.loads(manifest_path.read_text(encoding="utf-8"))
+
+    artifact_types = {
+        entry["name"]
+        for entry in manifest.get("artifact_types", [])
+        if isinstance(entry, dict) and isinstance(entry.get("name"), str)
+    }
+    mechanic_names = {
+        entry["name"]
+        for entry in manifest.get("mechanics", [])
+        if isinstance(entry, dict) and isinstance(entry.get("name"), str)
+    }
+    mechanic_names.update(_mechanic_names_from_directory(root_path / "mechanics"))
+
+    return WorkflowRegistry(
+        disciplines=_directory_names(root_path / "skills") | _directory_names(root_path / "protocols"),
+        mechanics=mechanic_names,
+        artifact_schemas=artifact_types,
+    )
 
 
 def load_workflow_contract(path: Path | str, registry: WorkflowRegistry | None = None) -> dict[str, Any]:
@@ -53,6 +81,28 @@ def validate_workflow_contract(contract: dict[str, Any], registry: WorkflowRegis
 
     if errors:
         raise WorkflowContractError(errors)
+
+
+def _directory_names(directory: Path) -> set[str]:
+    if not directory.exists():
+        return set()
+    return {entry.name for entry in directory.iterdir() if entry.is_dir()}
+
+
+def _mechanic_names_from_directory(directory: Path) -> set[str]:
+    if not directory.exists():
+        return set()
+
+    names: set[str] = set()
+    for path in directory.rglob("*.toml"):
+        try:
+            mechanic = tomllib.loads(path.read_text(encoding="utf-8"))
+        except (OSError, tomllib.TOMLDecodeError):
+            continue
+        name = mechanic.get("name")
+        if isinstance(name, str):
+            names.add(name)
+    return names
 
 
 def _schema_errors(contract: dict[str, Any]) -> list[tuple[str, str]]:

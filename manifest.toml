@@ -59,6 +59,26 @@ name = "github"
 [[forge_tags]]
 name = "sourcehut"
 
+# --- Mechanics ---
+#
+# Referenceable mechanic handles for C-2 workflow contracts. Full C-3 mechanic
+# definitions may refine these handles as the mechanic library is authored.
+
+[[mechanics]]
+name = "read-artifact"
+
+[[mechanics]]
+name = "inspect-change-proposals"
+
+[[mechanics]]
+name = "deliver-change-proposal"
+
+[[mechanics]]
+name = "inspect-worktree"
+
+[[mechanics]]
+name = "run-test"
+
 # --- Protocols ---
 #
 # Planning phase: survey → decompose

@@ -20,9 +20,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   handles, disposition/blocking-finding consistency, manifest-declared forge
   tags, format-enforced artifact validation, and `patch` schema supersession
   metadata (closes #316).
+- Narrowed Step 1 conformance runner for C-2 workflow contracts, C-3
+  mechanics, C-4 artifact instances, and JSON Schema definitions, with
+  aggregate pass/fail reporting and non-zero exit on failure (closes #297).
 
 ### Fixed
 
+- Step 1 conformance now validates C-2 workflow registry references and reports
+  explicit path read failures as aggregate failures instead of aborting.
+- Step 1 conformance now classifies explicit relative TOML paths from inside
+  `workflow-contracts/` or `mechanics/` directories by resolving them before
+  dispatch; TOML files outside those unit directories remain unsupported.
+- Step 1 conformance directory arguments now use the same unit discovery rules
+  as the default runner, so non-unit files such as `manifest.toml` are skipped
+  during directory expansion while explicitly named non-units still fail.
 - Mechanic substrate validation now rejects empty `examples` arrays and
   registry-loaded mechanics whose `forge_tag` is not declared in
   `manifest.toml`; generic runtime mechanics remain forge-neutral by omitting
