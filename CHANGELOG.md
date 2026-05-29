@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Narrowed Step 1 conformance runner for C-2 workflow contracts, C-3
   mechanics, C-4 artifact instances, and JSON Schema definitions, with
   aggregate pass/fail reporting and non-zero exit on failure (closes #297).
+- Source C-2 workflow contract exercise for the forge-neutral `verify`
+  protocol, including default conformance coverage and a Step 1 R1 note
+  recording that the format held for `verify`'s shape without schema/parser
+  revision (closes #317).
 
 ### Fixed
 

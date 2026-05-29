@@ -5,8 +5,10 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from tooling.conformance import discover_units, main, run_conformance
+from tooling.workflow_contracts import WorkflowRegistry
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -202,6 +204,31 @@ class ConformanceTests(unittest.TestCase):
         self.assertEqual(1, len(results))
         self.assertEqual("C-2 workflow-contract", results[0].category)
         self.assertTrue(results[0].passed)
+
+    def test_source_verify_workflow_contract_is_discovered_and_registry_validated(self) -> None:
+        contract = ROOT / "workflow-contracts" / "verify.toml"
+
+        discovered = discover_units(ROOT)
+        self.assertIn(contract, discovered)
+
+        results = run_conformance([contract])
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-2 workflow-contract", results[0].category)
+        self.assertTrue(results[0].passed)
+        self.assertEqual([], results[0].errors)
+
+        with mock.patch(
+            "tooling.conformance.workflow_registry_from_manifest",
+            return_value=WorkflowRegistry(),
+        ):
+            registry_results = run_conformance([contract])
+
+        self.assertEqual(1, len(registry_results))
+        self.assertFalse(registry_results[0].passed)
+        self.assertIn(
+            "discipline `orient` does not resolve in registry",
+            " ".join(registry_results[0].errors),
+        )
 
     def test_bare_relative_workflow_contract_validates_from_contract_directory(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -1,0 +1,64 @@
+name = "verify"
+purpose = "Gate completion claims by comparing fresh verification evidence against the behavior contract."
+session_role = "verification gate"
+preconditions = ["behavior-contract, test-evidence, and work-unit artifacts exist"]
+start_node = "identify-verification"
+failure_modes = [
+  "verification command is stale or partial",
+  "test evidence does not cover claimed behavior",
+]
+corruption_modes = [
+  "evidence-before-assertion loss",
+  "partial verification treated as completion",
+]
+
+[[nodes]]
+name = "identify-verification"
+intent = "Identify the command and artifacts required to prove the requested completion claim."
+disciplines = ["orient", "contract"]
+mechanics = ["read-artifact"]
+outcomes = ["verification command and required behavior coverage are known"]
+
+[[nodes]]
+name = "run-verification"
+intent = "Run the full verification command freshly and capture its output."
+disciplines = ["contract"]
+mechanics = ["run-test"]
+outcomes = ["fresh command output and exit status are available"]
+
+[[nodes]]
+name = "assess-completion"
+intent = "Compare fresh output and test evidence against the behavior contract and work-unit criteria."
+disciplines = ["contract"]
+mechanics = ["read-artifact"]
+outcomes = ["criterion coverage status is determined"]
+
+[[edges]]
+from = "identify-verification"
+to = "run-verification"
+condition = { type = "always" }
+
+[[edges]]
+from = "run-verification"
+to = "assess-completion"
+condition = { type = "always" }
+
+[[edges]]
+from = "assess-completion"
+to = "completion-covered"
+condition = { type = "case", field = "coverage_status", equals = "covered" }
+
+[[edges]]
+from = "assess-completion"
+to = "completion-incomplete"
+condition = { type = "default", field = "coverage_status" }
+
+[[terminals]]
+name = "completion-covered"
+outcome = "Completion evidence records all criteria covered."
+artifact_produced = "completion-evidence"
+
+[[terminals]]
+name = "completion-incomplete"
+outcome = "Completion evidence records partial or uncovered criteria and blocks unsupported completion claims."
+artifact_produced = "completion-evidence"
