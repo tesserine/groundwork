@@ -75,6 +75,20 @@ class ConformanceTests(unittest.TestCase):
         self.assertEqual("C-2 workflow-contract", results[1].category)
         self.assertTrue(results[1].passed)
 
+    def test_non_utf8_explicit_path_fails_without_aborting_remaining_units(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            malformed = Path(directory) / "malformed.schema.json"
+            malformed.write_bytes(b"\xff")
+
+            results = run_conformance([malformed, WORKFLOW_FIXTURES / "valid-linear.toml"])
+
+        self.assertEqual(2, len(results))
+        self.assertEqual("C-4 schema-definition", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("cannot read conformance unit", " ".join(results[0].errors))
+        self.assertEqual("C-2 workflow-contract", results[1].category)
+        self.assertTrue(results[1].passed)
+
     def test_invalid_schema_definition_returns_failure_result(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             schema = Path(directory) / "broken.schema.json"

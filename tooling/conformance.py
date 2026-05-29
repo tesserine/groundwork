@@ -100,7 +100,7 @@ def _check_unit(path: Path) -> ConformanceResult:
             return _check_schema_definition(path)
         if category == CATEGORY_ARTIFACT:
             return _check_artifact_instance(path)
-    except OSError as error:
+    except (OSError, UnicodeDecodeError) as error:
         return ConformanceResult(
             path=path,
             category=category,
