@@ -77,13 +77,7 @@ def _expand_paths(paths: Iterable[Path | str]) -> list[Path]:
     for path_like in paths:
         path = Path(path_like).resolve()
         if path.is_dir():
-            units.extend(
-                sorted(
-                    candidate
-                    for candidate in path.rglob("*")
-                    if candidate.is_file() and candidate.suffix in {".json", ".toml"}
-                )
-            )
+            units.extend(discover_units(path))
         else:
             units.append(path)
     return units

@@ -112,7 +112,10 @@ python -m tooling.conformance
 By default it checks source-tree workflow contracts and mechanics when those
 directories exist, and all JSON Schema definitions under `schemas/`. Pass files
 or directories as arguments to check explicit C-2/C-3/C-4 units and aggregate
-all failures before returning a non-zero exit status.
+all failures before returning a non-zero exit status. Directory arguments use
+the same discovery rules as the default runner: `workflow-contracts/` and
+`mechanics/` TOML units plus `schemas/*.schema.json`. Explicit file arguments
+that do not classify as conformance units still fail loudly.
 
 ## What Groundwork Believes
 

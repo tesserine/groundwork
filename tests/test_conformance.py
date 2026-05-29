@@ -113,6 +113,34 @@ class ConformanceTests(unittest.TestCase):
         self.assertFalse(results[0].passed)
         self.assertIn("unsupported conformance unit", results[0].errors)
 
+    def test_directory_argument_discovers_only_recognized_units(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "manifest.toml").write_text("name = \"example\"\n", encoding="utf-8")
+            contracts = root / "workflow-contracts"
+            contracts.mkdir()
+            contract = contracts / "verify.toml"
+            contract.write_text((WORKFLOW_FIXTURES / "valid-linear.toml").read_text(encoding="utf-8"), encoding="utf-8")
+
+            results = run_conformance([root])
+
+        self.assertEqual(1, len(results))
+        self.assertEqual(contract.resolve(), results[0].path)
+        self.assertEqual("C-2 workflow-contract", results[0].category)
+        self.assertTrue(results[0].passed)
+
+    def test_explicit_non_unit_toml_path_fails_instead_of_silently_skipping(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "manifest.toml"
+            manifest.write_text("name = \"example\"\n", encoding="utf-8")
+
+            results = run_conformance([manifest])
+
+        self.assertEqual(1, len(results))
+        self.assertEqual("unknown", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("unsupported conformance unit", results[0].errors)
+
     def test_cli_exit_code_reflects_aggregate_result(self) -> None:
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
