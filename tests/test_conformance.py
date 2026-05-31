@@ -262,6 +262,43 @@ name = "change-proposal"
         self.assertFalse(all(result.passed for result in results))
         self.assertIn("invalid TOML", " ".join(error for result in results for error in result.errors))
 
+    def test_malformed_local_manifest_registry_shape_does_not_abort_sibling_checks(self) -> None:
+        cases = {
+            "workflow-artifact-types": (
+                "artifact_types = 7\n",
+                "workflow-contracts",
+                WORKFLOW_FIXTURES / "valid-linear.toml",
+                "C-2 workflow-contract",
+            ),
+            "workflow-protocols": (
+                "protocols = 7\n",
+                "workflow-contracts",
+                WORKFLOW_FIXTURES / "valid-linear.toml",
+                "C-2 workflow-contract",
+            ),
+            "mechanic-artifact-types": (
+                "artifact_types = 7\n",
+                "mechanics",
+                MECHANIC_FIXTURES / "valid-mcp-tool.toml",
+                "C-3 mechanic",
+            ),
+        }
+        for label, (manifest_source, unit_directory_name, fixture, expected_category) in cases.items():
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / "manifest.toml").write_text(manifest_source, encoding="utf-8")
+                unit_directory = root / unit_directory_name
+                unit_directory.mkdir()
+                unit = unit_directory / "unit.toml"
+                unit.write_text(fixture.read_text(encoding="utf-8"), encoding="utf-8")
+
+                results = run_conformance([root])
+
+                self.assertEqual([root / "manifest.toml", unit], [result.path for result in results])
+                self.assertEqual(["C-5 manifest", expected_category], [result.category for result in results])
+                self.assertTrue(all(not result.passed for result in results))
+                self.assertIn("manifest registry could not be loaded", " ".join(results[1].errors))
+
     def test_direct_schema_directory_argument_validates_schema_definitions(self) -> None:
         results = run_conformance([SCHEMAS])
 

@@ -145,36 +145,29 @@ def _classify(path: Path) -> str:
 
 
 def _check_workflow_contract(path: Path) -> ConformanceResult:
+    manifest_path = _registry_manifest_for_unit(path)
     try:
-        manifest_path = _registry_manifest_for_unit(path)
-        load_workflow_contract(
-            path,
-            registry=workflow_registry_from_manifest(manifest_path, root=manifest_path.parent),
-        )
+        registry = workflow_registry_from_manifest(manifest_path, root=manifest_path.parent)
+    except Exception as error:
+        return _registry_load_failure_result(path, CATEGORY_WORKFLOW, error)
+
+    try:
+        load_workflow_contract(path, registry=registry)
     except WorkflowContractError as error:
         return ConformanceResult(path=path, category=CATEGORY_WORKFLOW, passed=False, errors=_exception_errors(error))
-    except tomllib.TOMLDecodeError as error:
-        return ConformanceResult(
-            path=path,
-            category=CATEGORY_WORKFLOW,
-            passed=False,
-            errors=[f"manifest registry could not be loaded: invalid TOML: {error}"],
-        )
     return ConformanceResult(path=path, category=CATEGORY_WORKFLOW, passed=True, errors=[])
 
 
 def _check_mechanic(path: Path) -> ConformanceResult:
     try:
-        load_mechanic(path, registry=registry_from_manifest(_registry_manifest_for_unit(path)))
+        registry = registry_from_manifest(_registry_manifest_for_unit(path))
+    except Exception as error:
+        return _registry_load_failure_result(path, CATEGORY_MECHANIC, error)
+
+    try:
+        load_mechanic(path, registry=registry)
     except MechanicError as error:
         return ConformanceResult(path=path, category=CATEGORY_MECHANIC, passed=False, errors=_exception_errors(error))
-    except tomllib.TOMLDecodeError as error:
-        return ConformanceResult(
-            path=path,
-            category=CATEGORY_MECHANIC,
-            passed=False,
-            errors=[f"manifest registry could not be loaded: invalid TOML: {error}"],
-        )
     return ConformanceResult(path=path, category=CATEGORY_MECHANIC, passed=True, errors=[])
 
 
@@ -449,6 +442,25 @@ def _artifact_type_for_path(path: Path) -> str | None:
 
 def _exception_errors(error: WorkflowContractError | MechanicError | ArtifactSchemaError) -> list[str]:
     return [f"{path}: {message}" for path, message in error.errors]
+
+
+def _registry_load_failure_result(path: Path, category: str, error: Exception) -> ConformanceResult:
+    return ConformanceResult(
+        path=path,
+        category=category,
+        passed=False,
+        errors=[_registry_load_error_message(error)],
+    )
+
+
+def _registry_load_error_message(error: Exception) -> str:
+    if isinstance(error, tomllib.TOMLDecodeError):
+        return f"manifest registry could not be loaded: invalid TOML: {error}"
+    if isinstance(error, UnicodeDecodeError):
+        return f"manifest registry could not be loaded: cannot decode local registry input: {error}"
+    if isinstance(error, OSError):
+        return f"manifest registry could not be loaded: cannot read local registry input: {error}"
+    return f"manifest registry could not be loaded: malformed manifest registry shape: {error}"
 
 
 if __name__ == "__main__":
