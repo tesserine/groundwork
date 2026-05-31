@@ -48,6 +48,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   dispatch; TOML files outside those unit directories remain unsupported.
 - Step 1 conformance directory arguments now use the same unit discovery rules
   as the default runner, while explicitly named non-units still fail.
+- Directory-discovered C-2 workflow contracts and C-3 mechanics now validate
+  registry references against the directory-local `manifest.toml`, and C-5
+  rejects malformed known manifest keys instead of silently treating them as
+  absent.
 - Mechanic substrate validation now rejects empty `examples` arrays and
   registry-loaded mechanics whose `forge_tag` is not declared in
   `manifest.toml`; generic runtime mechanics remain forge-neutral by omitting

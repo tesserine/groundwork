@@ -146,17 +146,35 @@ def _classify(path: Path) -> str:
 
 def _check_workflow_contract(path: Path) -> ConformanceResult:
     try:
-        load_workflow_contract(path, registry=workflow_registry_from_manifest())
+        manifest_path = _registry_manifest_for_unit(path)
+        load_workflow_contract(
+            path,
+            registry=workflow_registry_from_manifest(manifest_path, root=manifest_path.parent),
+        )
     except WorkflowContractError as error:
         return ConformanceResult(path=path, category=CATEGORY_WORKFLOW, passed=False, errors=_exception_errors(error))
+    except tomllib.TOMLDecodeError as error:
+        return ConformanceResult(
+            path=path,
+            category=CATEGORY_WORKFLOW,
+            passed=False,
+            errors=[f"manifest registry could not be loaded: invalid TOML: {error}"],
+        )
     return ConformanceResult(path=path, category=CATEGORY_WORKFLOW, passed=True, errors=[])
 
 
 def _check_mechanic(path: Path) -> ConformanceResult:
     try:
-        load_mechanic(path, registry=registry_from_manifest())
+        load_mechanic(path, registry=registry_from_manifest(_registry_manifest_for_unit(path)))
     except MechanicError as error:
         return ConformanceResult(path=path, category=CATEGORY_MECHANIC, passed=False, errors=_exception_errors(error))
+    except tomllib.TOMLDecodeError as error:
+        return ConformanceResult(
+            path=path,
+            category=CATEGORY_MECHANIC,
+            passed=False,
+            errors=[f"manifest registry could not be loaded: invalid TOML: {error}"],
+        )
     return ConformanceResult(path=path, category=CATEGORY_MECHANIC, passed=True, errors=[])
 
 
@@ -175,6 +193,17 @@ def _check_artifact_instance(path: Path) -> ConformanceResult:
     except ArtifactSchemaError as error:
         return ConformanceResult(path=path, category=CATEGORY_ARTIFACT, passed=False, errors=_exception_errors(error))
     return ConformanceResult(path=path, category=CATEGORY_ARTIFACT, passed=True, errors=[])
+
+
+def _registry_manifest_for_unit(path: Path) -> Path:
+    if path.name == "manifest.toml":
+        return path
+
+    for parent in (path.parent, *path.parents):
+        manifest = parent / "manifest.toml"
+        if manifest.exists():
+            return manifest
+    return ROOT / "manifest.toml"
 
 
 def _check_schema_definition(path: Path) -> ConformanceResult:
@@ -210,13 +239,15 @@ def _check_manifest(path: Path) -> ConformanceResult:
 
 def _manifest_errors(manifest: dict[str, Any]) -> list[tuple[str, str]]:
     errors: list[tuple[str, str]] = []
-    artifact_types = _named_manifest_entries(manifest, "artifact_types")
-    outcome_types = _named_manifest_entries(manifest, "outcome_types")
+    artifact_type_entries = _manifest_table_entries(manifest, "artifact_types", "artifact type", errors)
+    outcome_type_entries = _manifest_table_entries(manifest, "outcome_types", "outcome type", errors)
+    protocol_entries = _manifest_table_entries(manifest, "protocols", "protocol", errors)
+    artifact_types = _named_manifest_entries(artifact_type_entries, "artifact_types", "artifact type", errors)
+    outcome_types = _named_manifest_entries(outcome_type_entries, "outcome_types", "outcome type", errors)
 
-    for outcome_index, outcome_type in enumerate(_manifest_table_array(manifest, "outcome_types")):
-        name = outcome_type.get("name") if isinstance(outcome_type, dict) else None
+    for outcome_index, outcome_type in outcome_type_entries:
+        name = outcome_type.get("name")
         if not isinstance(name, str):
-            errors.append((f"outcome_types/{outcome_index}/name", "outcome type must declare a string name"))
             continue
         if name not in artifact_types:
             errors.append(
@@ -227,19 +258,30 @@ def _manifest_errors(manifest: dict[str, Any]) -> list[tuple[str, str]]:
             )
 
     outcome_bearing_outputs: set[str] = set()
-    for protocol_index, protocol in enumerate(_manifest_table_array(manifest, "protocols")):
-        if not isinstance(protocol, dict):
-            continue
-
+    for protocol_index, protocol in protocol_entries:
         choices = protocol.get("required_output_choices", [])
         if not isinstance(choices, list):
+            if "required_output_choices" in protocol:
+                errors.append(
+                    (
+                        f"protocols/{protocol_index}/required_output_choices",
+                        "required output choices must be an array of tables",
+                    )
+                )
             continue
 
         if choices:
             for output_key in ("produces", "may_produce"):
                 values = protocol.get(output_key, [])
-                if isinstance(values, list):
-                    outcome_bearing_outputs.update(value for value in values if isinstance(value, str))
+                if not isinstance(values, list):
+                    if output_key in protocol:
+                        errors.append((f"protocols/{protocol_index}/{output_key}", f"{output_key} must be an array"))
+                    continue
+                for value_index, value in enumerate(values):
+                    if not isinstance(value, str):
+                        errors.append((f"protocols/{protocol_index}/{output_key}/{value_index}", f"{output_key} member must be a string"))
+                        continue
+                    outcome_bearing_outputs.add(value)
 
         for choice_index, choice in enumerate(choices):
             if not isinstance(choice, dict):
@@ -250,6 +292,15 @@ def _manifest_errors(manifest: dict[str, Any]) -> list[tuple[str, str]]:
                     )
                 )
                 continue
+
+            choice_name = choice.get("name")
+            if not isinstance(choice_name, str):
+                errors.append(
+                    (
+                        f"protocols/{protocol_index}/required_output_choices/{choice_index}/name",
+                        "required output choice must declare a string name",
+                    )
+                )
 
             members = choice.get("members")
             if not isinstance(members, list):
@@ -282,11 +333,12 @@ def _manifest_errors(manifest: dict[str, Any]) -> list[tuple[str, str]]:
                 if member not in outcome_types:
                     errors.append((member_path, f"required output choice member `{member}` is not registered in outcome_types"))
 
-    for protocol_index, protocol in enumerate(_manifest_table_array(manifest, "protocols")):
-        if not isinstance(protocol, dict):
-            continue
+    for protocol_index, protocol in protocol_entries:
         trigger = protocol.get("trigger")
-        if isinstance(trigger, dict):
+        if "trigger" in protocol and not isinstance(trigger, dict):
+            errors.append((f"protocols/{protocol_index}/trigger", "trigger must be a table"))
+            continue
+        if trigger is not None:
             errors.extend(
                 _manifest_trigger_errors(
                     trigger,
@@ -299,17 +351,43 @@ def _manifest_errors(manifest: dict[str, Any]) -> list[tuple[str, str]]:
     return errors
 
 
-def _named_manifest_entries(manifest: dict[str, Any], key: str) -> set[str]:
-    return {
-        entry["name"]
-        for entry in _manifest_table_array(manifest, key)
-        if isinstance(entry, dict) and isinstance(entry.get("name"), str)
-    }
+def _named_manifest_entries(
+    entries: list[tuple[int, dict[str, Any]]],
+    key: str,
+    entry_label: str,
+    errors: list[tuple[str, str]],
+) -> set[str]:
+    names: set[str] = set()
+    for entry_index, entry in entries:
+        name = entry.get("name")
+        if not isinstance(name, str):
+            errors.append((f"{key}/{entry_index}/name", f"{entry_label} must declare a string name"))
+            continue
+        names.add(name)
+    return names
 
 
-def _manifest_table_array(manifest: dict[str, Any], key: str) -> list[Any]:
-    value = manifest.get(key, [])
-    return value if isinstance(value, list) else []
+def _manifest_table_entries(
+    manifest: dict[str, Any],
+    key: str,
+    entry_label: str,
+    errors: list[tuple[str, str]],
+) -> list[tuple[int, dict[str, Any]]]:
+    if key not in manifest:
+        return []
+
+    value = manifest[key]
+    if not isinstance(value, list):
+        errors.append((key, f"{key} must be an array of tables"))
+        return []
+
+    entries: list[tuple[int, dict[str, Any]]] = []
+    for entry_index, entry in enumerate(value):
+        if not isinstance(entry, dict):
+            errors.append((f"{key}/{entry_index}", f"{entry_label} must be a table"))
+            continue
+        entries.append((entry_index, entry))
+    return entries
 
 
 def _manifest_trigger_errors(
@@ -332,17 +410,21 @@ def _manifest_trigger_errors(
     if trigger_type in {"all_of", "any_of"}:
         conditions = trigger.get("conditions", [])
         if not isinstance(conditions, list):
+            if "conditions" in trigger:
+                errors.append((f"{path}/conditions", "conditions must be an array of tables"))
             return errors
         for condition_index, condition in enumerate(conditions):
-            if isinstance(condition, dict):
-                errors.extend(
-                    _manifest_trigger_errors(
-                        condition,
-                        f"{path}/conditions/{condition_index}",
-                        outcome_types,
-                        outcome_bearing_outputs,
-                    )
+            if not isinstance(condition, dict):
+                errors.append((f"{path}/conditions/{condition_index}", "condition must be a table"))
+                continue
+            errors.extend(
+                _manifest_trigger_errors(
+                    condition,
+                    f"{path}/conditions/{condition_index}",
+                    outcome_types,
+                    outcome_bearing_outputs,
                 )
+            )
 
     return errors
 
