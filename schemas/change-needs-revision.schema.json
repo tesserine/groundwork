@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/change-needs-revision.schema.json",
+  "title": "Change Needs Revision",
+  "description": "Validates a review outcome artifact whose produced type is the needs-revision disposition.",
+  "type": "object",
+  "required": ["work_unit", "against_version", "reviewer", "reviewed_at", "findings"],
+  "additionalProperties": false,
+  "properties": {
+    "work_unit": {
+      "$ref": "#/$defs/review-outcome/properties/work_unit"
+    },
+    "against_version": {
+      "$ref": "#/$defs/review-outcome/properties/against_version"
+    },
+    "reviewer": {
+      "$ref": "#/$defs/review-outcome/properties/reviewer"
+    },
+    "reviewed_at": {
+      "$ref": "#/$defs/review-outcome/properties/reviewed_at"
+    },
+    "findings": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/review-outcome/properties/findings"
+        },
+        {
+          "contains": {
+            "$ref": "#/$defs/blocking-finding"
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "review-outcome": {
+      "type": "object",
+      "properties": {
+        "work_unit": {
+          "type": "string",
+          "description": "Common envelope - identifies the reviewed proposal's work unit.",
+          "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
+        },
+        "against_version": {
+          "type": "integer",
+          "description": "Change-proposal version this review addresses.",
+          "minimum": 1
+        },
+        "reviewer": {
+          "type": "string",
+          "description": "Reviewer identity.",
+          "minLength": 1
+        },
+        "reviewed_at": {
+          "type": "string",
+          "description": "Review timestamp.",
+          "format": "date-time",
+          "minLength": 1
+        },
+        "findings": {
+          "type": "array",
+          "description": "Review observations, each classified independently.",
+          "items": {
+            "$ref": "#/$defs/finding"
+          }
+        }
+      }
+    },
+    "blocking-finding": {
+      "type": "object",
+      "required": ["classification"],
+      "properties": {
+        "classification": {
+          "const": "blocking"
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "required": ["observation", "classification"],
+      "additionalProperties": false,
+      "properties": {
+        "observation": {
+          "type": "string",
+          "description": "Review observation.",
+          "minLength": 1
+        },
+        "classification": {
+          "type": "string",
+          "description": "Whether the observation blocks approval.",
+          "enum": ["blocking", "non-blocking"]
+        },
+        "location": {
+          "type": "string",
+          "description": "Optional file, schema path, or review-location reference.",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

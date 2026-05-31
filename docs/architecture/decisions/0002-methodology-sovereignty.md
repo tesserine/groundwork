@@ -45,6 +45,12 @@ carrier we own — under the no-lists decision there is no server pointer). A ne
 triggers on that disposition, not on the raw proposal (folds #243). The
 `patch.pr_reference`-required schema is retired.
 
+**2026-05-31 supersession:** ADR-0003 replaces the single
+`review-findings`-with-disposition artifact with typed review outcome artifacts:
+`change-approved` and `change-needs-revision`. The Correction 3 direction still
+holds - land gates on the review disposition rather than the raw proposal - but
+the disposition is now the produced artifact type.
+
 **Correction 4 — two orthogonal HOW axes.** HOW varies by *forge* (PR vs patch
 mechanics, apply mechanic, status target) and independently by *mode*
 (autonomous → runa artifact store; interactive → session working file, already
