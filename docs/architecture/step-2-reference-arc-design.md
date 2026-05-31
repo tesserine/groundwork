@@ -10,14 +10,23 @@ The decisions here are constraints, not implementation instructions. They name
 what the contracts and mechanics must make true, and they also name the places
 where the current Step-1 substrate is not enough.
 
+## Revision Note
+
+ADR-0003 supersedes the original single-`review-findings` disposition record.
+Review now emits exactly one typed outcome artifact, `change-approved` or
+`change-needs-revision`, through a required-choice output group. The
+review-cycle and classification-home decisions below still hold, but the
+cross-protocol routing signal is the produced outcome type rather than a
+`disposition` field.
+
 ## Grounding
 
 ADR-0002's 2026-05-28 revision fixes the arc vocabulary at six
 forge-invariant operations: `deliver-change-proposal`, `review`, `revise`,
 `apply-approved-change`, `reflect-disposition`, and `close-out`. It also
 replaces `patch` with `change-proposal`, gives each proposal an immutable
-`version`, adds a forge-tagged `handle`, and makes `review-findings` carry the
-review disposition consumed by the land/revise flow.
+`version`, and adds a forge-tagged `handle`. ADR-0003 moves the review
+disposition into the produced outcome type consumed by the land/revise flow.
 
 The Step-1 substrate on `main` has these relevant facts:
 
@@ -30,9 +39,9 @@ The Step-1 substrate on `main` has these relevant facts:
   it does not select a mechanic for an active forge.
 - `manifest.toml` registers available forge tags (`github`, `sourcehut`), but it
   does not declare an active forge or operation-to-mechanic bindings.
-- `review-findings.schema.json` already makes classification structural:
-  `approved` findings cannot contain blocking observations, and `needs_revision`
-  findings must contain at least one blocking observation.
+- `change-approved.schema.json` and `change-needs-revision.schema.json` make
+  classification structural: approval cannot contain blocking observations, and
+  needs-revision must contain at least one blocking observation.
 
 The runa interface contract grounds the trigger decision: runa exposes artifact
 types, protocol declarations, and trigger conditions. `on_change(name)` fires when
@@ -51,12 +60,12 @@ version for the same work unit. A revised proposal is a new valid
 `change-proposal` instance with `version = previous + 1`; prior versions remain
 review-round history.
 
-`review` consumes the current proposal version and produces a `review-findings`
-artifact whose `against_version` names the reviewed proposal version. Re-review
-is expressed by `review` triggering on `on_change("change-proposal")`, not by
-inventing a separate cycle vocabulary. When a new proposal version appears,
-runa's input freshness model makes the review protocol eligible again for that
-work unit.
+`review` consumes the current proposal version and produces exactly one typed
+outcome artifact whose `against_version` names the reviewed proposal version.
+Re-review is expressed by `review` triggering on
+`on_change("change-proposal")`, not by inventing a separate cycle vocabulary.
+When a new proposal version appears, runa's input freshness model makes the
+review protocol eligible again for that work unit.
 
 The `version` field is methodology semantics, not runa semantics. Runa observes
 artifact state and freshness; the review contract must select the latest valid
@@ -65,34 +74,27 @@ version.
 
 ### 2. Classification is produced by `review`
 
-Finding classification lives in `review-findings`, and the disposition is
-authoritative as produced by the `review` step. There is no separate `triage`
-protocol in Step 2 and no unnamed governance step between review and land.
+Finding classification lives in the typed review outcome artifact, and the
+disposition is authoritative as produced by the `review` step. There is no
+separate `triage` protocol in Step 2 and no unnamed governance step between
+review and land.
 
 The `review` protocol may involve a human or external review agent, but the
-capstone is still the `review-findings` artifact. The producing review step is
-responsible for recording `blocking` or `non-blocking` on each finding and the
-aggregate `disposition` (`approved` or `needs_revision`). Full automation of the
-blocking call is deferred; naming the producing step is not deferred.
+capstone is still a typed review outcome artifact. The producing review step is
+responsible for recording `blocking` or `non-blocking` on each finding and for
+emitting exactly one disposition type. Full automation of the blocking call is
+deferred; naming the producing step is not deferred.
 
 ### 3. Land gates on approved review disposition
 
 `land` must not activate from a raw `change-proposal` or legacy `patch`. The
-release gate is the approved review disposition in `review-findings`.
+release gate is `on_artifact("change-approved")`. `change-needs-revision` routes
+to revision instead, and runa's required-choice output group fails a review run
+that emits no verdict or more than one verdict.
 
-This is not fully realizable on the current runa trigger substrate as an exact
-activation gate, because runa currently has artifact-type triggers but no field
-predicate such as `review-findings.disposition == "approved"`. A type-level
-trigger on `review-findings` would also fire for `needs_revision`, which would
-activate `land` on a non-release state.
-
-Therefore #332 requires a substrate addition before it can honestly satisfy the
-gate: runa/manifest trigger conditions need a field predicate over a valid
-artifact instance, at minimum enough to express "activate `land` when a scoped
-`review-findings` instance has `disposition = approved`." The land C-2 contract
-still verifies the disposition before applying the change, but runtime activation
-must be predicate-gated so `needs_revision` findings route to revision instead
-of a failing land run.
+ADR-0003 supersedes this note's original field-predicate prerequisite. Runa
+does not need to read `review-findings.disposition`; it only enforces output
+type cardinality and routes on artifact type.
 
 ### 4. Forge-operation resolution is a Step-2 substrate gap
 
@@ -128,11 +130,12 @@ operation binding under the selected forge tag.
   `deliver-change-proposal` and, for revision rounds, `revise` as invariant
   operation handles. It must not embed GitHub or SourceHut vocabulary.
 - #331: `review` consumes `change-proposal`, triggers on
-  `on_change("change-proposal")`, produces authoritative `review-findings`, and
-  names the disposition itself.
-- #332: `land` consumes approved `review-findings`, applies the approved change,
-  reflects disposition, and closes out. It depends on the approved-disposition
-  trigger predicate substrate.
+  `on_change("change-proposal")`, declares a required-choice output group over
+  `change-approved` / `change-needs-revision`, and names the disposition by the
+  outcome type it produces.
+- #332: `land` consumes `change-approved`, applies the approved change, reflects
+  disposition, and closes out. It activates on the typed approval outcome, not a
+  field predicate.
 - #333/#334: GitHub and SourceHut mechanics implement the invariant operation
   handles through `forge_tag`-selected C-3 mechanics. They do not create
   per-(forge x mode) mechanics; the interactive artifact-delivery adapter remains
@@ -153,7 +156,8 @@ operation binding under the selected forge tag.
 - [ADR-0002](decisions/0002-methodology-sovereignty.md)
 - [Step 1 R1 C-2 contract exercise](step-1-r1-c2-contract-exercise.md)
 - [change-proposal schema](../../schemas/change-proposal.schema.json)
-- [review-findings schema](../../schemas/review-findings.schema.json)
+- [change-approved schema](../../schemas/change-approved.schema.json)
+- [change-needs-revision schema](../../schemas/change-needs-revision.schema.json)
 - [workflow-contract schema](../../schemas/workflow-contract.schema.json)
 - [mechanic schema](../../schemas/mechanic.schema.json)
 - [runa interface contract](https://github.com/tesserine/runa/blob/main/docs/interface-contract.md)
@@ -162,9 +166,9 @@ operation binding under the selected forge tag.
 
 This note closes #243's open cycle-vocabulary question by choosing
 artifact-versioned re-review through `on_change("change-proposal")`, grounded in
-runa's trigger model. It closes the triage-home question by making
-`review-findings` produced by `review` the classification authority. It closes
+runa's trigger model. It closes the triage-home question by making the typed
+review outcome produced by `review` the classification authority. It closes
 the forge-resolution question by naming the exact current substrate gap and the
-required operation resolution mechanism. It also names the land-disposition
-trigger gap explicitly, so #332 does not assume a runtime feature that does not
-exist on `main`.
+required operation resolution mechanism. ADR-0003 supersedes the original
+land-disposition field-predicate gap with typed outcome routing and the
+required-choice output edge.

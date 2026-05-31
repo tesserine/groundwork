@@ -511,7 +511,8 @@ name = "change-proposal"
 
         self.assertIn(ROOT / "manifest.toml", discovered)
         self.assertIn(SCHEMAS / "change-proposal.schema.json", discovered)
-        self.assertIn(SCHEMAS / "review-findings.schema.json", discovered)
+        self.assertIn(SCHEMAS / "change-approved.schema.json", discovered)
+        self.assertIn(SCHEMAS / "change-needs-revision.schema.json", discovered)
         self.assertFalse(any("tests/fixtures" in path.as_posix() for path in discovered))
 
     def test_future_r1_contract_is_discovered_without_runner_changes(self) -> None:
@@ -816,6 +817,18 @@ trigger = { type = "on_artifact", name = "review-findings" }
 
     def test_source_verify_workflow_contract_is_discovered_and_registry_validated(self) -> None:
         contract = ROOT / "workflow-contracts" / "verify.toml"
+
+        discovered = discover_units(ROOT)
+        self.assertIn(contract, discovered)
+
+        results = run_conformance([contract])
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-2 workflow-contract", results[0].category)
+        self.assertTrue(results[0].passed)
+        self.assertEqual([], results[0].errors)
+
+    def test_source_review_workflow_contract_is_discovered_and_registry_validated(self) -> None:
+        contract = ROOT / "workflow-contracts" / "review.toml"
 
         discovered = discover_units(ROOT)
         self.assertIn(contract, discovered)

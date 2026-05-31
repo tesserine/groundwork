@@ -1,0 +1,54 @@
+name = "review"
+purpose = "Review a submitted change proposal and produce exactly one disposition outcome."
+session_role = "review gate"
+preconditions = ["change-proposal exists"]
+start_node = "inspect-change-proposal"
+failure_modes = [
+  "review cannot inspect the proposed change",
+  "review cannot classify whether findings block approval",
+  "review emits no disposition outcome",
+]
+corruption_modes = [
+  "disposition-agnostic routing",
+  "forge-specific review tooling embedded in the workflow contract",
+  "semantic shift accepted as harmless cleanup",
+]
+
+[[nodes]]
+name = "inspect-change-proposal"
+intent = "Read the current change-proposal version and identify the reviewed artifact boundary."
+disciplines = ["orient"]
+mechanics = ["read-artifact"]
+outcomes = ["review target and proposal version are known"]
+
+[[nodes]]
+name = "evaluate-change"
+intent = "Evaluate the proposal for scope honesty, correctness, semantic shift, and blocking findings."
+disciplines = ["code-review"]
+mechanics = ["review"]
+outcomes = ["review disposition is known and findings are classified"]
+
+[[edges]]
+from = "inspect-change-proposal"
+to = "evaluate-change"
+condition = { type = "always" }
+
+[[edges]]
+from = "evaluate-change"
+to = "approved"
+condition = { type = "case", field = "disposition", equals = "approved" }
+
+[[edges]]
+from = "evaluate-change"
+to = "needs-revision"
+condition = { type = "default", field = "disposition" }
+
+[[terminals]]
+name = "approved"
+outcome = "The change is approved and contains no blocking findings."
+artifact_produced = "change-approved"
+
+[[terminals]]
+name = "needs-revision"
+outcome = "The change needs revision because at least one blocking finding remains."
+artifact_produced = "change-needs-revision"

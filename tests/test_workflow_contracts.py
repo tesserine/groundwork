@@ -159,6 +159,14 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("terminals/1/artifact_produced", context.exception.paths)
         self.assertIn("not a member of manifest required_output_choices `review-disposition`", str(context.exception))
 
+    def test_review_shared_record_type_guard_fixture_stays_invalid(self) -> None:
+        registry = workflow_registry_from_manifest()
+
+        with self.assertRaises(WorkflowContractError) as context:
+            load_workflow_contract(self.fixture("invalid-shared-record-type-outcomes.toml"), registry=registry)
+
+        self.assertIn("not a member of manifest required_output_choices `review-disposition`", str(context.exception))
+
     def test_outcome_terminals_reject_manifest_group_divergence(self) -> None:
         registry = WorkflowRegistry(
             disciplines={"orient"},

@@ -12,13 +12,13 @@ declared as a runtime artifact type in `manifest.toml`.
 ADR-0002. It is validated by `tooling.mechanics`, not declared as a runtime
 artifact type in `manifest.toml`.
 
-`change-proposal.schema.json` and `review-findings.schema.json` are the C-4
-artifact schemas from ADR-0002 Revision 2026-05-28. `change-proposal` replaces
-the old PR-shaped `patch` artifact with a forge-neutral envelope plus a
-forge-tagged handle. `review-findings` records the review disposition and
-classified observations against an immutable proposal version: approved reviews
-cannot carry blocking findings, and reviews needing revision must carry at
-least one blocking finding.
+`change-proposal.schema.json`, `change-approved.schema.json`, and
+`change-needs-revision.schema.json` are the C-4 artifact schemas for the
+submit -> review handoff from ADR-0002 and ADR-0003. `change-proposal`
+replaces the old PR-shaped `patch` artifact with a forge-neutral envelope plus
+a forge-tagged handle. The review disposition is the produced outcome type:
+`change-approved` cannot carry blocking findings, and `change-needs-revision`
+must carry at least one blocking finding.
 
 Change-proposal handle forge tags and mechanic-authored `forge_tag` values
 resolve against the declarative `[[forge_tags]]` registry in `manifest.toml`.

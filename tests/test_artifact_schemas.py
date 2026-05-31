@@ -90,39 +90,38 @@ class ArtifactSchemaTests(unittest.TestCase):
         self.assertIn("handle/forge_tag", context.exception.paths)
         self.assertIn("forge tag `sourcehut` does not resolve in registry", str(context.exception))
 
-    def test_review_findings_schema_accepts_structured_findings(self) -> None:
-        artifact = load_artifact("review-findings", self.fixture("valid-review-findings.json"))
+    def test_change_needs_revision_schema_accepts_structured_findings(self) -> None:
+        artifact = load_artifact("change-needs-revision", self.fixture("valid-change-needs-revision.json"))
 
-        self.assertEqual("needs_revision", artifact["disposition"])
         self.assertEqual("blocking", artifact["findings"][0]["classification"])
 
-    def test_review_findings_schema_rejects_unknown_disposition(self) -> None:
-        with self.assertRaises(ArtifactSchemaError) as context:
-            load_artifact("review-findings", self.fixture("invalid-review-findings-disposition.json"))
+    def test_change_approved_schema_accepts_approval_without_blocking_findings(self) -> None:
+        artifact = load_artifact("change-approved", self.fixture("valid-change-approved.json"))
 
-        self.assertIn("disposition", context.exception.paths)
+        self.assertEqual([], artifact["findings"])
+        self.assertNotIn("disposition", artifact)
 
-    def test_review_findings_schema_rejects_unclassified_finding(self) -> None:
+    def test_change_approved_schema_rejects_unclassified_finding(self) -> None:
         with self.assertRaises(ArtifactSchemaError) as context:
-            load_artifact("review-findings", self.fixture("invalid-review-findings-unclassified.json"))
+            load_artifact("change-approved", self.fixture("invalid-change-approved-unclassified.json"))
 
         self.assertIn("findings/0/classification", context.exception.paths)
 
-    def test_review_findings_schema_rejects_approved_with_blocking_findings(self) -> None:
+    def test_change_approved_schema_rejects_blocking_findings(self) -> None:
         with self.assertRaises(ArtifactSchemaError) as context:
-            load_artifact("review-findings", self.fixture("invalid-review-findings-approved-with-blocking.json"))
+            load_artifact("change-approved", self.fixture("invalid-change-approved-with-blocking.json"))
 
         self.assertIn("findings", context.exception.paths)
 
-    def test_review_findings_schema_rejects_needs_revision_without_blocking_findings(self) -> None:
+    def test_change_needs_revision_schema_rejects_missing_blocking_finding(self) -> None:
         with self.assertRaises(ArtifactSchemaError) as context:
-            load_artifact("review-findings", self.fixture("invalid-review-findings-needs-revision-without-blocking.json"))
+            load_artifact("change-needs-revision", self.fixture("invalid-change-needs-revision-without-blocking.json"))
 
         self.assertIn("findings", context.exception.paths)
 
-    def test_review_findings_schema_rejects_bad_review_timestamp(self) -> None:
+    def test_change_approved_schema_rejects_bad_review_timestamp(self) -> None:
         with self.assertRaises(ArtifactSchemaError) as context:
-            load_artifact("review-findings", self.fixture("invalid-review-findings-bad-timestamp.json"))
+            load_artifact("change-approved", self.fixture("invalid-change-approved-bad-timestamp.json"))
 
         self.assertIn("reviewed_at", context.exception.paths)
 
@@ -144,9 +143,9 @@ class ArtifactSchemaTests(unittest.TestCase):
         self.assertIn("Superseded by change-proposal", schema["description"])
 
     def test_validate_artifact_accepts_already_loaded_json_data(self) -> None:
-        artifact = load_artifact("review-findings", self.fixture("valid-review-findings-approved.json"))
+        artifact = load_artifact("change-approved", self.fixture("valid-change-approved.json"))
 
-        validate_artifact("review-findings", artifact)
+        validate_artifact("change-approved", artifact)
 
 
 if __name__ == "__main__":

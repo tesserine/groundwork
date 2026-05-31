@@ -3,7 +3,6 @@
   "against_version": 1,
   "reviewer": "governance",
   "reviewed_at": "2026-05-28T12:00:00Z",
-  "disposition": "needs_revision",
   "findings": [
     {
       "observation": "SourceHut handle must name its mbox carrier field.",

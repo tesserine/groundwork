@@ -32,7 +32,8 @@ change → land merges and closes the loop.
 Each protocol produces an artifact that the next protocol requires.
 → [`docs/architecture/connecting-structure.md`](docs/architecture/connecting-structure.md)
 
-Six skills operate across the topology:
+Skills operate across the topology as cross-cutting disciplines and
+stage-specific judgment:
 
 - **orient** — the methodology map that connects protocols and skills
 - **reckon** — first-principles reasoning when creating or analyzing
@@ -40,6 +41,7 @@ Six skills operate across the topology:
 - **resolve** — structural friction resolution when obstacles impede
 - **research** — external evidence gathering when facts are missing
 - **contract** — behavior traceability through execution
+- **code-review** — review judgment for submitted change proposals
 
 Not every piece of work needs every stage. A bug with an existing work-unit enters
 at execution. A new capability enters at planning. The constraint is sequence,
@@ -193,8 +195,8 @@ becomes a work-unit.
 | Path | Contains |
 |------|----------|
 | [`manifest.toml`](manifest.toml) | Manifest: artifact types, protocol topology, trigger conditions |
-| [`protocols/`](protocols/) | 10 protocol definitions — one per stage |
-| [`skills/`](skills/) | 6 skills — orientation and cross-cutting disciplines |
+| [`protocols/`](protocols/) | Protocol definitions for methodology stages |
+| [`skills/`](skills/) | Skills for orientation, cross-cutting disciplines, and stage-specific judgment |
 | [`schemas/`](schemas/) | JSON Schema contracts for artifacts and authoring substrates |
 | [`tooling/`](tooling/) | Authoring-time parsers and validators |
 | [`docs/architecture/`](docs/architecture/) | Topology design rationale and work-unit state model |

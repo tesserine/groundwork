@@ -3,7 +3,7 @@
   "branch": "issue-316/feat-architecture-step-1-change-proposal",
   "commit": "5ef2870a5958971f84ec33b46d389dd920d4933a",
   "base": "main",
-  "summary": "Add change-proposal and review-findings artifact schemas.",
+  "summary": "Add change-proposal and typed review outcome artifact schemas.",
   "version": 1,
   "handle": {
     "forge_tag": "github",

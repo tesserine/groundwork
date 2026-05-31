@@ -38,7 +38,10 @@ name = "documentation-record"
 name = "change-proposal"
 
 [[artifact_types]]
-name = "review-findings"
+name = "change-approved"
+
+[[artifact_types]]
+name = "change-needs-revision"
 
 [[artifact_types]]
 name = "patch"
@@ -48,6 +51,17 @@ name = "completion-record"
 
 [[artifact_types]]
 name = "research-record"
+
+# --- Outcome Types ---
+#
+# Outcome types are artifact types whose produced type is the disposition used
+# for cross-protocol routing.
+
+[[outcome_types]]
+name = "change-approved"
+
+[[outcome_types]]
+name = "change-needs-revision"
 
 # --- Forge Tags ---
 #
@@ -74,6 +88,9 @@ name = "inspect-change-proposals"
 name = "deliver-change-proposal"
 
 [[mechanics]]
+name = "review"
+
+[[mechanics]]
 name = "inspect-worktree"
 
 [[mechanics]]
@@ -83,7 +100,7 @@ name = "run-test"
 #
 # Planning phase: survey → decompose
 # Execution phase: take → specify → plan → implement → verify
-#                  → document → submit → land
+#                  → document → submit → review → land
 
 [[protocols]]
 name = "survey"
@@ -163,6 +180,19 @@ accepts = []
 produces = ["patch"]
 may_produce = []
 trigger = { type = "on_artifact", name = "documentation-record" }
+
+[[protocols]]
+name = "review"
+scoped = true
+requires = ["change-proposal"]
+accepts = []
+produces = []
+may_produce = []
+trigger = { type = "on_change", name = "change-proposal" }
+
+[[protocols.required_output_choices]]
+name = "review-disposition"
+members = ["change-approved", "change-needs-revision"]
 
 [[protocols]]
 name = "land"

@@ -15,10 +15,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Mechanic authoring substrate: a C-3 JSON Schema, TOML parser, optional
   forge-tag validation, registry-reference validation, and fixture coverage for
   forge-neutral, forge-tagged, and runtime-tool mechanics (closes #294).
-- Change proposal review substrate: C-4 `change-proposal` and
-  `review-findings` artifact schemas, fixture coverage for GitHub and SourceHut
-  handles, disposition/blocking-finding consistency, manifest-declared forge
-  tags, format-enforced artifact validation, and `patch` schema supersession
+- Change proposal review substrate: C-4 `change-proposal`,
+  `change-approved`, and `change-needs-revision` artifact schemas, fixture
+  coverage for GitHub and SourceHut handles, disposition/blocking-finding
+  consistency through typed review outcomes, manifest-declared forge tags,
+  format-enforced artifact validation, and `patch` schema supersession
   metadata (closes #316).
 - Narrowed Step 1 conformance runner for C-2 workflow contracts, C-3
   mechanics, C-4 artifact instances, and JSON Schema definitions, with
@@ -35,6 +36,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   classification ownership, approved-disposition land gating, and
   forge-operation resolution constraints for downstream authoring units
   (closes #329).
+- Review protocol authoring surface: source C-2 `review` contract,
+  `code-review` skill, manifest-registered required-choice outcome group, and
+  typed review disposition routing through `change-approved` /
+  `change-needs-revision` (closes #331).
 
 ### Fixed
 

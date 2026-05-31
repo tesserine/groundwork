@@ -3,10 +3,10 @@
   "against_version": 1,
   "reviewer": "governance",
   "reviewed_at": "2026-05-28T12:00:00Z",
-  "disposition": "needs_revision",
   "findings": [
     {
-      "observation": "Every finding must carry its own classification."
+      "observation": "Non-blocking findings alone cannot require revision.",
+      "classification": "non-blocking"
     }
   ]
 }

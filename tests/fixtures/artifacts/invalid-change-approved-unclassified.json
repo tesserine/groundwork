@@ -3,6 +3,9 @@
   "against_version": 2,
   "reviewer": "governance",
   "reviewed_at": "2026-05-28T13:00:00Z",
-  "disposition": "approved",
-  "findings": []
+  "findings": [
+    {
+      "observation": "Finding classification is required."
+    }
+  ]
 }
