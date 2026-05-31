@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import SchemaError
@@ -21,6 +22,7 @@ CATEGORY_WORKFLOW = "C-2 workflow-contract"
 CATEGORY_MECHANIC = "C-3 mechanic"
 CATEGORY_ARTIFACT = "C-4 artifact-instance"
 CATEGORY_SCHEMA = "C-4 schema-definition"
+CATEGORY_MANIFEST = "C-5 manifest"
 CATEGORY_UNKNOWN = "unknown"
 
 DIRECT_UNIT_DIRECTORY_NAMES = {"workflow-contracts", "mechanics", "schemas"}
@@ -37,6 +39,10 @@ class ConformanceResult:
 def discover_units(root: Path | str = ROOT) -> list[Path]:
     root_path = Path(root).resolve()
     units: list[Path] = []
+
+    manifest = root_path / "manifest.toml"
+    if manifest.exists():
+        units.append(manifest)
 
     for directory_name in ("workflow-contracts", "mechanics"):
         directory = root_path / directory_name
@@ -110,6 +116,8 @@ def _check_unit(path: Path) -> ConformanceResult:
             return _check_schema_definition(path)
         if category == CATEGORY_ARTIFACT:
             return _check_artifact_instance(path)
+        if category == CATEGORY_MANIFEST:
+            return _check_manifest(path)
     except (OSError, UnicodeDecodeError) as error:
         return ConformanceResult(
             path=path,
@@ -123,6 +131,8 @@ def _check_unit(path: Path) -> ConformanceResult:
 def _classify(path: Path) -> str:
     # C-2 and C-3 TOML units are directory-scoped in Step 1; TOML files outside
     # those directories intentionally remain unknown.
+    if path.name == "manifest.toml":
+        return CATEGORY_MANIFEST
     if path.name.endswith(".schema.json"):
         return CATEGORY_SCHEMA
     if path.suffix == ".toml" and "workflow-contracts" in path.parts:
@@ -135,8 +145,14 @@ def _classify(path: Path) -> str:
 
 
 def _check_workflow_contract(path: Path) -> ConformanceResult:
+    manifest_path = _registry_manifest_for_unit(path)
     try:
-        load_workflow_contract(path, registry=workflow_registry_from_manifest())
+        registry = workflow_registry_from_manifest(manifest_path, root=manifest_path.parent)
+    except Exception as error:
+        return _registry_load_failure_result(path, CATEGORY_WORKFLOW, error)
+
+    try:
+        load_workflow_contract(path, registry=registry)
     except WorkflowContractError as error:
         return ConformanceResult(path=path, category=CATEGORY_WORKFLOW, passed=False, errors=_exception_errors(error))
     return ConformanceResult(path=path, category=CATEGORY_WORKFLOW, passed=True, errors=[])
@@ -144,7 +160,12 @@ def _check_workflow_contract(path: Path) -> ConformanceResult:
 
 def _check_mechanic(path: Path) -> ConformanceResult:
     try:
-        load_mechanic(path, registry=registry_from_manifest())
+        registry = registry_from_manifest(_registry_manifest_for_unit(path))
+    except Exception as error:
+        return _registry_load_failure_result(path, CATEGORY_MECHANIC, error)
+
+    try:
+        load_mechanic(path, registry=registry)
     except MechanicError as error:
         return ConformanceResult(path=path, category=CATEGORY_MECHANIC, passed=False, errors=_exception_errors(error))
     return ConformanceResult(path=path, category=CATEGORY_MECHANIC, passed=True, errors=[])
@@ -167,6 +188,17 @@ def _check_artifact_instance(path: Path) -> ConformanceResult:
     return ConformanceResult(path=path, category=CATEGORY_ARTIFACT, passed=True, errors=[])
 
 
+def _registry_manifest_for_unit(path: Path) -> Path:
+    if path.name == "manifest.toml":
+        return path
+
+    for parent in (path.parent, *path.parents):
+        manifest = parent / "manifest.toml"
+        if manifest.exists():
+            return manifest
+    return ROOT / "manifest.toml"
+
+
 def _check_schema_definition(path: Path) -> ConformanceResult:
     try:
         schema = json.loads(path.read_text(encoding="utf-8"))
@@ -176,6 +208,218 @@ def _check_schema_definition(path: Path) -> ConformanceResult:
     except SchemaError as error:
         return ConformanceResult(path=path, category=CATEGORY_SCHEMA, passed=False, errors=[error.message])
     return ConformanceResult(path=path, category=CATEGORY_SCHEMA, passed=True, errors=[])
+
+
+def _check_manifest(path: Path) -> ConformanceResult:
+    try:
+        manifest = tomllib.loads(path.read_text(encoding="utf-8"))
+    except tomllib.TOMLDecodeError as error:
+        return ConformanceResult(
+            path=path,
+            category=CATEGORY_MANIFEST,
+            passed=False,
+            errors=[f"<toml>: {path.name} is invalid TOML: {error}"],
+        )
+
+    errors = _manifest_errors(manifest)
+    return ConformanceResult(
+        path=path,
+        category=CATEGORY_MANIFEST,
+        passed=not errors,
+        errors=[f"{error_path}: {message}" for error_path, message in errors],
+    )
+
+
+def _manifest_errors(manifest: dict[str, Any]) -> list[tuple[str, str]]:
+    errors: list[tuple[str, str]] = []
+    artifact_type_entries = _manifest_table_entries(manifest, "artifact_types", "artifact type", errors)
+    outcome_type_entries = _manifest_table_entries(manifest, "outcome_types", "outcome type", errors)
+    protocol_entries = _manifest_table_entries(manifest, "protocols", "protocol", errors)
+    artifact_types = _named_manifest_entries(artifact_type_entries, "artifact_types", "artifact type", errors)
+    outcome_types = _named_manifest_entries(outcome_type_entries, "outcome_types", "outcome type", errors)
+
+    for outcome_index, outcome_type in outcome_type_entries:
+        name = outcome_type.get("name")
+        if not isinstance(name, str):
+            continue
+        if name not in artifact_types:
+            errors.append(
+                (
+                    f"outcome_types/{outcome_index}/name",
+                    f"outcome type `{name}` does not resolve in artifact_types",
+                )
+            )
+
+    outcome_bearing_outputs: set[str] = set()
+    for protocol_index, protocol in protocol_entries:
+        choices = protocol.get("required_output_choices", [])
+        if not isinstance(choices, list):
+            if "required_output_choices" in protocol:
+                errors.append(
+                    (
+                        f"protocols/{protocol_index}/required_output_choices",
+                        "required output choices must be an array of tables",
+                    )
+                )
+            continue
+
+        if choices:
+            for output_key in ("produces", "may_produce"):
+                values = protocol.get(output_key, [])
+                if not isinstance(values, list):
+                    if output_key in protocol:
+                        errors.append((f"protocols/{protocol_index}/{output_key}", f"{output_key} must be an array"))
+                    continue
+                for value_index, value in enumerate(values):
+                    if not isinstance(value, str):
+                        errors.append((f"protocols/{protocol_index}/{output_key}/{value_index}", f"{output_key} member must be a string"))
+                        continue
+                    outcome_bearing_outputs.add(value)
+
+        for choice_index, choice in enumerate(choices):
+            if not isinstance(choice, dict):
+                errors.append(
+                    (
+                        f"protocols/{protocol_index}/required_output_choices/{choice_index}",
+                        "required output choice must be a table",
+                    )
+                )
+                continue
+
+            choice_name = choice.get("name")
+            if not isinstance(choice_name, str):
+                errors.append(
+                    (
+                        f"protocols/{protocol_index}/required_output_choices/{choice_index}/name",
+                        "required output choice must declare a string name",
+                    )
+                )
+
+            members = choice.get("members")
+            if not isinstance(members, list):
+                errors.append(
+                    (
+                        f"protocols/{protocol_index}/required_output_choices/{choice_index}/members",
+                        "required output choice members must be an array",
+                    )
+                )
+                continue
+            if len(members) < 2:
+                errors.append(
+                    (
+                        f"protocols/{protocol_index}/required_output_choices/{choice_index}/members",
+                        "required output choice must list at least two members",
+                    )
+                )
+
+            seen_members: set[str] = set()
+            for member_index, member in enumerate(members):
+                member_path = f"protocols/{protocol_index}/required_output_choices/{choice_index}/members/{member_index}"
+                if not isinstance(member, str):
+                    errors.append((member_path, "required output choice member must be a string"))
+                    continue
+                if member in seen_members:
+                    errors.append((member_path, f"required output choice repeats member `{member}`"))
+                seen_members.add(member)
+                if member not in artifact_types:
+                    errors.append((member_path, f"required output choice member `{member}` does not resolve in artifact_types"))
+                if member not in outcome_types:
+                    errors.append((member_path, f"required output choice member `{member}` is not registered in outcome_types"))
+
+    for protocol_index, protocol in protocol_entries:
+        trigger = protocol.get("trigger")
+        if "trigger" in protocol and not isinstance(trigger, dict):
+            errors.append((f"protocols/{protocol_index}/trigger", "trigger must be a table"))
+            continue
+        if trigger is not None:
+            errors.extend(
+                _manifest_trigger_errors(
+                    trigger,
+                    f"protocols/{protocol_index}/trigger",
+                    outcome_types,
+                    outcome_bearing_outputs,
+                )
+            )
+
+    return errors
+
+
+def _named_manifest_entries(
+    entries: list[tuple[int, dict[str, Any]]],
+    key: str,
+    entry_label: str,
+    errors: list[tuple[str, str]],
+) -> set[str]:
+    names: set[str] = set()
+    for entry_index, entry in entries:
+        name = entry.get("name")
+        if not isinstance(name, str):
+            errors.append((f"{key}/{entry_index}/name", f"{entry_label} must declare a string name"))
+            continue
+        names.add(name)
+    return names
+
+
+def _manifest_table_entries(
+    manifest: dict[str, Any],
+    key: str,
+    entry_label: str,
+    errors: list[tuple[str, str]],
+) -> list[tuple[int, dict[str, Any]]]:
+    if key not in manifest:
+        return []
+
+    value = manifest[key]
+    if not isinstance(value, list):
+        errors.append((key, f"{key} must be an array of tables"))
+        return []
+
+    entries: list[tuple[int, dict[str, Any]]] = []
+    for entry_index, entry in enumerate(value):
+        if not isinstance(entry, dict):
+            errors.append((f"{key}/{entry_index}", f"{entry_label} must be a table"))
+            continue
+        entries.append((entry_index, entry))
+    return entries
+
+
+def _manifest_trigger_errors(
+    trigger: dict[str, Any],
+    path: str,
+    outcome_types: set[str],
+    outcome_bearing_outputs: set[str],
+) -> list[tuple[str, str]]:
+    trigger_type = trigger.get("type")
+    trigger_name = trigger.get("name")
+    errors: list[tuple[str, str]] = []
+
+    if trigger_type in {"on_artifact", "on_change", "on_invalid"} and isinstance(trigger_name, str):
+        if trigger_name in outcome_types and trigger_type != "on_artifact":
+            errors.append((path, f"outcome trigger must use on_artifact for `{trigger_name}`"))
+        if trigger_name in outcome_bearing_outputs:
+            errors.append((path, f"successor routes on disposition-agnostic output `{trigger_name}`"))
+        return errors
+
+    if trigger_type in {"all_of", "any_of"}:
+        conditions = trigger.get("conditions", [])
+        if not isinstance(conditions, list):
+            if "conditions" in trigger:
+                errors.append((f"{path}/conditions", "conditions must be an array of tables"))
+            return errors
+        for condition_index, condition in enumerate(conditions):
+            if not isinstance(condition, dict):
+                errors.append((f"{path}/conditions/{condition_index}", "condition must be a table"))
+                continue
+            errors.extend(
+                _manifest_trigger_errors(
+                    condition,
+                    f"{path}/conditions/{condition_index}",
+                    outcome_types,
+                    outcome_bearing_outputs,
+                )
+            )
+
+    return errors
 
 
 def _artifact_type_for_path(path: Path) -> str | None:
@@ -198,6 +442,25 @@ def _artifact_type_for_path(path: Path) -> str | None:
 
 def _exception_errors(error: WorkflowContractError | MechanicError | ArtifactSchemaError) -> list[str]:
     return [f"{path}: {message}" for path, message in error.errors]
+
+
+def _registry_load_failure_result(path: Path, category: str, error: Exception) -> ConformanceResult:
+    return ConformanceResult(
+        path=path,
+        category=category,
+        passed=False,
+        errors=[_registry_load_error_message(error)],
+    )
+
+
+def _registry_load_error_message(error: Exception) -> str:
+    if isinstance(error, tomllib.TOMLDecodeError):
+        return f"manifest registry could not be loaded: invalid TOML: {error}"
+    if isinstance(error, UnicodeDecodeError):
+        return f"manifest registry could not be loaded: cannot decode local registry input: {error}"
+    if isinstance(error, OSError):
+        return f"manifest registry could not be loaded: cannot read local registry input: {error}"
+    return f"manifest registry could not be loaded: malformed manifest registry shape: {error}"
 
 
 if __name__ == "__main__":

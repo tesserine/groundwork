@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Narrowed Step 1 conformance runner for C-2 workflow contracts, C-3
   mechanics, C-4 artifact instances, and JSON Schema definitions, with
   aggregate pass/fail reporting and non-zero exit on failure (closes #297).
+- Required-choice outcome group conformance substrate: C-5 manifest dispatch,
+  `[[outcome_types]]` vocabulary validation, manifest required-output-choice
+  member validation, outcome-trigger routing checks, and C-2 workflow terminal
+  parity against the manifest group (closes #336).
 - Source C-2 workflow contract exercise for the forge-neutral `verify`
   protocol, including default conformance coverage and a Step 1 R1 note
   recording that the format held for `verify`'s shape without schema/parser
@@ -34,6 +38,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- C-5 manifest conformance now rejects disposition-agnostic outputs of
+  outcome-bearing protocols through `on_change`, `on_invalid`, and composite
+  triggers, while preserving valid re-review triggers on protocol inputs.
 - Release-cut now ignores its own generated `release_lib` bytecode cache during
   the clean-tree pre-check, so the documented release ceremony works from a
   fresh checkout after prior `release-check` invocations (closes #311, #315).
@@ -43,8 +50,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `workflow-contracts/` or `mechanics/` directories by resolving them before
   dispatch; TOML files outside those unit directories remain unsupported.
 - Step 1 conformance directory arguments now use the same unit discovery rules
-  as the default runner, so non-unit files such as `manifest.toml` are skipped
-  during directory expansion while explicitly named non-units still fail.
+  as the default runner, while explicitly named non-units still fail.
+- Directory-discovered C-2 workflow contracts and C-3 mechanics now validate
+  registry references against the directory-local `manifest.toml`, and C-5
+  rejects malformed known manifest keys instead of silently treating them as
+  absent.
 - Mechanic substrate validation now rejects empty `examples` arrays and
   registry-loaded mechanics whose `forge_tag` is not declared in
   `manifest.toml`; generic runtime mechanics remain forge-neutral by omitting

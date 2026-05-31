@@ -1,0 +1,34 @@
+name = "review"
+purpose = "Review a submitted change proposal and route by disposition."
+session_role = "review gate"
+preconditions = ["change-proposal exists"]
+start_node = "inspect-change"
+failure_modes = ["review cannot classify the change"]
+corruption_modes = ["disposition-agnostic routing"]
+
+[[nodes]]
+name = "inspect-change"
+intent = "Inspect the change proposal and classify review disposition."
+disciplines = ["orient"]
+mechanics = ["read-artifact"]
+outcomes = ["review disposition is known"]
+
+[[edges]]
+from = "inspect-change"
+to = "approved"
+condition = { type = "case", field = "disposition", equals = "approved" }
+
+[[edges]]
+from = "inspect-change"
+to = "needs-revision"
+condition = { type = "default", field = "disposition" }
+
+[[terminals]]
+name = "approved"
+outcome = "The change is approved."
+artifact_produced = "review-findings"
+
+[[terminals]]
+name = "needs-revision"
+outcome = "The change needs revision."
+artifact_produced = "review-findings"
