@@ -340,6 +340,44 @@ class ReleaseCeremonyTests(unittest.TestCase):
         )
         assert_success(self, fixture.run_release_check("release", "v1.2.3"))
 
+    def test_release_cut_accepts_bytecode_cache_from_prior_release_check(self) -> None:
+        fixture = self.add_fixture("release-cut-prior-release-check-cache", "1.2.2")
+        fixture.init_git_with_remote()
+
+        assert_success(self, fixture.run_release_check("metadata"))
+        assert_success(self, fixture.run_release_check("release", "v1.2.2"))
+        self.assertTrue((fixture.root / "scripts" / "__pycache__").is_dir())
+
+        result = fixture.run_release_cut("v1.2.3")
+
+        assert_success(self, result)
+        assert_success(self, fixture.run_release_check("release", "v1.2.3"))
+
+    def test_release_cut_rejects_genuine_untracked_artifacts(self) -> None:
+        fixture = self.add_fixture("release-cut-untracked-artifact", "1.2.2")
+        fixture.init_git_with_remote()
+        fixture.write("operator-notes.txt", "not part of the release\n")
+
+        result = fixture.run_release_cut("v1.2.3")
+
+        assert_failure_contains(self, result, "release-cut requires a clean working tree")
+
+    def test_release_cut_rejects_symlinked_bytecode_cache_without_deleting_target_files(self) -> None:
+        fixture = self.add_fixture("release-cut-symlinked-bytecode-cache", "1.2.2")
+        fixture.init_git_with_remote()
+        target = Path(tempfile.mkdtemp(prefix=f"{fixture.root.name}-cache-target-"))
+        self.addCleanup(lambda: shutil.rmtree(target, ignore_errors=True))
+        target_file = target / "release_lib.cpython-312.pyc"
+        target_file.write_bytes(b"outside repo bytecode")
+        cache = fixture.root / "scripts" / "__pycache__"
+        cache.symlink_to(target, target_is_directory=True)
+
+        result = fixture.run_release_cut("v1.2.3")
+
+        assert_failure_contains(self, result, "release-cut requires a clean working tree")
+        self.assertTrue(cache.is_symlink())
+        self.assertTrue(target_file.exists())
+
     def test_release_cut_creates_release_candidate_release_commit_and_tag(self) -> None:
         fixture = self.add_fixture("release-cut-rc", "1.2.3")
         fixture.init_git_with_remote()

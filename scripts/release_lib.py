@@ -4,6 +4,7 @@ import argparse
 import datetime as _dt
 import json
 import re
+import stat as _stat
 import subprocess
 import sys
 import tomllib
@@ -295,10 +296,37 @@ def git(root: Path, *args: str, check: bool = True) -> CommandResult:
     return CommandResult(result.stdout, result.stderr)
 
 
+def remove_release_lib_bytecode_cache(root: Path) -> None:
+    cache = root / "scripts" / "__pycache__"
+    try:
+        cache_mode = cache.stat(follow_symlinks=False).st_mode
+    except FileNotFoundError:
+        return
+    if not _stat.S_ISDIR(cache_mode):
+        return
+    current = root
+    for part in cache.relative_to(root).parts:
+        current = current / part
+        if current.is_symlink():
+            return
+    for path in cache.glob("release_lib.*.pyc"):
+        try:
+            path_mode = path.stat(follow_symlinks=False).st_mode
+        except FileNotFoundError:
+            continue
+        if _stat.S_ISREG(path_mode):
+            path.unlink()
+    try:
+        cache.rmdir()
+    except OSError:
+        pass
+
+
 def require_clean_main(root: Path) -> None:
     branch = git(root, "branch", "--show-current").stdout.strip()
     if branch != "main":
         die(f"release-cut must run on main, not {branch or 'detached HEAD'}")
+    remove_release_lib_bytecode_cache(root)
     status = git(root, "status", "--short").stdout.strip()
     if status:
         die("release-cut requires a clean working tree")
