@@ -223,6 +223,119 @@ members = ["completion-evidence", "test-evidence"]
         self.assertFalse(workflow_result.passed)
         self.assertIn("do not match outcome terminal artifact_produced values", " ".join(workflow_result.errors))
 
+    def test_directory_workflow_contract_rejects_non_member_terminal_for_required_choice_group(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "manifest.toml").write_text(
+                """
+name = "local-methodology"
+
+[[artifact_types]]
+name = "change-approved"
+
+[[artifact_types]]
+name = "change-needs-revision"
+
+[[artifact_types]]
+name = "review-audit"
+
+[[outcome_types]]
+name = "change-approved"
+
+[[outcome_types]]
+name = "change-needs-revision"
+
+[[mechanics]]
+name = "read-artifact"
+
+[[protocols]]
+name = "review"
+
+[[protocols.required_output_choices]]
+name = "review-disposition"
+members = ["change-approved", "change-needs-revision"]
+""".lstrip(),
+                encoding="utf-8",
+            )
+            (root / "skills" / "orient").mkdir(parents=True)
+            contracts = root / "workflow-contracts"
+            contracts.mkdir()
+            contract = contracts / "review.toml"
+            contract.write_text(
+                (WORKFLOW_FIXTURES / "invalid-review-outcomes-with-audit-terminal.toml").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([root])
+
+        workflow_result = next(result for result in results if result.path == contract)
+        self.assertEqual("C-2 workflow-contract", workflow_result.category)
+        self.assertFalse(workflow_result.passed)
+        self.assertIn("terminals/2/artifact_produced", " ".join(workflow_result.errors))
+
+    def test_directory_workflow_contract_rejects_multiple_required_choice_groups(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "manifest.toml").write_text(
+                """
+name = "local-methodology"
+
+[[artifact_types]]
+name = "change-approved"
+
+[[artifact_types]]
+name = "change-needs-revision"
+
+[[artifact_types]]
+name = "change-aborted"
+
+[[artifact_types]]
+name = "change-escalated"
+
+[[outcome_types]]
+name = "change-approved"
+
+[[outcome_types]]
+name = "change-needs-revision"
+
+[[outcome_types]]
+name = "change-aborted"
+
+[[outcome_types]]
+name = "change-escalated"
+
+[[mechanics]]
+name = "read-artifact"
+
+[[protocols]]
+name = "review"
+
+[[protocols.required_output_choices]]
+name = "review-disposition"
+members = ["change-approved", "change-needs-revision"]
+
+[[protocols.required_output_choices]]
+name = "review-closure"
+members = ["change-aborted", "change-escalated"]
+""".lstrip(),
+                encoding="utf-8",
+            )
+            (root / "skills" / "orient").mkdir(parents=True)
+            contracts = root / "workflow-contracts"
+            contracts.mkdir()
+            contract = contracts / "review.toml"
+            contract.write_text(
+                (WORKFLOW_FIXTURES / "valid-review-outcomes.toml").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([root])
+
+        workflow_result = next(result for result in results if result.path == contract)
+        self.assertEqual("C-2 workflow-contract", workflow_result.category)
+        self.assertFalse(workflow_result.passed)
+        self.assertIn("declares 2 manifest required_output_choices groups", " ".join(workflow_result.errors))
+
     def test_directory_mechanic_uses_self_contained_local_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

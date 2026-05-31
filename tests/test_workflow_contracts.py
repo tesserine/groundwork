@@ -107,7 +107,7 @@ class WorkflowContractTests(unittest.TestCase):
         registry = WorkflowRegistry(
             disciplines={"orient"},
             mechanics={"read-artifact"},
-            artifact_schemas={"change-approved", "change-needs-revision", "review-audit"},
+            artifact_schemas={"change-approved", "change-needs-revision"},
             outcome_types={"change-approved", "change-needs-revision"},
             required_output_choices={
                 "review": [{"name": "review-disposition", "members": ["change-approved", "change-needs-revision"]}]
@@ -115,11 +115,31 @@ class WorkflowContractTests(unittest.TestCase):
         )
 
         contract = load_workflow_contract(
-            self.fixture("valid-review-outcomes-with-audit-terminal.toml"),
+            self.fixture("valid-review-outcomes.toml"),
             registry=registry,
         )
 
         self.assertEqual("review", contract["name"])
+
+    def test_outcome_terminals_reject_non_member_terminal_when_manifest_declares_choice_members(self) -> None:
+        registry = WorkflowRegistry(
+            disciplines={"orient"},
+            mechanics={"read-artifact"},
+            artifact_schemas={"change-approved", "change-needs-revision", "review-audit"},
+            outcome_types={"change-approved", "change-needs-revision"},
+            required_output_choices={
+                "review": [{"name": "review-disposition", "members": ["change-approved", "change-needs-revision"]}]
+            },
+        )
+
+        with self.assertRaises(WorkflowContractError) as context:
+            load_workflow_contract(
+                self.fixture("invalid-review-outcomes-with-audit-terminal.toml"),
+                registry=registry,
+            )
+
+        self.assertIn("terminals/2/artifact_produced", context.exception.paths)
+        self.assertIn("not a member of manifest required_output_choices `review-disposition`", str(context.exception))
 
     def test_outcome_terminals_reject_shared_record_type_when_manifest_declares_choice_members(self) -> None:
         registry = WorkflowRegistry(
@@ -135,8 +155,9 @@ class WorkflowContractTests(unittest.TestCase):
         with self.assertRaises(WorkflowContractError) as context:
             load_workflow_contract(self.fixture("invalid-shared-record-type-outcomes.toml"), registry=registry)
 
-        self.assertIn("terminals", context.exception.paths)
-        self.assertIn("manifest required_output_choices declared for protocol `review`", str(context.exception))
+        self.assertIn("terminals/0/artifact_produced", context.exception.paths)
+        self.assertIn("terminals/1/artifact_produced", context.exception.paths)
+        self.assertIn("not a member of manifest required_output_choices `review-disposition`", str(context.exception))
 
     def test_outcome_terminals_reject_manifest_group_divergence(self) -> None:
         registry = WorkflowRegistry(
@@ -151,12 +172,32 @@ class WorkflowContractTests(unittest.TestCase):
 
         with self.assertRaises(WorkflowContractError) as context:
             load_workflow_contract(
-                self.fixture("valid-review-outcomes-with-audit-terminal.toml"),
+                self.fixture("valid-review-outcomes.toml"),
                 registry=registry,
             )
 
         self.assertIn("terminals", context.exception.paths)
         self.assertIn("do not match outcome terminal artifact_produced values", str(context.exception))
+
+    def test_outcome_terminals_reject_multiple_manifest_choice_groups(self) -> None:
+        registry = WorkflowRegistry(
+            disciplines={"orient"},
+            mechanics={"read-artifact"},
+            artifact_schemas={"change-approved", "change-needs-revision", "change-aborted", "change-escalated"},
+            outcome_types={"change-approved", "change-needs-revision", "change-aborted", "change-escalated"},
+            required_output_choices={
+                "review": [
+                    {"name": "review-disposition", "members": ["change-approved", "change-needs-revision"]},
+                    {"name": "review-closure", "members": ["change-aborted", "change-escalated"]},
+                ]
+            },
+        )
+
+        with self.assertRaises(WorkflowContractError) as context:
+            load_workflow_contract(self.fixture("valid-review-outcomes.toml"), registry=registry)
+
+        self.assertIn("terminals", context.exception.paths)
+        self.assertIn("declares 2 manifest required_output_choices groups", str(context.exception))
 
     def test_parser_registries_resolve_mechanic_names_across_parsers(self) -> None:
         mechanic = load_mechanic(MECHANIC_FIXTURES / "valid-github.toml")

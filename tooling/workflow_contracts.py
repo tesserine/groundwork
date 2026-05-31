@@ -440,17 +440,6 @@ def _outcome_terminal_errors(contract: dict[str, Any], registry: WorkflowRegistr
     ]
     manifest_choices = registry.required_output_choices.get(contract["name"], [])
 
-    if not outcome_terminal_artifacts:
-        if manifest_choices:
-            return [
-                (
-                    "terminals",
-                    f"manifest required_output_choices declared for protocol `{contract['name']}` "
-                    "but workflow contract has no outcome terminals",
-                )
-            ]
-        return []
-
     errors: list[tuple[str, str]] = []
     seen: set[str] = set()
     for terminal_index, terminal in enumerate(contract["terminals"]):
@@ -466,18 +455,49 @@ def _outcome_terminal_errors(contract: dict[str, Any], registry: WorkflowRegistr
             )
         seen.add(artifact)
 
-    if len(manifest_choices) != 1:
+    if len(manifest_choices) > 1:
         errors.append(
             (
                 "terminals",
-                f"outcome terminals for protocol `{contract['name']}` require exactly one "
-                "manifest required_output_choices group",
+                f"protocol `{contract['name']}` declares {len(manifest_choices)} "
+                "manifest required_output_choices groups; outcome terminals require exactly one group",
             )
         )
         return errors
 
+    if not manifest_choices:
+        if outcome_terminal_artifacts:
+            errors.append(
+                (
+                    "terminals",
+                    f"outcome terminals for protocol `{contract['name']}` require exactly one "
+                    "manifest required_output_choices group",
+                )
+            )
+        return errors
+
     manifest_choice = manifest_choices[0]
     manifest_members = set(manifest_choice["members"])
+    for terminal_index, terminal in enumerate(contract["terminals"]):
+        artifact = terminal["artifact_produced"]
+        if artifact not in manifest_members:
+            errors.append(
+                (
+                    f"terminals/{terminal_index}/artifact_produced",
+                    f"terminal artifact_produced `{artifact}` is not a member of "
+                    f"manifest required_output_choices `{manifest_choice['name']}`",
+                )
+            )
+
+    if not outcome_terminal_artifacts:
+        errors.append(
+            (
+                "terminals",
+                f"manifest required_output_choices declared for protocol `{contract['name']}` "
+                "but workflow contract has no outcome terminals",
+            )
+        )
+
     terminal_members = set(outcome_terminal_artifacts)
     if manifest_members != terminal_members:
         errors.append(
