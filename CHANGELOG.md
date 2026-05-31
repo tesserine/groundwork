@@ -27,6 +27,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   protocol, including default conformance coverage and a Step 1 R1 note
   recording that the format held for `verify`'s shape without schema/parser
   revision (closes #317).
+- Step 2 reference arc design note resolving review-cycle semantics, finding
+  classification ownership, approved-disposition land gating, and
+  forge-operation resolution constraints for downstream authoring units
+  (closes #329).
 
 ### Fixed
 
