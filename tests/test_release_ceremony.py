@@ -362,6 +362,22 @@ class ReleaseCeremonyTests(unittest.TestCase):
 
         assert_failure_contains(self, result, "release-cut requires a clean working tree")
 
+    def test_release_cut_rejects_symlinked_bytecode_cache_without_deleting_target_files(self) -> None:
+        fixture = self.add_fixture("release-cut-symlinked-bytecode-cache", "1.2.2")
+        fixture.init_git_with_remote()
+        target = Path(tempfile.mkdtemp(prefix=f"{fixture.root.name}-cache-target-"))
+        self.addCleanup(lambda: shutil.rmtree(target, ignore_errors=True))
+        target_file = target / "release_lib.cpython-312.pyc"
+        target_file.write_bytes(b"outside repo bytecode")
+        cache = fixture.root / "scripts" / "__pycache__"
+        cache.symlink_to(target, target_is_directory=True)
+
+        result = fixture.run_release_cut("v1.2.3")
+
+        assert_failure_contains(self, result, "release-cut requires a clean working tree")
+        self.assertTrue(cache.is_symlink())
+        self.assertTrue(target_file.exists())
+
     def test_release_cut_creates_release_candidate_release_commit_and_tag(self) -> None:
         fixture = self.add_fixture("release-cut-rc", "1.2.3")
         fixture.init_git_with_remote()

@@ -4,6 +4,7 @@ import argparse
 import datetime as _dt
 import json
 import re
+import stat as _stat
 import subprocess
 import sys
 import tomllib
@@ -297,10 +298,23 @@ def git(root: Path, *args: str, check: bool = True) -> CommandResult:
 
 def remove_release_lib_bytecode_cache(root: Path) -> None:
     cache = root / "scripts" / "__pycache__"
-    if not cache.is_dir():
+    try:
+        cache_mode = cache.stat(follow_symlinks=False).st_mode
+    except FileNotFoundError:
         return
+    if not _stat.S_ISDIR(cache_mode):
+        return
+    current = root
+    for part in cache.relative_to(root).parts:
+        current = current / part
+        if current.is_symlink():
+            return
     for path in cache.glob("release_lib.*.pyc"):
-        if path.is_file() and not path.is_symlink():
+        try:
+            path_mode = path.stat(follow_symlinks=False).st_mode
+        except FileNotFoundError:
+            continue
+        if _stat.S_ISREG(path_mode):
             path.unlink()
     try:
         cache.rmdir()
