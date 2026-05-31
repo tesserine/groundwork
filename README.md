@@ -122,7 +122,9 @@ The C-5 manifest check validates the outcome-routing substrate used by
 required-choice protocol outputs: top-level `[[outcome_types]]` entries must
 resolve to declared artifact types, `[[protocols.required_output_choices]]`
 members must be registered outcome types, and successor triggers that route on
-an outcome must use `on_artifact`.
+an outcome must use `on_artifact`, while successor triggers must not target a
+disposition-agnostic output of an outcome-bearing protocol through any trigger
+form or composite trigger.
 
 ## What Groundwork Believes
 

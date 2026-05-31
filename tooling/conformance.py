@@ -396,7 +396,7 @@ def _manifest_trigger_errors(
     if trigger_type in {"on_artifact", "on_change", "on_invalid"} and isinstance(trigger_name, str):
         if trigger_name in outcome_types and trigger_type != "on_artifact":
             errors.append((path, f"outcome trigger must use on_artifact for `{trigger_name}`"))
-        if trigger_type == "on_artifact" and trigger_name in outcome_bearing_outputs:
+        if trigger_name in outcome_bearing_outputs:
             errors.append((path, f"successor routes on disposition-agnostic output `{trigger_name}`"))
         return errors
 

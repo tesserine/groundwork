@@ -19,6 +19,49 @@ SCHEMAS = ROOT / "schemas"
 
 
 class ConformanceTests(unittest.TestCase):
+    def run_manifest_conformance(self, manifest_source: str) -> list:
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "manifest.toml"
+            manifest.write_text(manifest_source.lstrip(), encoding="utf-8")
+
+            return run_conformance([manifest])
+
+    def review_outcome_manifest(self, successor_trigger: str) -> str:
+        return f"""
+name = "review-methodology"
+
+[[artifact_types]]
+name = "change-proposal"
+
+[[artifact_types]]
+name = "review-findings"
+
+[[artifact_types]]
+name = "change-approved"
+
+[[artifact_types]]
+name = "change-needs-revision"
+
+[[outcome_types]]
+name = "change-approved"
+
+[[outcome_types]]
+name = "change-needs-revision"
+
+[[protocols]]
+name = "review"
+produces = ["review-findings"]
+trigger = {{ type = "on_change", name = "change-proposal" }}
+
+[[protocols.required_output_choices]]
+name = "review-disposition"
+members = ["change-approved", "change-needs-revision"]
+
+[[protocols]]
+name = "successor"
+{successor_trigger}
+"""
+
     def test_explicit_dispatch_accepts_valid_step_1_units(self) -> None:
         results = run_conformance(
             [
@@ -658,45 +701,28 @@ trigger = { type = "all_of", conditions = "change-approved" }
             self.assertIn(error_path, " ".join(results[0].errors))
             self.assertIn(message, " ".join(results[0].errors))
 
-    def test_manifest_dispatch_rejects_non_artifact_outcome_trigger(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            manifest = Path(directory) / "manifest.toml"
-            manifest.write_text(
-                """
-name = "review-methodology"
+    def test_manifest_dispatch_rejects_non_artifact_outcome_trigger_forms_and_composites(self) -> None:
+        cases = {
+            "on_change": 'trigger = { type = "on_change", name = "change-approved" }',
+            "on_invalid": 'trigger = { type = "on_invalid", name = "change-approved" }',
+            "all_of": (
+                'trigger = { type = "all_of", conditions = ['
+                ' { type = "on_change", name = "change-approved" }'
+                " ] }"
+            ),
+            "any_of": (
+                'trigger = { type = "any_of", conditions = ['
+                ' { type = "on_invalid", name = "change-approved" }'
+                " ] }"
+            ),
+        }
+        for label, successor_trigger in cases.items():
+            with self.subTest(label=label):
+                results = self.run_manifest_conformance(self.review_outcome_manifest(successor_trigger))
 
-[[artifact_types]]
-name = "change-approved"
-
-[[artifact_types]]
-name = "change-needs-revision"
-
-[[outcome_types]]
-name = "change-approved"
-
-[[outcome_types]]
-name = "change-needs-revision"
-
-[[protocols]]
-name = "review"
-trigger = { type = "on_artifact", name = "change-approved" }
-
-[[protocols.required_output_choices]]
-name = "review-disposition"
-members = ["change-approved", "change-needs-revision"]
-
-[[protocols]]
-name = "land"
-trigger = { type = "on_change", name = "change-approved" }
-""".lstrip(),
-                encoding="utf-8",
-            )
-
-            results = run_conformance([manifest])
-
-        self.assertEqual("C-5 manifest", results[0].category)
-        self.assertFalse(results[0].passed)
-        self.assertIn("outcome trigger must use on_artifact", " ".join(results[0].errors))
+            self.assertEqual("C-5 manifest", results[0].category)
+            self.assertFalse(results[0].passed)
+            self.assertIn("outcome trigger must use on_artifact", " ".join(results[0].errors))
 
     def test_manifest_dispatch_rejects_disposition_agnostic_successor_trigger(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -741,6 +767,52 @@ trigger = { type = "on_artifact", name = "review-findings" }
         self.assertEqual("C-5 manifest", results[0].category)
         self.assertFalse(results[0].passed)
         self.assertIn("successor routes on disposition-agnostic output", " ".join(results[0].errors))
+
+    def test_manifest_dispatch_rejects_disposition_agnostic_change_and_invalid_triggers(self) -> None:
+        cases = {
+            "on_change": 'trigger = { type = "on_change", name = "review-findings" }',
+            "on_invalid": 'trigger = { type = "on_invalid", name = "review-findings" }',
+        }
+        for label, successor_trigger in cases.items():
+            with self.subTest(label=label):
+                results = self.run_manifest_conformance(self.review_outcome_manifest(successor_trigger))
+
+            self.assertEqual("C-5 manifest", results[0].category)
+            self.assertFalse(results[0].passed)
+            self.assertIn("successor routes on disposition-agnostic output", " ".join(results[0].errors))
+
+    def test_manifest_dispatch_rejects_disposition_agnostic_composite_trigger(self) -> None:
+        cases = {
+            "all_of": (
+                'trigger = { type = "all_of", conditions = ['
+                ' { type = "on_change", name = "review-findings" },'
+                ' { type = "on_artifact", name = "change-approved" }'
+                " ] }"
+            ),
+            "any_of": (
+                'trigger = { type = "any_of", conditions = ['
+                ' { type = "on_change", name = "review-findings" },'
+                ' { type = "on_artifact", name = "change-approved" }'
+                " ] }"
+            ),
+        }
+        for label, successor_trigger in cases.items():
+            with self.subTest(label=label):
+                results = self.run_manifest_conformance(self.review_outcome_manifest(successor_trigger))
+
+            self.assertEqual("C-5 manifest", results[0].category)
+            self.assertFalse(results[0].passed)
+            self.assertIn("protocols/1/trigger/conditions/0", " ".join(results[0].errors))
+            self.assertIn("successor routes on disposition-agnostic output", " ".join(results[0].errors))
+
+    def test_manifest_dispatch_accepts_re_review_change_trigger_on_protocol_input(self) -> None:
+        results = self.run_manifest_conformance(
+            self.review_outcome_manifest('trigger = { type = "on_change", name = "change-proposal" }')
+        )
+
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertTrue(results[0].passed)
+        self.assertEqual([], results[0].errors)
 
     def test_source_verify_workflow_contract_is_discovered_and_registry_validated(self) -> None:
         contract = ROOT / "workflow-contracts" / "verify.toml"

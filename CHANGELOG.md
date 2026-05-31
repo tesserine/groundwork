@@ -38,6 +38,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- C-5 manifest conformance now rejects disposition-agnostic outputs of
+  outcome-bearing protocols through `on_change`, `on_invalid`, and composite
+  triggers, while preserving valid re-review triggers on protocol inputs.
 - Release-cut now ignores its own generated `release_lib` bytecode cache during
   the clean-tree pre-check, so the documented release ceremony works from a
   fresh checkout after prior `release-check` invocations (closes #311, #315).
