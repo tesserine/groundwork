@@ -7,6 +7,53 @@
 PRINCIPLES.md P1 (Sovereignty). Governed by `with-claude` principles #5
 (Parsimony) and #10 (Scale-Honest Design).
 
+## Revision (2026-05-31): outcomes are a required-choice output, not `may_produce`
+
+Post-decision governance review found the original mechanism incomplete. The
+*decision* below stands unchanged — disposition is the artifact type (sub-choice
+(a)), and the within/cross rule holds. What changes is how the "exactly one
+outcome per run" obligation is enforced, and the cross-repo consequence.
+
+The original draft declared the outcome types as `may_produce` and located the
+"exactly-one-outcome" guarantee in the C-2 graph plus the conformance check. That
+is insufficient. Grounded against runa (`libagent/src/model.rs`):
+`ProtocolDeclaration` has four flat output lists — `requires`, `accepts`,
+`produces` (all required), `may_produce` (all optional) — with no grouping or
+cardinality, so "produce exactly one of {A, B}" is inexpressible. The C-2 graph
+and the conformance check are **authoring-time**; runa is the only **runtime**
+enforcer of outputs, and `may_produce` makes it *abstain*. A run that reaches no
+terminal (an erroring agent) then emits no outcome type and **nothing catches it
+at runtime** — land never fires, the revise cycle never fires, the work unit
+stalls silently. Worse, this is a regression: the pre-(a) single-`produces`-type
+design *did* fail at runtime when review produced nothing; `may_produce` drops
+that guarantee. A load-bearing invariant with no runtime enforcer is what #10
+forbids. (A completion *anchor* in `produces` does not fix it: review could
+complete having emitted the anchor but no verdict, still stalling land/revise.)
+
+**This is structural, not semantic — so it does not reopen the field predicate we
+rejected.** "Exactly one of a declared set is produced" is output-type cardinality,
+the same currency `produces`/`may_produce` already trade in. runa need not know
+what the outcomes *mean*, only that one of a declared set must appear. Content-/
+semantics-blindness is preserved.
+
+**Corrected mechanism.** Add a **first-class required output choice** to runa: a
+named, required output group with **exactly-one-of** cardinality over a registered
+type set — a third output edge alongside `produces`/`may_produce`, runtime-enforced.
+review declares its two outcomes in this group; runa fails the protocol if the run
+does not produce exactly one. The C-2 contract gains the matching declaration and
+the conformance check maps the C-2 outcome terminals onto the runa group (see the
+revised *Routing* and *Conformance obligation* below). Per Parsimony, build
+exactly-one-of over a set (N≥2, which also serves escalation #233); do **not**
+pre-build a general min/max cardinality language.
+
+**Consequence delta:** the original "no runa change / single-repo" consequence is
+**superseded** — a bounded runa interface change (the third edge) plus an
+`interface-contract.md` revision are now in scope, and a runa substrate unit is
+sequenced ahead of #331. As a bonus the required-choice edge also resolves the
+freshness concern: the produced outcome is now real completion evidence, so
+review's `on_change` suppression is reliable. The C-2-/conformance-only path (no
+runa change) is ruled out — it leaves the invariant with no runtime enforcer.
+
 ## Context
 
 A protocol can route on its own outcome *within* itself — `verify.toml` has two
@@ -92,12 +139,15 @@ Successors route with the **existing** trigger vocabulary:
   #329 Decision 1 — a new immutable proposal version re-fires review. The cycle is
   driven by new proposal versions, not by a disposition-agnostic review type.
 
-"Exactly one outcome per run" is guaranteed where it already belongs — the C-2
-graph reaching exactly one terminal (ADR-0002: outgoing edge conditions are
-mutually exclusive, every terminal reachable from start). At the manifest layer the
-outcome types are therefore declared **`may_produce`** (a single run produces one of
-them); runa validates whichever appears, and the C-2 graph guarantees one always
-does. This requires no `produces`/`may_produce` extension.
+"Exactly one outcome per run" is enforced at runtime by a **required-choice output
+group** (see the 2026-05-31 Revision above): review declares its two outcome types
+in a named, required exactly-one-of group; runa fails the protocol unless the run
+produces exactly one member. The C-2 graph still expresses the same shape at
+authoring time — mutually-exclusive, exhaustive terminals (ADR-0002), each mapping
+to one group member — and the conformance check verifies the manifest group matches
+the set of outcome-terminal `artifact_produced` values, so the methodology layer and
+the runtime agree on the same single source (the C-2 terminals). The earlier draft's
+`may_produce` declaration is superseded: it left the obligation unenforced at runtime.
 
 ### The sub-choice: outcome *is* the type, with no separate field
 
@@ -145,16 +195,28 @@ named here as an outcome (its enforcement, not its implementation):
    disposition-agnostic type.
 3. The within/cross rule is enforceable: a fact routed on by a successor must be a
    type; it must not be smuggled as a field a successor cannot see.
+4. The manifest's required-choice output group for an outcome-bearing protocol
+   matches the set of `artifact_produced` values across its outcome terminals — the
+   methodology layer and the runtime declare the same single source.
 
 This is an addition to the C-2 / C-5 conformance surface that already dispatches
-C-2/C-3/C-4. It need not be implemented in the session that records this ADR; it is
-sized as a substrate addition and lands with the consuming arc (see below). It is
+C-2/C-3/C-4, coordinated with the new runa output edge (Revision above). It need not
+be implemented in the session that records this ADR; it is sized as a substrate
+addition and lands with the runa edge ahead of the consuming arc (see below). It is
 not trivial enough to claim done here.
 
-### What this explicitly does not change
+### The bounded runa change now in scope, and what still does not change
 
-runa. No trigger form, manifest field, or runtime behavior is added or altered. The
-decision stays single-repo (groundwork), which keeps the cross-repo story simple.
+This decision adds **one** thing to runa: a required-choice output edge (the
+exactly-one-of group, Revision above) and the matching `interface-contract.md`
+revision. That is bounded — one new output modality, built as exactly-one-of, not a
+general cardinality language. What still does not change: runa remains
+content/semantics-blind (the group is type cardinality, not field reading); no
+trigger form changes; routing still uses the existing `on_artifact`/`on_change`
+vocabulary. runa has no ADR convention (its `interface-contract.md` is its canonical
+boundary doc), so the runa-side decision is recorded as that contract's revision,
+commissioned with its enforcement as a single coherent change (a contract edge
+without a runtime check would be worse than none).
 
 ## How #330–#334 consume it
 
@@ -163,10 +225,12 @@ decision stays single-repo (groundwork), which keeps the cross-repo story simple
   disposition). No new dependency.
 - **#331 (review protocol + code-review skill).** `review` produces the typed
   outcomes `change-approved` / `change-needs-revision` instead of a single
-  `review-findings`-with-disposition-field. Authors the two outcome schemas (shared
-  `$defs` base; per-type blocking-finding constraint) replacing
-  `review-findings.schema.json`. Carries the conformance obligation's enforcement
-  if it lands the C-2/C-5 check.
+  `review-findings`-with-disposition-field, declared in a required-choice output
+  group. Authors the two outcome schemas (shared `$defs` base; per-type
+  blocking-finding constraint) replacing `review-findings.schema.json`. **Depends on
+  the runa required-choice edge and the matching C-2/conformance support landing
+  first** (sequenced ahead of #331); it cannot honestly declare the group until the
+  edge exists.
 - **#332 (land C-2 contract).** **Its runa-substrate dependency is removed.** Land
   activates on `on_artifact("change-approved")` using the existing trigger
   vocabulary. #329 Decision 3's field-predicate prerequisite is superseded by this
@@ -185,8 +249,10 @@ follow-up, not rescoped into this arc (Sufficiency).
 
 ### Good
 
-- The cross-protocol outcome-routing gap is closed with runa's existing primitives;
-  no runtime change, no new open-ended runtime surface.
+- The cross-protocol outcome-routing gap is closed without a field predicate and
+  without any new open-ended runtime surface; the one runa addition is bounded
+  type cardinality (exactly-one-of), and the "exactly one outcome" invariant gains a
+  real runtime enforcer (Revision above).
 - One source of truth for each outcome; coherence drift between a field and a signal
   is structurally impossible.
 - runa's content-blindness — its strongest scale and sovereignty property — is
