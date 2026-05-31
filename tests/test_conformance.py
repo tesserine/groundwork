@@ -126,10 +126,9 @@ class ConformanceTests(unittest.TestCase):
 
             results = run_conformance([root])
 
-        self.assertEqual(1, len(results))
-        self.assertEqual(contract.resolve(), results[0].path)
-        self.assertEqual("C-2 workflow-contract", results[0].category)
-        self.assertTrue(results[0].passed)
+        self.assertEqual([root / "manifest.toml", contract], [result.path for result in results])
+        self.assertEqual(["C-5 manifest", "C-2 workflow-contract"], [result.category for result in results])
+        self.assertTrue(all(result.passed for result in results))
 
     def test_direct_schema_directory_argument_validates_schema_definitions(self) -> None:
         results = run_conformance([SCHEMAS])
@@ -160,10 +159,10 @@ class ConformanceTests(unittest.TestCase):
 
     def test_explicit_non_unit_toml_path_fails_instead_of_silently_skipping(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            manifest = Path(directory) / "manifest.toml"
-            manifest.write_text("name = \"example\"\n", encoding="utf-8")
+            settings = Path(directory) / "settings.toml"
+            settings.write_text("name = \"example\"\n", encoding="utf-8")
 
-            results = run_conformance([manifest])
+            results = run_conformance([settings])
 
         self.assertEqual(1, len(results))
         self.assertEqual("unknown", results[0].category)
@@ -185,6 +184,7 @@ class ConformanceTests(unittest.TestCase):
     def test_default_discovery_finds_schema_definitions_without_requiring_future_dirs(self) -> None:
         discovered = discover_units(ROOT)
 
+        self.assertIn(ROOT / "manifest.toml", discovered)
         self.assertIn(SCHEMAS / "change-proposal.schema.json", discovered)
         self.assertIn(SCHEMAS / "review-findings.schema.json", discovered)
         self.assertFalse(any("tests/fixtures" in path.as_posix() for path in discovered))
@@ -204,6 +204,172 @@ class ConformanceTests(unittest.TestCase):
         self.assertEqual(1, len(results))
         self.assertEqual("C-2 workflow-contract", results[0].category)
         self.assertTrue(results[0].passed)
+
+    def test_manifest_dispatch_validates_registered_outcome_members_and_routing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "manifest.toml"
+            manifest.write_text(
+                """
+name = "review-methodology"
+
+[[artifact_types]]
+name = "change-proposal"
+
+[[artifact_types]]
+name = "change-approved"
+
+[[artifact_types]]
+name = "change-needs-revision"
+
+[[artifact_types]]
+name = "completion-record"
+
+[[outcome_types]]
+name = "change-approved"
+
+[[outcome_types]]
+name = "change-needs-revision"
+
+[[protocols]]
+name = "review"
+requires = ["change-proposal"]
+trigger = { type = "on_artifact", name = "change-proposal" }
+
+[[protocols.required_output_choices]]
+name = "review-disposition"
+members = ["change-approved", "change-needs-revision"]
+
+[[protocols]]
+name = "land"
+requires = ["change-approved"]
+produces = ["completion-record"]
+trigger = { type = "on_artifact", name = "change-approved" }
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([manifest])
+
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertTrue(results[0].passed)
+
+    def test_manifest_dispatch_rejects_choice_member_outside_outcome_vocabulary(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "manifest.toml"
+            manifest.write_text(
+                """
+name = "review-methodology"
+
+[[artifact_types]]
+name = "change-approved"
+
+[[artifact_types]]
+name = "change-needs-revision"
+
+[[outcome_types]]
+name = "change-approved"
+
+[[protocols]]
+name = "review"
+trigger = { type = "on_artifact", name = "change-approved" }
+
+[[protocols.required_output_choices]]
+name = "review-disposition"
+members = ["change-approved", "change-needs-revision"]
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([manifest])
+
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("is not registered in outcome_types", " ".join(results[0].errors))
+
+    def test_manifest_dispatch_rejects_non_artifact_outcome_trigger(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "manifest.toml"
+            manifest.write_text(
+                """
+name = "review-methodology"
+
+[[artifact_types]]
+name = "change-approved"
+
+[[artifact_types]]
+name = "change-needs-revision"
+
+[[outcome_types]]
+name = "change-approved"
+
+[[outcome_types]]
+name = "change-needs-revision"
+
+[[protocols]]
+name = "review"
+trigger = { type = "on_artifact", name = "change-approved" }
+
+[[protocols.required_output_choices]]
+name = "review-disposition"
+members = ["change-approved", "change-needs-revision"]
+
+[[protocols]]
+name = "land"
+trigger = { type = "on_change", name = "change-approved" }
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([manifest])
+
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("outcome trigger must use on_artifact", " ".join(results[0].errors))
+
+    def test_manifest_dispatch_rejects_disposition_agnostic_successor_trigger(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "manifest.toml"
+            manifest.write_text(
+                """
+name = "review-methodology"
+
+[[artifact_types]]
+name = "review-findings"
+
+[[artifact_types]]
+name = "change-approved"
+
+[[artifact_types]]
+name = "change-needs-revision"
+
+[[outcome_types]]
+name = "change-approved"
+
+[[outcome_types]]
+name = "change-needs-revision"
+
+[[protocols]]
+name = "review"
+produces = ["review-findings"]
+trigger = { type = "on_artifact", name = "review-findings" }
+
+[[protocols.required_output_choices]]
+name = "review-disposition"
+members = ["change-approved", "change-needs-revision"]
+
+[[protocols]]
+name = "land"
+trigger = { type = "on_artifact", name = "review-findings" }
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([manifest])
+
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("successor routes on disposition-agnostic output", " ".join(results[0].errors))
 
     def test_source_verify_workflow_contract_is_discovered_and_registry_validated(self) -> None:
         contract = ROOT / "workflow-contracts" / "verify.toml"

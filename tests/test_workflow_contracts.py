@@ -103,6 +103,61 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("nodes/0/disciplines/1", context.exception.paths)
         self.assertIn("discipline `missing-discipline` does not resolve in registry", str(context.exception))
 
+    def test_outcome_terminals_match_manifest_required_output_choice_members(self) -> None:
+        registry = WorkflowRegistry(
+            disciplines={"orient"},
+            mechanics={"read-artifact"},
+            artifact_schemas={"change-approved", "change-needs-revision", "review-audit"},
+            outcome_types={"change-approved", "change-needs-revision"},
+            required_output_choices={
+                "review": [{"name": "review-disposition", "members": ["change-approved", "change-needs-revision"]}]
+            },
+        )
+
+        contract = load_workflow_contract(
+            self.fixture("valid-review-outcomes-with-audit-terminal.toml"),
+            registry=registry,
+        )
+
+        self.assertEqual("review", contract["name"])
+
+    def test_outcome_terminals_reject_shared_record_type_when_manifest_declares_choice_members(self) -> None:
+        registry = WorkflowRegistry(
+            disciplines={"orient"},
+            mechanics={"read-artifact"},
+            artifact_schemas={"review-findings", "change-approved", "change-needs-revision"},
+            outcome_types={"change-approved", "change-needs-revision"},
+            required_output_choices={
+                "review": [{"name": "review-disposition", "members": ["change-approved", "change-needs-revision"]}]
+            },
+        )
+
+        with self.assertRaises(WorkflowContractError) as context:
+            load_workflow_contract(self.fixture("invalid-shared-record-type-outcomes.toml"), registry=registry)
+
+        self.assertIn("terminals", context.exception.paths)
+        self.assertIn("manifest required_output_choices declared for protocol `review`", str(context.exception))
+
+    def test_outcome_terminals_reject_manifest_group_divergence(self) -> None:
+        registry = WorkflowRegistry(
+            disciplines={"orient"},
+            mechanics={"read-artifact"},
+            artifact_schemas={"change-approved", "change-needs-revision", "review-audit", "change-rejected"},
+            outcome_types={"change-approved", "change-needs-revision", "change-rejected"},
+            required_output_choices={
+                "review": [{"name": "review-disposition", "members": ["change-approved", "change-rejected"]}]
+            },
+        )
+
+        with self.assertRaises(WorkflowContractError) as context:
+            load_workflow_contract(
+                self.fixture("valid-review-outcomes-with-audit-terminal.toml"),
+                registry=registry,
+            )
+
+        self.assertIn("terminals", context.exception.paths)
+        self.assertIn("do not match outcome terminal artifact_produced values", str(context.exception))
+
     def test_parser_registries_resolve_mechanic_names_across_parsers(self) -> None:
         mechanic = load_mechanic(MECHANIC_FIXTURES / "valid-github.toml")
         registry = WorkflowRegistry(

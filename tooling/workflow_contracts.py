@@ -29,6 +29,8 @@ class WorkflowRegistry:
     disciplines: set[str] = field(default_factory=set)
     mechanics: set[str] = field(default_factory=set)
     artifact_schemas: set[str] = field(default_factory=set)
+    outcome_types: set[str] = field(default_factory=set)
+    required_output_choices: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
 
 
 def workflow_registry_from_manifest(
@@ -44,6 +46,28 @@ def workflow_registry_from_manifest(
         for entry in manifest.get("artifact_types", [])
         if isinstance(entry, dict) and isinstance(entry.get("name"), str)
     }
+    outcome_types = {
+        entry["name"]
+        for entry in manifest.get("outcome_types", [])
+        if isinstance(entry, dict) and isinstance(entry.get("name"), str)
+    }
+    required_output_choices = {
+        entry["name"]: [
+            {
+                "name": choice["name"],
+                "members": list(choice["members"]),
+            }
+            for choice in entry.get("required_output_choices", [])
+            if isinstance(choice, dict)
+            and isinstance(choice.get("name"), str)
+            and isinstance(choice.get("members"), list)
+            and all(isinstance(member, str) for member in choice["members"])
+        ]
+        for entry in manifest.get("protocols", [])
+        if isinstance(entry, dict)
+        and isinstance(entry.get("name"), str)
+        and isinstance(entry.get("required_output_choices"), list)
+    }
     mechanic_names = {
         entry["name"]
         for entry in manifest.get("mechanics", [])
@@ -55,6 +79,8 @@ def workflow_registry_from_manifest(
         disciplines=_directory_names(root_path / "skills") | _directory_names(root_path / "protocols"),
         mechanics=mechanic_names,
         artifact_schemas=artifact_types,
+        outcome_types=outcome_types,
+        required_output_choices=required_output_choices,
     )
 
 
@@ -400,5 +426,67 @@ def _registry_errors(contract: dict[str, Any], registry: WorkflowRegistry) -> li
                     f"artifact schema `{artifact}` does not resolve in registry",
                 )
             )
+
+    errors.extend(_outcome_terminal_errors(contract, registry))
+
+    return errors
+
+
+def _outcome_terminal_errors(contract: dict[str, Any], registry: WorkflowRegistry) -> list[tuple[str, str]]:
+    outcome_terminal_artifacts = [
+        terminal["artifact_produced"]
+        for terminal in contract["terminals"]
+        if terminal["artifact_produced"] in registry.outcome_types
+    ]
+    manifest_choices = registry.required_output_choices.get(contract["name"], [])
+
+    if not outcome_terminal_artifacts:
+        if manifest_choices:
+            return [
+                (
+                    "terminals",
+                    f"manifest required_output_choices declared for protocol `{contract['name']}` "
+                    "but workflow contract has no outcome terminals",
+                )
+            ]
+        return []
+
+    errors: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for terminal_index, terminal in enumerate(contract["terminals"]):
+        artifact = terminal["artifact_produced"]
+        if artifact not in registry.outcome_types:
+            continue
+        if artifact in seen:
+            errors.append(
+                (
+                    f"terminals/{terminal_index}/artifact_produced",
+                    f"outcome terminal repeats artifact_produced `{artifact}`",
+                )
+            )
+        seen.add(artifact)
+
+    if len(manifest_choices) != 1:
+        errors.append(
+            (
+                "terminals",
+                f"outcome terminals for protocol `{contract['name']}` require exactly one "
+                "manifest required_output_choices group",
+            )
+        )
+        return errors
+
+    manifest_choice = manifest_choices[0]
+    manifest_members = set(manifest_choice["members"])
+    terminal_members = set(outcome_terminal_artifacts)
+    if manifest_members != terminal_members:
+        errors.append(
+            (
+                "terminals",
+                f"manifest required_output_choices `{manifest_choice['name']}` members "
+                f"{sorted(manifest_members)} do not match outcome terminal artifact_produced values "
+                f"{sorted(terminal_members)}",
+            )
+        )
 
     return errors

@@ -109,13 +109,20 @@ Run the narrowed Step 1 methodology conformance runner with:
 python -m tooling.conformance
 ```
 
-By default it checks source-tree workflow contracts and mechanics when those
-directories exist, and all JSON Schema definitions under `schemas/`. Pass files
-or directories as arguments to check explicit C-2/C-3/C-4 units and aggregate
-all failures before returning a non-zero exit status. Directory arguments use
-the same discovery rules as the default runner: `workflow-contracts/` and
-`mechanics/` TOML units plus `schemas/*.schema.json`. Explicit file arguments
-that do not classify as conformance units still fail loudly.
+By default it checks `manifest.toml`, source-tree workflow contracts and
+mechanics when those directories exist, and all JSON Schema definitions under
+`schemas/`. Pass files or directories as arguments to check explicit
+C-2/C-3/C-4/C-5 units and aggregate all failures before returning a non-zero
+exit status. Directory arguments use the same discovery rules as the default
+runner: `manifest.toml`, `workflow-contracts/` and `mechanics/` TOML units,
+plus `schemas/*.schema.json`. Explicit file arguments that do not classify as
+conformance units still fail loudly.
+
+The C-5 manifest check validates the outcome-routing substrate used by
+required-choice protocol outputs: top-level `[[outcome_types]]` entries must
+resolve to declared artifact types, `[[protocols.required_output_choices]]`
+members must be registered outcome types, and successor triggers that route on
+an outcome must use `on_artifact`.
 
 ## What Groundwork Believes
 

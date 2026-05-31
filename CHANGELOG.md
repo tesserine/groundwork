@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Narrowed Step 1 conformance runner for C-2 workflow contracts, C-3
   mechanics, C-4 artifact instances, and JSON Schema definitions, with
   aggregate pass/fail reporting and non-zero exit on failure (closes #297).
+- Required-choice outcome group conformance substrate: C-5 manifest dispatch,
+  `[[outcome_types]]` vocabulary validation, manifest required-output-choice
+  member validation, outcome-trigger routing checks, and C-2 workflow terminal
+  parity against the manifest group (closes #336).
 - Source C-2 workflow contract exercise for the forge-neutral `verify`
   protocol, including default conformance coverage and a Step 1 R1 note
   recording that the format held for `verify`'s shape without schema/parser
@@ -43,8 +47,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `workflow-contracts/` or `mechanics/` directories by resolving them before
   dispatch; TOML files outside those unit directories remain unsupported.
 - Step 1 conformance directory arguments now use the same unit discovery rules
-  as the default runner, so non-unit files such as `manifest.toml` are skipped
-  during directory expansion while explicitly named non-units still fail.
+  as the default runner, while explicitly named non-units still fail.
 - Mechanic substrate validation now rejects empty `examples` arrays and
   registry-loaded mechanics whose `forge_tag` is not declared in
   `manifest.toml`; generic runtime mechanics remain forge-neutral by omitting
