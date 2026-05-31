@@ -340,6 +340,28 @@ class ReleaseCeremonyTests(unittest.TestCase):
         )
         assert_success(self, fixture.run_release_check("release", "v1.2.3"))
 
+    def test_release_cut_accepts_bytecode_cache_from_prior_release_check(self) -> None:
+        fixture = self.add_fixture("release-cut-prior-release-check-cache", "1.2.2")
+        fixture.init_git_with_remote()
+
+        assert_success(self, fixture.run_release_check("metadata"))
+        assert_success(self, fixture.run_release_check("release", "v1.2.2"))
+        self.assertTrue((fixture.root / "scripts" / "__pycache__").is_dir())
+
+        result = fixture.run_release_cut("v1.2.3")
+
+        assert_success(self, result)
+        assert_success(self, fixture.run_release_check("release", "v1.2.3"))
+
+    def test_release_cut_rejects_genuine_untracked_artifacts(self) -> None:
+        fixture = self.add_fixture("release-cut-untracked-artifact", "1.2.2")
+        fixture.init_git_with_remote()
+        fixture.write("operator-notes.txt", "not part of the release\n")
+
+        result = fixture.run_release_cut("v1.2.3")
+
+        assert_failure_contains(self, result, "release-cut requires a clean working tree")
+
     def test_release_cut_creates_release_candidate_release_commit_and_tag(self) -> None:
         fixture = self.add_fixture("release-cut-rc", "1.2.3")
         fixture.init_git_with_remote()

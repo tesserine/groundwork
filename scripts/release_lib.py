@@ -295,10 +295,24 @@ def git(root: Path, *args: str, check: bool = True) -> CommandResult:
     return CommandResult(result.stdout, result.stderr)
 
 
+def remove_release_lib_bytecode_cache(root: Path) -> None:
+    cache = root / "scripts" / "__pycache__"
+    if not cache.is_dir():
+        return
+    for path in cache.glob("release_lib.*.pyc"):
+        if path.is_file() and not path.is_symlink():
+            path.unlink()
+    try:
+        cache.rmdir()
+    except OSError:
+        pass
+
+
 def require_clean_main(root: Path) -> None:
     branch = git(root, "branch", "--show-current").stdout.strip()
     if branch != "main":
         die(f"release-cut must run on main, not {branch or 'detached HEAD'}")
+    remove_release_lib_bytecode_cache(root)
     status = git(root, "status", "--short").stdout.strip()
     if status:
         die("release-cut requires a clean working tree")

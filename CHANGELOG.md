@@ -30,6 +30,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Release-cut now ignores its own generated `release_lib` bytecode cache during
+  the clean-tree pre-check, so the documented release ceremony works from a
+  fresh checkout after prior `release-check` invocations (closes #311, #315).
 - Step 1 conformance now validates C-2 workflow registry references and reports
   explicit path read failures as aggregate failures instead of aborting.
 - Step 1 conformance now classifies explicit relative TOML paths from inside
