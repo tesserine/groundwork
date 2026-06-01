@@ -1,0 +1,31 @@
+name = "deliver-change-proposal"
+purpose = "Produce the SourceHut change-proposal mbox, store it at the artifact-store URI recorded in handle.mbox, and leave it not sent to lists.sr.ht."
+forge_tag = "sourcehut"
+default_invocation = "git format-patch --stdout {base}..{commit} > {mbox_file} && artifact-store put {mbox_file} {mbox_uri}"
+examples = [
+  "git format-patch --stdout main..7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0 > /tmp/issue-316-v2.mbox && artifact-store put /tmp/issue-316-v2.mbox artifact://change-proposals/issue-316/v2.mbox",
+]
+
+[[parameters]]
+name = "base"
+purpose = "Base branch or revision targeted by the proposal."
+required = true
+
+[[parameters]]
+name = "commit"
+purpose = "Approved proposal commit or stable revision used as the patch-series tip."
+required = true
+
+[[parameters]]
+name = "mbox_file"
+purpose = "Local temporary mbox file produced before artifact-store storage."
+required = true
+
+[[parameters]]
+name = "mbox_uri"
+purpose = "Artifact-store path or URI recorded as the SourceHut change-proposal handle.mbox value."
+required = true
+
+[outcome]
+description = "A single artifact-store mbox carrier exists and the change-proposal handle.mbox points at it; no mailing-list patchset is sent."
+artifact_type = "change-proposal"

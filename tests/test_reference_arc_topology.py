@@ -39,6 +39,13 @@ def mechanics_for_forge(forge_tag: str) -> list[dict]:
     return mechanics
 
 
+def mechanic_for_forge(forge_tag: str, name: str) -> dict:
+    matches = [mechanic for mechanic in mechanics_for_forge(forge_tag) if mechanic["name"] == name]
+    if len(matches) != 1:
+        raise AssertionError(f"expected one {forge_tag} mechanic named {name}, found {len(matches)}")
+    return matches[0]
+
+
 class ReferenceArcTopologyTests(unittest.TestCase):
     def test_manifest_routes_submit_review_land_through_disposition_artifacts(self) -> None:
         artifact_types = {entry["name"] for entry in manifest()["artifact_types"]}
@@ -81,18 +88,50 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertEqual(["completion-record"], land["produces"])
         self.assertEqual({"type": "on_artifact", "name": "change-approved"}, land["trigger"])
 
-    def test_github_reference_arc_mechanics_are_bound_once_in_manifest_and_c3(self) -> None:
+    def test_reference_arc_mechanics_are_bound_once_per_forge_in_manifest_and_c3(self) -> None:
         operations = {
             "deliver-change-proposal",
             "apply-approved-change",
             "reflect-disposition",
         }
         manifest_mechanics = {entry["name"]: entry for entry in manifest()["mechanics"]}
-        github_mechanics = mechanics_for_forge("github")
 
-        for operation in operations:
-            self.assertIn("github", manifest_mechanics[operation]["forge_tags"])
-            self.assertEqual(1, sum(1 for mechanic in github_mechanics if mechanic["name"] == operation))
+        for forge_tag in {"github", "sourcehut"}:
+            forge_mechanics = mechanics_for_forge(forge_tag)
+            for operation in operations:
+                self.assertIn(forge_tag, manifest_mechanics[operation]["forge_tags"])
+                self.assertEqual(1, sum(1 for mechanic in forge_mechanics if mechanic["name"] == operation))
+
+    def test_sourcehut_mechanics_use_single_artifact_store_mbox_without_lists(self) -> None:
+        deliver = mechanic_for_forge("sourcehut", "deliver-change-proposal")
+        apply = mechanic_for_forge("sourcehut", "apply-approved-change")
+        combined = " ".join(
+            [
+                deliver["purpose"],
+                deliver["default_invocation"],
+                deliver["outcome"]["description"],
+                apply["purpose"],
+                apply["default_invocation"],
+                apply["outcome"]["description"],
+            ]
+        )
+
+        self.assertIn("artifact-store", deliver["purpose"])
+        self.assertIn("not sent to lists.sr.ht", deliver["purpose"])
+        self.assertIn("mbox", deliver["outcome"]["description"])
+        self.assertIn("artifact://", deliver["examples"][0])
+        self.assertIn("git am --3way", apply["default_invocation"])
+        self.assertIn("git push", apply["default_invocation"])
+        self.assertNotIn("git send-email", combined)
+
+    def test_sourcehut_apply_mechanic_guards_approved_version_against_drift(self) -> None:
+        apply = mechanic_for_forge("sourcehut", "apply-approved-change")
+        invocation = apply["default_invocation"]
+
+        self.assertIn("{approved_commit}", invocation)
+        self.assertIn("git rev-parse HEAD", invocation)
+        self.assertIn("test", invocation)
+        self.assertIn("git push", invocation)
 
     def test_land_approved_proposal_resolution_uses_work_unit_and_version_together(self) -> None:
         v1 = load_fixture("valid-change-proposal-github-issue340-v1.json")

@@ -117,10 +117,21 @@ The Step-2 resolution mechanism is:
 - Validate, for the reference arc, that `github` and `sourcehut` each provide
   implementations for every forge-touching operation they need.
 
-#333 introduces this mechanism for GitHub as the first C-3 mechanic library:
+#333 introduced this mechanism for GitHub as the first C-3 mechanic library,
+and #334 extends the same invariant operations to SourceHut:
 `deliver-change-proposal`, `apply-approved-change`, and
-`reflect-disposition` are bound under `forge_tag = "github"` and conformance
-rejects unknown, missing, or duplicate operation/tag implementations.
+`reflect-disposition` are bound under `forge_tag = "github"` and
+`forge_tag = "sourcehut"`. Conformance rejects unknown, missing, or duplicate
+operation/tag implementations.
+
+The SourceHut delivery locus is the change-proposal mbox itself. Submit
+produces an mbox, stores it at the artifact-store URI recorded in
+`change-proposal.handle.mbox`, and does not send it to lists.sr.ht. Land reads
+that same mbox handle after resolving the approved proposal by
+`work_unit`/`against_version`, applies it with `git am --3way`, verifies the
+applied and pushed head match the approved commit, and pushes the target ref
+over SSH. Disposition lives in tracker-ticket state; there is no platform merge
+or patchset email.
 
 ## Downstream Constraints
 

@@ -1,0 +1,40 @@
+name = "apply-approved-change"
+purpose = "Apply the mbox handle from the SourceHut change-proposal resolved by work_unit and against_version, verify the applied head is the approved commit, and push the target ref over SSH."
+forge_tag = "sourcehut"
+default_invocation = "git am --3way {mbox_file} && test \"$(git rev-parse HEAD)\" = \"{approved_commit}\" && git push {ssh_remote} HEAD:{target_ref} && test \"$(git ls-remote {ssh_remote} {target_ref} | cut -f1)\" = \"{approved_commit}\""
+examples = [
+  "git am --3way /tmp/issue-316-v2.mbox && test \"$(git rev-parse HEAD)\" = \"7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0\" && git push git@git.sr.ht:~tesserine/groundwork HEAD:refs/heads/dogfood/issue-316-v2 && test \"$(git ls-remote git@git.sr.ht:~tesserine/groundwork refs/heads/dogfood/issue-316-v2 | cut -f1)\" = \"7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0\"",
+]
+
+[[parameters]]
+name = "work_unit"
+purpose = "Work-unit identity used with against_version to resolve the approved change-proposal."
+required = true
+
+[[parameters]]
+name = "against_version"
+purpose = "Approved proposal version from change-approved.against_version."
+required = true
+
+[[parameters]]
+name = "mbox_file"
+purpose = "Local materialization of the artifact-store mbox referenced by the resolved change-proposal handle."
+required = true
+
+[[parameters]]
+name = "approved_commit"
+purpose = "Approved proposal commit that the applied series and pushed ref must match."
+required = true
+
+[[parameters]]
+name = "ssh_remote"
+purpose = "SourceHut Git SSH remote receiving the applied change."
+required = true
+
+[[parameters]]
+name = "target_ref"
+purpose = "Throwaway or release target ref to update on the SourceHut remote."
+required = true
+
+[outcome]
+description = "The resolved SourceHut mbox is applied with git am, the resulting HEAD and pushed ref match the approved commit, and drift is refused before disposition reflection."
