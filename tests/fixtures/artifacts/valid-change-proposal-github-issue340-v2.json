@@ -1,0 +1,13 @@
+{
+  "work_unit": "issue-340",
+  "branch": "issue-340/feat-contracts-submit-review-land-dispos",
+  "commit": "fb5ed767589810bfe5ef93f5b0a9e9c48b97c11a",
+  "base": "main",
+  "summary": "Revise the submit and land disposition migration after review.",
+  "version": 2,
+  "handle": {
+    "forge_tag": "github",
+    "url": "https://github.com/tesserine/groundwork/pull/340",
+    "number": 340
+  }
+}

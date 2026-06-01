@@ -1,0 +1,60 @@
+name = "submit"
+purpose = "Deliver an initial or revised change proposal for review."
+session_role = "submission"
+preconditions = ["completion-evidence and documentation-record exist"]
+start_node = "resolve-submission-round"
+failure_modes = [
+  "no change proposal can be delivered",
+  "a revision round does not preserve proposal version history",
+]
+corruption_modes = [
+  "forge-specific delivery vocabulary embedded in the workflow contract",
+  "revision loop bypasses review disposition",
+  "proposal version history is overwritten instead of advanced",
+]
+
+[[nodes]]
+name = "resolve-submission-round"
+intent = "Determine whether this delivery is an initial proposal or a revision requested by review."
+disciplines = ["orient"]
+mechanics = ["read-artifact"]
+outcomes = ["submission round is known"]
+
+[[nodes]]
+name = "deliver-change-proposal"
+intent = "Deliver the initial forge-neutral change proposal."
+disciplines = ["orient"]
+mechanics = ["deliver-change-proposal"]
+outcomes = ["change proposal version 1 is available for review"]
+
+[[nodes]]
+name = "revise-change-proposal"
+intent = "Deliver a new immutable proposal version that answers the review disposition."
+disciplines = ["orient"]
+mechanics = ["revise", "deliver-change-proposal"]
+outcomes = ["revised change proposal version is available for review"]
+
+[[edges]]
+from = "resolve-submission-round"
+to = "revise-change-proposal"
+condition = { type = "case", field = "submission_round", equals = "revision" }
+
+[[edges]]
+from = "resolve-submission-round"
+to = "deliver-change-proposal"
+condition = { type = "default", field = "submission_round" }
+
+[[edges]]
+from = "deliver-change-proposal"
+to = "submitted"
+condition = { type = "always" }
+
+[[edges]]
+from = "revise-change-proposal"
+to = "submitted"
+condition = { type = "always" }
+
+[[terminals]]
+name = "submitted"
+outcome = "A change proposal exists for review."
+artifact_produced = "change-proposal"

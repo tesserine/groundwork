@@ -1,0 +1,13 @@
+{
+  "work_unit": "issue-341",
+  "branch": "issue-341/feat-independent-disposition-change",
+  "commit": "1b2c3d4e5f67890123456789abcdef012345678",
+  "base": "main",
+  "summary": "Independent second-round proposal with a colliding version number.",
+  "version": 2,
+  "handle": {
+    "forge_tag": "github",
+    "url": "https://github.com/tesserine/groundwork/pull/341",
+    "number": 341
+  }
+}

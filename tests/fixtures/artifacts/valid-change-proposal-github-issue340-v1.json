@@ -1,0 +1,13 @@
+{
+  "work_unit": "issue-340",
+  "branch": "issue-340/feat-contracts-submit-review-land-dispos",
+  "commit": "0a1b2c3d4e5f67890123456789abcdef01234567",
+  "base": "main",
+  "summary": "Migrate submit to produce the first disposition-gated change proposal.",
+  "version": 1,
+  "handle": {
+    "forge_tag": "github",
+    "url": "https://github.com/tesserine/groundwork/pull/340",
+    "number": 340
+  }
+}
