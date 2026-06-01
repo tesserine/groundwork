@@ -117,6 +117,7 @@ class ReferenceArcTopologyTests(unittest.TestCase):
     def test_sourcehut_deliver_mechanic_produces_mbox_and_proposal_ref_without_lists(self) -> None:
         deliver = mechanic_for_forge("sourcehut", "deliver-change-proposal")
         invocation = deliver["default_invocation"]
+        parameters = {parameter["name"] for parameter in deliver["parameters"]}
         combined = " ".join(
             [
                 deliver["purpose"],
@@ -128,8 +129,14 @@ class ReferenceArcTopologyTests(unittest.TestCase):
 
         self.assertIn("git format-patch --stdout {base}..{commit}", invocation)
         self.assertIn("git push {ssh_remote} {commit}:{proposal_ref}", invocation)
+        self.assertIn("artifact_tag", parameters)
+        self.assertIn("git tag --force {artifact_tag} {commit}", invocation)
+        self.assertIn("refs/tags/{artifact_tag}:refs/tags/{artifact_tag}", invocation)
+        self.assertIn('"revspec":"refs/tags/{artifact_tag}"', invocation)
         self.assertIn("uploadArtifact", invocation)
-        self.assertLess(invocation.index("git push {ssh_remote} {commit}:{proposal_ref}"), invocation.index("uploadArtifact"))
+        self.assertLess(invocation.index("refs/tags/{artifact_tag}:refs/tags/{artifact_tag}"), invocation.index("uploadArtifact"))
+        self.assertNotIn('"revspec":"{proposal_ref}"', invocation)
+        self.assertNotIn('"revspec":"refs/heads/', combined)
         self.assertIn("change-proposal.branch", combined)
         self.assertIn("no lists.sr.ht", combined)
         self.assertNotIn("git send-email", combined)

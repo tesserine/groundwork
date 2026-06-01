@@ -1,9 +1,9 @@
 name = "deliver-change-proposal"
 purpose = "Deliver a SourceHut change proposal as a stable proposal ref recorded in change-proposal.branch plus an uploaded mbox carrier, with no lists.sr.ht delivery."
 forge_tag = "sourcehut"
-default_invocation = '''git format-patch --stdout {base}..{commit} > {mbox_file} && git push {ssh_remote} {commit}:{proposal_ref} && curl --fail --silent --show-error --header "Authorization: Bearer {token}" -F 'operations={"query":"mutation($repoId: Int!, $revspec: String!, $file: Upload!) { uploadArtifact(repoId: $repoId, revspec: $revspec, file: $file) { id filename checksum size url } }","variables":{"repoId":{repo_id},"revspec":"{proposal_ref}","file":null}}' -F 'map={"0":["variables.file"]}' -F '0=@{mbox_file};filename={mbox_filename};type=text/plain' {git_query_url}'''
+default_invocation = '''git format-patch --stdout {base}..{commit} > {mbox_file} && git tag --force {artifact_tag} {commit} && git push {ssh_remote} {commit}:{proposal_ref} refs/tags/{artifact_tag}:refs/tags/{artifact_tag} && curl --fail --silent --show-error --header "Authorization: Bearer {token}" -F 'operations={"query":"mutation($repoId: Int!, $revspec: String!, $file: Upload!) { uploadArtifact(repoId: $repoId, revspec: $revspec, file: $file) { id filename checksum size url } }","variables":{"repoId":{repo_id},"revspec":"refs/tags/{artifact_tag}","file":null}}' -F 'map={"0":["variables.file"]}' -F '0=@{mbox_file};filename={mbox_filename};type=text/plain' {git_query_url}'''
 examples = [
-  '''git format-patch --stdout main..7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0 > /tmp/issue-316-v2.mbox && git push git@git.sr.ht:~tesserine/groundwork 7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0:refs/heads/proposals/issue-316-v2 && curl --fail --silent --show-error --header "Authorization: Bearer $SOURCEHUT_TOKEN" -F 'operations={"query":"mutation($repoId: Int!, $revspec: String!, $file: Upload!) { uploadArtifact(repoId: $repoId, revspec: $revspec, file: $file) { id filename checksum size url } }","variables":{"repoId":42,"revspec":"refs/heads/proposals/issue-316-v2","file":null}}' -F 'map={"0":["variables.file"]}' -F '0=@/tmp/issue-316-v2.mbox;filename=issue-316-v2.mbox;type=text/plain' https://git.sr.ht/query''',
+  '''git format-patch --stdout main..7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0 > /tmp/issue-316-v2.mbox && git tag --force proposals/issue-316-v2 7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0 && git push git@git.sr.ht:~tesserine/groundwork 7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0:refs/heads/proposals/issue-316-v2 refs/tags/proposals/issue-316-v2:refs/tags/proposals/issue-316-v2 && curl --fail --silent --show-error --header "Authorization: Bearer $SOURCEHUT_TOKEN" -F 'operations={"query":"mutation($repoId: Int!, $revspec: String!, $file: Upload!) { uploadArtifact(repoId: $repoId, revspec: $revspec, file: $file) { id filename checksum size url } }","variables":{"repoId":42,"revspec":"refs/tags/proposals/issue-316-v2","file":null}}' -F 'map={"0":["variables.file"]}' -F '0=@/tmp/issue-316-v2.mbox;filename=issue-316-v2.mbox;type=text/plain' https://git.sr.ht/query''',
 ]
 
 [[parameters]]
@@ -34,6 +34,11 @@ required = true
 [[parameters]]
 name = "proposal_ref"
 purpose = "Stable SourceHut proposal ref recorded in change-proposal.branch and later fetched by apply-approved-change."
+required = true
+
+[[parameters]]
+name = "artifact_tag"
+purpose = "Specific git tag name pushed and passed as the SourceHut uploadArtifact revspec for the mbox artifact."
 required = true
 
 [[parameters]]
