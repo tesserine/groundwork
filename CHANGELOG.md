@@ -44,6 +44,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `reflect-disposition` now have forge-tagged mechanics bound from
   `manifest.toml`, with conformance enforcing exactly one C-3 implementation
   for each declared operation/tag pair.
+- SourceHut C-3 mechanic library for the reference arc: list-free
+  `deliver-change-proposal` now stores a durable mbox reference and pushes the
+  proposal ref, `apply-approved-change` fetches that ref, verifies it still
+  resolves to the approved commit, and guards tree equality after plain
+  `git am --3way`, and `reflect-disposition` records tracker-ticket state
+  under `forge_tag = "sourcehut"`.
 
 ### Changed
 
@@ -56,6 +62,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- SourceHut `deliver-change-proposal` and `reflect-disposition` now fail on
+  GraphQL application-layer `errors` payloads returned with HTTP 200, and only
+  accept delivery/reflection when the expected mutation `data` fields are
+  present.
+- SourceHut `deliver-change-proposal` now uploads the mbox artifact against a
+  pushed git tag revspec instead of the proposal branch ref, matching
+  SourceHut `uploadArtifact` requirements while preserving
+  `change-proposal.branch` for downstream apply; deliver and apply now qualify
+  that bare branch as `refs/heads/...` only at the git push/fetch boundary.
 - C-5 manifest conformance now rejects disposition-agnostic outputs of
   outcome-bearing protocols through `on_change`, `on_invalid`, and composite
   triggers, while preserving valid re-review triggers on protocol inputs.

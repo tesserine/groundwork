@@ -1,0 +1,45 @@
+name = "apply-approved-change"
+purpose = "Apply the SourceHut mbox resolved by work_unit and against_version, verify the proposal ref still resolves to the approved commit, verify tree equality, and push the applied target ref over SSH."
+forge_tag = "sourcehut"
+default_invocation = "git fetch {ssh_remote} refs/heads/{proposal_ref} && fetched_commit=$(git rev-parse FETCH_HEAD) && approved_commit=$(git rev-parse {approved_commit}^{commit}) && if test \"$fetched_commit\" != \"$approved_commit\"; then printf '%s\n' \"SourceHut proposal ref resolved to $fetched_commit, expected $approved_commit\" >&2; exit 1; fi && expected_tree=$(git rev-parse {approved_commit}^{tree}) && git am --3way {mbox_file} && test \"$(git rev-parse HEAD^{tree})\" = \"$expected_tree\" && git push {ssh_remote} HEAD:{target_ref} && test \"$(git ls-remote {ssh_remote} {target_ref} | cut -f1 | xargs -I{} git rev-parse {}^{tree})\" = \"$expected_tree\""
+examples = [
+  "git fetch git@git.sr.ht:~tesserine/groundwork refs/heads/issue-316/feat-architecture-step-1-change-proposal && fetched_commit=$(git rev-parse FETCH_HEAD) && approved_commit=$(git rev-parse 7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0^{commit}) && if test \"$fetched_commit\" != \"$approved_commit\"; then printf '%s\n' \"SourceHut proposal ref resolved to $fetched_commit, expected $approved_commit\" >&2; exit 1; fi && expected_tree=$(git rev-parse 7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0^{tree}) && git am --3way /tmp/issue-316-v2.mbox && test \"$(git rev-parse HEAD^{tree})\" = \"$expected_tree\" && git push git@git.sr.ht:~tesserine/groundwork HEAD:refs/heads/dogfood/issue-316-v2 && test \"$(git ls-remote git@git.sr.ht:~tesserine/groundwork refs/heads/dogfood/issue-316-v2 | cut -f1 | xargs -I{} git rev-parse {}^{tree})\" = \"$expected_tree\"",
+]
+
+[[parameters]]
+name = "work_unit"
+purpose = "Work-unit identity used with against_version to resolve the approved change-proposal."
+required = true
+
+[[parameters]]
+name = "against_version"
+purpose = "Approved proposal version from change-approved.against_version."
+required = true
+
+[[parameters]]
+name = "proposal_ref"
+purpose = "Bare SourceHut proposal branch resolved from the approved change-proposal branch field."
+required = true
+
+[[parameters]]
+name = "mbox_file"
+purpose = "Local materialization of the uploaded mbox referenced by the resolved change-proposal handle."
+required = true
+
+[[parameters]]
+name = "approved_commit"
+purpose = "Approved proposal commit whose tree must match the applied result."
+required = true
+
+[[parameters]]
+name = "ssh_remote"
+purpose = "SourceHut Git SSH remote used to fetch the proposal ref and push the applied target ref."
+required = true
+
+[[parameters]]
+name = "target_ref"
+purpose = "Throwaway or release target ref to update on the SourceHut remote."
+required = true
+
+[outcome]
+description = "The approved SourceHut proposal ref is fetched, FETCH_HEAD matches the approved proposal commit, the mbox is applied with git am, and the applied and pushed trees match the approved proposal tree."
