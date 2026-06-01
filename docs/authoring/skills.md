@@ -26,6 +26,8 @@ A `SKILL.md` file begins with a YAML frontmatter block delimited by
 
 Only the identification layer is required. Metadata is optional. The
 forbidden layer must be omitted entirely.
+This keeps skill authoring focused on agent activation, while protocol
+contract routing remains centralized in the manifest.
 
 ## Field reference
 
