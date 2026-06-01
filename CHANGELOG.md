@@ -61,6 +61,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- SourceHut `deliver-change-proposal` and `reflect-disposition` now fail on
+  GraphQL application-layer `errors` payloads returned with HTTP 200, and only
+  accept delivery/reflection when the expected mutation `data` fields are
+  present.
 - SourceHut `deliver-change-proposal` now uploads the mbox artifact against a
   pushed git tag revspec instead of the proposal branch ref, matching
   SourceHut `uploadArtifact` requirements while preserving

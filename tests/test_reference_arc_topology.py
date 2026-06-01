@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import subprocess
 import tempfile
@@ -61,6 +62,23 @@ def run_git(args: list[str], cwd: Path) -> str:
 
 
 class ReferenceArcTopologyTests(unittest.TestCase):
+    def run_mechanic_invocation(self, invocation: str, replacements: dict[str, str], bin_dir: Path) -> subprocess.CompletedProcess:
+        command = invocation
+        for placeholder, value in replacements.items():
+            command = command.replace(f"{{{placeholder}}}", value)
+
+        environment = os.environ.copy()
+        environment["PATH"] = f"{bin_dir}{os.pathsep}{environment['PATH']}"
+        return subprocess.run(
+            command,
+            shell=True,
+            executable="/bin/sh",
+            env=environment,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
     def test_manifest_routes_submit_review_land_through_disposition_artifacts(self) -> None:
         artifact_types = {entry["name"] for entry in manifest()["artifact_types"]}
         mechanics = {entry["name"] for entry in manifest()["mechanics"]}
@@ -201,6 +219,104 @@ class ReferenceArcTopologyTests(unittest.TestCase):
 
         self.assertIn("{todo_query_url}", invocation)
         self.assertNotIn("https://todo.sr.ht/query", invocation)
+
+    def test_sourcehut_deliver_fails_when_upload_artifact_returns_graphql_errors_with_http_success(self) -> None:
+        deliver = mechanic_for_forge("sourcehut", "deliver-change-proposal")
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            (bin_dir / "git").write_text(
+                """#!/bin/sh
+case "$1" in
+  format-patch) printf 'patch body\\n' ;;
+  tag|push) exit 0 ;;
+  *) exit 1 ;;
+esac
+""",
+                encoding="utf-8",
+            )
+            (bin_dir / "curl").write_text(
+                """#!/bin/sh
+printf '%s\\n' '{"errors":[{"message":"artifact already exists"}],"data":{"uploadArtifact":null}}'
+""",
+                encoding="utf-8",
+            )
+            (bin_dir / "git").chmod(0o755)
+            (bin_dir / "curl").chmod(0o755)
+
+            result = self.run_mechanic_invocation(
+                deliver["default_invocation"],
+                {
+                    "base": "main",
+                    "commit": "HEAD",
+                    "mbox_file": str(root / "proposal.mbox"),
+                    "repo_id": "42",
+                    "ssh_remote": "git@example.invalid:repo",
+                    "proposal_ref": "issue-26/proposal",
+                    "artifact_tag": "proposals/issue-26-v1",
+                    "mbox_filename": "issue-26-v1.mbox",
+                    "git_query_url": "https://git.example.invalid/query",
+                    "token": "test-token",
+                },
+                bin_dir,
+            )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("data.uploadArtifact.url", result.stderr)
+
+    def test_sourcehut_reflect_fails_when_either_todo_mutation_returns_graphql_errors_with_http_success(self) -> None:
+        reflect = mechanic_for_forge("sourcehut", "reflect-disposition")
+
+        cases = [
+            (
+                '{"errors":[{"message":"comment rejected"}],"data":{"submitComment":null}}',
+                '{"data":{"updateTicketStatus":{"id":26}}}',
+                "data.submitComment",
+            ),
+            (
+                '{"data":{"submitComment":{"id":7}}}',
+                '{"errors":[{"message":"status rejected"}],"data":{"updateTicketStatus":null}}',
+                "data.updateTicketStatus",
+            ),
+        ]
+
+        for comment_response, status_response, expected_stderr in cases:
+            with self.subTest(expected_stderr=expected_stderr):
+                with tempfile.TemporaryDirectory() as temporary_directory:
+                    root = Path(temporary_directory)
+                    bin_dir = root / "bin"
+                    bin_dir.mkdir()
+                    comment_payload = root / "comment.json"
+                    status_payload = root / "status.json"
+                    comment_payload.write_text('{"query":"mutation { submitComment { id } }"}', encoding="utf-8")
+                    status_payload.write_text('{"query":"mutation { updateTicketStatus { id } }"}', encoding="utf-8")
+                    (bin_dir / "curl").write_text(
+                        f"""#!/bin/sh
+case "$*" in
+  *{comment_payload}*) printf '%s\\n' '{comment_response}' ;;
+  *{status_payload}*) printf '%s\\n' '{status_response}' ;;
+  *) exit 1 ;;
+esac
+""",
+                        encoding="utf-8",
+                    )
+                    (bin_dir / "curl").chmod(0o755)
+
+                    result = self.run_mechanic_invocation(
+                        reflect["default_invocation"],
+                        {
+                            "token": "test-token",
+                            "comment_payload_file": str(comment_payload),
+                            "status_payload_file": str(status_payload),
+                            "todo_query_url": "https://todo.example.invalid/query",
+                        },
+                        bin_dir,
+                    )
+
+                self.assertNotEqual(0, result.returncode)
+                self.assertIn(expected_stderr, result.stderr)
 
     def test_land_approved_proposal_resolution_uses_work_unit_and_version_together(self) -> None:
         v1 = load_fixture("valid-change-proposal-github-issue340-v1.json")
