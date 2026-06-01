@@ -852,6 +852,30 @@ trigger = { type = "on_artifact", name = "review-findings" }
             " ".join(registry_results[0].errors),
         )
 
+    def test_source_submit_workflow_contract_is_discovered_and_registry_validated(self) -> None:
+        contract = ROOT / "workflow-contracts" / "submit.toml"
+
+        discovered = discover_units(ROOT)
+        self.assertIn(contract, discovered)
+
+        results = run_conformance([contract])
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-2 workflow-contract", results[0].category)
+        self.assertTrue(results[0].passed)
+        self.assertEqual([], results[0].errors)
+
+    def test_source_land_workflow_contract_is_discovered_and_registry_validated(self) -> None:
+        contract = ROOT / "workflow-contracts" / "land.toml"
+
+        discovered = discover_units(ROOT)
+        self.assertIn(contract, discovered)
+
+        results = run_conformance([contract])
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-2 workflow-contract", results[0].category)
+        self.assertTrue(results[0].passed)
+        self.assertEqual([], results[0].errors)
+
     def test_bare_relative_workflow_contract_validates_from_contract_directory(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

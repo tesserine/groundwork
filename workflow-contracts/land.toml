@@ -1,0 +1,68 @@
+name = "land"
+purpose = "Apply an approved change proposal and record completion."
+session_role = "release gate"
+preconditions = ["change-approved and matching change-proposal artifacts exist"]
+start_node = "resolve-approved-proposal"
+failure_modes = [
+  "approved proposal details cannot be resolved",
+  "approved change cannot be applied",
+  "disposition or close-out cannot be reflected",
+]
+corruption_modes = [
+  "landing from a raw proposal instead of approved disposition",
+  "approved version resolution ignores work-unit identity",
+  "forge-specific apply vocabulary embedded in the workflow contract",
+]
+
+[[nodes]]
+name = "resolve-approved-proposal"
+intent = "Select the change-proposal whose work_unit matches the approval and whose version equals the approved against_version."
+disciplines = ["orient"]
+mechanics = ["read-artifact"]
+outcomes = ["approved proposal detail is resolved"]
+
+[[nodes]]
+name = "apply-approved-change"
+intent = "Apply the resolved approved proposal detail."
+disciplines = ["orient"]
+mechanics = ["apply-approved-change"]
+outcomes = ["approved change is applied"]
+
+[[nodes]]
+name = "reflect-disposition"
+intent = "Reflect the approved disposition in the configured collaboration surface."
+disciplines = ["orient"]
+mechanics = ["reflect-disposition"]
+outcomes = ["approval disposition is reflected"]
+
+[[nodes]]
+name = "close-out"
+intent = "Close out the work unit with completion context."
+disciplines = ["orient"]
+mechanics = ["close-out"]
+outcomes = ["completion context is ready to record"]
+
+[[edges]]
+from = "resolve-approved-proposal"
+to = "apply-approved-change"
+condition = { type = "always" }
+
+[[edges]]
+from = "apply-approved-change"
+to = "reflect-disposition"
+condition = { type = "always" }
+
+[[edges]]
+from = "reflect-disposition"
+to = "close-out"
+condition = { type = "always" }
+
+[[edges]]
+from = "close-out"
+to = "completed"
+condition = { type = "always" }
+
+[[terminals]]
+name = "completed"
+outcome = "Completion is recorded for the approved change."
+artifact_produced = "completion-record"

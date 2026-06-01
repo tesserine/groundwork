@@ -18,9 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Change proposal review substrate: C-4 `change-proposal`,
   `change-approved`, and `change-needs-revision` artifact schemas, fixture
   coverage for GitHub and SourceHut handles, disposition/blocking-finding
-  consistency through typed review outcomes, manifest-declared forge tags,
-  format-enforced artifact validation, and `patch` schema supersession
-  metadata (closes #316).
+  consistency through typed review outcomes, manifest-declared forge tags, and
+  format-enforced artifact validation (closes #316).
 - Narrowed Step 1 conformance runner for C-2 workflow contracts, C-3
   mechanics, C-4 artifact instances, and JSON Schema definitions, with
   aggregate pass/fail reporting and non-zero exit on failure (closes #297).
@@ -40,6 +39,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `code-review` skill, manifest-registered required-choice outcome group, and
   typed review disposition routing through `change-approved` /
   `change-needs-revision` (closes #331).
+
+### Changed
+
+- Submit and land now complete the disposition-gated reference arc:
+  `submit` produces `change-proposal`, review emits `change-approved` or
+  `change-needs-revision`, revision reactivates submit, and `land` activates
+  only from `change-approved` while resolving the approved proposal by
+  `(work_unit, against_version)`. The manifest-level `patch` artifact type and
+  schema are retired (closes #340).
 
 ### Fixed
 

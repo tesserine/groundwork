@@ -38,7 +38,7 @@ These survived prior reckoning sessions and are ground for this design.
 The full flow for a single work-unit is:
 
 ```
-take → specify → plan → implement → verify → document → submit → land
+take → specify → plan → implement → verify → document → submit → review → land
 ```
 
 Survey and decompose precede take when project-level planning is needed.
@@ -62,11 +62,13 @@ together with the code it explains. Submit is gated on documentation-record.
 | implement | test-evidence | Proof of correct implementation — passing tests mapped to scenarios |
 | verify    | completion-evidence | Aggregated behavior coverage status |
 | document  | documentation-record | Documentation coverage and tracking |
-| submit    | patch | Packaged changes ready for review |
+| submit    | change-proposal | Forge-neutral proposal ready for review |
+| review    | change-approved or change-needs-revision | Typed review disposition |
 | land      | completion-record | Final state: coverage, gaps, merge ref |
 
-All ten protocols produce artifacts for runa. No protocol is disconnected
-from the artifact graph.
+Every protocol either produces a direct capstone artifact or, for review, a
+required-choice disposition artifact. No protocol is disconnected from the
+artifact graph.
 
 ### Artifact types entering from outside
 
@@ -132,8 +134,12 @@ The complete chain across both phases:
 ```
 request → requirements → work-unit → claim → behavior-contract
 → implementation-plan → test-evidence → completion-evidence
-→ documentation-record → patch → completion-record
+→ documentation-record → change-proposal → change-approved
+→ completion-record
 ```
+
+The revision loop is `change-needs-revision → submit → change-proposal`;
+review re-runs on the changed proposal version.
 
 Cross-cutting: research-record feeds in via accepts edges where needed.
 Research-record may optionally be scoped to a work-unit when the research
@@ -198,7 +204,13 @@ name = "completion-evidence"
 name = "documentation-record"
 
 [[artifact_types]]
-name = "patch"
+name = "change-proposal"
+
+[[artifact_types]]
+name = "change-approved"
+
+[[artifact_types]]
+name = "change-needs-revision"
 
 [[artifact_types]]
 name = "completion-record"
@@ -286,19 +298,35 @@ trigger = { type = "on_artifact", name = "completion-evidence" }
 name = "submit"
 scoped = true
 requires = ["completion-evidence", "documentation-record"]
-accepts = []
-produces = ["patch"]
+accepts = ["change-proposal", "change-needs-revision"]
+produces = ["change-proposal"]
 may_produce = []
-trigger = { type = "on_artifact", name = "documentation-record" }
+trigger = { type = "any_of", conditions = [
+  { type = "on_artifact", name = "documentation-record" },
+  { type = "on_artifact", name = "change-needs-revision" },
+] }
+
+[[protocols]]
+name = "review"
+scoped = true
+requires = ["change-proposal"]
+accepts = []
+produces = []
+may_produce = []
+trigger = { type = "on_change", name = "change-proposal" }
+
+[[protocols.required_output_choices]]
+name = "review-disposition"
+members = ["change-approved", "change-needs-revision"]
 
 [[protocols]]
 name = "land"
 scoped = true
-requires = ["patch"]
+requires = ["change-approved", "change-proposal"]
 accepts = ["completion-evidence", "behavior-contract", "documentation-record", "work-unit"]
 produces = ["completion-record"]
 may_produce = []
-trigger = { type = "on_artifact", name = "patch" }
+trigger = { type = "on_artifact", name = "change-approved" }
 ```
 
 ### Changes from current manifest
@@ -311,10 +339,11 @@ trigger = { type = "on_artifact", name = "patch" }
 - survey, decompose, take, specify, plan, verify, document, land
 
 **Artifact types added:**
-- request, requirements, work-unit, claim, patch
+- request, requirements, work-unit, claim, change-proposal, change-approved,
+  change-needs-revision
 
 **Artifact types removed:**
-- assessment (replaced by requirements)
+- assessment (replaced by requirements), patch (replaced by change-proposal)
 
 **Artifact types renamed:**
 - none (all surviving types keep their names)
@@ -343,17 +372,19 @@ trigger = { type = "on_artifact", name = "patch" }
 | test-evidence | implement |
 | completion-evidence | verify |
 | documentation-record | document |
-| patch | submit |
+| change-proposal | submit |
+| change-approved | review |
+| change-needs-revision | review |
 | completion-record | land |
 | research-record | research skill (via `may_produce`; see below) |
 
 **Every type consumed.** All artifact types have at least one consumer
 except completion-record, which is the terminal archival artifact.
 
-**Trigger consistency.** Each protocol's trigger artifact is the last
-requires dependency to land — the one that unblocks execution. Verified
-for all ten protocols: the trigger is always the artifact that cannot
-exist until all earlier dependencies in the chain are satisfied.
+**Trigger consistency.** Each protocol's trigger is the artifact state that
+unblocks that protocol. Most triggers are a single artifact; submit uses a
+composite trigger for initial delivery and revision, review uses `on_change` for
+new proposal versions, and land gates on the typed approval outcome.
 
 **Research-record is the sole skill-produced artifact in the protocol
 graph.** No protocol declares it in `produces`, because no protocol's
@@ -794,16 +825,26 @@ tracks and threads by work-unit identity.
 
 - **requires:** completion-evidence, documentation-record. Cannot submit
   unverified work, and docs must accompany the code.
-- **produces:** patch.
-- **trigger:** `on_artifact("documentation-record")`
+- **accepts:** change-proposal, change-needs-revision. Revision rounds see the
+  prior proposal and the review disposition that requested changes.
+- **produces:** change-proposal.
+- **trigger:** `any_of(on_artifact("documentation-record"), on_artifact("change-needs-revision"))`
+
+### review
+
+- **requires:** change-proposal. Cannot review until a proposal exists.
+- **produces:** exactly one required-choice outcome: change-approved or
+  change-needs-revision.
+- **trigger:** `on_change("change-proposal")`
 
 ### land
 
-- **requires:** patch. Cannot land without a submitted patch.
+- **requires:** change-approved, change-proposal. Cannot land without typed
+  approval and the proposal detail approved by review.
 - **accepts:** completion-evidence, behavior-contract, documentation-record,
   work-unit. Context for the completion record. Completion-evidence already
   carries criterion-level coverage, so work-unit is enrichment not structural.
-- **trigger:** `on_artifact("patch")`
+- **trigger:** `on_artifact("change-approved")`
 
 ## Document Protocol vs Document Skill
 
@@ -1091,18 +1132,39 @@ The existing schema structure survives — it tracks the right things.
 | verified_accurate_docs | array of strings | yes | Documentation reviewed and confirmed accurate |
 | tracking_work_units | array of strings | yes | Work-units filed for documentation follow-up |
 
-### patch
+### change-proposal
 
-**Consumer:** land (requires).
-**What land needs:** the submitted change — where it is and what it
-contains. This is the artifact representation of the PR.
+**Consumers:** review (requires), land (requires), submit (accepts for revision).
+**What review needs:** the proposed change version and the handle where the
+change can be inspected. **What land needs:** the approved proposal's apply
+detail. Land resolves it by matching `work_unit` and `version` against the
+approval's `work_unit` and `against_version`.
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
 | work_unit | string (work-unit ref) | yes | Common envelope |
-| pr_reference | string | yes | PR URL or identifier |
-| branch | string | yes | Feature branch name |
-| commit | string | yes | Head commit SHA at submission time |
+| branch | string | yes | Proposal branch or carrier branch |
+| commit | string | yes | Head commit or stable revision |
+| base | string | yes | Target base revision |
+| summary | string | yes | Human-readable proposal summary |
+| version | integer | yes | Immutable review-round version for the work-unit |
+| handle | object | yes | Forge-tagged inspection/apply handle |
+
+### change-approved / change-needs-revision
+
+**Consumers:** land consumes change-approved; submit consumes
+change-needs-revision.
+**What successors need:** the review disposition and reviewed proposal version.
+The artifact type is the disposition, and `against_version` identifies the
+proposal version reviewed within the named work unit.
+
+| Field | Type | Required | Purpose |
+|-------|------|----------|---------|
+| work_unit | string (work-unit ref) | yes | Common envelope |
+| against_version | integer | yes | Reviewed change-proposal version |
+| reviewer | string | yes | Reviewer identity |
+| reviewed_at | string | yes | Review timestamp |
+| findings | array | yes | Classified review findings |
 
 ### completion-record
 

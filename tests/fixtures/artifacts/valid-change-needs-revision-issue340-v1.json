@@ -1,0 +1,13 @@
+{
+  "work_unit": "issue-340",
+  "against_version": 1,
+  "reviewer": "governance",
+  "reviewed_at": "2026-06-01T10:00:00Z",
+  "findings": [
+    {
+      "observation": "Land must resolve approved proposal details by both work unit and version.",
+      "classification": "blocking",
+      "location": "protocols/land/PROTOCOL.md"
+    }
+  ]
+}
