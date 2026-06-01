@@ -35,10 +35,9 @@ The Step-1 substrate on `main` has these relevant facts:
   `name` values.
 - `schemas/mechanic.schema.json` has `name` and an optional `forge_tag`; it has no
   separate operation field.
-- `tooling.mechanics` validates that a mechanic's `forge_tag` is registered, but
-  it does not select a mechanic for an active forge.
-- `manifest.toml` registers available forge tags (`github`, `sourcehut`), but it
-  does not declare an active forge or operation-to-mechanic bindings.
+- `tooling.mechanics` validates that a mechanic's `forge_tag` is registered.
+- `manifest.toml` registers available forge tags (`github`, `sourcehut`) and
+  operation-to-mechanic bindings through `[[mechanics]].forge_tags`.
 - `change-approved.schema.json` and `change-needs-revision.schema.json` make
   classification structural: approval cannot contain blocking observations, and
   needs-revision must contain at least one blocking observation.
@@ -101,10 +100,11 @@ type cardinality and routes on artifact type.
 C-2 contracts must reference forge-invariant operation names only. They must not
 contain `create-pr`, `pr-merge`, or other forge-specific HOW vocabulary.
 
-The current Step-1 substrate does not yet implement the resolution mechanism
-needed by that decision. Bare mechanic names plus optional `forge_tag` validation
-prove that a mechanic has a registered forge tag; they do not prove that an
-operation reference resolves to exactly one mechanic for an active forge.
+The Step-2 substrate adds the resolution mechanism needed by that decision.
+Bare mechanic names plus optional `forge_tag` validation prove that a mechanic
+has a registered forge tag; manifest-declared `forge_tags` additionally prove
+that an operation reference resolves to exactly one C-3 mechanic for the
+declared forge.
 
 The Step-2 resolution mechanism is:
 
@@ -117,12 +117,10 @@ The Step-2 resolution mechanism is:
 - Validate, for the reference arc, that `github` and `sourcehut` each provide
   implementations for every forge-touching operation they need.
 
-This mechanism is not present on `main`. It should be added as a substrate
-prerequisite before the downstream contracts and mechanics are treated as
-complete. #330 and #332 may author forge-invariant operation references only
-after the conformance runner can validate the operation handles; #333 and #334
-may author forge-tagged mechanics only after the runner can prove their
-operation binding under the selected forge tag.
+#333 introduces this mechanism for GitHub as the first C-3 mechanic library:
+`deliver-change-proposal`, `apply-approved-change`, and
+`reflect-disposition` are bound under `forge_tag = "github"` and conformance
+rejects unknown, missing, or duplicate operation/tag implementations.
 
 ## Downstream Constraints
 

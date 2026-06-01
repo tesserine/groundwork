@@ -403,6 +403,86 @@ name = "change-proposal"
         self.assertFalse(mechanic_result.passed)
         self.assertIn("artifact schema `completion-evidence` does not resolve in registry", " ".join(mechanic_result.errors))
 
+    def test_manifest_forge_tagged_mechanic_binding_requires_matching_c3_mechanic(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "manifest.toml"
+            manifest.write_text(
+                """
+[[forge_tags]]
+name = "github"
+
+[[mechanics]]
+name = "deliver-change-proposal"
+forge_tags = ["github"]
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([manifest])
+
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn(
+            "mechanic binding `deliver-change-proposal` for forge tag `github` resolves to 0 C-3 mechanics",
+            " ".join(results[0].errors),
+        )
+
+    def test_manifest_forge_tagged_mechanic_binding_rejects_unknown_forge_tag(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "manifest.toml"
+            manifest.write_text(
+                """
+[[mechanics]]
+name = "deliver-change-proposal"
+forge_tags = ["github"]
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([manifest])
+
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("forge tag `github` does not resolve in forge_tags", " ".join(results[0].errors))
+
+    def test_manifest_forge_tagged_mechanic_binding_rejects_duplicate_c3_mechanics(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "manifest.toml"
+            manifest.write_text(
+                """
+[[forge_tags]]
+name = "github"
+
+[[artifact_types]]
+name = "change-proposal"
+
+[[mechanics]]
+name = "deliver-change-proposal"
+forge_tags = ["github"]
+""".lstrip(),
+                encoding="utf-8",
+            )
+            mechanics = root / "mechanics"
+            mechanics.mkdir()
+            mechanic_source = (MECHANIC_FIXTURES / "valid-github.toml").read_text(encoding="utf-8")
+            (mechanics / "one.toml").write_text(mechanic_source, encoding="utf-8")
+            (mechanics / "two.toml").write_text(mechanic_source, encoding="utf-8")
+
+            results = run_conformance([manifest])
+
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn(
+            "mechanic binding `deliver-change-proposal` for forge tag `github` resolves to 2 C-3 mechanics",
+            " ".join(results[0].errors),
+        )
+
     def test_malformed_directory_manifest_does_not_abort_sibling_registry_checks(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

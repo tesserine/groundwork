@@ -221,7 +221,7 @@ def _check_manifest(path: Path) -> ConformanceResult:
             errors=[f"<toml>: {path.name} is invalid TOML: {error}"],
         )
 
-    errors = _manifest_errors(manifest)
+    errors = _manifest_errors(manifest, path.parent)
     return ConformanceResult(
         path=path,
         category=CATEGORY_MANIFEST,
@@ -230,13 +230,16 @@ def _check_manifest(path: Path) -> ConformanceResult:
     )
 
 
-def _manifest_errors(manifest: dict[str, Any]) -> list[tuple[str, str]]:
+def _manifest_errors(manifest: dict[str, Any], root: Path) -> list[tuple[str, str]]:
     errors: list[tuple[str, str]] = []
     artifact_type_entries = _manifest_table_entries(manifest, "artifact_types", "artifact type", errors)
     outcome_type_entries = _manifest_table_entries(manifest, "outcome_types", "outcome type", errors)
     protocol_entries = _manifest_table_entries(manifest, "protocols", "protocol", errors)
+    mechanic_entries = _manifest_table_entries(manifest, "mechanics", "mechanic", errors)
     artifact_types = _named_manifest_entries(artifact_type_entries, "artifact_types", "artifact type", errors)
     outcome_types = _named_manifest_entries(outcome_type_entries, "outcome_types", "outcome type", errors)
+    forge_tag_entries = _manifest_table_entries(manifest, "forge_tags", "forge tag", errors)
+    forge_tags = _named_manifest_entries(forge_tag_entries, "forge_tags", "forge tag", errors)
 
     for outcome_index, outcome_type in outcome_type_entries:
         name = outcome_type.get("name")
@@ -341,7 +344,67 @@ def _manifest_errors(manifest: dict[str, Any]) -> list[tuple[str, str]]:
                 )
             )
 
+    errors.extend(_manifest_mechanic_binding_errors(mechanic_entries, forge_tags, root))
+
     return errors
+
+
+def _manifest_mechanic_binding_errors(
+    mechanic_entries: list[tuple[int, dict[str, Any]]],
+    forge_tags: set[str],
+    root: Path,
+) -> list[tuple[str, str]]:
+    errors: list[tuple[str, str]] = []
+    c3_bindings = _c3_mechanic_bindings(root / "mechanics")
+
+    for mechanic_index, mechanic in mechanic_entries:
+        name = mechanic.get("name")
+        declared_forge_tags = mechanic.get("forge_tags")
+        if declared_forge_tags is None:
+            continue
+        if not isinstance(declared_forge_tags, list):
+            errors.append((f"mechanics/{mechanic_index}/forge_tags", "forge_tags must be an array"))
+            continue
+
+        for forge_tag_index, forge_tag in enumerate(declared_forge_tags):
+            forge_tag_path = f"mechanics/{mechanic_index}/forge_tags/{forge_tag_index}"
+            if not isinstance(forge_tag, str):
+                errors.append((forge_tag_path, "forge_tags member must be a string"))
+                continue
+            if forge_tag not in forge_tags:
+                errors.append((forge_tag_path, f"forge tag `{forge_tag}` does not resolve in forge_tags"))
+                continue
+            if not isinstance(name, str):
+                continue
+
+            match_count = c3_bindings.count((name, forge_tag))
+            if match_count != 1:
+                errors.append(
+                    (
+                        forge_tag_path,
+                        f"mechanic binding `{name}` for forge tag `{forge_tag}` resolves to "
+                        f"{match_count} C-3 mechanics; expected exactly 1",
+                    )
+                )
+
+    return errors
+
+
+def _c3_mechanic_bindings(directory: Path) -> list[tuple[str, str]]:
+    if not directory.exists():
+        return []
+
+    bindings: list[tuple[str, str]] = []
+    for path in directory.rglob("*.toml"):
+        try:
+            mechanic = tomllib.loads(path.read_text(encoding="utf-8"))
+        except (OSError, tomllib.TOMLDecodeError, UnicodeDecodeError):
+            continue
+        name = mechanic.get("name")
+        forge_tag = mechanic.get("forge_tag")
+        if isinstance(name, str) and isinstance(forge_tag, str):
+            bindings.append((name, forge_tag))
+    return bindings
 
 
 def _named_manifest_entries(

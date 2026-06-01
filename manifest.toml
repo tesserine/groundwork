@@ -83,6 +83,7 @@ name = "inspect-change-proposals"
 
 [[mechanics]]
 name = "deliver-change-proposal"
+forge_tags = ["github"]
 
 [[mechanics]]
 name = "revise"
@@ -92,9 +93,11 @@ name = "review"
 
 [[mechanics]]
 name = "apply-approved-change"
+forge_tags = ["github"]
 
 [[mechanics]]
 name = "reflect-disposition"
+forge_tags = ["github"]
 
 [[mechanics]]
 name = "close-out"

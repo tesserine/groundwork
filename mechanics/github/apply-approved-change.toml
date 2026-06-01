@@ -1,0 +1,25 @@
+name = "apply-approved-change"
+purpose = "Apply an approved GitHub pull request whose head commit matches the approved change-proposal version."
+forge_tag = "github"
+default_invocation = "gh pr merge {pr_number} --repo {repository} --merge --delete-branch --match-head-commit {commit}"
+examples = [
+  "gh pr merge 344 --repo tesserine/groundwork --merge --delete-branch --match-head-commit 8b519b2cd8782657a7bc3b93b1fac308547c1b0e",
+]
+
+[[parameters]]
+name = "repository"
+purpose = "GitHub repository in OWNER/REPO form."
+required = true
+
+[[parameters]]
+name = "pr_number"
+purpose = "GitHub pull request number to merge."
+required = true
+
+[[parameters]]
+name = "commit"
+purpose = "Approved proposal head commit SHA that must match the pull request head."
+required = true
+
+[outcome]
+description = "The approved GitHub pull request is merged without applying a different head commit."

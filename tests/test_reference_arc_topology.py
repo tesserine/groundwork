@@ -30,6 +30,15 @@ def load_fixture(name: str) -> dict:
     return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
 
 
+def mechanics_for_forge(forge_tag: str) -> list[dict]:
+    mechanics = []
+    for path in sorted((ROOT / "mechanics").rglob("*.toml")):
+        mechanic = tomllib.loads(path.read_text(encoding="utf-8"))
+        if mechanic.get("forge_tag") == forge_tag:
+            mechanics.append(mechanic)
+    return mechanics
+
+
 class ReferenceArcTopologyTests(unittest.TestCase):
     def test_manifest_routes_submit_review_land_through_disposition_artifacts(self) -> None:
         artifact_types = {entry["name"] for entry in manifest()["artifact_types"]}
@@ -71,6 +80,19 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertIn("completion-evidence", land["accepts"])
         self.assertEqual(["completion-record"], land["produces"])
         self.assertEqual({"type": "on_artifact", "name": "change-approved"}, land["trigger"])
+
+    def test_github_reference_arc_mechanics_are_bound_once_in_manifest_and_c3(self) -> None:
+        operations = {
+            "deliver-change-proposal",
+            "apply-approved-change",
+            "reflect-disposition",
+        }
+        manifest_mechanics = {entry["name"]: entry for entry in manifest()["mechanics"]}
+        github_mechanics = mechanics_for_forge("github")
+
+        for operation in operations:
+            self.assertIn("github", manifest_mechanics[operation]["forge_tags"])
+            self.assertEqual(1, sum(1 for mechanic in github_mechanics if mechanic["name"] == operation))
 
     def test_land_approved_proposal_resolution_uses_work_unit_and_version_together(self) -> None:
         v1 = load_fixture("valid-change-proposal-github-issue340-v1.json")
