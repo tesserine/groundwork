@@ -88,6 +88,9 @@ name = "inspect-change-proposals"
 name = "deliver-change-proposal"
 
 [[mechanics]]
+name = "revise"
+
+[[mechanics]]
 name = "review"
 
 [[mechanics]]
@@ -176,8 +179,8 @@ trigger = { type = "on_artifact", name = "completion-evidence" }
 name = "submit"
 scoped = true
 requires = ["completion-evidence", "documentation-record"]
-accepts = []
-produces = ["patch"]
+accepts = ["change-proposal", "change-needs-revision"]
+produces = ["change-proposal"]
 may_produce = []
 trigger = { type = "on_artifact", name = "documentation-record" }
 

@@ -1,0 +1,60 @@
+name = "submit"
+purpose = "Deliver a verified, documented change as a forge-neutral change proposal for review."
+session_role = "submission gate"
+preconditions = ["completion-evidence and documentation-record artifacts exist"]
+start_node = "resolve-change-proposal-path"
+failure_modes = [
+  "no deliverable change proposal path is available",
+  "proposal delivery cannot produce a valid forge-tagged handle",
+]
+corruption_modes = [
+  "forge-specific delivery vocabulary embedded in the workflow contract",
+  "legacy submission output preserved after change-proposal migration",
+  "revision delivered without advancing the proposal version",
+]
+
+[[nodes]]
+name = "resolve-change-proposal-path"
+intent = "Determine whether this submission creates an initial proposal or revises an existing proposal round."
+disciplines = ["orient", "contract"]
+mechanics = ["read-artifact"]
+outcomes = ["proposal_path is selected and required evidence is identified"]
+
+[[nodes]]
+name = "deliver-change-proposal"
+intent = "Deliver the initial proposal through the selected forge operation."
+disciplines = ["contract"]
+mechanics = ["deliver-change-proposal"]
+outcomes = ["initial change proposal exists with version 1 and a forge-tagged handle"]
+
+[[nodes]]
+name = "revise-change-proposal"
+intent = "Deliver a revised proposal version after a needs-revision outcome."
+disciplines = ["contract"]
+mechanics = ["revise"]
+outcomes = ["revised change proposal exists with an advanced version and a forge-tagged handle"]
+
+[[edges]]
+from = "resolve-change-proposal-path"
+to = "revise-change-proposal"
+condition = { type = "case", field = "proposal_path", equals = "revision" }
+
+[[edges]]
+from = "resolve-change-proposal-path"
+to = "deliver-change-proposal"
+condition = { type = "default", field = "proposal_path" }
+
+[[edges]]
+from = "deliver-change-proposal"
+to = "submitted"
+condition = { type = "always" }
+
+[[edges]]
+from = "revise-change-proposal"
+to = "submitted"
+condition = { type = "always" }
+
+[[terminals]]
+name = "submitted"
+outcome = "A change proposal exists for review."
+artifact_produced = "change-proposal"
