@@ -39,6 +39,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `code-review` skill, manifest-registered required-choice outcome group, and
   typed review disposition routing through `change-approved` /
   `change-needs-revision` (closes #331).
+- GitHub C-3 mechanic library for the reference arc:
+  `deliver-change-proposal`, `apply-approved-change`, and
+  `reflect-disposition` now have forge-tagged mechanics bound from
+  `manifest.toml`, with conformance enforcing exactly one C-3 implementation
+  for each declared operation/tag pair.
 
 ### Changed
 

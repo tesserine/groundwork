@@ -1,0 +1,30 @@
+name = "reflect-disposition"
+purpose = "Reflect the acted-on GitHub approval disposition on the pull request and issue surfaces."
+forge_tag = "github"
+default_invocation = "gh pr comment {pr_number} --repo {repository} --body-file {body_file} && gh issue comment {issue_number} --repo {repository} --body-file {body_file} && gh issue close {issue_number} --repo {repository} --reason completed"
+examples = [
+  "gh pr comment 344 --repo tesserine/groundwork --body-file /tmp/disposition.md && gh issue comment 343 --repo tesserine/groundwork --body-file /tmp/disposition.md && gh issue close 343 --repo tesserine/groundwork --reason completed",
+]
+
+[[parameters]]
+name = "repository"
+purpose = "GitHub repository in OWNER/REPO form."
+required = true
+
+[[parameters]]
+name = "pr_number"
+purpose = "GitHub pull request number where disposition context is recorded."
+required = true
+
+[[parameters]]
+name = "issue_number"
+purpose = "GitHub issue number whose work-unit state is reflected."
+required = true
+
+[[parameters]]
+name = "body_file"
+purpose = "Path to a file containing disposition evidence."
+required = true
+
+[outcome]
+description = "GitHub PR and issue state reflect that the approved disposition was acted on."

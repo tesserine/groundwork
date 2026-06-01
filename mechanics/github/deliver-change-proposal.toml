@@ -1,0 +1,36 @@
+name = "deliver-change-proposal"
+purpose = "Deliver a GitHub pull request for review while preserving the forge-neutral change-proposal envelope."
+forge_tag = "github"
+default_invocation = "git push origin {branch} && gh pr create --repo {repository} --base {base} --head {branch} --title {title} --body-file {body_file}"
+examples = [
+  "git push origin issue-343/github-mechanics-dogfood && gh pr create --repo tesserine/groundwork --base main --head issue-343/github-mechanics-dogfood --title 'docs: clarify skill authoring contract boundary' --body-file /tmp/pr-body.md",
+]
+
+[[parameters]]
+name = "repository"
+purpose = "GitHub repository in OWNER/REPO form."
+required = true
+
+[[parameters]]
+name = "branch"
+purpose = "Feature branch carrying the proposed change."
+required = true
+
+[[parameters]]
+name = "base"
+purpose = "Base branch or revision targeted by the proposal."
+required = true
+
+[[parameters]]
+name = "title"
+purpose = "Pull request title."
+required = true
+
+[[parameters]]
+name = "body_file"
+purpose = "Path to a file containing the pull request body."
+required = true
+
+[outcome]
+description = "A GitHub pull request exists and can be recorded as a change-proposal handle."
+artifact_type = "change-proposal"

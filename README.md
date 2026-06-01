@@ -128,6 +128,11 @@ an outcome must use `on_artifact`, while successor triggers must not target a
 disposition-agnostic output of an outcome-bearing protocol through any trigger
 form or composite trigger.
 
+It also validates forge-tagged C-3 mechanic bindings. When a manifest
+`[[mechanics]]` entry declares `forge_tags = [...]`, each tag must resolve to
+`[[forge_tags]]` and exactly one `mechanics/**/*.toml` file whose `name` and
+`forge_tag` match that operation/tag pair.
+
 ## What Groundwork Believes
 
 These are the methodology choices embedded in groundwork's protocols and skills.
