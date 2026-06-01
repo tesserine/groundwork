@@ -62,7 +62,9 @@ def run_git(args: list[str], cwd: Path) -> str:
 
 
 class ReferenceArcTopologyTests(unittest.TestCase):
-    def run_mechanic_invocation(self, invocation: str, replacements: dict[str, str], bin_dir: Path) -> subprocess.CompletedProcess:
+    def run_mechanic_invocation(
+        self, invocation: str, replacements: dict[str, str], bin_dir: Path, cwd: Path | None = None
+    ) -> subprocess.CompletedProcess:
         command = invocation
         for placeholder, value in replacements.items():
             command = command.replace(f"{{{placeholder}}}", value)
@@ -73,6 +75,7 @@ class ReferenceArcTopologyTests(unittest.TestCase):
             command,
             shell=True,
             executable="/bin/sh",
+            cwd=cwd or ROOT,
             env=environment,
             text=True,
             stdout=subprocess.PIPE,
@@ -139,8 +142,10 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         invocation = apply["default_invocation"]
 
         self.assertIn("git fetch {ssh_remote} refs/heads/{proposal_ref}", invocation)
+        self.assertIn("git rev-parse FETCH_HEAD", invocation)
         self.assertIn("expected_tree=$(git rev-parse {approved_commit}^{tree})", invocation)
         self.assertIn("git am --3way {mbox_file}", invocation)
+        self.assertLess(invocation.index("git rev-parse FETCH_HEAD"), invocation.index("git am --3way {mbox_file}"))
         self.assertIn("git rev-parse HEAD^{tree}", invocation)
         self.assertIn("resolved by work_unit and against_version", apply["purpose"])
         self.assertNotIn("git rev-parse HEAD)\" = \"{approved_commit}", invocation)
@@ -213,6 +218,66 @@ class ReferenceArcTopologyTests(unittest.TestCase):
             fetched_commit = run_git(["rev-parse", "FETCH_HEAD"], consumer)
             self.assertEqual(commit, fetched_commit)
 
+    def test_sourcehut_apply_refuses_force_updated_proposal_ref_before_applying_mbox(self) -> None:
+        apply = mechanic_for_forge("sourcehut", "apply-approved-change")
+        proposal_ref = load_fixture("valid-change-proposal-sourcehut-v2.json")["branch"]
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            remote = root / "remote.git"
+            source = root / "source"
+            consumer = root / "consumer"
+            mbox_file = root / "approved.mbox"
+
+            run_git(["init", "--bare", str(remote)], root)
+            run_git(["init", str(source)], root)
+            run_git(["config", "user.name", "Groundwork Tests"], source)
+            run_git(["config", "user.email", "groundwork-tests@example.invalid"], source)
+            (source / "base.txt").write_text("base\n", encoding="utf-8")
+            run_git(["add", "base.txt"], source)
+            run_git(["commit", "-m", "test: base"], source)
+            base = run_git(["rev-parse", "HEAD"], source)
+
+            (source / "proposal.txt").write_text("approved\n", encoding="utf-8")
+            run_git(["add", "proposal.txt"], source)
+            run_git(["commit", "-m", "test: approved proposal"], source)
+            approved_commit = run_git(["rev-parse", "HEAD"], source)
+            mbox_file.write_text(run_git(["format-patch", "--stdout", f"{base}..{approved_commit}"], source), encoding="utf-8")
+            run_git(["push", str(remote), f"{approved_commit}:refs/heads/{proposal_ref}", f"{base}:refs/heads/main"], source)
+
+            run_git(["init", str(consumer)], root)
+            run_git(["config", "user.name", "Groundwork Tests"], consumer)
+            run_git(["config", "user.email", "groundwork-tests@example.invalid"], consumer)
+            run_git(["fetch", str(remote), "refs/heads/main"], consumer)
+            run_git(["checkout", "-B", "main", "FETCH_HEAD"], consumer)
+            run_git(["fetch", str(remote), f"refs/heads/{proposal_ref}"], consumer)
+
+            run_git(["checkout", "--detach", base], source)
+            (source / "drift.txt").write_text("force-updated\n", encoding="utf-8")
+            run_git(["add", "drift.txt"], source)
+            run_git(["commit", "-m", "test: force-updated proposal"], source)
+            drift_commit = run_git(["rev-parse", "HEAD"], source)
+            run_git(["push", "--force", str(remote), f"{drift_commit}:refs/heads/{proposal_ref}"], source)
+
+            result = self.run_mechanic_invocation(
+                apply["default_invocation"],
+                {
+                    "ssh_remote": str(remote),
+                    "proposal_ref": proposal_ref,
+                    "approved_commit": approved_commit,
+                    "mbox_file": str(mbox_file),
+                    "target_ref": "refs/heads/dogfood/force-updated-proposal",
+                },
+                root,
+                consumer,
+            )
+
+            target_ref = run_git(["ls-remote", str(remote), "refs/heads/dogfood/force-updated-proposal"], consumer)
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("SourceHut proposal ref resolved to", result.stderr)
+        self.assertEqual("", target_ref)
+
     def test_sourcehut_reflect_mechanic_uses_configured_tracker_endpoint(self) -> None:
         reflect = mechanic_for_forge("sourcehut", "reflect-disposition")
         invocation = reflect["default_invocation"]
@@ -264,7 +329,58 @@ printf '%s\\n' '{"errors":[{"message":"artifact already exists"}],"data":{"uploa
             )
 
         self.assertNotEqual(0, result.returncode)
-        self.assertIn("data.uploadArtifact.url", result.stderr)
+        self.assertIn("data.uploadArtifact.id/filename", result.stderr)
+
+    def test_sourcehut_deliver_outputs_durable_mbox_reference_not_artifact_url(self) -> None:
+        deliver = mechanic_for_forge("sourcehut", "deliver-change-proposal")
+        invocation = deliver["default_invocation"]
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            (bin_dir / "git").write_text(
+                """#!/bin/sh
+case "$1" in
+  format-patch) printf 'patch body\\n' ;;
+  tag|push) exit 0 ;;
+  *) exit 1 ;;
+esac
+""",
+                encoding="utf-8",
+            )
+            (bin_dir / "curl").write_text(
+                """#!/bin/sh
+printf '%s\\n' '{"data":{"uploadArtifact":{"id":987,"filename":"issue-26-v1.mbox","checksum":"sha256:abc","size":123,"url":"https://git.sr.ht/~tesserine/groundwork/blob/proposals/issue-26-v1/issue-26-v1.mbox"}}}'
+""",
+                encoding="utf-8",
+            )
+            (bin_dir / "git").chmod(0o755)
+            (bin_dir / "curl").chmod(0o755)
+
+            result = self.run_mechanic_invocation(
+                invocation,
+                {
+                    "base": "main",
+                    "commit": "HEAD",
+                    "mbox_file": str(root / "proposal.mbox"),
+                    "repo_id": "42",
+                    "ssh_remote": "git@example.invalid:repo",
+                    "proposal_ref": "issue-26/proposal",
+                    "artifact_tag": "proposals/issue-26-v1",
+                    "mbox_filename": "issue-26-v1.mbox",
+                    "git_query_url": "https://git.example.invalid/query",
+                    "token": "test-token",
+                },
+                bin_dir,
+            )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(
+            "sourcehut-artifact://repo/42/refs/tags/proposals/issue-26-v1/issue-26-v1.mbox?id=987",
+            result.stdout.strip(),
+        )
+        self.assertNotIn("https://", result.stdout)
 
     def test_sourcehut_reflect_fails_when_either_todo_mutation_returns_graphql_errors_with_http_success(self) -> None:
         reflect = mechanic_for_forge("sourcehut", "reflect-disposition")

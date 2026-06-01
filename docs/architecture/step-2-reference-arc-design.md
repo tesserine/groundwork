@@ -125,14 +125,16 @@ and #334 extends the same invariant operations to SourceHut:
 operation/tag implementations.
 
 SourceHut uses a patch-series handoff instead of a platform merge. Delivery
-stores the mbox at `change-proposal.handle.mbox` and pushes the approved
-proposal commit to the stable proposal ref recorded in `change-proposal.branch`;
-it does not send the patch to lists.sr.ht. Apply fetches that proposal ref,
-materializes the approved commit's tree, applies the mbox with plain
-`git am --3way`, and verifies the applied and pushed trees match the approved
-tree. It intentionally does not compare commit SHA identity, because `git am`
-replays the patch as a new commit. GitHub remains intentionally different and
-keeps the commit-identity guard through `gh pr merge --match-head-commit`.
+stores a durable mbox reference at `change-proposal.handle.mbox` and pushes the
+approved proposal commit to the stable proposal ref recorded in
+`change-proposal.branch`; it does not send the patch to lists.sr.ht. Apply
+fetches that proposal ref, verifies the fetched ref still resolves to the
+approved commit, materializes the approved commit's tree, applies the mbox with
+plain `git am --3way`, and verifies the applied and pushed trees match the
+approved tree. It intentionally does not compare the replayed commit SHA
+identity, because `git am` creates a new commit. GitHub remains intentionally
+different and keeps the commit-identity guard through
+`gh pr merge --match-head-commit`.
 
 ## Downstream Constraints
 
