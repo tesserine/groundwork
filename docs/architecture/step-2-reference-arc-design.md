@@ -117,10 +117,24 @@ The Step-2 resolution mechanism is:
 - Validate, for the reference arc, that `github` and `sourcehut` each provide
   implementations for every forge-touching operation they need.
 
-#333 introduces this mechanism for GitHub as the first C-3 mechanic library:
+#333 introduced this mechanism for GitHub as the first C-3 mechanic library,
+and #334 extends the same invariant operations to SourceHut:
 `deliver-change-proposal`, `apply-approved-change`, and
-`reflect-disposition` are bound under `forge_tag = "github"` and conformance
-rejects unknown, missing, or duplicate operation/tag implementations.
+`reflect-disposition` are bound under `forge_tag = "github"` and
+`forge_tag = "sourcehut"`. Conformance rejects unknown, missing, or duplicate
+operation/tag implementations.
+
+The SourceHut delivery locus is the change-proposal mbox itself. Submit
+produces an mbox, stores it at the artifact-store URI recorded in
+`change-proposal.handle.mbox`, and does not send it to lists.sr.ht. Land reads
+that same mbox handle after resolving the approved proposal by
+`work_unit`/`against_version`, fetches the proposal ref so the approved commit
+object is available in a fresh apply clone, applies the mbox with plain
+`git am --3way`, and verifies the applied tree matches the approved commit's
+tree before pushing the target ref over SSH. This is intentionally different
+from GitHub: GitHub's `gh pr merge --match-head-commit` checks SHA identity
+because GitHub merges the approved commit object, while SourceHut's mbox flow
+replays commits and must guard tree/content equality instead.
 
 ## Downstream Constraints
 
