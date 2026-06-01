@@ -39,6 +39,13 @@ def mechanics_for_forge(forge_tag: str) -> list[dict]:
     return mechanics
 
 
+def mechanic_for_forge(forge_tag: str, name: str) -> dict:
+    matches = [mechanic for mechanic in mechanics_for_forge(forge_tag) if mechanic["name"] == name]
+    if len(matches) != 1:
+        raise AssertionError(f"expected one {forge_tag} mechanic named {name}, found {len(matches)}")
+    return matches[0]
+
+
 class ReferenceArcTopologyTests(unittest.TestCase):
     def test_manifest_routes_submit_review_land_through_disposition_artifacts(self) -> None:
         artifact_types = {entry["name"] for entry in manifest()["artifact_types"]}
@@ -81,18 +88,58 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertEqual(["completion-record"], land["produces"])
         self.assertEqual({"type": "on_artifact", "name": "change-approved"}, land["trigger"])
 
-    def test_github_reference_arc_mechanics_are_bound_once_in_manifest_and_c3(self) -> None:
+    def test_reference_arc_mechanics_are_bound_once_per_forge_in_manifest_and_c3(self) -> None:
         operations = {
             "deliver-change-proposal",
             "apply-approved-change",
             "reflect-disposition",
         }
         manifest_mechanics = {entry["name"]: entry for entry in manifest()["mechanics"]}
-        github_mechanics = mechanics_for_forge("github")
 
-        for operation in operations:
-            self.assertIn("github", manifest_mechanics[operation]["forge_tags"])
-            self.assertEqual(1, sum(1 for mechanic in github_mechanics if mechanic["name"] == operation))
+        for forge_tag in {"github", "sourcehut"}:
+            forge_mechanics = mechanics_for_forge(forge_tag)
+            for operation in operations:
+                self.assertIn(forge_tag, manifest_mechanics[operation]["forge_tags"])
+                self.assertEqual(1, sum(1 for mechanic in forge_mechanics if mechanic["name"] == operation))
+
+    def test_sourcehut_apply_mechanic_uses_proposal_ref_and_tree_equality_not_commit_identity(self) -> None:
+        apply = mechanic_for_forge("sourcehut", "apply-approved-change")
+        invocation = apply["default_invocation"]
+
+        self.assertIn("git fetch {ssh_remote} {proposal_ref}", invocation)
+        self.assertIn("expected_tree=$(git rev-parse {approved_commit}^{tree})", invocation)
+        self.assertIn("git am --3way {mbox_file}", invocation)
+        self.assertIn("git rev-parse HEAD^{tree}", invocation)
+        self.assertIn("resolved by work_unit and against_version", apply["purpose"])
+        self.assertNotIn("git rev-parse HEAD)\" = \"{approved_commit}", invocation)
+        self.assertNotIn("GIT_COMMITTER_DATE", invocation)
+
+    def test_sourcehut_deliver_mechanic_produces_mbox_and_proposal_ref_without_lists(self) -> None:
+        deliver = mechanic_for_forge("sourcehut", "deliver-change-proposal")
+        invocation = deliver["default_invocation"]
+        combined = " ".join(
+            [
+                deliver["purpose"],
+                invocation,
+                deliver["outcome"]["description"],
+                *deliver["examples"],
+            ]
+        )
+
+        self.assertIn("git format-patch --stdout {base}..{commit}", invocation)
+        self.assertIn("git push {ssh_remote} {commit}:{proposal_ref}", invocation)
+        self.assertIn("uploadArtifact", invocation)
+        self.assertLess(invocation.index("git push {ssh_remote} {commit}:{proposal_ref}"), invocation.index("uploadArtifact"))
+        self.assertIn("change-proposal.branch", combined)
+        self.assertIn("no lists.sr.ht", combined)
+        self.assertNotIn("git send-email", combined)
+
+    def test_sourcehut_reflect_mechanic_uses_configured_tracker_endpoint(self) -> None:
+        reflect = mechanic_for_forge("sourcehut", "reflect-disposition")
+        invocation = reflect["default_invocation"]
+
+        self.assertIn("{todo_query_url}", invocation)
+        self.assertNotIn("https://todo.sr.ht/query", invocation)
 
     def test_land_approved_proposal_resolution_uses_work_unit_and_version_together(self) -> None:
         v1 = load_fixture("valid-change-proposal-github-issue340-v1.json")

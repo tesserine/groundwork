@@ -44,6 +44,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `reflect-disposition` now have forge-tagged mechanics bound from
   `manifest.toml`, with conformance enforcing exactly one C-3 implementation
   for each declared operation/tag pair.
+- SourceHut C-3 mechanic library for the reference arc: list-free
+  `deliver-change-proposal` now stores the mbox and pushes the proposal ref,
+  `apply-approved-change` fetches that ref and guards tree equality after
+  plain `git am --3way`, and `reflect-disposition` records tracker-ticket
+  state under `forge_tag = "sourcehut"`.
 
 ### Changed
 

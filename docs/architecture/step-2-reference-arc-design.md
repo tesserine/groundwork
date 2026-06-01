@@ -117,10 +117,22 @@ The Step-2 resolution mechanism is:
 - Validate, for the reference arc, that `github` and `sourcehut` each provide
   implementations for every forge-touching operation they need.
 
-#333 introduces this mechanism for GitHub as the first C-3 mechanic library:
+#333 introduced this mechanism for GitHub as the first C-3 mechanic library,
+and #334 extends the same invariant operations to SourceHut:
 `deliver-change-proposal`, `apply-approved-change`, and
-`reflect-disposition` are bound under `forge_tag = "github"` and conformance
-rejects unknown, missing, or duplicate operation/tag implementations.
+`reflect-disposition` are bound under `forge_tag = "github"` and
+`forge_tag = "sourcehut"`. Conformance rejects unknown, missing, or duplicate
+operation/tag implementations.
+
+SourceHut uses a patch-series handoff instead of a platform merge. Delivery
+stores the mbox at `change-proposal.handle.mbox` and pushes the approved
+proposal commit to the stable proposal ref recorded in `change-proposal.branch`;
+it does not send the patch to lists.sr.ht. Apply fetches that proposal ref,
+materializes the approved commit's tree, applies the mbox with plain
+`git am --3way`, and verifies the applied and pushed trees match the approved
+tree. It intentionally does not compare commit SHA identity, because `git am`
+replays the patch as a new commit. GitHub remains intentionally different and
+keeps the commit-identity guard through `gh pr merge --match-head-commit`.
 
 ## Downstream Constraints
 

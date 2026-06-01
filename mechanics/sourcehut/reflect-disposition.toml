@@ -1,0 +1,40 @@
+name = "reflect-disposition"
+purpose = "Reflect the acted-on SourceHut approval disposition as tracker-ticket metadata after the approved mbox has been applied and pushed."
+forge_tag = "sourcehut"
+default_invocation = "curl --fail --silent --show-error --header \"Authorization: Bearer {token}\" --header 'Content-Type: application/json' --data @'{comment_payload_file}' {todo_query_url} && curl --fail --silent --show-error --header \"Authorization: Bearer {token}\" --header 'Content-Type: application/json' --data @'{status_payload_file}' {todo_query_url}"
+examples = [
+  "curl --fail --silent --show-error --header \"Authorization: Bearer $WEFORGE_OPERATOR_PAT\" --header 'Content-Type: application/json' --data @/tmp/sourcehut-disposition-comment.json https://todo.sr.ht/query && curl --fail --silent --show-error --header \"Authorization: Bearer $WEFORGE_OPERATOR_PAT\" --header 'Content-Type: application/json' --data @/tmp/sourcehut-disposition-resolved.json https://todo.sr.ht/query",
+]
+
+[[parameters]]
+name = "tracker_id"
+purpose = "todo.sr.ht tracker ID containing the work-unit ticket."
+required = true
+
+[[parameters]]
+name = "ticket_id"
+purpose = "todo.sr.ht ticket ID whose status records the disposition."
+required = true
+
+[[parameters]]
+name = "comment_payload_file"
+purpose = "JSON GraphQL payload for submitComment containing mbox, proposal ref, approved version, commit, pushed ref, and apply evidence."
+required = true
+
+[[parameters]]
+name = "status_payload_file"
+purpose = "JSON GraphQL payload for updateTicketStatus setting the ticket to RESOLVED with the chosen resolution."
+required = true
+
+[[parameters]]
+name = "todo_query_url"
+purpose = "SourceHut todo GraphQL endpoint used for submitComment and updateTicketStatus."
+required = true
+
+[[parameters]]
+name = "token"
+purpose = "SourceHut API token supplied from WEFORGE_OPERATOR_PAT at command time only; never hardcoded, written, echoed, or logged."
+required = true
+
+[outcome]
+description = "The SourceHut tracker ticket records the acted-on approval evidence and final resolved state; no platform merge or mailing-list patchset is created."
