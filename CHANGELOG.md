@@ -64,7 +64,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - SourceHut `deliver-change-proposal` now uploads the mbox artifact against a
   pushed git tag revspec instead of the proposal branch ref, matching
   SourceHut `uploadArtifact` requirements while preserving
-  `change-proposal.branch` for downstream apply.
+  `change-proposal.branch` for downstream apply; deliver and apply now qualify
+  that bare branch as `refs/heads/...` only at the git push/fetch boundary.
 - C-5 manifest conformance now rejects disposition-agnostic outputs of
   outcome-bearing protocols through `on_change`, `on_invalid`, and composite
   triggers, while preserving valid re-review triggers on protocol inputs.

@@ -1,9 +1,9 @@
 name = "deliver-change-proposal"
 purpose = "Deliver a SourceHut change proposal as a stable proposal ref recorded in change-proposal.branch plus an uploaded mbox carrier, with no lists.sr.ht delivery."
 forge_tag = "sourcehut"
-default_invocation = '''git format-patch --stdout {base}..{commit} > {mbox_file} && git tag --force {artifact_tag} {commit} && git push {ssh_remote} {commit}:{proposal_ref} refs/tags/{artifact_tag}:refs/tags/{artifact_tag} && curl --fail --silent --show-error --header "Authorization: Bearer {token}" -F 'operations={"query":"mutation($repoId: Int!, $revspec: String!, $file: Upload!) { uploadArtifact(repoId: $repoId, revspec: $revspec, file: $file) { id filename checksum size url } }","variables":{"repoId":{repo_id},"revspec":"refs/tags/{artifact_tag}","file":null}}' -F 'map={"0":["variables.file"]}' -F '0=@{mbox_file};filename={mbox_filename};type=text/plain' {git_query_url}'''
+default_invocation = '''git format-patch --stdout {base}..{commit} > {mbox_file} && git tag --force {artifact_tag} {commit} && git push {ssh_remote} {commit}:refs/heads/{proposal_ref} refs/tags/{artifact_tag}:refs/tags/{artifact_tag} && curl --fail --silent --show-error --header "Authorization: Bearer {token}" -F 'operations={"query":"mutation($repoId: Int!, $revspec: String!, $file: Upload!) { uploadArtifact(repoId: $repoId, revspec: $revspec, file: $file) { id filename checksum size url } }","variables":{"repoId":{repo_id},"revspec":"refs/tags/{artifact_tag}","file":null}}' -F 'map={"0":["variables.file"]}' -F '0=@{mbox_file};filename={mbox_filename};type=text/plain' {git_query_url}'''
 examples = [
-  '''git format-patch --stdout main..7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0 > /tmp/issue-316-v2.mbox && git tag --force proposals/issue-316-v2 7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0 && git push git@git.sr.ht:~tesserine/groundwork 7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0:refs/heads/proposals/issue-316-v2 refs/tags/proposals/issue-316-v2:refs/tags/proposals/issue-316-v2 && curl --fail --silent --show-error --header "Authorization: Bearer $SOURCEHUT_TOKEN" -F 'operations={"query":"mutation($repoId: Int!, $revspec: String!, $file: Upload!) { uploadArtifact(repoId: $repoId, revspec: $revspec, file: $file) { id filename checksum size url } }","variables":{"repoId":42,"revspec":"refs/tags/proposals/issue-316-v2","file":null}}' -F 'map={"0":["variables.file"]}' -F '0=@/tmp/issue-316-v2.mbox;filename=issue-316-v2.mbox;type=text/plain' https://git.sr.ht/query''',
+  '''git format-patch --stdout main..7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0 > /tmp/issue-316-v2.mbox && git tag --force proposals/issue-316-v2 7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0 && git push git@git.sr.ht:~tesserine/groundwork 7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0:refs/heads/issue-316/feat-architecture-step-1-change-proposal refs/tags/proposals/issue-316-v2:refs/tags/proposals/issue-316-v2 && curl --fail --silent --show-error --header "Authorization: Bearer $SOURCEHUT_TOKEN" -F 'operations={"query":"mutation($repoId: Int!, $revspec: String!, $file: Upload!) { uploadArtifact(repoId: $repoId, revspec: $revspec, file: $file) { id filename checksum size url } }","variables":{"repoId":42,"revspec":"refs/tags/proposals/issue-316-v2","file":null}}' -F 'map={"0":["variables.file"]}' -F '0=@/tmp/issue-316-v2.mbox;filename=issue-316-v2.mbox;type=text/plain' https://git.sr.ht/query''',
 ]
 
 [[parameters]]
@@ -33,7 +33,7 @@ required = true
 
 [[parameters]]
 name = "proposal_ref"
-purpose = "Stable SourceHut proposal ref recorded in change-proposal.branch and later fetched by apply-approved-change."
+purpose = "Bare SourceHut proposal branch recorded in change-proposal.branch and later fetched by apply-approved-change."
 required = true
 
 [[parameters]]
@@ -57,5 +57,5 @@ purpose = "SourceHut API token supplied from WEFORGE_OPERATOR_PAT at command tim
 required = true
 
 [outcome]
-description = "The SourceHut proposal commit is reachable at the proposal ref recorded in change-proposal.branch and change-proposal.handle.mbox points at the uploaded mbox URL returned by uploadArtifact."
+description = "The SourceHut proposal commit is reachable at refs/heads/{proposal_ref} while change-proposal.branch records the bare proposal branch, and change-proposal.handle.mbox points at the uploaded mbox URL returned by uploadArtifact."
 artifact_type = "change-proposal"

@@ -1,9 +1,9 @@
 name = "apply-approved-change"
 purpose = "Apply the SourceHut mbox resolved by work_unit and against_version, verify tree equality with the approved proposal commit, and push the applied target ref over SSH."
 forge_tag = "sourcehut"
-default_invocation = "git fetch {ssh_remote} {proposal_ref} && git cat-file -e {approved_commit}^{commit} && expected_tree=$(git rev-parse {approved_commit}^{tree}) && git am --3way {mbox_file} && test \"$(git rev-parse HEAD^{tree})\" = \"$expected_tree\" && git push {ssh_remote} HEAD:{target_ref} && test \"$(git ls-remote {ssh_remote} {target_ref} | cut -f1 | xargs -I{} git rev-parse {}^{tree})\" = \"$expected_tree\""
+default_invocation = "git fetch {ssh_remote} refs/heads/{proposal_ref} && git cat-file -e {approved_commit}^{commit} && expected_tree=$(git rev-parse {approved_commit}^{tree}) && git am --3way {mbox_file} && test \"$(git rev-parse HEAD^{tree})\" = \"$expected_tree\" && git push {ssh_remote} HEAD:{target_ref} && test \"$(git ls-remote {ssh_remote} {target_ref} | cut -f1 | xargs -I{} git rev-parse {}^{tree})\" = \"$expected_tree\""
 examples = [
-  "git fetch git@git.sr.ht:~tesserine/groundwork refs/heads/proposals/issue-316-v2 && git cat-file -e 7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0^{commit} && expected_tree=$(git rev-parse 7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0^{tree}) && git am --3way /tmp/issue-316-v2.mbox && test \"$(git rev-parse HEAD^{tree})\" = \"$expected_tree\" && git push git@git.sr.ht:~tesserine/groundwork HEAD:refs/heads/dogfood/issue-316-v2 && test \"$(git ls-remote git@git.sr.ht:~tesserine/groundwork refs/heads/dogfood/issue-316-v2 | cut -f1 | xargs -I{} git rev-parse {}^{tree})\" = \"$expected_tree\"",
+  "git fetch git@git.sr.ht:~tesserine/groundwork refs/heads/issue-316/feat-architecture-step-1-change-proposal && git cat-file -e 7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0^{commit} && expected_tree=$(git rev-parse 7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0^{tree}) && git am --3way /tmp/issue-316-v2.mbox && test \"$(git rev-parse HEAD^{tree})\" = \"$expected_tree\" && git push git@git.sr.ht:~tesserine/groundwork HEAD:refs/heads/dogfood/issue-316-v2 && test \"$(git ls-remote git@git.sr.ht:~tesserine/groundwork refs/heads/dogfood/issue-316-v2 | cut -f1 | xargs -I{} git rev-parse {}^{tree})\" = \"$expected_tree\"",
 ]
 
 [[parameters]]
@@ -18,7 +18,7 @@ required = true
 
 [[parameters]]
 name = "proposal_ref"
-purpose = "Resolved SourceHut proposal ref from the approved change-proposal branch field."
+purpose = "Bare SourceHut proposal branch resolved from the approved change-proposal branch field."
 required = true
 
 [[parameters]]

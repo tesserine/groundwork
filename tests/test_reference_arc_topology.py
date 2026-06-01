@@ -1,5 +1,7 @@
 import json
 import re
+import subprocess
+import tempfile
 import tomllib
 import unittest
 from pathlib import Path
@@ -44,6 +46,18 @@ def mechanic_for_forge(forge_tag: str, name: str) -> dict:
     if len(matches) != 1:
         raise AssertionError(f"expected one {forge_tag} mechanic named {name}, found {len(matches)}")
     return matches[0]
+
+
+def run_git(args: list[str], cwd: Path) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=cwd,
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    return result.stdout.strip()
 
 
 class ReferenceArcTopologyTests(unittest.TestCase):
@@ -106,7 +120,7 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         apply = mechanic_for_forge("sourcehut", "apply-approved-change")
         invocation = apply["default_invocation"]
 
-        self.assertIn("git fetch {ssh_remote} {proposal_ref}", invocation)
+        self.assertIn("git fetch {ssh_remote} refs/heads/{proposal_ref}", invocation)
         self.assertIn("expected_tree=$(git rev-parse {approved_commit}^{tree})", invocation)
         self.assertIn("git am --3way {mbox_file}", invocation)
         self.assertIn("git rev-parse HEAD^{tree}", invocation)
@@ -128,7 +142,7 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         )
 
         self.assertIn("git format-patch --stdout {base}..{commit}", invocation)
-        self.assertIn("git push {ssh_remote} {commit}:{proposal_ref}", invocation)
+        self.assertIn("git push {ssh_remote} {commit}:refs/heads/{proposal_ref}", invocation)
         self.assertIn("artifact_tag", parameters)
         self.assertIn("git tag --force {artifact_tag} {commit}", invocation)
         self.assertIn("refs/tags/{artifact_tag}:refs/tags/{artifact_tag}", invocation)
@@ -140,6 +154,46 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertIn("change-proposal.branch", combined)
         self.assertIn("no lists.sr.ht", combined)
         self.assertNotIn("git send-email", combined)
+
+    def test_sourcehut_deliver_and_apply_qualify_bare_branch_proposal_ref(self) -> None:
+        proposal = load_fixture("valid-change-proposal-sourcehut-v2.json")
+        proposal_ref = proposal["branch"]
+        self.assertFalse(proposal_ref.startswith("refs/"))
+
+        deliver_invocation = mechanic_for_forge("sourcehut", "deliver-change-proposal")["default_invocation"]
+        apply_invocation = mechanic_for_forge("sourcehut", "apply-approved-change")["default_invocation"]
+
+        self.assertIn("{commit}:refs/heads/{proposal_ref}", deliver_invocation)
+        self.assertIn("git fetch {ssh_remote} refs/heads/{proposal_ref}", apply_invocation)
+        self.assertNotIn("{commit}:{proposal_ref}", deliver_invocation)
+        self.assertNotIn("git fetch {ssh_remote} {proposal_ref}", apply_invocation)
+
+    def test_sourcehut_bare_branch_proposal_ref_pushes_and_fetches_end_to_end(self) -> None:
+        proposal_ref = load_fixture("valid-change-proposal-sourcehut-v2.json")["branch"]
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            remote = root / "remote.git"
+            source = root / "source"
+            consumer = root / "consumer"
+
+            run_git(["init", "--bare", str(remote)], root)
+            run_git(["init", str(source)], root)
+            run_git(["config", "user.name", "Groundwork Tests"], source)
+            run_git(["config", "user.email", "groundwork-tests@example.invalid"], source)
+            (source / "proposal.txt").write_text("proposal\n", encoding="utf-8")
+            run_git(["add", "proposal.txt"], source)
+            run_git(["commit", "-m", "test: proposal"], source)
+            commit = run_git(["rev-parse", "HEAD"], source)
+
+            deliver_destination = f"{commit}:refs/heads/{proposal_ref}"
+            run_git(["push", str(remote), deliver_destination], source)
+
+            run_git(["init", str(consumer)], root)
+            run_git(["fetch", str(remote), f"refs/heads/{proposal_ref}"], consumer)
+
+            fetched_commit = run_git(["rev-parse", "FETCH_HEAD"], consumer)
+            self.assertEqual(commit, fetched_commit)
 
     def test_sourcehut_reflect_mechanic_uses_configured_tracker_endpoint(self) -> None:
         reflect = mechanic_for_forge("sourcehut", "reflect-disposition")
