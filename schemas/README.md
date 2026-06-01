@@ -20,6 +20,10 @@ a forge-tagged handle. The review disposition is the produced outcome type:
 `change-approved` cannot carry blocking findings, and `change-needs-revision`
 must carry at least one blocking finding.
 
+The old runtime `patch` artifact type is retired. Historical ADR and changelog
+mentions remain as design history, but no live `patch` schema or artifact
+fixtures are kept in this directory.
+
 Change-proposal handle forge tags and mechanic-authored `forge_tag` values
 resolve against the declarative `[[forge_tags]]` registry in `manifest.toml`.
 

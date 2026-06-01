@@ -1,0 +1,56 @@
+name = "land"
+purpose = "Apply an approved change and record completion after review disposition allows release."
+session_role = "release gate"
+preconditions = ["change-approved exists"]
+start_node = "apply-approved-change"
+failure_modes = [
+  "approved change cannot be applied",
+  "disposition cannot be reflected",
+  "close-out cannot produce a completion record",
+]
+corruption_modes = [
+  "raw proposal routed directly to release",
+  "surface-specific release vocabulary embedded in the workflow contract",
+  "release performed without reflecting review disposition",
+]
+
+[[nodes]]
+name = "apply-approved-change"
+intent = "Apply the reviewed change authorized by the approval outcome."
+disciplines = ["contract"]
+mechanics = ["apply-approved-change"]
+outcomes = ["approved change is applied"]
+
+[[nodes]]
+name = "reflect-disposition"
+intent = "Record that the approved disposition has been reflected in the configured work surface."
+disciplines = ["contract"]
+mechanics = ["reflect-disposition"]
+outcomes = ["approval disposition is reflected"]
+
+[[nodes]]
+name = "close-out"
+intent = "Close the work-unit lifecycle with an archival completion record."
+disciplines = ["contract"]
+mechanics = ["close-out"]
+outcomes = ["completion record content is ready"]
+
+[[edges]]
+from = "apply-approved-change"
+to = "reflect-disposition"
+condition = { type = "always" }
+
+[[edges]]
+from = "reflect-disposition"
+to = "close-out"
+condition = { type = "always" }
+
+[[edges]]
+from = "close-out"
+to = "completed"
+condition = { type = "always" }
+
+[[terminals]]
+name = "completed"
+outcome = "The approved change is applied and the work-unit lifecycle is complete."
+artifact_produced = "completion-record"

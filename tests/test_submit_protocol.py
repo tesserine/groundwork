@@ -50,12 +50,19 @@ class SubmitProtocolTests(unittest.TestCase):
     def test_manifest_routes_submit_to_change_proposal_not_patch(self) -> None:
         protocol = submit_protocol()
         mechanic_names = {mechanic["name"] for mechanic in load_manifest()["mechanics"]}
+        expected_trigger = {
+            "type": "any_of",
+            "conditions": [
+                {"type": "on_artifact", "name": "documentation-record"},
+                {"type": "on_artifact", "name": "change-needs-revision"},
+            ],
+        }
 
         self.assertEqual(["completion-evidence", "documentation-record"], protocol["requires"])
         self.assertEqual(["change-proposal", "change-needs-revision"], protocol["accepts"])
         self.assertEqual(["change-proposal"], protocol["produces"])
         self.assertEqual([], protocol["may_produce"])
-        self.assertEqual({"type": "on_artifact", "name": "documentation-record"}, protocol["trigger"])
+        self.assertEqual(expected_trigger, protocol["trigger"])
         self.assertIn("deliver-change-proposal", mechanic_names)
         self.assertIn("revise", mechanic_names)
 
@@ -71,9 +78,9 @@ class SubmitProtocolTests(unittest.TestCase):
     def test_changelog_records_submit_contract_conversion(self) -> None:
         changelog = normalized(CHANGELOG_PATH)
 
-        self.assertIn("Submit C-2 workflow contract", changelog)
+        self.assertIn("Submit-review-land disposition workflow migration", changelog)
         self.assertIn("change-proposal", changelog)
-        self.assertIn("closes #330", changelog)
+        self.assertIn("closes #340", changelog)
 
 
 if __name__ == "__main__":

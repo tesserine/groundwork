@@ -22,12 +22,12 @@ Work moves through two phases connected by the work-unit artifact.
 Survey examines what actually needs doing; decompose breaks that into work
 units with acceptance criteria and dependency edges.
 
-**Execution** takes one work-unit and carries it through to a merged increment:
+**Execution** takes one work-unit and carries it through to a completed increment:
 take claims the work-unit and opens the session → specify writes the behavior
 contract as Given/When/Then scenarios → plan converges on a decision-complete
 design → implement executes through RED-GREEN-REFACTOR → verify gates
-completion with evidence → document ensures accuracy → submit packages the
-change → land merges and closes the loop.
+completion with evidence → document ensures accuracy → submit delivers a
+change proposal → review produces disposition → land closes the loop.
 
 Each protocol produces an artifact that the next protocol requires.
 → [`docs/architecture/connecting-structure.md`](docs/architecture/connecting-structure.md)
@@ -197,7 +197,7 @@ becomes a work-unit.
 | [`manifest.toml`](manifest.toml) | Manifest: artifact types, protocol topology, trigger conditions |
 | [`protocols/`](protocols/) | Protocol definitions for methodology stages |
 | [`skills/`](skills/) | Skills for orientation, cross-cutting disciplines, and stage-specific judgment |
-| [`schemas/`](schemas/) | JSON Schema contracts for artifacts and authoring substrates |
+| [`schemas/`](schemas/) | JSON Schema contracts for live artifacts and authoring substrates |
 | [`tooling/`](tooling/) | Authoring-time parsers and validators |
 | [`docs/architecture/`](docs/architecture/) | Topology design rationale and work-unit state model |
 | [`docs/authoring/`](docs/authoring/) | Follow-direct guides for methodology authors |

@@ -40,11 +40,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `code-review` skill, manifest-registered required-choice outcome group, and
   typed review disposition routing through `change-approved` /
   `change-needs-revision` (closes #331).
-- Submit C-2 workflow contract authoring surface: source `submit` contract,
-  manifest wiring from `patch` to `change-proposal`, revision-path operation
-  registration, and WHAT-layer submit protocol prose that preserves the
-  release metadata invariant while moving forge-specific delivery to C-3
-  mechanics (closes #330).
+- Submit-review-land disposition workflow migration: source `submit` and
+  `land` contracts, manifest routing through `change-proposal`,
+  `change-approved`, and `change-needs-revision`, revision re-activation of
+  submit, WHAT-layer protocol prose for submit and land, and retirement of the
+  live `patch` artifact type and fixtures (closes #340; supersedes #330 and
+  #332).
 
 ### Fixed
 

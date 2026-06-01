@@ -1,4 +1,3 @@
-import json
 import unittest
 from pathlib import Path
 
@@ -136,11 +135,9 @@ class ArtifactSchemaTests(unittest.TestCase):
                 with self.assertRaises(ArtifactSchemaError):
                     load_artifact(artifact_type_for_fixture(fixture.name), fixture)
 
-    def test_patch_schema_is_marked_superseded(self) -> None:
-        schema = json.loads((ROOT / "schemas" / "patch.schema.json").read_text(encoding="utf-8"))
-
-        self.assertIs(schema["deprecated"], True)
-        self.assertIn("Superseded by change-proposal", schema["description"])
+    def test_patch_type_retirement_leaves_no_patch_schema_or_fixtures(self) -> None:
+        self.assertFalse((ROOT / "schemas" / "patch.schema.json").exists())
+        self.assertEqual([], sorted(fixture.name for fixture in FIXTURES.glob("*-patch.json")))
 
     def test_validate_artifact_accepts_already_loaded_json_data(self) -> None:
         artifact = load_artifact("change-approved", self.fixture("valid-change-approved.json"))

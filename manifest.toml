@@ -44,9 +44,6 @@ name = "change-approved"
 name = "change-needs-revision"
 
 [[artifact_types]]
-name = "patch"
-
-[[artifact_types]]
 name = "completion-record"
 
 [[artifact_types]]
@@ -92,6 +89,15 @@ name = "revise"
 
 [[mechanics]]
 name = "review"
+
+[[mechanics]]
+name = "apply-approved-change"
+
+[[mechanics]]
+name = "reflect-disposition"
+
+[[mechanics]]
+name = "close-out"
 
 [[mechanics]]
 name = "inspect-worktree"
@@ -182,7 +188,10 @@ requires = ["completion-evidence", "documentation-record"]
 accepts = ["change-proposal", "change-needs-revision"]
 produces = ["change-proposal"]
 may_produce = []
-trigger = { type = "on_artifact", name = "documentation-record" }
+trigger = { type = "any_of", conditions = [
+  { type = "on_artifact", name = "documentation-record" },
+  { type = "on_artifact", name = "change-needs-revision" },
+] }
 
 [[protocols]]
 name = "review"
@@ -200,8 +209,8 @@ members = ["change-approved", "change-needs-revision"]
 [[protocols]]
 name = "land"
 scoped = true
-requires = ["patch"]
+requires = ["change-approved"]
 accepts = ["completion-evidence", "behavior-contract", "documentation-record", "work-unit"]
 produces = ["completion-record"]
 may_produce = []
-trigger = { type = "on_artifact", name = "patch" }
+trigger = { type = "on_artifact", name = "change-approved" }
