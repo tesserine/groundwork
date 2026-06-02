@@ -177,9 +177,10 @@ write files, construct filenames, or supply `work_unit`.
 ### session-close
 
 1. Reach a stable checkpoint (done increment or explicit WIP note).
-2. Update work-unit state and leave a concise progress comment on the GitHub issue.
+2. Update work-unit state and leave a concise progress comment on the active
+   forge tracker record.
 3. Record decisions, blockers, and the exact next step.
-4. Ensure any follow-up work is represented as GitHub issue(s).
+4. Ensure any follow-up work is represented in the active forge tracker.
 5. Sync workspace and close.
 
 ## Key Terms
