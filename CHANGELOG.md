@@ -51,7 +51,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `git am --3way`, and `reflect-disposition` records tracker-ticket state
   under `forge_tag = "sourcehut"`.
 - Runtime forge-operation resolution for C-3 mechanics: `groundwork-mechanic`
-  reads `GROUNDWORK_FORGE` with a `github` default, resolves invariant
+  reads `GROUNDWORK_FORGE_TYPE` with a `github` default, resolves invariant
   operations to exactly one active-forge mechanic, invokes mechanics through
   environment-parameterized shell bodies, installs a runtime resolver bundle
   for interactive sessions, and adds GitHub/SourceHut `close-out` mechanics

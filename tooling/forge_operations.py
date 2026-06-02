@@ -15,33 +15,33 @@ class ForgeOperationError(ValueError):
     pass
 
 
-def active_forge(environment: Mapping[str, str], override: str | None) -> str:
+def active_forge_type(environment: Mapping[str, str], override: str | None) -> str:
     if override:
         return override
-    return environment.get("GROUNDWORK_FORGE") or "github"
+    return environment.get("GROUNDWORK_FORGE_TYPE") or "github"
 
 
-def resolve_operation(root: Path | str, operation: str, *, forge: str | None = None) -> dict[str, Any]:
+def resolve_operation(root: Path | str, operation: str, *, forge_type: str | None = None) -> dict[str, Any]:
     root_path = Path(root)
     manifest = _load_toml(root_path / "manifest.toml")
-    selected_forge = active_forge(os.environ, forge)
+    selected_forge_type = active_forge_type(os.environ, forge_type)
     forge_tags = _manifest_names(manifest, "forge_tags")
-    if selected_forge not in forge_tags:
-        raise ForgeOperationError(f"forge `{selected_forge}` does not resolve in forge_tags")
+    if selected_forge_type not in forge_tags:
+        raise ForgeOperationError(f"forge type `{selected_forge_type}` does not resolve in forge_tags")
 
     operation_entry = _manifest_operation(manifest, operation)
-    declared_forges = operation_entry.get("forge_tags")
-    if not isinstance(declared_forges, list) or selected_forge not in declared_forges:
-        raise ForgeOperationError(f"operation `{operation}` is not bound for forge `{selected_forge}`")
+    declared_forge_types = operation_entry.get("forge_tags")
+    if not isinstance(declared_forge_types, list) or selected_forge_type not in declared_forge_types:
+        raise ForgeOperationError(f"operation `{operation}` is not bound for forge type `{selected_forge_type}`")
 
     matches = [
         mechanic
         for mechanic in _load_mechanics(root_path / "mechanics")
-        if mechanic.get("name") == operation and mechanic.get("forge_tag") == selected_forge
+        if mechanic.get("name") == operation and mechanic.get("forge_tag") == selected_forge_type
     ]
     if len(matches) != 1:
         raise ForgeOperationError(
-            f"operation `{operation}` for forge `{selected_forge}` resolves to {len(matches)} mechanics; expected exactly 1"
+            f"operation `{operation}` for forge type `{selected_forge_type}` resolves to {len(matches)} mechanics; expected exactly 1"
         )
     return matches[0]
 
@@ -88,7 +88,7 @@ def run_invocation(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Resolve and invoke Groundwork forge operations.")
     parser.add_argument("--root", default=str(ROOT), help="Groundwork methodology root. Defaults to this checkout.")
-    parser.add_argument("--forge", help="Active forge override. Defaults to GROUNDWORK_FORGE, then github.")
+    parser.add_argument("--forge-type", help="Active forge type override. Defaults to GROUNDWORK_FORGE_TYPE, then github.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     resolve_parser = subparsers.add_parser("resolve", help="Print the resolved mechanic path-equivalent name.")
@@ -110,7 +110,7 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
     try:
-        mechanic = resolve_operation(args.root, args.operation, forge=args.forge)
+        mechanic = resolve_operation(args.root, args.operation, forge_type=args.forge_type)
         if args.command == "resolve":
             print(f"{mechanic['name']}[{mechanic['forge_tag']}]")
             return 0
