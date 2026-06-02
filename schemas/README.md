@@ -10,7 +10,10 @@ declared as a runtime artifact type in `manifest.toml`.
 
 `mechanic.schema.json` is an authoring substrate for C-3 mechanics from
 ADR-0002. It is validated by `tooling.mechanics`, not declared as a runtime
-artifact type in `manifest.toml`.
+artifact type in `manifest.toml`. Mechanic parameters are shell environment
+variable names because invocation data is supplied through the child process
+environment; secret parameters use `secret = true` and must remain values, not
+rendered command text.
 
 `change-proposal.schema.json`, `change-approved.schema.json`, and
 `change-needs-revision.schema.json` are the C-4 artifact schemas for the

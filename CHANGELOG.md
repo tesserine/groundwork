@@ -50,6 +50,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   resolves to the approved commit, and guards tree equality after plain
   `git am --3way`, and `reflect-disposition` records tracker-ticket state
   under `forge_tag = "sourcehut"`.
+- Runtime forge-operation resolution for C-3 mechanics: `groundwork-mechanic`
+  reads `GROUNDWORK_FORGE` with a `github` default, resolves invariant
+  operations to exactly one active-forge mechanic, invokes mechanics through
+  environment-parameterized shell bodies, installs a runtime resolver bundle
+  for interactive sessions, and adds GitHub/SourceHut `close-out` mechanics
+  bound in the manifest matrix (closes #350).
 
 ### Changed
 
@@ -92,9 +98,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   registry-loaded mechanics whose `forge_tag` is not declared in
   `manifest.toml`; generic runtime mechanics remain forge-neutral by omitting
   `forge_tag` (closes #322).
+- Mechanic invocation validation now rejects bare `{parameter}` placeholders
+  outside shell quoting, malformed shell, unexpanded declared parameters,
+  incomplete forge-operation matrices, and registered protocol bodies that leak
+  forge-specific command tokens outside the temporary #353 `take` exception.
 - Interactive install now projects the artifact delivery adapter into every
   protocol entry without depending on protocol prose formatting, so wrapped MCP
   delivery text cannot omit the adapter from installed protocol skills.
+- Interactive install now rewrites installed protocol resolver references to
+  a shell-quoted managed runtime command path, reports a missing expected
+  managed runtime as a status failure, rejects unmanaged `~/.groundwork`
+  conflicts before replacing the runtime bundle, and preflights runtime bundle
+  projection before mutating installed entries.
+- `groundwork-mechanic run` now rejects secret `NAME=VALUE` argv bindings and
+  accepts secret parameters through `--secret-env NAME=ENV_VAR`.
 
 ## [0.2.0] — 2026-05-17
 

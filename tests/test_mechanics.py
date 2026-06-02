@@ -34,6 +34,99 @@ class MechanicTests(unittest.TestCase):
 
         self.assertNotIn("forge_tag", mechanic)
 
+    def test_schema_accepts_secret_parameter_metadata(self) -> None:
+        mechanic = {
+            "name": "sourcehut-upload",
+            "purpose": "Upload with a bearer token.",
+            "default_invocation": 'curl --header "Authorization: Bearer ${token}" "${url}"',
+            "examples": ['curl --header "Authorization: Bearer ${token}" "${url}"'],
+            "parameters": [
+                {"name": "token", "purpose": "Bearer token.", "required": True, "secret": True},
+                {"name": "url", "purpose": "Endpoint URL.", "required": True},
+            ],
+            "outcome": {"description": "Uploaded."},
+        }
+
+        validate_mechanic(mechanic)
+
+    def test_invocation_rejects_bare_placeholder_parameters(self) -> None:
+        mechanic = {
+            "name": "git-push",
+            "purpose": "Push a branch.",
+            "default_invocation": "git push {remote} {branch}",
+            "examples": ["git push origin main"],
+            "parameters": [
+                {"name": "remote", "purpose": "Remote.", "required": True},
+                {"name": "branch", "purpose": "Branch.", "required": True},
+            ],
+            "outcome": {"description": "Pushed."},
+        }
+
+        with self.assertRaises(MechanicError) as context:
+            validate_mechanic(mechanic)
+
+        self.assertIn("default_invocation", context.exception.paths)
+        self.assertIn("bare placeholder", str(context.exception))
+
+    def test_invocation_accepts_quoted_embedded_language_braces(self) -> None:
+        mechanic = {
+            "name": "awk-print",
+            "purpose": "Print a file with awk.",
+            "default_invocation": """awk '{print}' "$file" """,
+            "examples": ["""awk '{print}' "$file" """],
+            "parameters": [{"name": "file", "purpose": "File to print.", "required": True}],
+            "outcome": {"description": "Printed."},
+        }
+
+        validate_mechanic(mechanic)
+
+    def test_invocation_rejects_unparseable_shell(self) -> None:
+        mechanic = {
+            "name": "git-push",
+            "purpose": "Push a branch.",
+            "default_invocation": 'git push "${remote}',
+            "examples": ['git push "${remote}'],
+            "parameters": [{"name": "remote", "purpose": "Remote.", "required": True}],
+            "outcome": {"description": "Pushed."},
+        }
+
+        with self.assertRaises(MechanicError) as context:
+            validate_mechanic(mechanic)
+
+        self.assertIn("default_invocation", context.exception.paths)
+        self.assertIn("valid /bin/sh", str(context.exception))
+
+    def test_invocation_rejects_declared_parameter_that_shell_does_not_expand(self) -> None:
+        mechanic = {
+            "name": "git-push",
+            "purpose": "Push a branch.",
+            "default_invocation": "printf '%s\\n' '$remote'",
+            "examples": ["printf '%s\\n' '$remote'"],
+            "parameters": [{"name": "remote", "purpose": "Remote.", "required": True}],
+            "outcome": {"description": "Pushed."},
+        }
+
+        with self.assertRaises(MechanicError) as context:
+            validate_mechanic(mechanic)
+
+        self.assertIn("parameters/0/name", context.exception.paths)
+        self.assertIn("not expanded by /bin/sh", str(context.exception))
+
+    def test_schema_rejects_parameter_names_that_cannot_be_environment_variables(self) -> None:
+        mechanic = {
+            "name": "bad-param",
+            "purpose": "Bad parameter name.",
+            "default_invocation": 'printf "%s\\n" "${bad-name}"',
+            "examples": ['printf "%s\\n" "${bad-name}"'],
+            "parameters": [{"name": "bad-name", "purpose": "Bad.", "required": True}],
+            "outcome": {"description": "Rejected."},
+        }
+
+        with self.assertRaises(MechanicError) as context:
+            validate_mechanic(mechanic)
+
+        self.assertIn("parameters/0/name", context.exception.paths)
+
     def test_schema_rejects_malformed_shape_with_field_paths(self) -> None:
         with self.assertRaises(MechanicError) as context:
             load_mechanic(self.fixture("invalid-malformed-shape.toml"))

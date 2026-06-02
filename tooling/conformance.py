@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,6 +27,19 @@ CATEGORY_MANIFEST = "C-5 manifest"
 CATEGORY_UNKNOWN = "unknown"
 
 DIRECT_UNIT_DIRECTORY_NAMES = {"workflow-contracts", "mechanics", "schemas"}
+FORGE_TOUCHING_OPERATIONS = {
+    "deliver-change-proposal",
+    "apply-approved-change",
+    "reflect-disposition",
+    "close-out",
+}
+FORGE_LEAKAGE_TOKEN_PATTERNS = {
+    "gh": r"(?<![A-Za-z0-9_-])gh(?![A-Za-z0-9_-])",
+    "github.com": r"github[.]com",
+    "git.sr.ht": r"git[.]sr[.]ht",
+    "todo.sr.ht": r"todo[.]sr[.]ht",
+}
+TEMPORARY_FORGE_LEAKAGE_EXEMPTIONS = {"take"}
 
 
 @dataclass(frozen=True)
@@ -345,7 +359,72 @@ def _manifest_errors(manifest: dict[str, Any], root: Path) -> list[tuple[str, st
             )
 
     errors.extend(_manifest_mechanic_binding_errors(mechanic_entries, forge_tags, root))
+    errors.extend(_manifest_forge_matrix_errors(mechanic_entries, forge_tags))
+    errors.extend(_manifest_protocol_leakage_errors(protocol_entries, root))
 
+    return errors
+
+
+def _manifest_forge_matrix_errors(
+    mechanic_entries: list[tuple[int, dict[str, Any]]],
+    forge_tags: set[str],
+) -> list[tuple[str, str]]:
+    errors: list[tuple[str, str]] = []
+    if not forge_tags:
+        return errors
+    mechanic_by_name = {
+        mechanic.get("name"): (mechanic_index, mechanic)
+        for mechanic_index, mechanic in mechanic_entries
+        if isinstance(mechanic.get("name"), str)
+    }
+    for operation in sorted(FORGE_TOUCHING_OPERATIONS):
+        if operation not in mechanic_by_name:
+            errors.append(
+                (
+                    "mechanics",
+                    f"forge-touching operation `{operation}` must be declared in mechanics",
+                )
+            )
+            continue
+        mechanic_index, mechanic = mechanic_by_name[operation]
+        declared = mechanic.get("forge_tags")
+        if not isinstance(declared, list) or set(declared) != forge_tags:
+            errors.append(
+                (
+                    f"mechanics/{mechanic_index}/forge_tags",
+                    f"forge-touching operation `{operation}` must declare forge_tags for every registered forge",
+                )
+            )
+    return errors
+
+
+def _manifest_protocol_leakage_errors(
+    protocol_entries: list[tuple[int, dict[str, Any]]],
+    root: Path,
+) -> list[tuple[str, str]]:
+    errors: list[tuple[str, str]] = []
+    for protocol_index, protocol in protocol_entries:
+        name = protocol.get("name")
+        if not isinstance(name, str):
+            continue
+        if name in TEMPORARY_FORGE_LEAKAGE_EXEMPTIONS:
+            continue
+        protocol_body = root / "protocols" / name / "PROTOCOL.md"
+        if not protocol_body.exists():
+            continue
+        try:
+            body = protocol_body.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as error:
+            errors.append((f"protocols/{protocol_index}", f"cannot read protocol body for forge leakage scan: {error}"))
+            continue
+        for token, pattern in FORGE_LEAKAGE_TOKEN_PATTERNS.items():
+            if re.search(pattern, body):
+                errors.append(
+                    (
+                        f"protocols/{protocol_index}",
+                        f"protocol `{name}` leaks forge-specific token `{token}`",
+                    )
+                )
     return errors
 
 

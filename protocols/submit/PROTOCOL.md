@@ -41,6 +41,9 @@ Revision delivery uses the invariant `revise` operation and then delivers the
 new proposal version. Both paths end in the same capstone: a
 `change-proposal` artifact.
 
+An executing agent resolves the invariant delivery operation through
+`groundwork-mechanic` and runs the active-forge mechanic it returns.
+
 The protocol must not encode forge-specific delivery language. The artifact's
 `handle` carries the forge-tagged reference needed by downstream review and
 apply mechanics while the protocol remains at the WHAT layer.

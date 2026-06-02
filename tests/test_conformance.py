@@ -483,6 +483,51 @@ forge_tags = ["github"]
             " ".join(results[0].errors),
         )
 
+    def test_manifest_requires_forge_touching_operations_for_every_registered_forge(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "manifest.toml"
+            manifest.write_text(
+                """
+[[forge_tags]]
+name = "github"
+
+[[forge_tags]]
+name = "sourcehut"
+
+[[mechanics]]
+name = "close-out"
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([manifest])
+
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("forge-touching operation `close-out` must declare forge_tags for every registered forge", " ".join(results[0].errors))
+
+    def test_manifest_forge_leakage_scan_covers_registered_protocol_without_workflow_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "manifest.toml"
+            manifest.write_text(
+                """
+[[protocols]]
+name = "survey"
+""".lstrip(),
+                encoding="utf-8",
+            )
+            protocol = root / "protocols" / "survey"
+            protocol.mkdir(parents=True)
+            (protocol / "PROTOCOL.md").write_text("Fallback: run `gh issue view 350`.\n", encoding="utf-8")
+
+            results = run_conformance([manifest])
+
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("protocol `survey` leaks forge-specific token `gh`", " ".join(results[0].errors))
+
     def test_malformed_directory_manifest_does_not_abort_sibling_registry_checks(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

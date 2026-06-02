@@ -52,6 +52,8 @@ order:
 
 These operation names remain forge-invariant. Forge-specific mechanics may
 implement them, but the protocol does not prescribe those mechanics.
+An executing agent resolves each operation through `groundwork-mechanic` and
+runs the active-forge mechanic it returns.
 
 ## Deliver `completion-record`
 
