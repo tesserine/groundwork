@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import re
+import subprocess
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -44,6 +46,8 @@ def load_mechanic(path: Path | str, registry: MechanicRegistry | None = None) ->
 def validate_mechanic(mechanic: dict[str, Any], registry: MechanicRegistry | None = None) -> None:
     errors: list[tuple[str, str]] = []
     errors.extend(_schema_errors(mechanic))
+    if not errors:
+        errors.extend(_invocation_errors(mechanic))
     if registry is not None and not errors:
         errors.extend(_registry_errors(mechanic, registry))
 
@@ -64,6 +68,66 @@ def _schema_errors(mechanic: dict[str, Any]) -> list[tuple[str, str]]:
         errors.append((path or "<root>", error.message))
 
     return errors
+
+
+def _invocation_errors(mechanic: dict[str, Any]) -> list[tuple[str, str]]:
+    body = mechanic["default_invocation"]
+    errors: list[tuple[str, str]] = []
+
+    if re.search(r"(?<![$A-Za-z0-9_^])\{[A-Za-z_][A-Za-z0-9_.-]*\}", body):
+        errors.append(("default_invocation", "bare placeholder references are not allowed; use shell environment references"))
+
+    shell_check = subprocess.run(
+        ["/bin/sh", "-n", "-c", body],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if shell_check.returncode != 0:
+        errors.append(("default_invocation", f"default_invocation must parse as valid /bin/sh: {shell_check.stderr.strip()}"))
+
+    for parameter_index, parameter in enumerate(mechanic["parameters"]):
+        parameter_name = parameter["name"]
+        if not _shell_expands_parameter(body, parameter_name):
+            errors.append(
+                (
+                    f"parameters/{parameter_index}/name",
+                    f"parameter `{parameter_name}` is not expanded by /bin/sh in default_invocation",
+                )
+            )
+
+    return errors
+
+
+def _shell_expands_parameter(body: str, parameter_name: str) -> bool:
+    in_single_quote = False
+    escaped = False
+    index = 0
+    while index < len(body):
+        char = body[index]
+        if escaped:
+            escaped = False
+            index += 1
+            continue
+        if char == "\\":
+            escaped = True
+            index += 1
+            continue
+        if char == "'":
+            in_single_quote = not in_single_quote
+            index += 1
+            continue
+        if not in_single_quote and char == "$":
+            braced = f"${{{parameter_name}}}"
+            unbraced = f"${parameter_name}"
+            if body.startswith(braced, index):
+                return True
+            if body.startswith(unbraced, index):
+                following = body[index + len(unbraced) : index + len(unbraced) + 1]
+                if not following or not re.match(r"[A-Za-z0-9_]", following):
+                    return True
+        index += 1
+    return False
 
 
 def _registry_errors(mechanic: dict[str, Any], registry: MechanicRegistry) -> list[tuple[str, str]]:

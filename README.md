@@ -68,6 +68,7 @@ The installer writes user-owned entries only, with no root or sudo requirement:
 
 - `~/.claude/skills/{name}/`
 - `~/.agents/skills/{name}/`
+- `~/.groundwork/`
 
 Every directory under `skills/` is copied as a skill entry. Every directory
 under `protocols/` is copied as a skill-shaped entry with `PROTOCOL.md`
@@ -77,6 +78,13 @@ how to present the produced artifact body to the human instead of calling the
 runa MCP artifact tool. Installed entries are copies, not source-checkout
 symlinks, so later changes to the checkout do not drift into the active
 discovery surface.
+
+When `manifest.toml`, `mechanics/`, and the forge-operation resolver are
+present, the installer also projects a managed runtime bundle under
+`~/.groundwork/`. The bundle contains the manifest, mechanic library, resolver
+module, and `bin/groundwork-mechanic`, so installed protocol sessions can
+resolve forge-invariant operations through the active `GROUNDWORK_FORGE`
+configuration without reaching back into the source checkout.
 
 The source checkout must be clean and pinned at a tag or full commit SHA. The
 command refuses branch checkouts because a branch is a moving source. To update

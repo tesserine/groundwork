@@ -59,13 +59,16 @@
         "name": {
           "type": "string",
           "minLength": 1,
-          "pattern": "^[a-z][a-z0-9]*([_.-][a-z0-9]+)*$"
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
         },
         "purpose": {
           "type": "string",
           "minLength": 1
         },
         "required": {
+          "type": "boolean"
+        },
+        "secret": {
           "type": "boolean"
         },
         "schema_ref": {

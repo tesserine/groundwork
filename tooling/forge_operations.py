@@ -1,0 +1,188 @@
+from __future__ import annotations
+
+import argparse
+import os
+import subprocess
+import tomllib
+from pathlib import Path
+from typing import Any, Mapping
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class ForgeOperationError(ValueError):
+    pass
+
+
+def active_forge(environment: Mapping[str, str], override: str | None) -> str:
+    if override:
+        return override
+    return environment.get("GROUNDWORK_FORGE") or "github"
+
+
+def resolve_operation(root: Path | str, operation: str, *, forge: str | None = None) -> dict[str, Any]:
+    root_path = Path(root)
+    manifest = _load_toml(root_path / "manifest.toml")
+    selected_forge = active_forge(os.environ, forge)
+    forge_tags = _manifest_names(manifest, "forge_tags")
+    if selected_forge not in forge_tags:
+        raise ForgeOperationError(f"forge `{selected_forge}` does not resolve in forge_tags")
+
+    operation_entry = _manifest_operation(manifest, operation)
+    declared_forges = operation_entry.get("forge_tags")
+    if not isinstance(declared_forges, list) or selected_forge not in declared_forges:
+        raise ForgeOperationError(f"operation `{operation}` is not bound for forge `{selected_forge}`")
+
+    matches = [
+        mechanic
+        for mechanic in _load_mechanics(root_path / "mechanics")
+        if mechanic.get("name") == operation and mechanic.get("forge_tag") == selected_forge
+    ]
+    if len(matches) != 1:
+        raise ForgeOperationError(
+            f"operation `{operation}` for forge `{selected_forge}` resolves to {len(matches)} mechanics; expected exactly 1"
+        )
+    return matches[0]
+
+
+def inspect_invocation(mechanic: Mapping[str, Any], values: Mapping[str, str]) -> str:
+    unknown = sorted(set(values) - set(_parameters(mechanic)))
+    if unknown:
+        raise ForgeOperationError(f"unknown parameter(s): {', '.join(unknown)}")
+    return _invocation_body(mechanic)
+
+
+def render_shell_invocation(mechanic: Mapping[str, Any], values: Mapping[str, str]) -> tuple[str, dict[str, str]]:
+    parameters = _parameters(mechanic)
+    missing = [name for name, parameter in parameters.items() if parameter.get("required") and name not in values]
+    if missing:
+        raise ForgeOperationError(f"missing required parameter(s): {', '.join(sorted(missing))}")
+    unknown = sorted(set(values) - set(parameters))
+    if unknown:
+        raise ForgeOperationError(f"unknown parameter(s): {', '.join(unknown)}")
+    return _invocation_body(mechanic), {name: str(value) for name, value in values.items()}
+
+
+def run_invocation(
+    mechanic: Mapping[str, Any],
+    values: Mapping[str, str],
+    *,
+    cwd: Path | str,
+) -> subprocess.CompletedProcess[str]:
+    command, invocation_environment = render_shell_invocation(mechanic, values)
+    environment = os.environ.copy()
+    environment.update(invocation_environment)
+    return subprocess.run(
+        command,
+        shell=True,
+        executable="/bin/sh",
+        cwd=cwd,
+        env=environment,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Resolve and invoke Groundwork forge operations.")
+    parser.add_argument("--root", default=str(ROOT), help="Groundwork methodology root. Defaults to this checkout.")
+    parser.add_argument("--forge", help="Active forge override. Defaults to GROUNDWORK_FORGE, then github.")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    resolve_parser = subparsers.add_parser("resolve", help="Print the resolved mechanic path-equivalent name.")
+    resolve_parser.add_argument("operation")
+
+    inspect_parser = subparsers.add_parser("inspect", help="Print the constant shell invocation body.")
+    inspect_parser.add_argument("operation")
+
+    run_parser = subparsers.add_parser("run", help="Run the resolved mechanic with NAME=VALUE parameter bindings.")
+    run_parser.add_argument("operation")
+    run_parser.add_argument("bindings", nargs="*", help="Parameter bindings in NAME=VALUE form.")
+
+    args = parser.parse_args(argv)
+    try:
+        mechanic = resolve_operation(args.root, args.operation, forge=args.forge)
+        if args.command == "resolve":
+            print(f"{mechanic['name']}[{mechanic['forge_tag']}]")
+            return 0
+        if args.command == "inspect":
+            print(inspect_invocation(mechanic, {}))
+            return 0
+        if args.command == "run":
+            result = run_invocation(mechanic, _parse_bindings(args.bindings), cwd=Path.cwd())
+            if result.stdout:
+                print(result.stdout, end="")
+            if result.stderr:
+                print(result.stderr, end="", file=os.sys.stderr)
+            return result.returncode
+    except ForgeOperationError as error:
+        print(f"groundwork-mechanic: {error}", file=os.sys.stderr)
+        return 1
+    return 1
+
+
+def _load_toml(path: Path) -> dict[str, Any]:
+    try:
+        return tomllib.loads(path.read_text(encoding="utf-8"))
+    except tomllib.TOMLDecodeError as error:
+        raise ForgeOperationError(f"{path} is invalid TOML: {error}") from error
+
+
+def _manifest_names(manifest: Mapping[str, Any], key: str) -> set[str]:
+    return {
+        entry["name"]
+        for entry in manifest.get(key, [])
+        if isinstance(entry, dict) and isinstance(entry.get("name"), str)
+    }
+
+
+def _manifest_operation(manifest: Mapping[str, Any], operation: str) -> Mapping[str, Any]:
+    matches = [
+        entry
+        for entry in manifest.get("mechanics", [])
+        if isinstance(entry, dict) and entry.get("name") == operation
+    ]
+    if not matches:
+        raise ForgeOperationError(f"operation `{operation}` does not resolve in manifest mechanics")
+    if len(matches) != 1:
+        raise ForgeOperationError(f"operation `{operation}` resolves to {len(matches)} manifest mechanics; expected exactly 1")
+    return matches[0]
+
+
+def _load_mechanics(directory: Path) -> list[dict[str, Any]]:
+    if not directory.exists():
+        return []
+    return [_load_toml(path) for path in sorted(directory.rglob("*.toml"))]
+
+
+def _parameters(mechanic: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
+    return {
+        parameter["name"]: parameter
+        for parameter in mechanic.get("parameters", [])
+        if isinstance(parameter, dict) and isinstance(parameter.get("name"), str)
+    }
+
+
+def _invocation_body(mechanic: Mapping[str, Any]) -> str:
+    body = mechanic.get("default_invocation")
+    if not isinstance(body, str) or not body:
+        raise ForgeOperationError("mechanic default_invocation must be a non-empty string")
+    return body
+
+
+def _parse_bindings(bindings: list[str]) -> dict[str, str]:
+    parsed: dict[str, str] = {}
+    for binding in bindings:
+        if "=" not in binding:
+            raise ForgeOperationError(f"binding `{binding}` must use NAME=VALUE")
+        name, value = binding.split("=", 1)
+        if not name:
+            raise ForgeOperationError("binding name must not be empty")
+        parsed[name] = value
+    return parsed
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

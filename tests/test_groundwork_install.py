@@ -137,6 +137,9 @@ class InstallRun:
     def state_file(self) -> Path:
         return self.state / "interactive-install.tsv"
 
+    def runtime_root(self) -> Path:
+        return self.home / ".groundwork"
+
 
 class GroundworkInstallTests(unittest.TestCase):
     def add_fixture(self, name: str) -> MethodologyFixture:
@@ -189,6 +192,58 @@ class GroundworkInstallTests(unittest.TestCase):
         self.assert_adapter_projected_once(take_body)
         self.assertTrue((install.target(".agents", "take") / "references" / "example.md").is_file())
         self.assertTrue((install.target(".agents", "reckon") / "references" / "example.md").is_file())
+
+    def test_install_projects_runtime_bundle_for_installed_mechanic_resolution(self) -> None:
+        fixture = self.add_fixture("runtime-bundle")
+        fixture.write(
+            "manifest.toml",
+            """
+            [[forge_tags]]
+            name = "github"
+
+            [[forge_tags]]
+            name = "sourcehut"
+
+            [[mechanics]]
+            name = "close-out"
+            forge_tags = ["github", "sourcehut"]
+            """,
+        )
+        for forge in ["github", "sourcehut"]:
+            fixture.write(
+                f"mechanics/{forge}/close-out.toml",
+                f"""
+                name = "close-out"
+                purpose = "Close out on {forge}."
+                forge_tag = "{forge}"
+                default_invocation = 'printf "%s\\n" "$message"'
+                examples = ['printf "%s\\n" "$message"']
+
+                [[parameters]]
+                name = "message"
+                purpose = "Completion message."
+                required = true
+
+                [outcome]
+                description = "Closed."
+                """,
+            )
+        fixture.write("tooling/forge_operations.py", (ROOT / "tooling" / "forge_operations.py").read_text(encoding="utf-8"))
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        resolver = install.runtime_root() / "bin" / "groundwork-mechanic"
+        self.assertTrue(resolver.is_file())
+        resolved = run(
+            [str(resolver), "resolve", "close-out"],
+            install.runtime_root(),
+            env={**os.environ, "GROUNDWORK_FORGE": "sourcehut"},
+        )
+        assert_success(self, resolved)
+        self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
 
     def test_install_projects_interactive_adapter_into_every_protocol_entry(self) -> None:
         fixture = self.add_fixture("adapter-all-protocols")

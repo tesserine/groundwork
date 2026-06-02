@@ -65,14 +65,11 @@ class ReferenceArcTopologyTests(unittest.TestCase):
     def run_mechanic_invocation(
         self, invocation: str, replacements: dict[str, str], bin_dir: Path, cwd: Path | None = None
     ) -> subprocess.CompletedProcess:
-        command = invocation
-        for placeholder, value in replacements.items():
-            command = command.replace(f"{{{placeholder}}}", value)
-
         environment = os.environ.copy()
+        environment.update(replacements)
         environment["PATH"] = f"{bin_dir}{os.pathsep}{environment['PATH']}"
         return subprocess.run(
-            command,
+            invocation,
             shell=True,
             executable="/bin/sh",
             cwd=cwd or ROOT,
@@ -128,6 +125,7 @@ class ReferenceArcTopologyTests(unittest.TestCase):
             "deliver-change-proposal",
             "apply-approved-change",
             "reflect-disposition",
+            "close-out",
         }
         manifest_mechanics = {entry["name"]: entry for entry in manifest()["mechanics"]}
 
@@ -141,14 +139,14 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         apply = mechanic_for_forge("sourcehut", "apply-approved-change")
         invocation = apply["default_invocation"]
 
-        self.assertIn("git fetch {ssh_remote} refs/heads/{proposal_ref}", invocation)
+        self.assertIn('git fetch "$ssh_remote" "refs/heads/$proposal_ref"', invocation)
         self.assertIn("git rev-parse FETCH_HEAD", invocation)
-        self.assertIn("expected_tree=$(git rev-parse {approved_commit}^{tree})", invocation)
-        self.assertIn("git am --3way {mbox_file}", invocation)
-        self.assertLess(invocation.index("git rev-parse FETCH_HEAD"), invocation.index("git am --3way {mbox_file}"))
+        self.assertIn('expected_tree=$(git rev-parse "${approved_commit}^{tree}")', invocation)
+        self.assertIn('git am --3way "$mbox_file"', invocation)
+        self.assertLess(invocation.index("git rev-parse FETCH_HEAD"), invocation.index('git am --3way "$mbox_file"'))
         self.assertIn("git rev-parse HEAD^{tree}", invocation)
         self.assertIn("resolved by work_unit and against_version", apply["purpose"])
-        self.assertNotIn("git rev-parse HEAD)\" = \"{approved_commit}", invocation)
+        self.assertNotIn('git rev-parse HEAD)" = "$approved_commit', invocation)
         self.assertNotIn("GIT_COMMITTER_DATE", invocation)
 
     def test_sourcehut_deliver_mechanic_produces_mbox_and_proposal_ref_without_lists(self) -> None:
@@ -164,15 +162,15 @@ class ReferenceArcTopologyTests(unittest.TestCase):
             ]
         )
 
-        self.assertIn("git format-patch --stdout {base}..{commit}", invocation)
-        self.assertIn("git push {ssh_remote} {commit}:refs/heads/{proposal_ref}", invocation)
+        self.assertIn('git format-patch --stdout "${base}..${commit}"', invocation)
+        self.assertIn('git push "$ssh_remote" "${commit}:refs/heads/${proposal_ref}"', invocation)
         self.assertIn("artifact_tag", parameters)
-        self.assertIn("git tag --force {artifact_tag} {commit}", invocation)
-        self.assertIn("refs/tags/{artifact_tag}:refs/tags/{artifact_tag}", invocation)
-        self.assertIn('"revspec":"refs/tags/{artifact_tag}"', invocation)
+        self.assertIn('git tag --force "$artifact_tag" "$commit"', invocation)
+        self.assertIn("refs/tags/${artifact_tag}:refs/tags/${artifact_tag}", invocation)
+        self.assertIn('refs/tags/${artifact_tag}', invocation)
         self.assertIn("uploadArtifact", invocation)
-        self.assertLess(invocation.index("refs/tags/{artifact_tag}:refs/tags/{artifact_tag}"), invocation.index("uploadArtifact"))
-        self.assertNotIn('"revspec":"{proposal_ref}"', invocation)
+        self.assertLess(invocation.index("refs/tags/${artifact_tag}:refs/tags/${artifact_tag}"), invocation.index("uploadArtifact"))
+        self.assertNotIn('"revspec":"${proposal_ref}"', invocation)
         self.assertNotIn('"revspec":"refs/heads/', combined)
         self.assertIn("change-proposal.branch", combined)
         self.assertIn("no lists.sr.ht", combined)
@@ -186,10 +184,10 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         deliver_invocation = mechanic_for_forge("sourcehut", "deliver-change-proposal")["default_invocation"]
         apply_invocation = mechanic_for_forge("sourcehut", "apply-approved-change")["default_invocation"]
 
-        self.assertIn("{commit}:refs/heads/{proposal_ref}", deliver_invocation)
-        self.assertIn("git fetch {ssh_remote} refs/heads/{proposal_ref}", apply_invocation)
-        self.assertNotIn("{commit}:{proposal_ref}", deliver_invocation)
-        self.assertNotIn("git fetch {ssh_remote} {proposal_ref}", apply_invocation)
+        self.assertIn("${commit}:refs/heads/${proposal_ref}", deliver_invocation)
+        self.assertIn('git fetch "$ssh_remote" "refs/heads/$proposal_ref"', apply_invocation)
+        self.assertNotIn("${commit}:${proposal_ref}", deliver_invocation)
+        self.assertNotIn('git fetch "$ssh_remote" "$proposal_ref"', apply_invocation)
 
     def test_sourcehut_bare_branch_proposal_ref_pushes_and_fetches_end_to_end(self) -> None:
         proposal_ref = load_fixture("valid-change-proposal-sourcehut-v2.json")["branch"]
@@ -282,7 +280,7 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         reflect = mechanic_for_forge("sourcehut", "reflect-disposition")
         invocation = reflect["default_invocation"]
 
-        self.assertIn("{todo_query_url}", invocation)
+        self.assertIn('"$todo_query_url"', invocation)
         self.assertNotIn("https://todo.sr.ht/query", invocation)
 
     def test_sourcehut_deliver_fails_when_upload_artifact_returns_graphql_errors_with_http_success(self) -> None:
