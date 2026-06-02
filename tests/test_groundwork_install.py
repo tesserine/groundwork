@@ -635,6 +635,34 @@ class GroundworkInstallTests(unittest.TestCase):
         self.assertFalse((runtime / "bin" / "groundwork-mechanic").exists())
         self.assertFalse(install.state_file().exists())
 
+    def test_sync_fails_before_changing_entries_or_state_when_runtime_projection_fails(self) -> None:
+        fixture = self.add_fixture("runtime-projection-failure")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        before_state = install.state_file().read_text(encoding="utf-8")
+        before_orient = {
+            root: (install.target(root, "orient") / "SKILL.md").read_text(encoding="utf-8")
+            for root in [".claude", ".agents"]
+        }
+        fixture.write("skills/orient/SKILL.md", "---\nname: orient\n---\n# Orient v2\n")
+        fixture.write("manifest.toml", "[[forge_tags]]\nname = \"github\"\n")
+        fixture.write("mechanics", "not a mechanics tree\n")
+        fixture.write(
+            "tooling/forge_operations.py",
+            (ROOT / "tooling" / "forge_operations.py").read_text(encoding="utf-8"),
+        )
+        fixture.commit_new_ref("v2")
+
+        result = install.run_installer("sync")
+
+        self.assertNotEqual(result.returncode, 0, "command unexpectedly succeeded")
+        for root in [".claude", ".agents"]:
+            self.assertEqual(
+                (install.target(root, "orient") / "SKILL.md").read_text(encoding="utf-8"),
+                before_orient[root],
+            )
+        self.assertEqual(install.state_file().read_text(encoding="utf-8"), before_state)
+
     def test_install_fails_without_writing_entries_when_any_target_root_is_not_preparable(self) -> None:
         fixture = self.add_fixture("target-root-file")
         install = InstallRun(self, fixture.root)

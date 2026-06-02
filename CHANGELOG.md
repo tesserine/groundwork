@@ -107,8 +107,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   delivery text cannot omit the adapter from installed protocol skills.
 - Interactive install now rewrites installed protocol resolver references to
   a shell-quoted managed runtime command path, reports a missing expected
-  managed runtime as a status failure, and rejects unmanaged `~/.groundwork`
-  conflicts before replacing the runtime bundle.
+  managed runtime as a status failure, rejects unmanaged `~/.groundwork`
+  conflicts before replacing the runtime bundle, and preflights runtime bundle
+  projection before mutating installed entries.
 - `groundwork-mechanic run` now rejects secret `NAME=VALUE` argv bindings and
   accepts secret parameters through `--secret-env NAME=ENV_VAR`.
 
