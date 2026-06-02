@@ -133,6 +133,20 @@ It also validates forge-tagged C-3 mechanic bindings. When a manifest
 `[[forge_tags]]` and exactly one `mechanics/**/*.toml` file whose `name` and
 `forge_tag` match that operation/tag pair.
 
+Forge-operation resolution is available to agents through the installed
+`forge-resolution` skill and the source `tooling.forge_resolution` module.
+The active forge is read from `GROUNDWORK_FORGE`, defaulting to `github` when
+the variable is absent; explicit test/standalone overrides may supply a forge
+directly. Resolution maps a forge-invariant operation handle plus active forge
+to exactly one C-3 mechanic. The conformance runner enforces a complete
+operation x forge matrix for forge-tagged operations, rejects ambiguous cells,
+and checks migrated forge-touching protocol bodies for forge-specific leakage.
+
+Mechanic `default_invocation` remains the C-3 shell-string format. The resolver
+renders supplied parameter values as shell-safe literals before invoking the
+existing pipeline, so values with spaces or shell metacharacters cannot split
+or inject additional commands.
+
 ## What Groundwork Believes
 
 These are the methodology choices embedded in groundwork's protocols and skills.

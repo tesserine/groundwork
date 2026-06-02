@@ -48,7 +48,8 @@ order:
 
 1. `apply-approved-change` applies the resolved proposal detail.
 2. `reflect-disposition` records that the approved disposition was acted on.
-3. `close-out` records work-unit completion context.
+3. `close-out` records work-unit completion context and closes or resolves the
+   tracker item.
 
 These operation names remain forge-invariant. Forge-specific mechanics may
 implement them, but the protocol does not prescribe those mechanics.

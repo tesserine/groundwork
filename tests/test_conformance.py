@@ -483,6 +483,124 @@ forge_tags = ["github"]
             " ".join(results[0].errors),
         )
 
+    def test_manifest_forge_tagged_operation_requires_every_supported_forge(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "manifest.toml"
+            manifest.write_text(
+                """
+[[forge_tags]]
+name = "github"
+
+[[forge_tags]]
+name = "sourcehut"
+
+[[mechanics]]
+name = "close-out"
+forge_tags = ["github"]
+""".lstrip(),
+                encoding="utf-8",
+            )
+            (root / "mechanics" / "github").mkdir(parents=True)
+            (root / "mechanics" / "github" / "close-out.toml").write_text(
+                """
+name = "close-out"
+purpose = "Close GitHub work."
+forge_tag = "github"
+default_invocation = "true"
+examples = ["true"]
+
+[outcome]
+description = "Closed."
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([manifest])
+
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("mechanic `close-out` does not declare forge tag `sourcehut`", " ".join(results[0].errors))
+
+    def test_manifest_no_leakage_rejects_forge_specific_body_for_operation_referencing_protocol(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "manifest.toml").write_text(
+                """
+[[artifact_types]]
+name = "completion-record"
+
+[[forge_tags]]
+name = "github"
+
+[[forge_tags]]
+name = "sourcehut"
+
+[[mechanics]]
+name = "close-out"
+forge_tags = ["github", "sourcehut"]
+""".lstrip(),
+                encoding="utf-8",
+            )
+            (root / "skills" / "orient").mkdir(parents=True)
+            (root / "protocols" / "land").mkdir(parents=True)
+            (root / "protocols" / "land" / "PROTOCOL.md").write_text(
+                "# Land\n\nRun `gh issue close 350` after applying the change.\n",
+                encoding="utf-8",
+            )
+            for forge in ["github", "sourcehut"]:
+                (root / "mechanics" / forge).mkdir(parents=True)
+                (root / "mechanics" / forge / "close-out.toml").write_text(
+                    f"""
+name = "close-out"
+purpose = "Close {forge} work."
+forge_tag = "{forge}"
+default_invocation = "true"
+examples = ["true"]
+
+[outcome]
+description = "Closed."
+""".lstrip(),
+                    encoding="utf-8",
+                )
+            contracts = root / "workflow-contracts"
+            contracts.mkdir()
+            (contracts / "land.toml").write_text(
+                """
+name = "land"
+purpose = "Close out approved work."
+session_role = "release gate"
+preconditions = ["approval exists"]
+start_node = "close-out"
+failure_modes = ["close-out fails"]
+corruption_modes = ["forge leakage"]
+
+[[nodes]]
+name = "close-out"
+intent = "Close out the work unit."
+disciplines = ["orient"]
+mechanics = ["close-out"]
+outcomes = ["closed"]
+
+[[edges]]
+from = "close-out"
+to = "completed"
+condition = { type = "always" }
+
+[[terminals]]
+name = "completed"
+outcome = "Closed."
+artifact_produced = "completion-record"
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([root])
+
+        manifest_result = next(result for result in results if result.path == root / "manifest.toml")
+        self.assertFalse(manifest_result.passed)
+        self.assertIn("forge-specific body leakage", " ".join(manifest_result.errors))
+
     def test_malformed_directory_manifest_does_not_abort_sibling_registry_checks(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

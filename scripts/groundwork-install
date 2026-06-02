@@ -292,7 +292,32 @@ project_entry() {
     mv "$target/PROTOCOL.md" "$target/SKILL.md"
     insert_interactive_adapter "$target/SKILL.md" "$sha"
   fi
+  if [[ "$kind" == "skill" && "$name" == "forge-resolution" ]]; then
+    project_forge_resolution_runtime "$target" "$sha"
+  fi
   write_marker "$target/$MARKER" "$kind" "$name" "$sha"
+}
+
+project_forge_resolution_runtime() {
+  local target="$1"
+  local sha="$2"
+  git -C "$source_path" cat-file -e "$sha:manifest.toml" 2>/dev/null ||
+    die "source has no manifest.toml required by forge-resolution"
+  git -C "$source_path" cat-file -e "$sha:mechanics" 2>/dev/null ||
+    die "source has no mechanics directory required by forge-resolution"
+  git -C "$source_path" cat-file -e "$sha:tooling/forge_resolution.py" 2>/dev/null ||
+    die "source has no tooling/forge_resolution.py required by forge-resolution"
+
+  git -C "$source_path" show "$sha:manifest.toml" > "$target/manifest.toml"
+  mkdir -p "$target/tooling"
+  git -C "$source_path" show "$sha:tooling/forge_resolution.py" > "$target/tooling/forge_resolution.py"
+  if git -C "$source_path" cat-file -e "$sha:tooling/__init__.py" 2>/dev/null; then
+    git -C "$source_path" show "$sha:tooling/__init__.py" > "$target/tooling/__init__.py"
+  else
+    : > "$target/tooling/__init__.py"
+  fi
+  mkdir -p "$target/mechanics"
+  git -C "$source_path" archive --format=tar "$sha:mechanics" | tar -xf - -C "$target/mechanics"
 }
 
 copy_entry() {

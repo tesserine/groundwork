@@ -252,6 +252,56 @@ class GroundworkInstallTests(unittest.TestCase):
                 with self.subTest(root=root, protocol=protocol):
                     self.assert_adapter_projected_once(body)
 
+    def test_install_projects_forge_resolution_runtime_snapshot(self) -> None:
+        fixture = self.add_fixture("forge-resolution")
+        fixture.write(
+            "skills/forge-resolution/SKILL.md",
+            """
+            ---
+            name: forge-resolution
+            ---
+            # Forge Resolution
+            """,
+        )
+        fixture.write(
+            "manifest.toml",
+            """
+            [[forge_tags]]
+            name = "github"
+
+            [[mechanics]]
+            name = "close-out"
+            forge_tags = ["github"]
+            """,
+        )
+        fixture.write(
+            "mechanics/github/close-out.toml",
+            """
+            name = "close-out"
+            purpose = "Close GitHub work."
+            forge_tag = "github"
+            default_invocation = "true"
+            examples = ["true"]
+
+            [outcome]
+            description = "Closed."
+            """,
+        )
+        fixture.write("tooling/__init__.py", "")
+        fixture.write("tooling/forge_resolution.py", "SNAPSHOT_SENTINEL = 'installed-runtime'\n")
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        for root in [".claude", ".agents"]:
+            target = install.target(root, "forge-resolution")
+            self.assertTrue((target / "manifest.toml").is_file())
+            self.assertTrue((target / "mechanics" / "github" / "close-out.toml").is_file())
+            self.assertTrue((target / "tooling" / "forge_resolution.py").is_file())
+            self.assertIn("installed-runtime", (target / "tooling" / "forge_resolution.py").read_text(encoding="utf-8"))
+
     def test_install_does_not_project_interactive_adapter_into_skill_entries(self) -> None:
         fixture = self.add_fixture("adapter-skills")
         install = InstallRun(self, fixture.root)

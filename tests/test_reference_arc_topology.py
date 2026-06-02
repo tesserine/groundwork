@@ -128,6 +128,7 @@ class ReferenceArcTopologyTests(unittest.TestCase):
             "deliver-change-proposal",
             "apply-approved-change",
             "reflect-disposition",
+            "close-out",
         }
         manifest_mechanics = {entry["name"]: entry for entry in manifest()["mechanics"]}
 
@@ -285,6 +286,26 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertIn("{todo_query_url}", invocation)
         self.assertNotIn("https://todo.sr.ht/query", invocation)
 
+    def test_reflect_disposition_records_acted_on_disposition_without_closing_tracker(self) -> None:
+        github_reflect = mechanic_for_forge("github", "reflect-disposition")
+        sourcehut_reflect = mechanic_for_forge("sourcehut", "reflect-disposition")
+
+        self.assertIn("acted-on", github_reflect["purpose"])
+        self.assertIn("acted-on", sourcehut_reflect["purpose"])
+        self.assertNotIn("gh issue close", github_reflect["default_invocation"])
+        self.assertNotIn("updateTicketStatus", sourcehut_reflect["default_invocation"])
+        self.assertNotIn("RESOLVED", sourcehut_reflect["default_invocation"])
+
+    def test_close_out_mechanics_own_tracker_closure_for_each_forge(self) -> None:
+        github_close = mechanic_for_forge("github", "close-out")
+        sourcehut_close = mechanic_for_forge("sourcehut", "close-out")
+
+        self.assertIn("gh issue comment", github_close["default_invocation"])
+        self.assertIn("gh issue close", github_close["default_invocation"])
+        self.assertIn("updateTicketStatus", sourcehut_close["default_invocation"])
+        self.assertIn("RESOLVED", " ".join([sourcehut_close["purpose"], sourcehut_close["default_invocation"], *sourcehut_close["examples"]]))
+        self.assertIn("{todo_query_url}", sourcehut_close["default_invocation"])
+
     def test_sourcehut_deliver_fails_when_upload_artifact_returns_graphql_errors_with_http_success(self) -> None:
         deliver = mechanic_for_forge("sourcehut", "deliver-change-proposal")
 
@@ -382,8 +403,41 @@ printf '%s\\n' '{"data":{"uploadArtifact":{"id":987,"filename":"issue-26-v1.mbox
         )
         self.assertNotIn("https://", result.stdout)
 
-    def test_sourcehut_reflect_fails_when_either_todo_mutation_returns_graphql_errors_with_http_success(self) -> None:
+    def test_sourcehut_reflect_fails_when_comment_mutation_returns_graphql_errors_with_http_success(self) -> None:
         reflect = mechanic_for_forge("sourcehut", "reflect-disposition")
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            comment_payload = root / "comment.json"
+            comment_payload.write_text('{"query":"mutation { submitComment { id } }"}', encoding="utf-8")
+            (bin_dir / "curl").write_text(
+                f"""#!/bin/sh
+case "$*" in
+  *{comment_payload}*) printf '%s\\n' '{{"errors":[{{"message":"comment rejected"}}],"data":{{"submitComment":null}}}}' ;;
+  *) exit 1 ;;
+esac
+""",
+                encoding="utf-8",
+            )
+            (bin_dir / "curl").chmod(0o755)
+
+            result = self.run_mechanic_invocation(
+                reflect["default_invocation"],
+                {
+                    "token": "test-token",
+                    "comment_payload_file": str(comment_payload),
+                    "todo_query_url": "https://todo.example.invalid/query",
+                },
+                bin_dir,
+            )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("data.submitComment", result.stderr)
+
+    def test_sourcehut_close_out_fails_when_either_todo_mutation_returns_graphql_errors_with_http_success(self) -> None:
+        close_out = mechanic_for_forge("sourcehut", "close-out")
 
         cases = [
             (
@@ -421,7 +475,7 @@ esac
                     (bin_dir / "curl").chmod(0o755)
 
                     result = self.run_mechanic_invocation(
-                        reflect["default_invocation"],
+                        close_out["default_invocation"],
                         {
                             "token": "test-token",
                             "comment_payload_file": str(comment_payload),

@@ -116,6 +116,10 @@ The Step-2 resolution mechanism is:
 - Reject missing matches and ambiguous matches.
 - Validate, for the reference arc, that `github` and `sourcehut` each provide
   implementations for every forge-touching operation they need.
+- Read the active forge from `GROUNDWORK_FORGE`, defaulting to `github` when
+  absent, with an explicit override only for standalone conformance and tests.
+- Expose resolution where agents run, including installed interactive protocol
+  sessions, through the installed `forge-resolution` skill.
 
 #333 introduced this mechanism for GitHub as the first C-3 mechanic library,
 and #334 extends the same invariant operations to SourceHut:
@@ -123,6 +127,12 @@ and #334 extends the same invariant operations to SourceHut:
 `reflect-disposition` are bound under `forge_tag = "github"` and
 `forge_tag = "sourcehut"`. Conformance rejects unknown, missing, or duplicate
 operation/tag implementations.
+
+`close-out` is also forge-bound for both `github` and `sourcehut`. In land's
+sequence, `reflect-disposition` records that the approved disposition was acted
+on, while `close-out` records completion context and closes or resolves the
+tracker item. This keeps apply -> reflect -> close-out coherent without
+double-closing a work-unit tracker.
 
 SourceHut uses a patch-series handoff instead of a platform merge. Delivery
 stores a durable mbox reference at `change-proposal.handle.mbox` and pushes the

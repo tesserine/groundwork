@@ -486,6 +486,14 @@ class ReleaseRepositoryContractTests(unittest.TestCase):
         self.assertIn("paths:", workflow)
         self.assertIn("./scripts/release-check metadata", workflow)
 
+    def test_conformance_workflow_runs_real_test_discovery_and_conformance(self) -> None:
+        workflow = self.read(".github/workflows/conformance.yml")
+
+        self.assertIn("pull_request:", workflow)
+        self.assertIn("python -m unittest discover -s tests", workflow)
+        self.assertIn("python -m tooling.conformance", workflow)
+        self.assertNotIn("python -m unittest\n", workflow)
+
     def test_releasing_documentation_matches_verifier_contract(self) -> None:
         releasing = self.read("RELEASING.md")
 

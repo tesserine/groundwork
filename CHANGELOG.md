@@ -50,6 +50,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   resolves to the approved commit, and guards tree equality after plain
   `git am --3way`, and `reflect-disposition` records tracker-ticket state
   under `forge_tag = "sourcehut"`.
+- Runtime forge-operation resolution: agents can resolve forge-invariant
+  operation handles through `GROUNDWORK_FORGE` with a `github` default,
+  installed sessions receive a pinned resolver snapshot, conformance enforces
+  complete `operation x forge_tag` bindings and forge-invariant protocol
+  bodies, and `close-out` now has GitHub and SourceHut mechanics for tracker
+  completion.
+- CI conformance gate: pull requests run the real unittest discovery command
+  over `tests/` and the methodology conformance runner.
 
 ### Changed
 
@@ -66,6 +74,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   GraphQL application-layer `errors` payloads returned with HTTP 200, and only
   accept delivery/reflection when the expected mutation `data` fields are
   present.
+- `reflect-disposition` now records acted-on disposition only; tracker
+  closure/resolution is owned by `close-out`, avoiding double-close behavior in
+  land's apply -> reflect -> close-out sequence.
 - SourceHut `deliver-change-proposal` now uploads the mbox artifact against a
   pushed git tag revspec instead of the proposal branch ref, matching
   SourceHut `uploadArtifact` requirements while preserving
