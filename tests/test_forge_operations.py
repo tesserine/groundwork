@@ -9,7 +9,7 @@ from pathlib import Path
 
 from tooling.forge_operations import (
     ForgeOperationError,
-    active_forge,
+    active_forge_type,
     inspect_invocation,
     render_shell_invocation,
     resolve_operation,
@@ -66,21 +66,48 @@ class ForgeOperationTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-    def test_active_forge_defaults_to_github_when_no_env_or_override_exists(self) -> None:
-        self.assertEqual("github", active_forge({}, None))
+    def test_active_forge_type_defaults_to_github_when_no_env_or_override_exists(self) -> None:
+        self.assertEqual("github", active_forge_type({}, None))
 
-    def test_active_forge_uses_explicit_override_before_environment(self) -> None:
-        self.assertEqual("sourcehut", active_forge({"GROUNDWORK_FORGE": "github"}, "sourcehut"))
+    def test_active_forge_type_uses_explicit_override_before_environment(self) -> None:
+        self.assertEqual("sourcehut", active_forge_type({"GROUNDWORK_FORGE_TYPE": "github"}, "sourcehut"))
+
+    def test_active_forge_type_uses_groundwork_forge_type_environment(self) -> None:
+        self.assertEqual("sourcehut", active_forge_type({"GROUNDWORK_FORGE_TYPE": "sourcehut"}, None))
 
     def test_resolve_operation_returns_exact_active_forge_mechanic(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.write_methodology(root)
 
-            mechanic = resolve_operation(root, "close-out", forge="sourcehut")
+            mechanic = resolve_operation(root, "close-out", forge_type="sourcehut")
 
         self.assertEqual("close-out", mechanic["name"])
         self.assertEqual("sourcehut", mechanic["forge_tag"])
+
+    def test_cli_resolve_accepts_forge_type_override(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_methodology(root)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "--forge-type",
+                    "sourcehut",
+                    "resolve",
+                    "close-out",
+                ],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("close-out[sourcehut]\n", result.stdout)
 
     def test_resolve_operation_rejects_duplicate_active_forge_mechanics(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -88,7 +115,7 @@ class ForgeOperationTests(unittest.TestCase):
             self.write_methodology(root, duplicate=True)
 
             with self.assertRaises(ForgeOperationError) as context:
-                resolve_operation(root, "close-out", forge="github")
+                resolve_operation(root, "close-out", forge_type="github")
 
         self.assertIn("close-out", str(context.exception))
         self.assertIn("github", str(context.exception))

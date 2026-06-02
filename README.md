@@ -83,7 +83,7 @@ When `manifest.toml`, `mechanics/`, and the forge-operation resolver are
 present, the installer also projects a managed runtime bundle under
 `~/.groundwork/`. The bundle contains the manifest, mechanic library, resolver
 module, and `bin/groundwork-mechanic`, so installed protocol sessions can
-resolve forge-invariant operations through the active `GROUNDWORK_FORGE`
+resolve forge-invariant operations through the active `GROUNDWORK_FORGE_TYPE`
 configuration without reaching back into the source checkout. Installed
 protocol copies reference the managed resolver path directly, so users do not
 need to add `~/.groundwork/bin` to `PATH`.
