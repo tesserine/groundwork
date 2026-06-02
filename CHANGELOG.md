@@ -105,7 +105,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Mechanic invocation validation now rejects bare `{parameter}` placeholders
   outside shell quoting, malformed shell, unexpanded declared parameters,
   incomplete forge-operation matrices, and registered protocol bodies that leak
-  forge-specific command tokens outside the temporary #353 `take` exception.
+  forge-specific command tokens.
 - Interactive install now projects the artifact delivery adapter into every
   protocol entry without depending on protocol prose formatting, so wrapped MCP
   delivery text cannot omit the adapter from installed protocol skills.

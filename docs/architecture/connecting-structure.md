@@ -88,8 +88,8 @@ references. Without it, runa cannot thread related artifacts together.
 
 The take artifact is a threading mechanism: work-unit identifier plus
 enough orientation for downstream protocols. Not a context dump — the
-the GitHub issue itself carries the full context, and the work-unit graph is the right
-place for that.
+forge tracker record carries the full context, and the work-unit graph is the
+right place for that.
 
 ## Input Edge Principle
 
