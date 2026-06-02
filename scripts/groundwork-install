@@ -5,6 +5,7 @@ PROGRAM="groundwork-install"
 MARKER=".groundwork-install"
 STATE_FILE_NAME="interactive-install.tsv"
 INTERACTIVE_ADAPTER_PATH="scripts/interactive-artifact-delivery-adapter.md"
+RESOLUTION_BUNDLE_PATHS=("manifest.toml" "mechanics" "schemas" "tooling")
 
 usage() {
   cat <<'EOF'
@@ -279,6 +280,17 @@ insert_interactive_adapter() {
   rm -f "$adapter_tmp"
 }
 
+project_resolution_bundle() {
+  local target="$1"
+  local sha="$2"
+  local rel
+  for rel in "${RESOLUTION_BUNDLE_PATHS[@]}"; do
+    if git -C "$source_path" cat-file -e "$sha:$rel" 2>/dev/null; then
+      git -C "$source_path" archive --format=tar "$sha" "$rel" | tar -xf - -C "$target"
+    fi
+  done
+}
+
 project_entry() {
   local kind="$1"
   local name="$2"
@@ -291,6 +303,7 @@ project_entry() {
     rm -f "$target/SKILL.md"
     mv "$target/PROTOCOL.md" "$target/SKILL.md"
     insert_interactive_adapter "$target/SKILL.md" "$sha"
+    project_resolution_bundle "$target" "$sha"
   fi
   write_marker "$target/$MARKER" "$kind" "$name" "$sha"
 }

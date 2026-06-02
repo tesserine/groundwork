@@ -101,6 +101,7 @@ forge_tags = ["github", "sourcehut"]
 
 [[mechanics]]
 name = "close-out"
+forge_tags = ["github", "sourcehut"]
 
 [[mechanics]]
 name = "inspect-worktree"

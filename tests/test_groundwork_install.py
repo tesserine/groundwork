@@ -69,6 +69,10 @@ class MethodologyFixture:
 
     def write_initial_surface(self) -> None:
         self.write(ADAPTER_RELATIVE_PATH, (ROOT / ADAPTER_RELATIVE_PATH).read_text(encoding="utf-8"))
+        self.write("manifest.toml", "name = \"fixture\"\n")
+        self.write("mechanics/sourcehut/deliver-change-proposal.toml", "name = \"deliver-change-proposal\"\n")
+        self.write("schemas/mechanic.schema.json", "{}\n")
+        self.write("tooling/mechanic_resolution.py", "GROUNDWORK_FORGE_ENV = 'GROUNDWORK_FORGE'\n")
         self.write("skills/orient/SKILL.md", "---\nname: orient\n---\n# Orient\n")
         self.write("skills/reckon/SKILL.md", "---\nname: reckon\n---\n# Reckon\n")
         self.write("skills/reckon/references/example.md", "reckon reference\n")
@@ -251,6 +255,21 @@ class GroundworkInstallTests(unittest.TestCase):
                 body = (install.target(root, protocol) / "SKILL.md").read_text(encoding="utf-8")
                 with self.subTest(root=root, protocol=protocol):
                     self.assert_adapter_projected_once(body)
+
+    def test_protocol_entries_include_resolution_bundle_for_installed_sessions(self) -> None:
+        fixture = self.add_fixture("resolution-bundle")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        for root in [".claude", ".agents"]:
+            entry = install.target(root, "take")
+            with self.subTest(root=root):
+                self.assertTrue((entry / "manifest.toml").is_file())
+                self.assertTrue((entry / "mechanics" / "sourcehut" / "deliver-change-proposal.toml").is_file())
+                self.assertTrue((entry / "schemas" / "mechanic.schema.json").is_file())
+                self.assertTrue((entry / "tooling" / "mechanic_resolution.py").is_file())
 
     def test_install_does_not_project_interactive_adapter_into_skill_entries(self) -> None:
         fixture = self.add_fixture("adapter-skills")

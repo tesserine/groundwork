@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -345,7 +346,49 @@ def _manifest_errors(manifest: dict[str, Any], root: Path) -> list[tuple[str, st
             )
 
     errors.extend(_manifest_mechanic_binding_errors(mechanic_entries, forge_tags, root))
+    errors.extend(_manifest_protocol_forge_leakage_errors(root))
 
+    return errors
+
+
+FORGE_LEAKAGE_PATTERNS = [
+    re.compile(pattern)
+    for pattern in [
+        r"\bgh\s+(?:issue|pr)\b",
+        r"https://github[.]com",
+        r"\btodo[.]sr[.]ht\b",
+        r"\bgit[.]sr[.]ht\b",
+        r"\bsourcehut-artifact://",
+        r"\bgit\s+send-email\b",
+    ]
+]
+
+
+def _manifest_protocol_forge_leakage_errors(root: Path) -> list[tuple[str, str]]:
+    errors: list[tuple[str, str]] = []
+    contracts = root / "workflow-contracts"
+    protocols = root / "protocols"
+    if not contracts.exists() or not protocols.exists():
+        return []
+
+    for contract in sorted(contracts.glob("*.toml")):
+        protocol = protocols / contract.stem / "PROTOCOL.md"
+        if not protocol.exists():
+            continue
+        try:
+            body = protocol.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as error:
+            errors.append((str(protocol.relative_to(root)), f"cannot read protocol body: {error}"))
+            continue
+        for pattern in FORGE_LEAKAGE_PATTERNS:
+            if pattern.search(body):
+                errors.append(
+                    (
+                        str(protocol.relative_to(root)),
+                        "registered protocol body contains forge-specific command vocabulary",
+                    )
+                )
+                break
     return errors
 
 

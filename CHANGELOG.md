@@ -50,6 +50,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   resolves to the approved commit, and guards tree equality after plain
   `git am --3way`, and `reflect-disposition` records tracker-ticket state
   under `forge_tag = "sourcehut"`.
+- Runtime forge-operation resolution for the reference arc: `GROUNDWORK_FORGE`
+  selects the active forge with a `github` default, operations resolve to
+  exactly one active forge-specific mechanic, installed protocol entries carry
+  the resolver bundle, `close-out` is bound for GitHub and SourceHut, and CI
+  runs conformance plus unit tests (closes #350).
 
 ### Changed
 
@@ -59,6 +64,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   only from `change-approved` while resolving the approved proposal by
   `(work_unit, against_version)`. The manifest-level `patch` artifact type and
   schema are retired (closes #340).
+- Mechanic invocations now pass caller data through shell environment
+  parameters instead of textual `{parameter}` substitution. Secret parameters
+  are declared in mechanic metadata and remain absent from inspected invocation
+  forms.
 
 ### Fixed
 

@@ -1,0 +1,25 @@
+name = "close-out"
+purpose = "Record completion context on a GitHub work-unit issue and close it as completed."
+forge_tag = "github"
+default_invocation = 'gh issue comment "$issue_number" --repo "$repository" --body-file "$body_file" && gh issue close "$issue_number" --repo "$repository" --reason completed'
+examples = [
+  "gh issue comment 350 --repo tesserine/groundwork --body-file /tmp/completion.md && gh issue close 350 --repo tesserine/groundwork --reason completed",
+]
+
+[[parameters]]
+name = "repository"
+purpose = "GitHub repository in OWNER/REPO form."
+required = true
+
+[[parameters]]
+name = "issue_number"
+purpose = "GitHub issue number for the completed work unit."
+required = true
+
+[[parameters]]
+name = "body_file"
+purpose = "Path to a file containing completion context."
+required = true
+
+[outcome]
+description = "The GitHub issue records completion context and is closed as completed."

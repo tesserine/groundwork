@@ -1,7 +1,7 @@
 name = "apply-approved-change"
 purpose = "Apply an approved GitHub pull request whose head commit matches the approved change-proposal version."
 forge_tag = "github"
-default_invocation = "gh pr merge {pr_number} --repo {repository} --merge --delete-branch --match-head-commit {commit}"
+default_invocation = 'gh pr merge "$pr_number" --repo "$repository" --merge --delete-branch --match-head-commit "$commit"'
 examples = [
   "gh pr merge 344 --repo tesserine/groundwork --merge --delete-branch --match-head-commit 8b519b2cd8782657a7bc3b93b1fac308547c1b0e",
 ]

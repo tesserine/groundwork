@@ -1,7 +1,7 @@
 name = "deliver-change-proposal"
 purpose = "Create a GitHub-hosted change proposal."
 forge_tag = "github"
-default_invocation = "gh pr create --title {title} --body-file {body_file}"
+default_invocation = "gh pr create --title $title --body-file $body_file"
 examples = [
   "gh pr create --title 'Add mechanic parser' --body-file /tmp/body.md",
 ]

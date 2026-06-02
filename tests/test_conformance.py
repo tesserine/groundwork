@@ -483,6 +483,93 @@ forge_tags = ["github"]
             " ".join(results[0].errors),
         )
 
+    def test_mechanic_conformance_rejects_textual_parameter_substitution(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            mechanic = root / "mechanics" / "unsafe.toml"
+            mechanic.parent.mkdir()
+            mechanic.write_text(
+                """
+name = "deliver-change-proposal"
+purpose = "Unsafe delivery."
+default_invocation = "git push origin {branch}"
+examples = ["git push origin $branch"]
+
+[[parameters]]
+name = "branch"
+purpose = "Branch to push."
+required = true
+
+[outcome]
+description = "Delivered."
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([mechanic])
+
+        self.assertEqual("C-3 mechanic", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("default_invocation", " ".join(results[0].errors))
+        self.assertIn("textual substitution", " ".join(results[0].errors))
+
+    def test_mechanic_conformance_rejects_unexpanded_declared_parameter(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            mechanic = root / "mechanics" / "unused.toml"
+            mechanic.parent.mkdir()
+            mechanic.write_text(
+                """
+name = "deliver-change-proposal"
+purpose = "Unsafe delivery."
+default_invocation = "git status"
+examples = ["git status"]
+
+[[parameters]]
+name = "branch"
+purpose = "Branch to push."
+required = true
+
+[outcome]
+description = "Delivered."
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([mechanic])
+
+        self.assertEqual("C-3 mechanic", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("parameters/0/name", " ".join(results[0].errors))
+        self.assertIn("expandable shell reference", " ".join(results[0].errors))
+
+    def test_manifest_conformance_rejects_forge_leaking_registered_protocol_body(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "manifest.toml"
+            manifest.write_text(
+                """
+name = "local-methodology"
+
+[[mechanics]]
+name = "close-out"
+""".lstrip(),
+                encoding="utf-8",
+            )
+            contract = root / "workflow-contracts" / "land.toml"
+            contract.parent.mkdir()
+            contract.write_text((WORKFLOW_FIXTURES / "valid-linear.toml").read_text(encoding="utf-8"), encoding="utf-8")
+            protocol = root / "protocols" / "land" / "PROTOCOL.md"
+            protocol.parent.mkdir(parents=True)
+            protocol.write_text("# Land\n\nRun `gh issue close 350` during close-out.\n", encoding="utf-8")
+
+            results = run_conformance([manifest])
+
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("protocols/land/PROTOCOL.md", " ".join(results[0].errors))
+        self.assertIn("forge-specific", " ".join(results[0].errors))
+
     def test_malformed_directory_manifest_does_not_abort_sibling_registry_checks(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

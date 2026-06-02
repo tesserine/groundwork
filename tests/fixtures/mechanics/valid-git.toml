@@ -1,6 +1,6 @@
 name = "git-push"
 purpose = "Push a local branch to a remote repository."
-default_invocation = "git push {remote} {branch}"
+default_invocation = "git push $remote $branch"
 examples = [
   "git push origin issue-294/feat-architecture-step-1-mechanic-schema",
 ]

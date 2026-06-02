@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -44,6 +45,8 @@ def load_mechanic(path: Path | str, registry: MechanicRegistry | None = None) ->
 def validate_mechanic(mechanic: dict[str, Any], registry: MechanicRegistry | None = None) -> None:
     errors: list[tuple[str, str]] = []
     errors.extend(_schema_errors(mechanic))
+    if not errors:
+        errors.extend(_invocation_errors(mechanic))
     if registry is not None and not errors:
         errors.extend(_registry_errors(mechanic, registry))
 
@@ -64,6 +67,35 @@ def _schema_errors(mechanic: dict[str, Any]) -> list[tuple[str, str]]:
         errors.append((path or "<root>", error.message))
 
     return errors
+
+
+def _invocation_errors(mechanic: dict[str, Any]) -> list[tuple[str, str]]:
+    invocation = mechanic["default_invocation"]
+    errors: list[tuple[str, str]] = []
+    for parameter_index, parameter in enumerate(mechanic["parameters"]):
+        name = parameter["name"]
+        if f"{{{name}}}" in invocation:
+            errors.append(
+                (
+                    "default_invocation",
+                    f"parameter `{name}` uses textual substitution; reference it as ${name} or ${{{name}}}",
+                )
+            )
+            continue
+        if not _references_shell_parameter(invocation, name):
+            errors.append(
+                (
+                    f"parameters/{parameter_index}/name",
+                    f"parameter `{name}` is not referenced as an expandable shell reference",
+                )
+            )
+    return errors
+
+
+def _references_shell_parameter(invocation: str, name: str) -> bool:
+    return re.search(rf"(?<![A-Za-z0-9_])\${re.escape(name)}(?![A-Za-z0-9_])", invocation) is not None or (
+        f"${{{name}}}" in invocation
+    )
 
 
 def _registry_errors(mechanic: dict[str, Any], registry: MechanicRegistry) -> list[tuple[str, str]]:

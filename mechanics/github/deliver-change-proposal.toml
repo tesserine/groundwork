@@ -1,7 +1,7 @@
 name = "deliver-change-proposal"
 purpose = "Deliver a GitHub pull request for review while preserving the forge-neutral change-proposal envelope."
 forge_tag = "github"
-default_invocation = "git push origin {branch} && gh pr create --repo {repository} --base {base} --head {branch} --title {title} --body-file {body_file}"
+default_invocation = 'git push origin "$branch" && gh pr create --repo "$repository" --base "$base" --head "$branch" --title "$title" --body-file "$body_file"'
 examples = [
   "git push origin issue-343/github-mechanics-dogfood && gh pr create --repo tesserine/groundwork --base main --head issue-343/github-mechanics-dogfood --title 'docs: clarify skill authoring contract boundary' --body-file /tmp/pr-body.md",
 ]

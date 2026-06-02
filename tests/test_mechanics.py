@@ -34,6 +34,30 @@ class MechanicTests(unittest.TestCase):
 
         self.assertNotIn("forge_tag", mechanic)
 
+    def test_schema_accepts_secret_parameter_metadata(self) -> None:
+        mechanic = {
+            "name": "authorized-call",
+            "purpose": "Call an authenticated endpoint.",
+            "default_invocation": 'curl --header "Authorization: Bearer $token" "$url"',
+            "parameters": [
+                {
+                    "name": "token",
+                    "purpose": "Bearer token.",
+                    "required": True,
+                    "secret": True,
+                },
+                {
+                    "name": "url",
+                    "purpose": "Endpoint URL.",
+                    "required": True,
+                },
+            ],
+            "outcome": {"description": "Endpoint called."},
+            "examples": ['curl --header "Authorization: Bearer $token" "$url"'],
+        }
+
+        validate_mechanic(mechanic)
+
     def test_schema_rejects_malformed_shape_with_field_paths(self) -> None:
         with self.assertRaises(MechanicError) as context:
             load_mechanic(self.fixture("invalid-malformed-shape.toml"))

@@ -74,9 +74,10 @@ under `protocols/` is copied as a skill-shaped entry with `PROTOCOL.md`
 projected to `SKILL.md` and an interactive artifact delivery adapter inserted
 near the top of the installed protocol. The adapter tells an interactive agent
 how to present the produced artifact body to the human instead of calling the
-runa MCP artifact tool. Installed entries are copies, not source-checkout
-symlinks, so later changes to the checkout do not drift into the active
-discovery surface.
+runa MCP artifact tool. Protocol entries also carry the manifest, mechanics,
+schemas, and tooling needed to resolve forge-invariant operation names from an
+installed session. Installed entries are copies, not source-checkout symlinks,
+so later changes to the checkout do not drift into the active discovery surface.
 
 The source checkout must be clean and pinned at a tag or full commit SHA. The
 command refuses branch checkouts because a branch is a moving source. To update
@@ -132,6 +133,13 @@ It also validates forge-tagged C-3 mechanic bindings. When a manifest
 `[[mechanics]]` entry declares `forge_tags = [...]`, each tag must resolve to
 `[[forge_tags]]` and exactly one `mechanics/**/*.toml` file whose `name` and
 `forge_tag` match that operation/tag pair.
+
+Runtime forge resolution reads the active forge from `GROUNDWORK_FORGE`,
+defaulting to `github` when absent. `tooling.mechanic_resolution` resolves an
+operation and active forge to exactly one C-3 mechanic and prepares invocations
+by passing declared parameter values through the child process environment.
+Mechanic bodies reference parameters as shell expansions such as `"$branch"`;
+they do not splice per-call values into command text.
 
 ## What Groundwork Believes
 

@@ -1,6 +1,6 @@
 name = "deliver-artifact"
 purpose = "Deliver an artifact through a runtime tool."
-default_invocation = "call {tool_name} with {payload}"
+default_invocation = "call $tool_name with $payload"
 examples = ["call change-proposal with payload"]
 
 [[parameters]]

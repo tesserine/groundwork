@@ -1,7 +1,7 @@
 name = "reflect-disposition"
 purpose = "Reflect the acted-on GitHub approval disposition on the pull request and issue surfaces."
 forge_tag = "github"
-default_invocation = "gh pr comment {pr_number} --repo {repository} --body-file {body_file} && gh issue comment {issue_number} --repo {repository} --body-file {body_file} && gh issue close {issue_number} --repo {repository} --reason completed"
+default_invocation = 'gh pr comment "$pr_number" --repo "$repository" --body-file "$body_file" && gh issue comment "$issue_number" --repo "$repository" --body-file "$body_file"'
 examples = [
   "gh pr comment 344 --repo tesserine/groundwork --body-file /tmp/disposition.md && gh issue comment 343 --repo tesserine/groundwork --body-file /tmp/disposition.md && gh issue close 343 --repo tesserine/groundwork --reason completed",
 ]

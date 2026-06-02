@@ -50,6 +50,12 @@ order:
 2. `reflect-disposition` records that the approved disposition was acted on.
 3. `close-out` records work-unit completion context.
 
+Before invoking each forge-touching operation, land resolves the invariant
+operation name through the bundled `tooling.mechanic_resolution` path available
+in the source checkout and installed protocol entries. Resolution reads
+`GROUNDWORK_FORGE`, defaults to `github` when absent, and must yield exactly one
+C-3 mechanic for the active forge before execution continues.
+
 These operation names remain forge-invariant. Forge-specific mechanics may
 implement them, but the protocol does not prescribe those mechanics.
 

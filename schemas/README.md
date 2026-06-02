@@ -11,6 +11,11 @@ declared as a runtime artifact type in `manifest.toml`.
 `mechanic.schema.json` is an authoring substrate for C-3 mechanics from
 ADR-0002. It is validated by `tooling.mechanics`, not declared as a runtime
 artifact type in `manifest.toml`.
+Mechanic parameters are shell-environment inputs: names must be shell variable
+safe, secret parameters are marked with `secret = true`, and
+`default_invocation` references declared parameters with expandable shell
+references such as `"$token"`. The invocation body must not contain textual
+`{parameter}` substitution.
 
 `change-proposal.schema.json`, `change-approved.schema.json`, and
 `change-needs-revision.schema.json` are the C-4 artifact schemas for the
@@ -25,6 +30,9 @@ resolve against the declarative `[[forge_tags]]` registry in `manifest.toml`.
 Manifest `[[mechanics]]` entries may declare `forge_tags = [...]` to bind an
 operation handle to forge-specific C-3 mechanics; conformance requires exactly
 one matching `mechanics/**/*.toml` file for each declared operation/tag pair.
+At runtime, `tooling.mechanic_resolution` reads `GROUNDWORK_FORGE` with a
+`github` default and resolves the active operation/forge pair through the same
+matrix.
 
 `request.schema.json` is different: it is a vendored copy of the canonical
 request contract maintained by `tesserine/commons`. Groundwork keeps the runtime
