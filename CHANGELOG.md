@@ -56,6 +56,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   environment-parameterized shell bodies, installs a runtime resolver bundle
   for interactive sessions, and adds GitHub/SourceHut `close-out` mechanics
   bound in the manifest matrix (closes #350).
+- `GROUNDWORK_*` deployment-identity contract documenting the atom variables a
+  forge session binds for deployment endpoint, owner/name, tracker ID, repo ID,
+  and active forge selection, with README discovery and the #363 composition
+  boundary (closes #362).
 
 ### Changed
 

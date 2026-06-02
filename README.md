@@ -88,6 +88,14 @@ configuration without reaching back into the source checkout. Installed
 protocol copies reference the managed resolver path directly, so users do not
 need to add `~/.groundwork/bin` to `PATH`.
 
+GROUNDWORK_* deployment identity is the atom set a forge session binds into
+that runtime surface: `GROUNDWORK_FORGE_TYPE`, `GROUNDWORK_FORGE_ENDPOINT`,
+`GROUNDWORK_FORGE_OWNER`, `GROUNDWORK_FORGE_NAME`,
+`GROUNDWORK_FORGE_TRACKER_ID`, and `GROUNDWORK_FORGE_REPO_ID`. See
+[`docs/architecture/forge-deployment-identity.md`](docs/architecture/forge-deployment-identity.md)
+for the contract and the boundary between atom binding and mechanic-parameter
+composition.
+
 Secret mechanic parameters must be bound from an environment variable rather
 than from `NAME=VALUE` argv bindings. For example, pass
 `--secret-env token=WEFORGE_OPERATOR_PAT` to bind a secret `token` parameter
