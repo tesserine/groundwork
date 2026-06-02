@@ -11,13 +11,13 @@ The work-unit graph is the persistence layer across sessions. Agent sessions end
 
 ## State Source Rule
 
-State is determined by reading GitHub issue content, not forge metadata (labels, columns). A work-unit's state is what its issue body and comments say it is.
+State is determined by reading the forge tracker record content, not forge metadata (labels, columns). A work-unit's state is what its record body and comments say it is.
 
 ## Work-Unit Working States
 
 | State       | Meaning                                      | Enters when                        | Exits when                          |
 |-------------|----------------------------------------------|------------------------------------|-------------------------------------|
-| draft       | Intent captured, not yet agent-executable     | GitHub issue created without full criteria | Criteria, scope, and size filled in |
+| draft       | Intent captured, not yet agent-executable     | Tracker record created without full criteria | Criteria, scope, and size filled in |
 | ready       | Agent-executable and unblocked                | All fields complete, deps closed   | Session claims it                   |
 | in-progress | Active session is working on it               | Session declares goal against it   | Session closes or blocks            |
 | blocked     | Waiting on one or more open dependencies      | Dependency discovered or reopened  | All blocking work-units closed      |

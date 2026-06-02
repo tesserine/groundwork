@@ -137,10 +137,12 @@ Set up the repository-local workspace for the selected work.
    Slug is the work-unit title — lowercase, hyphenated, truncated to 40
    chars. The `issue-` prefix on linked branch names is a repository-local
    naming convention; `<N>` encodes the work-unit's tracker identifier.
-3. Resolve referenced work-units. Runa injects the active work-unit; when
-   it references other work-units as dependencies or context, prefer runa's
-   injected context. Where runa does not carry a referenced work-unit, fall
-   back to the tracker surface (`gh issue view`) if available.
+3. Resolve referenced work-units from injected session context. Runa injects
+   the active work-unit and any referenced work-units needed as dependencies or
+   context. If a referenced work-unit is missing from injected input, halt with
+   a substrate-failure signal. Missing injected context is not benign absent
+   input: `take` does not attempt retrieval through a tracker surface and does
+   not proceed in a degraded state.
 
 #### Phase 3: Claim — produce the session capstone
 
@@ -175,9 +177,10 @@ write files, construct filenames, or supply `work_unit`.
 ### session-close
 
 1. Reach a stable checkpoint (done increment or explicit WIP note).
-2. Update work-unit state and leave a concise progress comment on the GitHub issue.
+2. Update work-unit state and leave a concise progress comment on the active
+   forge tracker record.
 3. Record decisions, blockers, and the exact next step.
-4. Ensure any follow-up work is represented as GitHub issue(s).
+4. Ensure any follow-up work is represented in the active forge tracker.
 5. Sync workspace and close.
 
 ## Key Terms
@@ -198,10 +201,10 @@ Brief definitions for self-contained use. See
 
 ## Operating Principles
 
-- **GitHub issue tracker is the source of truth.** Planning state lives in forge
-  issues, not local task trackers or agent memory. Sessions end; the graph
-  doesn't. GitHub issue status and comments reflect actual implementation state —
-  inaccurate state is planning debt.
+- **Forge tracker is the source of truth.** Planning state lives in work-unit
+  records in the active forge, not local task trackers or agent memory.
+  Sessions end; the graph doesn't. Forge tracker state and comments reflect
+  actual implementation state — inaccurate state is planning debt.
 - **Direction over prediction.** Capture starting direction at session open.
   Goals sharpen through implementation — rigid upfront done conditions are
   premature precision. The closing handoff matters more than the opening
@@ -226,7 +229,7 @@ Brief definitions for self-contained use. See
 - `recency-drift`: picking last-touched work instead of highest leverage.
 - `scope-creep`: crossing concern boundaries mid-session.
 - `blocker-bypass`: beginning blocked work anyway.
-- `state-lag`: GitHub issue tracker not reflecting real implementation state.
+- `state-lag`: forge tracker state not reflecting real implementation state.
 - `open-loop-close`: ending session without a concrete next step.
 - `skip-preparation`: jumping from selection to implementation without setting
   up a feature branch — loses workspace isolation and makes `submit` harder.

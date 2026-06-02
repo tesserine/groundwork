@@ -68,6 +68,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `take` now halts on missing injected referenced work-unit context instead of
+  falling back to a forge-specific tracker lookup, and C-5 conformance now scans
+  `take` for forge leakage with the rest of the registered protocol bodies
+  (closes #353).
 - SourceHut `deliver-change-proposal` and `reflect-disposition` now fail on
   GraphQL application-layer `errors` payloads returned with HTTP 200, and only
   accept delivery/reflection when the expected mutation `data` fields are
@@ -101,7 +105,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Mechanic invocation validation now rejects bare `{parameter}` placeholders
   outside shell quoting, malformed shell, unexpanded declared parameters,
   incomplete forge-operation matrices, and registered protocol bodies that leak
-  forge-specific command tokens outside the temporary #353 `take` exception.
+  forge-specific command tokens.
 - Interactive install now projects the artifact delivery adapter into every
   protocol entry without depending on protocol prose formatting, so wrapped MCP
   delivery text cannot omit the adapter from installed protocol skills.
