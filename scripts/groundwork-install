@@ -118,6 +118,10 @@ runtime_root() {
   printf '%s\n' "$home_path/.groundwork"
 }
 
+runtime_resolver_command() {
+  printf '%s/bin/groundwork-mechanic\n' "$(runtime_root)"
+}
+
 runtime_available() {
   local sha
   sha="$(source_sha)"
@@ -189,6 +193,13 @@ preflight_conflicts() {
       fi
     done < <(target_roots)
   done < <(desired_entries)
+  if runtime_available; then
+    target="$(runtime_root)"
+    if target_exists "$target" && ! target_has_marker "$target"; then
+      printf '%s: unmanaged conflict at %s\n' "$PROGRAM" "$target" >&2
+      conflict=1
+    fi
+  fi
   [[ "$conflict" -eq 0 ]] || exit 1
 }
 
@@ -325,6 +336,16 @@ insert_interactive_adapter() {
   rm -f "$adapter_tmp"
 }
 
+localize_runtime_resolver_command() {
+  runtime_available || return 0
+  local skill_path="$1"
+  local output_tmp resolver
+  resolver="$(runtime_resolver_command)"
+  output_tmp="$(mktemp "${skill_path}.resolver.XXXXXX")"
+  awk -v resolver="$resolver" '{ gsub(/groundwork-mechanic/, resolver); print }' "$skill_path" > "$output_tmp"
+  mv "$output_tmp" "$skill_path"
+}
+
 project_entry() {
   local kind="$1"
   local name="$2"
@@ -337,6 +358,7 @@ project_entry() {
     rm -f "$target/SKILL.md"
     mv "$target/PROTOCOL.md" "$target/SKILL.md"
     insert_interactive_adapter "$target/SKILL.md" "$sha"
+    localize_runtime_resolver_command "$target/SKILL.md"
   fi
   write_marker "$target/$MARKER" "$kind" "$name" "$sha"
 }

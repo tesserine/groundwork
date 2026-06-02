@@ -97,8 +97,15 @@ def main(argv: list[str] | None = None) -> int:
     inspect_parser = subparsers.add_parser("inspect", help="Print the constant shell invocation body.")
     inspect_parser.add_argument("operation")
 
-    run_parser = subparsers.add_parser("run", help="Run the resolved mechanic with NAME=VALUE parameter bindings.")
+    run_parser = subparsers.add_parser("run", help="Run the resolved mechanic with parameter bindings.")
     run_parser.add_argument("operation")
+    run_parser.add_argument(
+        "--secret-env",
+        action="append",
+        default=[],
+        metavar="NAME=ENV",
+        help="Bind secret parameter NAME from environment variable ENV without putting the value in argv.",
+    )
     run_parser.add_argument("bindings", nargs="*", help="Parameter bindings in NAME=VALUE form.")
 
     args = parser.parse_args(argv)
@@ -111,7 +118,9 @@ def main(argv: list[str] | None = None) -> int:
             print(inspect_invocation(mechanic, {}))
             return 0
         if args.command == "run":
-            result = run_invocation(mechanic, _parse_bindings(args.bindings), cwd=Path.cwd())
+            values = _parse_bindings(args.bindings, mechanic)
+            values.update(_parse_secret_env_bindings(args.secret_env, mechanic, os.environ))
+            result = run_invocation(mechanic, values, cwd=Path.cwd())
             if result.stdout:
                 print(result.stdout, end="")
             if result.stderr:
@@ -165,6 +174,10 @@ def _parameters(mechanic: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
     }
 
 
+def _secret_parameters(mechanic: Mapping[str, Any]) -> set[str]:
+    return {name for name, parameter in _parameters(mechanic).items() if parameter.get("secret") is True}
+
+
 def _invocation_body(mechanic: Mapping[str, Any]) -> str:
     body = mechanic.get("default_invocation")
     if not isinstance(body, str) or not body:
@@ -172,15 +185,44 @@ def _invocation_body(mechanic: Mapping[str, Any]) -> str:
     return body
 
 
-def _parse_bindings(bindings: list[str]) -> dict[str, str]:
+def _parse_bindings(bindings: list[str], mechanic: Mapping[str, Any] | None = None) -> dict[str, str]:
     parsed: dict[str, str] = {}
+    secret_parameters = _secret_parameters(mechanic) if mechanic is not None else set()
     for binding in bindings:
         if "=" not in binding:
             raise ForgeOperationError(f"binding `{binding}` must use NAME=VALUE")
         name, value = binding.split("=", 1)
         if not name:
             raise ForgeOperationError("binding name must not be empty")
+        if name in secret_parameters:
+            raise ForgeOperationError(f"secret parameter `{name}` must use --secret-env, not NAME=VALUE")
         parsed[name] = value
+    return parsed
+
+
+def _parse_secret_env_bindings(
+    bindings: list[str],
+    mechanic: Mapping[str, Any],
+    environment: Mapping[str, str],
+) -> dict[str, str]:
+    parsed: dict[str, str] = {}
+    parameters = _parameters(mechanic)
+    secret_parameters = _secret_parameters(mechanic)
+    for binding in bindings:
+        if "=" not in binding:
+            raise ForgeOperationError(f"secret binding `{binding}` must use NAME=ENV")
+        name, env_name = binding.split("=", 1)
+        if not name:
+            raise ForgeOperationError("secret binding name must not be empty")
+        if not env_name:
+            raise ForgeOperationError(f"secret binding `{name}` must name an environment variable")
+        if name not in parameters:
+            raise ForgeOperationError(f"unknown parameter(s): {name}")
+        if name not in secret_parameters:
+            raise ForgeOperationError(f"parameter `{name}` is not secret; use NAME=VALUE")
+        if env_name not in environment:
+            raise ForgeOperationError(f"secret environment variable `{env_name}` for `{name}` is not set")
+        parsed[name] = environment[env_name]
     return parsed
 
 

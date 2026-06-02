@@ -105,6 +105,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Interactive install now projects the artifact delivery adapter into every
   protocol entry without depending on protocol prose formatting, so wrapped MCP
   delivery text cannot omit the adapter from installed protocol skills.
+- Interactive install now rewrites installed protocol resolver references to
+  the managed runtime command path and rejects unmanaged `~/.groundwork`
+  conflicts before replacing the runtime bundle.
+- `groundwork-mechanic run` now rejects secret `NAME=VALUE` argv bindings and
+  accepts secret parameters through `--secret-env NAME=ENV_VAR`.
 
 ## [0.2.0] — 2026-05-17
 

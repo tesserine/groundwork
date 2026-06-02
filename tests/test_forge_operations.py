@@ -1,5 +1,7 @@
+import json
 import os
 import subprocess
+import sys
 import tempfile
 import textwrap
 import unittest
@@ -13,6 +15,8 @@ from tooling.forge_operations import (
     resolve_operation,
     run_invocation,
 )
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class ForgeOperationTests(unittest.TestCase):
@@ -148,6 +152,102 @@ class ForgeOperationTests(unittest.TestCase):
             render_shell_invocation(mechanic, {})
 
         self.assertIn("message", str(context.exception))
+
+    def test_cli_rejects_secret_parameter_value_in_argv_binding(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_secret_probe_methodology(root, 'printf "%s\\n" "$token"')
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "run",
+                    "probe",
+                    "token=super-secret",
+                ],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("secret parameter `token`", result.stderr)
+        self.assertNotIn("super-secret", result.stderr)
+
+    def test_cli_passes_secret_environment_binding_without_secret_in_child_argv(self) -> None:
+        secret = "super-secret-value"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_secret_probe_methodology(
+                root,
+                (
+                    "python3 -c 'import os; "
+                    'data=open("/proc/%s/cmdline" % os.getpid(), "rb").read().decode("latin1"); '
+                    "print(data); print(os.environ[\"token\"])'"
+                ),
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "run",
+                    "probe",
+                    "--secret-env",
+                    "token=GROUNDWORK_TEST_TOKEN",
+                ],
+                env={**os.environ, "GROUNDWORK_TEST_TOKEN": secret},
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        child_argv, exposed_secret = result.stdout.splitlines()
+        self.assertNotIn(secret, child_argv)
+        self.assertEqual(secret, exposed_secret)
+
+    def write_secret_probe_methodology(self, root: Path, invocation: str) -> None:
+        (root / "manifest.toml").write_text(
+            textwrap.dedent(
+                """
+                [[forge_tags]]
+                name = "github"
+
+                [[mechanics]]
+                name = "probe"
+                forge_tags = ["github"]
+                """
+            ).lstrip(),
+            encoding="utf-8",
+        )
+        (root / "mechanics" / "github").mkdir(parents=True, exist_ok=True)
+        (root / "mechanics" / "github" / "probe.toml").write_text(
+            textwrap.dedent(
+                f"""
+                name = "probe"
+                purpose = "Probe secret argv handling."
+                forge_tag = "github"
+                default_invocation = {json.dumps(invocation)}
+                examples = [{json.dumps(invocation)}]
+
+                [[parameters]]
+                name = "token"
+                purpose = "Secret token."
+                required = true
+                secret = true
+
+                [outcome]
+                description = "Printed."
+                """
+            ).lstrip(),
+            encoding="utf-8",
+        )
 
 
 if __name__ == "__main__":

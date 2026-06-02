@@ -84,7 +84,15 @@ present, the installer also projects a managed runtime bundle under
 `~/.groundwork/`. The bundle contains the manifest, mechanic library, resolver
 module, and `bin/groundwork-mechanic`, so installed protocol sessions can
 resolve forge-invariant operations through the active `GROUNDWORK_FORGE`
-configuration without reaching back into the source checkout.
+configuration without reaching back into the source checkout. Installed
+protocol copies reference the managed resolver path directly, so users do not
+need to add `~/.groundwork/bin` to `PATH`.
+
+Secret mechanic parameters must be bound from an environment variable rather
+than from `NAME=VALUE` argv bindings. For example, pass
+`--secret-env token=WEFORGE_OPERATOR_PAT` to bind a secret `token` parameter
+from the current process environment without placing the secret value in the
+resolver command line.
 
 The source checkout must be clean and pinned at a tag or full commit SHA. The
 command refuses branch checkouts because a branch is a moving source. To update

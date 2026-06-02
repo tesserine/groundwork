@@ -1,4 +1,6 @@
 import os
+import re
+import shlex
 import shutil
 import subprocess
 import tempfile
@@ -176,25 +178,7 @@ class GroundworkInstallTests(unittest.TestCase):
     def adapter_text(self, fixture: MethodologyFixture) -> str:
         return (fixture.root / ADAPTER_RELATIVE_PATH).read_text(encoding="utf-8")
 
-    def assert_adapter_projected_once(self, body: str) -> None:
-        self.assertEqual(body.count(ADAPTER_BEGIN), 1)
-        self.assertEqual(body.count(ADAPTER_END), 1)
-
-    def test_install_projects_skills_and_protocols_into_both_discovery_roots(self) -> None:
-        fixture = self.add_fixture("clean-install")
-        install = InstallRun(self, fixture.root)
-
-        result = install.run_installer("install")
-
-        assert_success(self, result)
-        self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
-        take_body = (install.target(".claude", "take") / "SKILL.md").read_text(encoding="utf-8")
-        self.assert_adapter_projected_once(take_body)
-        self.assertTrue((install.target(".agents", "take") / "references" / "example.md").is_file())
-        self.assertTrue((install.target(".agents", "reckon") / "references" / "example.md").is_file())
-
-    def test_install_projects_runtime_bundle_for_installed_mechanic_resolution(self) -> None:
-        fixture = self.add_fixture("runtime-bundle")
+    def write_runtime_surface(self, fixture: MethodologyFixture) -> None:
         fixture.write(
             "manifest.toml",
             """
@@ -229,6 +213,27 @@ class GroundworkInstallTests(unittest.TestCase):
                 """,
             )
         fixture.write("tooling/forge_operations.py", (ROOT / "tooling" / "forge_operations.py").read_text(encoding="utf-8"))
+
+    def assert_adapter_projected_once(self, body: str) -> None:
+        self.assertEqual(body.count(ADAPTER_BEGIN), 1)
+        self.assertEqual(body.count(ADAPTER_END), 1)
+
+    def test_install_projects_skills_and_protocols_into_both_discovery_roots(self) -> None:
+        fixture = self.add_fixture("clean-install")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
+        take_body = (install.target(".claude", "take") / "SKILL.md").read_text(encoding="utf-8")
+        self.assert_adapter_projected_once(take_body)
+        self.assertTrue((install.target(".agents", "take") / "references" / "example.md").is_file())
+        self.assertTrue((install.target(".agents", "reckon") / "references" / "example.md").is_file())
+
+    def test_install_projects_runtime_bundle_for_installed_mechanic_resolution(self) -> None:
+        fixture = self.add_fixture("runtime-bundle")
+        self.write_runtime_surface(fixture)
         fixture.commit_new_ref("v2")
         install = InstallRun(self, fixture.root)
 
@@ -244,6 +249,52 @@ class GroundworkInstallTests(unittest.TestCase):
         )
         assert_success(self, resolved)
         self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
+
+    def test_installed_protocol_resolver_invocation_uses_runnable_managed_command(self) -> None:
+        fixture = self.add_fixture("installed-runtime-command")
+        self.write_runtime_surface(fixture)
+        fixture.write(
+            "protocols/submit/PROTOCOL.md",
+            """
+            ---
+            name: submit
+            ---
+            # Submit
+
+            Run `groundwork-mechanic resolve close-out` before delivery.
+            """,
+        )
+        fixture.write(
+            "protocols/land/PROTOCOL.md",
+            """
+            ---
+            name: land
+            ---
+            # Land
+
+            Run `groundwork-mechanic resolve close-out` before closeout.
+            """,
+        )
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        resolver = install.runtime_root() / "bin" / "groundwork-mechanic"
+        for protocol in ["submit", "land"]:
+            body = (install.target(".agents", protocol) / "SKILL.md").read_text(encoding="utf-8")
+            command = re.search(r"`([^`]*groundwork-mechanic resolve close-out)`", body)
+            self.assertIsNotNone(command, body)
+            invocation = command.group(1)
+            self.assertTrue(invocation.startswith(str(resolver)), invocation)
+            resolved = run(
+                shlex.split(invocation),
+                install.runtime_root(),
+                env={**os.environ, "GROUNDWORK_FORGE": "sourcehut", "PATH": "/usr/bin:/bin"},
+            )
+            assert_success(self, resolved)
+            self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
 
     def test_install_projects_interactive_adapter_into_every_protocol_entry(self) -> None:
         fixture = self.add_fixture("adapter-all-protocols")
@@ -527,6 +578,23 @@ class GroundworkInstallTests(unittest.TestCase):
         assert_failure_contains(self, result, "unmanaged conflict")
         self.assertEqual((conflict / "SKILL.md").read_text(encoding="utf-8"), "# Mine\n")
         self.assertFalse((install.home / ".agents" / "skills" / "take").exists())
+        self.assertFalse(install.state_file().exists())
+
+    def test_install_rejects_unmanaged_runtime_conflict_before_replacing_it(self) -> None:
+        fixture = self.add_fixture("runtime-conflict")
+        self.write_runtime_surface(fixture)
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+        runtime = install.runtime_root()
+        runtime.mkdir()
+        local_file = runtime / "operator-data.txt"
+        local_file.write_text("keep me\n", encoding="utf-8")
+
+        result = install.run_installer("install")
+
+        assert_failure_contains(self, result, "unmanaged conflict")
+        self.assertEqual(local_file.read_text(encoding="utf-8"), "keep me\n")
+        self.assertFalse((runtime / "bin" / "groundwork-mechanic").exists())
         self.assertFalse(install.state_file().exists())
 
     def test_install_fails_without_writing_entries_when_any_target_root_is_not_preparable(self) -> None:
