@@ -284,17 +284,55 @@ class GroundworkInstallTests(unittest.TestCase):
         resolver = install.runtime_root() / "bin" / "groundwork-mechanic"
         for protocol in ["submit", "land"]:
             body = (install.target(".agents", protocol) / "SKILL.md").read_text(encoding="utf-8")
-            command = re.search(r"`([^`]*groundwork-mechanic resolve close-out)`", body)
+            command = re.search(r"`([^`]* resolve close-out)`", body)
             self.assertIsNotNone(command, body)
             invocation = command.group(1)
-            self.assertTrue(invocation.startswith(str(resolver)), invocation)
+            argv = shlex.split(invocation)
+            self.assertEqual(str(resolver), argv[0])
             resolved = run(
-                shlex.split(invocation),
+                argv,
                 install.runtime_root(),
                 env={**os.environ, "GROUNDWORK_FORGE": "sourcehut", "PATH": "/usr/bin:/bin"},
             )
             assert_success(self, resolved)
             self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
+
+    def test_installed_protocol_resolver_invocation_runs_when_home_contains_whitespace(self) -> None:
+        fixture = self.add_fixture("installed-runtime-command-spaced-home")
+        self.write_runtime_surface(fixture)
+        fixture.write(
+            "protocols/submit/PROTOCOL.md",
+            """
+            ---
+            name: submit
+            ---
+            # Submit
+
+            Run `groundwork-mechanic resolve close-out` before delivery.
+            """,
+        )
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+        shutil.rmtree(install.home)
+        install.home = Path(tempfile.mkdtemp(prefix="groundwork install home "))
+        self.addCleanup(lambda: shutil.rmtree(install.home, ignore_errors=True))
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        body = (install.target(".agents", "submit") / "SKILL.md").read_text(encoding="utf-8")
+        command = re.search(r"`([^`]* resolve close-out)`", body)
+        self.assertIsNotNone(command, body)
+        invocation = command.group(1)
+        argv = shlex.split(invocation)
+        self.assertEqual(str(install.runtime_root() / "bin" / "groundwork-mechanic"), argv[0])
+        resolved = run(
+            argv,
+            install.runtime_root(),
+            env={**os.environ, "GROUNDWORK_FORGE": "sourcehut", "PATH": "/usr/bin:/bin"},
+        )
+        assert_success(self, resolved)
+        self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
 
     def test_install_projects_interactive_adapter_into_every_protocol_entry(self) -> None:
         fixture = self.add_fixture("adapter-all-protocols")
@@ -669,6 +707,18 @@ class GroundworkInstallTests(unittest.TestCase):
 
         assert_failure_contains(self, result, "not installed")
         self.assertFalse((install.home / ".agents").exists())
+
+    def test_status_fails_when_expected_managed_runtime_is_absent(self) -> None:
+        fixture = self.add_fixture("status-missing-runtime")
+        self.write_runtime_surface(fixture)
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        shutil.rmtree(install.runtime_root())
+
+        result = install.run_installer("status")
+
+        assert_failure_contains(self, result, "missing managed runtime")
 
     def test_home_option_supplies_default_state_dir_when_home_environment_is_unset(self) -> None:
         fixture = self.add_fixture("unset-home")

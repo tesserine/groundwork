@@ -122,6 +122,11 @@ runtime_resolver_command() {
   printf '%s/bin/groundwork-mechanic\n' "$(runtime_root)"
 }
 
+shell_quote() {
+  local value="$1"
+  printf "'%s'\n" "${value//\'/\'\\\'\'}"
+}
+
 runtime_available() {
   local sha
   sha="$(source_sha)"
@@ -340,9 +345,19 @@ localize_runtime_resolver_command() {
   runtime_available || return 0
   local skill_path="$1"
   local output_tmp resolver
-  resolver="$(runtime_resolver_command)"
+  resolver="$(shell_quote "$(runtime_resolver_command)")"
   output_tmp="$(mktemp "${skill_path}.resolver.XXXXXX")"
-  awk -v resolver="$resolver" '{ gsub(/groundwork-mechanic/, resolver); print }' "$skill_path" > "$output_tmp"
+  awk -v resolver="$resolver" '
+    {
+      line = $0
+      output = ""
+      while ((position = index(line, "groundwork-mechanic")) > 0) {
+        output = output substr(line, 1, position - 1) resolver
+        line = substr(line, position + length("groundwork-mechanic"))
+      }
+      print output line
+    }
+  ' "$skill_path" > "$output_tmp"
   mv "$output_tmp" "$skill_path"
 }
 
@@ -509,7 +524,7 @@ status_install() {
   done < "$state_file"
   local runtime
   runtime="$(runtime_root)"
-  if [[ -d "$runtime" ]] && ! target_has_marker "$runtime"; then
+  if runtime_available && ! target_has_marker "$runtime"; then
     printf '%s: missing managed runtime marker %s\n' "$PROGRAM" "$runtime" >&2
     missing=1
   fi

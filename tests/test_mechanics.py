@@ -68,6 +68,18 @@ class MechanicTests(unittest.TestCase):
         self.assertIn("default_invocation", context.exception.paths)
         self.assertIn("bare placeholder", str(context.exception))
 
+    def test_invocation_accepts_quoted_embedded_language_braces(self) -> None:
+        mechanic = {
+            "name": "awk-print",
+            "purpose": "Print a file with awk.",
+            "default_invocation": """awk '{print}' "$file" """,
+            "examples": ["""awk '{print}' "$file" """],
+            "parameters": [{"name": "file", "purpose": "File to print.", "required": True}],
+            "outcome": {"description": "Printed."},
+        }
+
+        validate_mechanic(mechanic)
+
     def test_invocation_rejects_unparseable_shell(self) -> None:
         mechanic = {
             "name": "git-push",

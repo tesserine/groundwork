@@ -98,15 +98,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   registry-loaded mechanics whose `forge_tag` is not declared in
   `manifest.toml`; generic runtime mechanics remain forge-neutral by omitting
   `forge_tag` (closes #322).
-- Mechanic invocation validation now rejects bare `{parameter}` placeholders,
-  malformed shell, unexpanded declared parameters, incomplete forge-operation
-  matrices, and registered protocol bodies that leak forge-specific command
-  tokens outside the temporary #353 `take` exception.
+- Mechanic invocation validation now rejects bare `{parameter}` placeholders
+  outside shell quoting, malformed shell, unexpanded declared parameters,
+  incomplete forge-operation matrices, and registered protocol bodies that leak
+  forge-specific command tokens outside the temporary #353 `take` exception.
 - Interactive install now projects the artifact delivery adapter into every
   protocol entry without depending on protocol prose formatting, so wrapped MCP
   delivery text cannot omit the adapter from installed protocol skills.
 - Interactive install now rewrites installed protocol resolver references to
-  the managed runtime command path and rejects unmanaged `~/.groundwork`
+  a shell-quoted managed runtime command path, reports a missing expected
+  managed runtime as a status failure, and rejects unmanaged `~/.groundwork`
   conflicts before replacing the runtime bundle.
 - `groundwork-mechanic run` now rejects secret `NAME=VALUE` argv bindings and
   accepts secret parameters through `--secret-env NAME=ENV_VAR`.

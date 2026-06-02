@@ -74,7 +74,7 @@ def _invocation_errors(mechanic: dict[str, Any]) -> list[tuple[str, str]]:
     body = mechanic["default_invocation"]
     errors: list[tuple[str, str]] = []
 
-    if re.search(r"(?<![$A-Za-z0-9_^])\{[A-Za-z_][A-Za-z0-9_.-]*\}", body):
+    if _shell_has_bare_placeholder(body):
         errors.append(("default_invocation", "bare placeholder references are not allowed; use shell environment references"))
 
     shell_check = subprocess.run(
@@ -97,6 +97,38 @@ def _invocation_errors(mechanic: dict[str, Any]) -> list[tuple[str, str]]:
             )
 
     return errors
+
+
+def _shell_has_bare_placeholder(body: str) -> bool:
+    in_single_quote = False
+    in_double_quote = False
+    escaped = False
+    index = 0
+    while index < len(body):
+        char = body[index]
+        if escaped:
+            escaped = False
+            index += 1
+            continue
+        if char == "\\":
+            escaped = True
+            index += 1
+            continue
+        if char == "'" and not in_double_quote:
+            in_single_quote = not in_single_quote
+            index += 1
+            continue
+        if char == '"' and not in_single_quote:
+            in_double_quote = not in_double_quote
+            index += 1
+            continue
+        if not in_single_quote and not in_double_quote and char == "{":
+            match = re.match(r"\{[A-Za-z_][A-Za-z0-9_.-]*\}", body[index:])
+            previous = body[index - 1 : index]
+            if match and (not previous or not re.match(r"[$A-Za-z0-9_^]", previous)):
+                return True
+        index += 1
+    return False
 
 
 def _shell_expands_parameter(body: str, parameter_name: str) -> bool:
