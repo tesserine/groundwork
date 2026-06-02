@@ -39,7 +39,6 @@ FORGE_LEAKAGE_TOKEN_PATTERNS = {
     "git.sr.ht": r"git[.]sr[.]ht",
     "todo.sr.ht": r"todo[.]sr[.]ht",
 }
-TEMPORARY_FORGE_LEAKAGE_EXEMPTIONS = {"take"}
 
 
 @dataclass(frozen=True)
@@ -406,8 +405,6 @@ def _manifest_protocol_leakage_errors(
     for protocol_index, protocol in protocol_entries:
         name = protocol.get("name")
         if not isinstance(name, str):
-            continue
-        if name in TEMPORARY_FORGE_LEAKAGE_EXEMPTIONS:
             continue
         protocol_body = root / "protocols" / name / "PROTOCOL.md"
         if not protocol_body.exists():
