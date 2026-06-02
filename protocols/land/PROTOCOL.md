@@ -50,6 +50,19 @@ order:
 2. `reflect-disposition` records that the approved disposition was acted on.
 3. `close-out` records work-unit completion context.
 
+Before invoking each forge-touching operation, resolve it through the
+methodology resolver:
+
+```
+python -m tooling.forge_resolution resolve apply-approved-change
+python -m tooling.forge_resolution resolve reflect-disposition
+python -m tooling.forge_resolution resolve close-out
+```
+
+The resolver reads the active forge from `GROUNDWORK_FORGE` and returns the
+forge-specific C-3 mechanic to execute. If resolution does not yield exactly one
+mechanic for the operation and active forge, stop before that operation.
+
 These operation names remain forge-invariant. Forge-specific mechanics may
 implement them, but the protocol does not prescribe those mechanics.
 

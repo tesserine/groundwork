@@ -25,6 +25,8 @@ resolve against the declarative `[[forge_tags]]` registry in `manifest.toml`.
 Manifest `[[mechanics]]` entries may declare `forge_tags = [...]` to bind an
 operation handle to forge-specific C-3 mechanics; conformance requires exactly
 one matching `mechanics/**/*.toml` file for each declared operation/tag pair.
+Forge-tagged operations must declare every supported `[[forge_tags]]` entry so
+the active-forge resolver can halt loudly on missing or ambiguous matrix cells.
 
 `request.schema.json` is different: it is a vendored copy of the canonical
 request contract maintained by `tesserine/commons`. Groundwork keeps the runtime

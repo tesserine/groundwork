@@ -133,6 +133,25 @@ It also validates forge-tagged C-3 mechanic bindings. When a manifest
 `[[forge_tags]]` and exactly one `mechanics/**/*.toml` file whose `name` and
 `forge_tag` match that operation/tag pair.
 
+Forge-touching operations resolve through the active forge. Groundwork reads the
+active forge from `GROUNDWORK_FORGE`; when the variable is absent, the default is
+`github`. Standalone conformance and tests can supply or override that value:
+
+```bash
+python -m tooling.conformance --forge sourcehut
+```
+
+An executing agent resolves the operation before invoking forge mechanics:
+
+```bash
+python -m tooling.forge_resolution resolve close-out
+```
+
+The resolver returns the active forge's C-3 mechanic and exits non-zero if the
+operation and forge resolve to zero or multiple mechanics. The same entrypoint
+can execute a resolved mechanic with `invoke` and `name=value` parameters for
+runtime tests or scripted agent flows.
+
 ## What Groundwork Believes
 
 These are the methodology choices embedded in groundwork's protocols and skills.

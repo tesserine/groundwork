@@ -8,6 +8,8 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
+from tooling.forge_resolution import ForgeResolutionError, active_forge, resolve_mechanic
+
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "manifest.toml"
@@ -31,11 +33,14 @@ class WorkflowRegistry:
     artifact_schemas: set[str] = field(default_factory=set)
     outcome_types: set[str] = field(default_factory=set)
     required_output_choices: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+    active_forge: str = "github"
+    resolved_mechanics: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 def workflow_registry_from_manifest(
     path: Path | str = MANIFEST,
     root: Path | str | None = None,
+    forge: str | None = None,
 ) -> WorkflowRegistry:
     manifest_path = Path(path)
     root_path = Path(root) if root is not None else manifest_path.parent
@@ -74,6 +79,7 @@ def workflow_registry_from_manifest(
         if isinstance(entry, dict) and isinstance(entry.get("name"), str)
     }
     mechanic_names.update(_mechanic_names_from_directory(root_path / "mechanics"))
+    selected_forge = active_forge(forge)
 
     return WorkflowRegistry(
         disciplines=_directory_names(root_path / "skills") | _directory_names(root_path / "protocols"),
@@ -81,6 +87,8 @@ def workflow_registry_from_manifest(
         artifact_schemas=artifact_types,
         outcome_types=outcome_types,
         required_output_choices=required_output_choices,
+        active_forge=selected_forge,
+        resolved_mechanics=_resolved_mechanics(manifest, root_path, selected_forge),
     )
 
 
@@ -129,6 +137,21 @@ def _mechanic_names_from_directory(directory: Path) -> set[str]:
         if isinstance(name, str):
             names.add(name)
     return names
+
+
+def _resolved_mechanics(manifest: dict[str, Any], root: Path, selected_forge: str) -> dict[str, dict[str, Any]]:
+    resolved: dict[str, dict[str, Any]] = {}
+    for entry in manifest.get("mechanics", []):
+        if not isinstance(entry, dict) or not isinstance(entry.get("name"), str):
+            continue
+        forge_tags = entry.get("forge_tags")
+        if not isinstance(forge_tags, list) or selected_forge not in forge_tags:
+            continue
+        try:
+            resolved[entry["name"]] = resolve_mechanic(entry["name"], forge=selected_forge, root=root).mechanic
+        except ForgeResolutionError:
+            continue
+    return resolved
 
 
 def _schema_errors(contract: dict[str, Any]) -> list[tuple[str, str]]:

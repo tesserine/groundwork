@@ -50,6 +50,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   resolves to the approved commit, and guards tree equality after plain
   `git am --3way`, and `reflect-disposition` records tracker-ticket state
   under `forge_tag = "sourcehut"`.
+- Active forge resolution for forge-touching operations: `GROUNDWORK_FORGE`
+  selects the runtime forge with a `github` default, `python -m
+  tooling.forge_resolution` resolves or invokes the active forge's C-3
+  mechanic, and conformance accepts `--forge` for standalone checks.
+- GitHub and SourceHut `close-out` mechanics now fill the reference arc's final
+  forge matrix cell and record work-unit completion context through the active
+  forge's tracker surface.
 
 ### Changed
 
@@ -92,6 +99,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   registry-loaded mechanics whose `forge_tag` is not declared in
   `manifest.toml`; generic runtime mechanics remain forge-neutral by omitting
   `forge_tag` (closes #322).
+- C-5 manifest conformance now enforces full supported-forge matrix
+  declarations for forge-tagged operations and scans migrated protocol targets
+  for forge-specific leakage by inclusion rule.
 - Interactive install now projects the artifact delivery adapter into every
   protocol entry without depending on protocol prose formatting, so wrapped MCP
   delivery text cannot omit the adapter from installed protocol skills.

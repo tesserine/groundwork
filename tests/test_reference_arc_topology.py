@@ -128,6 +128,7 @@ class ReferenceArcTopologyTests(unittest.TestCase):
             "deliver-change-proposal",
             "apply-approved-change",
             "reflect-disposition",
+            "close-out",
         }
         manifest_mechanics = {entry["name"]: entry for entry in manifest()["mechanics"]}
 
@@ -136,6 +137,19 @@ class ReferenceArcTopologyTests(unittest.TestCase):
             for operation in operations:
                 self.assertIn(forge_tag, manifest_mechanics[operation]["forge_tags"])
                 self.assertEqual(1, sum(1 for mechanic in forge_mechanics if mechanic["name"] == operation))
+
+    def test_sourcehut_close_out_mechanic_uses_checked_tracker_graphql(self) -> None:
+        close_out = mechanic_for_forge("sourcehut", "close-out")
+        invocation = close_out["default_invocation"]
+        parameters = {parameter["name"] for parameter in close_out["parameters"]}
+
+        self.assertIn("{todo_query_url}", invocation)
+        self.assertIn("submitComment", invocation)
+        self.assertIn("updateTicketStatus", invocation)
+        self.assertIn("expected=sys.argv[2]", invocation)
+        self.assertIn("data.%s", invocation)
+        self.assertIn("token", parameters)
+        self.assertIn("completion context", close_out["purpose"])
 
     def test_sourcehut_apply_mechanic_uses_proposal_ref_and_tree_equality_not_commit_identity(self) -> None:
         apply = mechanic_for_forge("sourcehut", "apply-approved-change")

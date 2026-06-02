@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,6 +12,7 @@ from jsonschema import Draft202012Validator
 from jsonschema.exceptions import SchemaError
 
 from tooling.artifact_schemas import ArtifactSchemaError, load_artifact, registry_from_manifest
+from tooling.forge_resolution import active_forge
 from tooling.mechanics import MechanicError, load_mechanic
 from tooling.workflow_contracts import WorkflowContractError, load_workflow_contract, workflow_registry_from_manifest
 
@@ -24,6 +26,20 @@ CATEGORY_ARTIFACT = "C-4 artifact-instance"
 CATEGORY_SCHEMA = "C-4 schema-definition"
 CATEGORY_MANIFEST = "C-5 manifest"
 CATEGORY_UNKNOWN = "unknown"
+_FORGE_LEAKAGE_PATTERNS = [
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"\bgh\b",
+        r"github\.com",
+        r"git\.sr\.ht",
+        r"todo\.sr\.ht",
+        r"\bgithub\b",
+        r"\bsourcehut\b",
+        r"\bcreate-pr\b",
+        r"\bpr-merge\b",
+        r"\bpull request\b",
+    )
+]
 
 DIRECT_UNIT_DIRECTORY_NAMES = {"workflow-contracts", "mechanics", "schemas"}
 
@@ -56,18 +72,19 @@ def discover_units(root: Path | str = ROOT) -> list[Path]:
     return units
 
 
-def run_conformance(paths: Iterable[Path | str] | None = None) -> list[ConformanceResult]:
+def run_conformance(paths: Iterable[Path | str] | None = None, *, forge: str | None = None) -> list[ConformanceResult]:
     units = discover_units() if paths is None else _expand_paths(paths)
-    return [_check_unit(path) for path in units]
+    return [_check_unit(path, forge=forge) for path in units]
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run Groundwork Step-1 conformance checks.")
+    parser.add_argument("--forge", help="Override GROUNDWORK_FORGE for standalone conformance and testing.")
     parser.add_argument("paths", nargs="*", help="Files or directories to check. Defaults to source-tree units.")
     args = parser.parse_args(argv)
 
     paths = args.paths if args.paths else None
-    results = run_conformance(paths)
+    results = run_conformance(paths, forge=args.forge)
     for result in results:
         status = "PASS" if result.passed else "FAIL"
         print(f"{status} {result.category} {result.path}")
@@ -105,7 +122,7 @@ def _discover_direct_unit_directory(path: Path) -> list[Path]:
     return sorted(path.rglob("*.toml"))
 
 
-def _check_unit(path: Path) -> ConformanceResult:
+def _check_unit(path: Path, *, forge: str | None = None) -> ConformanceResult:
     category = _classify(path)
     try:
         if category == CATEGORY_WORKFLOW:
@@ -117,7 +134,7 @@ def _check_unit(path: Path) -> ConformanceResult:
         if category == CATEGORY_ARTIFACT:
             return _check_artifact_instance(path)
         if category == CATEGORY_MANIFEST:
-            return _check_manifest(path)
+            return _check_manifest(path, forge=forge)
     except (OSError, UnicodeDecodeError) as error:
         return ConformanceResult(
             path=path,
@@ -210,7 +227,7 @@ def _check_schema_definition(path: Path) -> ConformanceResult:
     return ConformanceResult(path=path, category=CATEGORY_SCHEMA, passed=True, errors=[])
 
 
-def _check_manifest(path: Path) -> ConformanceResult:
+def _check_manifest(path: Path, *, forge: str | None = None) -> ConformanceResult:
     try:
         manifest = tomllib.loads(path.read_text(encoding="utf-8"))
     except tomllib.TOMLDecodeError as error:
@@ -221,7 +238,7 @@ def _check_manifest(path: Path) -> ConformanceResult:
             errors=[f"<toml>: {path.name} is invalid TOML: {error}"],
         )
 
-    errors = _manifest_errors(manifest, path.parent)
+    errors = _manifest_errors(manifest, path.parent, forge=forge)
     return ConformanceResult(
         path=path,
         category=CATEGORY_MANIFEST,
@@ -230,7 +247,7 @@ def _check_manifest(path: Path) -> ConformanceResult:
     )
 
 
-def _manifest_errors(manifest: dict[str, Any], root: Path) -> list[tuple[str, str]]:
+def _manifest_errors(manifest: dict[str, Any], root: Path, *, forge: str | None = None) -> list[tuple[str, str]]:
     errors: list[tuple[str, str]] = []
     artifact_type_entries = _manifest_table_entries(manifest, "artifact_types", "artifact type", errors)
     outcome_type_entries = _manifest_table_entries(manifest, "outcome_types", "outcome type", errors)
@@ -240,6 +257,9 @@ def _manifest_errors(manifest: dict[str, Any], root: Path) -> list[tuple[str, st
     outcome_types = _named_manifest_entries(outcome_type_entries, "outcome_types", "outcome type", errors)
     forge_tag_entries = _manifest_table_entries(manifest, "forge_tags", "forge tag", errors)
     forge_tags = _named_manifest_entries(forge_tag_entries, "forge_tags", "forge tag", errors)
+    selected_forge = active_forge(forge)
+    if forge_tags and selected_forge not in forge_tags:
+        errors.append(("forge_tags", f"active forge `{selected_forge}` does not resolve in forge_tags"))
 
     for outcome_index, outcome_type in outcome_type_entries:
         name = outcome_type.get("name")
@@ -345,6 +365,7 @@ def _manifest_errors(manifest: dict[str, Any], root: Path) -> list[tuple[str, st
             )
 
     errors.extend(_manifest_mechanic_binding_errors(mechanic_entries, forge_tags, root))
+    errors.extend(_manifest_no_forge_leakage_errors(protocol_entries, root))
 
     return errors
 
@@ -366,13 +387,27 @@ def _manifest_mechanic_binding_errors(
             errors.append((f"mechanics/{mechanic_index}/forge_tags", "forge_tags must be an array"))
             continue
 
+        if isinstance(name, str):
+            for required_forge_tag in sorted(forge_tags):
+                if required_forge_tag not in declared_forge_tags:
+                    errors.append(
+                        (
+                            f"mechanics/{mechanic_index}/forge_tags",
+                            f"operation `{name}` does not declare supported forge `{required_forge_tag}`",
+                        )
+                    )
         for forge_tag_index, forge_tag in enumerate(declared_forge_tags):
             forge_tag_path = f"mechanics/{mechanic_index}/forge_tags/{forge_tag_index}"
             if not isinstance(forge_tag, str):
                 errors.append((forge_tag_path, "forge_tags member must be a string"))
                 continue
             if forge_tag not in forge_tags:
-                errors.append((forge_tag_path, f"forge tag `{forge_tag}` does not resolve in forge_tags"))
+                errors.append(
+                    (
+                        forge_tag_path,
+                        f"forge tag `{forge_tag}` does not resolve in forge_tags",
+                    )
+                )
                 continue
             if not isinstance(name, str):
                 continue
@@ -387,6 +422,44 @@ def _manifest_mechanic_binding_errors(
                     )
                 )
 
+    return errors
+
+
+def _manifest_no_forge_leakage_errors(
+    protocol_entries: list[tuple[int, dict[str, Any]]],
+    root: Path,
+) -> list[tuple[str, str]]:
+    errors: list[tuple[str, str]] = []
+    registered_protocols = {
+        protocol.get("name")
+        for _protocol_index, protocol in protocol_entries
+        if isinstance(protocol.get("name"), str)
+    }
+    workflow_contracts = root / "workflow-contracts"
+    protocol_bodies = root / "protocols"
+    for protocol_name in sorted(registered_protocols):
+        if not (workflow_contracts / f"{protocol_name}.toml").exists():
+            continue
+        for path in (
+            workflow_contracts / f"{protocol_name}.toml",
+            protocol_bodies / protocol_name / "PROTOCOL.md",
+        ):
+            if not path.exists():
+                continue
+            try:
+                text = path.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError) as error:
+                errors.append((str(path.relative_to(root)), f"cannot read migrated protocol target: {error}"))
+                continue
+            for pattern in _FORGE_LEAKAGE_PATTERNS:
+                if pattern.search(text):
+                    errors.append(
+                        (
+                            str(path.relative_to(root)),
+                            f"migrated protocol target contains forge-specific vocabulary `{pattern.pattern}`",
+                        )
+                    )
+                    break
     return errors
 
 

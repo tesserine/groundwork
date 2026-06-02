@@ -41,6 +41,17 @@ Revision delivery uses the invariant `revise` operation and then delivers the
 new proposal version. Both paths end in the same capstone: a
 `change-proposal` artifact.
 
+Before invoking a forge-touching operation, resolve it through the methodology
+resolver:
+
+```
+python -m tooling.forge_resolution resolve deliver-change-proposal
+```
+
+The resolver reads the active forge from `GROUNDWORK_FORGE` and returns the
+forge-specific C-3 mechanic to execute. If resolution does not yield exactly one
+mechanic, stop without producing a `change-proposal`.
+
 The protocol must not encode forge-specific delivery language. The artifact's
 `handle` carries the forge-tagged reference needed by downstream review and
 apply mechanics while the protocol remains at the WHAT layer.

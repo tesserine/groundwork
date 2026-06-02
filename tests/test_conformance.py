@@ -26,6 +26,25 @@ class ConformanceTests(unittest.TestCase):
 
             return run_conformance([manifest])
 
+    def write_mechanic(self, root: Path, forge_tag: str, name: str) -> Path:
+        mechanic = root / "mechanics" / forge_tag / f"{name}.toml"
+        mechanic.parent.mkdir(parents=True, exist_ok=True)
+        mechanic.write_text(
+            f"""
+name = "{name}"
+purpose = "{forge_tag} {name}"
+forge_tag = "{forge_tag}"
+default_invocation = "printf {forge_tag}-{name}"
+examples = ["printf {forge_tag}-{name}"]
+parameters = []
+
+[outcome]
+description = "{name} completed"
+""".lstrip(),
+            encoding="utf-8",
+        )
+        return mechanic
+
     def review_outcome_manifest(self, successor_trigger: str) -> str:
         return f"""
 name = "review-methodology"
@@ -482,6 +501,93 @@ forge_tags = ["github"]
             "mechanic binding `deliver-change-proposal` for forge tag `github` resolves to 2 C-3 mechanics",
             " ".join(results[0].errors),
         )
+
+    def test_cli_accepts_forge_override_for_standalone_conformance(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "manifest.toml").write_text(
+                """
+[[forge_tags]]
+name = "github"
+
+[[forge_tags]]
+name = "sourcehut"
+
+[[mechanics]]
+name = "deliver-change-proposal"
+forge_tags = ["github", "sourcehut"]
+""".lstrip(),
+                encoding="utf-8",
+            )
+            self.write_mechanic(root, "github", "deliver-change-proposal")
+            self.write_mechanic(root, "sourcehut", "deliver-change-proposal")
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                exit_code = main(["--forge", "sourcehut", str(root)])
+
+        self.assertEqual(0, exit_code)
+        self.assertIn("PASS C-5 manifest", stdout.getvalue())
+
+    def test_manifest_forge_matrix_requires_each_supported_forge_for_forge_touching_operations(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "manifest.toml"
+            manifest.write_text(
+                """
+[[forge_tags]]
+name = "github"
+
+[[forge_tags]]
+name = "sourcehut"
+
+[[mechanics]]
+name = "deliver-change-proposal"
+forge_tags = ["github"]
+""".lstrip(),
+                encoding="utf-8",
+            )
+            self.write_mechanic(root, "github", "deliver-change-proposal")
+
+            results = run_conformance([manifest])
+
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("operation `deliver-change-proposal` does not declare supported forge `sourcehut`", " ".join(results[0].errors))
+
+    def test_no_forge_leakage_scans_migrated_protocol_targets_by_extensible_rule(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "manifest.toml").write_text(
+                """
+[[artifact_types]]
+name = "completion-evidence"
+
+[[mechanics]]
+name = "read-artifact"
+
+[[protocols]]
+name = "land"
+""".lstrip(),
+                encoding="utf-8",
+            )
+            (root / "skills" / "orient").mkdir(parents=True)
+            contracts = root / "workflow-contracts"
+            contracts.mkdir()
+            (contracts / "land.toml").write_text(
+                (WORKFLOW_FIXTURES / "valid-linear.toml").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+            protocol = root / "protocols" / "land" / "PROTOCOL.md"
+            protocol.parent.mkdir(parents=True)
+            protocol.write_text("Land closes the issue with `gh issue close`.\n", encoding="utf-8")
+
+            results = run_conformance([root])
+
+        manifest_result = next(result for result in results if result.path == root / "manifest.toml")
+        self.assertFalse(manifest_result.passed)
+        self.assertIn("protocols/land/PROTOCOL.md", " ".join(manifest_result.errors))
+        self.assertIn("forge-specific vocabulary", " ".join(manifest_result.errors))
 
     def test_malformed_directory_manifest_does_not_abort_sibling_registry_checks(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

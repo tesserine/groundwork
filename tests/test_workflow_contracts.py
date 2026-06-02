@@ -255,6 +255,47 @@ name = "change-proposal"
 
         self.assertEqual("submit-smoke", contract["name"])
 
+    def test_registry_from_manifest_carries_active_forge_resolved_mechanics(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for forge_tag in ("github", "sourcehut"):
+                mechanic = root / "mechanics" / forge_tag / "deliver-change-proposal.toml"
+                mechanic.parent.mkdir(parents=True, exist_ok=True)
+                mechanic.write_text(
+                    f"""
+name = "deliver-change-proposal"
+purpose = "{forge_tag} delivery"
+forge_tag = "{forge_tag}"
+default_invocation = "printf {forge_tag}"
+examples = ["printf {forge_tag}"]
+parameters = []
+
+[outcome]
+description = "delivered"
+""".lstrip(),
+                    encoding="utf-8",
+                )
+            manifest = root / "manifest.toml"
+            manifest.write_text(
+                """
+[[forge_tags]]
+name = "github"
+
+[[forge_tags]]
+name = "sourcehut"
+
+[[mechanics]]
+name = "deliver-change-proposal"
+forge_tags = ["github", "sourcehut"]
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            registry = workflow_registry_from_manifest(manifest, root=root, forge="sourcehut")
+
+        self.assertEqual("sourcehut", registry.active_forge)
+        self.assertEqual("printf sourcehut", registry.resolved_mechanics["deliver-change-proposal"]["default_invocation"])
+
     def test_validate_workflow_contract_accepts_already_loaded_toml_data(self) -> None:
         contract = load_workflow_contract(self.fixture("valid-linear.toml"))
 
