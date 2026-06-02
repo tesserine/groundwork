@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -29,6 +30,136 @@ class MechanicRegistry:
     artifact_schemas: set[str] = field(default_factory=set)
     artifact_types: set[str] = field(default_factory=set)
     forge_tags: set[str] = field(default_factory=set)
+
+
+@dataclass(frozen=True)
+class ParameterizedInvocationContractGuard:
+    invocation: str
+
+    _bare_placeholder_pattern = re.compile(r"(?<![$^])\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)\}")
+    _name_start_pattern = re.compile(r"[A-Za-z_]")
+    _name_pattern = re.compile(r"[A-Za-z0-9_]")
+
+    def errors_for(self, parameters: list[dict[str, Any]]) -> list[tuple[str, str]]:
+        errors = [
+            (
+                "default_invocation",
+                f"bare brace placeholder `{{{match.group('name')}}}` uses textual substitution; "
+                "reference declared parameters as $name or ${name}",
+            )
+            for word in self._placeholder_scan_words()
+            for match in self._bare_placeholder_pattern.finditer(word)
+        ]
+        if errors:
+            return errors
+
+        for parameter_index, parameter in enumerate(parameters):
+            name = parameter["name"]
+            if not self.references_shell_parameter(name):
+                errors.append(
+                    (
+                        f"parameters/{parameter_index}/name",
+                        f"parameter `{name}` is not referenced as an expandable shell reference",
+                    )
+                )
+        return errors
+
+    def references_shell_parameter(self, name: str) -> bool:
+        return name in self._expandable_shell_reference_names()
+
+    def _expandable_shell_reference_names(self) -> set[str]:
+        names: set[str] = set()
+        quote: str | None = None
+        index = 0
+
+        while index < len(self.invocation):
+            char = self.invocation[index]
+
+            if quote == "'":
+                if char == "'":
+                    quote = None
+                index += 1
+                continue
+
+            if char == "\\":
+                if quote != '"' or self._double_quote_backslash_escapes(index):
+                    index += 2
+                else:
+                    index += 1
+                continue
+
+            if char == "'":
+                if quote is None:
+                    quote = "'"
+                index += 1
+                continue
+
+            if char == '"':
+                quote = None if quote == '"' else '"'
+                index += 1
+                continue
+
+            if char != "$":
+                index += 1
+                continue
+
+            name, consumed = self._shell_parameter_name_at(index + 1)
+            if name is not None:
+                names.add(name)
+            index += consumed + 1
+
+        return names
+
+    def _double_quote_backslash_escapes(self, index: int) -> bool:
+        next_index = index + 1
+        return next_index < len(self.invocation) and self.invocation[next_index] in {'$', "`", '"', "\\", "\n"}
+
+    def _shell_parameter_name_at(self, index: int) -> tuple[str | None, int]:
+        if index >= len(self.invocation):
+            return None, 0
+
+        if self.invocation[index] == "{":
+            name_start = index + 1
+            if name_start >= len(self.invocation) or self._name_start_pattern.fullmatch(self.invocation[name_start]) is None:
+                return None, 1
+
+            name_end = name_start + 1
+            while name_end < len(self.invocation) and self._name_pattern.fullmatch(self.invocation[name_end]) is not None:
+                name_end += 1
+            return self.invocation[name_start:name_end], name_end - index
+
+        if self._name_start_pattern.fullmatch(self.invocation[index]) is None:
+            return None, 0
+
+        name_end = index + 1
+        while name_end < len(self.invocation) and self._name_pattern.fullmatch(self.invocation[name_end]) is not None:
+            name_end += 1
+        return self.invocation[index:name_end], name_end - index
+
+    def _placeholder_scan_words(self) -> list[str]:
+        words = shlex.split(self.invocation, posix=True)
+        scanned: list[str] = []
+        command: str | None = None
+        skip_next_python_command_string = False
+
+        for word in words:
+            if skip_next_python_command_string:
+                skip_next_python_command_string = False
+                continue
+
+            if word in {"&&", "||", "|", ";"}:
+                command = None
+                scanned.append(word)
+                continue
+
+            if command is None:
+                command = Path(word).name
+            elif command.startswith("python") and word == "-c":
+                skip_next_python_command_string = True
+
+            scanned.append(word)
+
+        return scanned
 
 
 def load_mechanic(path: Path | str, registry: MechanicRegistry | None = None) -> dict[str, Any]:
@@ -70,32 +201,7 @@ def _schema_errors(mechanic: dict[str, Any]) -> list[tuple[str, str]]:
 
 
 def _invocation_errors(mechanic: dict[str, Any]) -> list[tuple[str, str]]:
-    invocation = mechanic["default_invocation"]
-    errors: list[tuple[str, str]] = []
-    for parameter_index, parameter in enumerate(mechanic["parameters"]):
-        name = parameter["name"]
-        if f"{{{name}}}" in invocation:
-            errors.append(
-                (
-                    "default_invocation",
-                    f"parameter `{name}` uses textual substitution; reference it as ${name} or ${{{name}}}",
-                )
-            )
-            continue
-        if not _references_shell_parameter(invocation, name):
-            errors.append(
-                (
-                    f"parameters/{parameter_index}/name",
-                    f"parameter `{name}` is not referenced as an expandable shell reference",
-                )
-            )
-    return errors
-
-
-def _references_shell_parameter(invocation: str, name: str) -> bool:
-    return re.search(rf"(?<![A-Za-z0-9_])\${re.escape(name)}(?![A-Za-z0-9_])", invocation) is not None or (
-        f"${{{name}}}" in invocation
-    )
+    return ParameterizedInvocationContractGuard(mechanic["default_invocation"]).errors_for(mechanic["parameters"])
 
 
 def _registry_errors(mechanic: dict[str, Any], registry: MechanicRegistry) -> list[tuple[str, str]]:

@@ -346,7 +346,7 @@ def _manifest_errors(manifest: dict[str, Any], root: Path) -> list[tuple[str, st
             )
 
     errors.extend(_manifest_mechanic_binding_errors(mechanic_entries, forge_tags, root))
-    errors.extend(_manifest_protocol_forge_leakage_errors(root))
+    errors.extend(_manifest_protocol_forge_leakage_errors(protocol_entries, root))
 
     return errors
 
@@ -364,15 +364,20 @@ FORGE_LEAKAGE_PATTERNS = [
 ]
 
 
-def _manifest_protocol_forge_leakage_errors(root: Path) -> list[tuple[str, str]]:
+def _manifest_protocol_forge_leakage_errors(
+    protocol_entries: list[tuple[int, dict[str, Any]]],
+    root: Path,
+) -> list[tuple[str, str]]:
     errors: list[tuple[str, str]] = []
-    contracts = root / "workflow-contracts"
     protocols = root / "protocols"
-    if not contracts.exists() or not protocols.exists():
+    if not protocols.exists():
         return []
 
-    for contract in sorted(contracts.glob("*.toml")):
-        protocol = protocols / contract.stem / "PROTOCOL.md"
+    for _protocol_index, protocol_entry in protocol_entries:
+        protocol_name = protocol_entry.get("name")
+        if not isinstance(protocol_name, str):
+            continue
+        protocol = protocols / protocol_name / "PROTOCOL.md"
         if not protocol.exists():
             continue
         try:

@@ -71,6 +71,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Mechanic invocation conformance now accepts both `$name` and `${name}` shell
+  references, rejects misspelled bare `{name}` placeholders, and supports
+  installed resolver execution by direct `tooling/mechanic_resolution.py` file
+  path.
 - SourceHut `deliver-change-proposal` and `reflect-disposition` now fail on
   GraphQL application-layer `errors` payloads returned with HTTP 200, and only
   accept delivery/reflection when the expected mutation `data` fields are

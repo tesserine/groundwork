@@ -3,10 +3,14 @@ from __future__ import annotations
 import argparse
 import os
 import subprocess
+import sys
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
+
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from tooling.artifact_schemas import registry_from_manifest
 from tooling.mechanics import load_mechanic

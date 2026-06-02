@@ -177,6 +177,38 @@ description = "Closed."
         self.assertEqual(0, status)
         self.assertEqual("mechanics/sourcehut/deliver-change-proposal.toml", stdout.getvalue().strip())
 
+    def test_cli_resolves_when_invoked_from_installed_bundle_by_file_path(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            installed = Path(directory) / "land"
+            installed.mkdir()
+            for name in ["manifest.toml", "mechanics", "schemas", "tooling"]:
+                source = ROOT / name
+                destination = installed / name
+                if source.is_dir():
+                    subprocess.run(["cp", "-R", str(source), str(destination)], check=True)
+                else:
+                    destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    "python",
+                    str(installed / "tooling" / "mechanic_resolution.py"),
+                    "resolve",
+                    "deliver-change-proposal",
+                    "--forge",
+                    "sourcehut",
+                    "--root",
+                    str(installed),
+                ],
+                cwd=Path(directory),
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("mechanics/sourcehut/deliver-change-proposal.toml", result.stdout.strip())
+
 
 if __name__ == "__main__":
     unittest.main()

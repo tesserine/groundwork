@@ -543,6 +543,36 @@ description = "Delivered."
         self.assertIn("parameters/0/name", " ".join(results[0].errors))
         self.assertIn("expandable shell reference", " ".join(results[0].errors))
 
+    def test_parameterized_invocation_guard_rejects_single_quoted_parameter_reference(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            mechanic = root / "mechanics" / "quoted.toml"
+            mechanic.parent.mkdir()
+            mechanic.write_text(
+                """
+name = "deliver-change-proposal"
+purpose = "Unsafe delivery."
+default_invocation = "printf '$branch'"
+examples = ["printf '$branch'"]
+
+[[parameters]]
+name = "branch"
+purpose = "Branch to push."
+required = true
+
+[outcome]
+description = "Delivered."
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([mechanic])
+
+        self.assertEqual("C-3 mechanic", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("parameters/0/name", " ".join(results[0].errors))
+        self.assertIn("expandable shell reference", " ".join(results[0].errors))
+
     def test_manifest_conformance_rejects_forge_leaking_registered_protocol_body(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -553,6 +583,9 @@ name = "local-methodology"
 
 [[mechanics]]
 name = "close-out"
+
+[[protocols]]
+name = "land"
 """.lstrip(),
                 encoding="utf-8",
             )
@@ -568,6 +601,30 @@ name = "close-out"
         self.assertEqual("C-5 manifest", results[0].category)
         self.assertFalse(results[0].passed)
         self.assertIn("protocols/land/PROTOCOL.md", " ".join(results[0].errors))
+        self.assertIn("forge-specific", " ".join(results[0].errors))
+
+    def test_parameterized_invocation_guard_scans_workflow_contractless_registered_protocols(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "manifest.toml"
+            manifest.write_text(
+                """
+name = "local-methodology"
+
+[[protocols]]
+name = "implement"
+""".lstrip(),
+                encoding="utf-8",
+            )
+            protocol = root / "protocols" / "implement" / "PROTOCOL.md"
+            protocol.parent.mkdir(parents=True)
+            protocol.write_text("# Implement\n\nRun `gh pr create` during implementation.\n", encoding="utf-8")
+
+            results = run_conformance([manifest])
+
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("protocols/implement/PROTOCOL.md", " ".join(results[0].errors))
         self.assertIn("forge-specific", " ".join(results[0].errors))
 
     def test_malformed_directory_manifest_does_not_abort_sibling_registry_checks(self) -> None:

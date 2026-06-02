@@ -139,6 +139,32 @@ class MechanicTests(unittest.TestCase):
 
         validate_mechanic(mechanic)
 
+    def test_parameterized_invocation_guard_accepts_expandable_shell_forms_and_rejects_bare_placeholders(self) -> None:
+        valid = {
+            "name": "publish",
+            "purpose": "Publish a branch.",
+            "default_invocation": 'git push "$remote" "${branch}_suffix"',
+            "parameters": [
+                {"name": "remote", "purpose": "Remote name.", "required": True},
+                {"name": "branch", "purpose": "Branch name.", "required": True},
+            ],
+            "outcome": {"description": "Published."},
+            "examples": ['git push "$remote" "${branch}_suffix"'],
+        }
+
+        validate_mechanic(valid)
+
+        invalid = {
+            **valid,
+            "default_invocation": 'gh pr create --repo {repository} "$branch"',
+        }
+
+        with self.assertRaises(MechanicError) as context:
+            validate_mechanic(invalid)
+
+        self.assertIn("default_invocation", context.exception.paths)
+        self.assertIn("bare brace placeholder `{repository}`", str(context.exception))
+
     def test_invalid_toml_reports_source_path(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "bad.toml"

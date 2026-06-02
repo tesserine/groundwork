@@ -140,7 +140,7 @@ Set up the repository-local workspace for the selected work.
 3. Resolve referenced work-units. Runa injects the active work-unit; when
    it references other work-units as dependencies or context, prefer runa's
    injected context. Where runa does not carry a referenced work-unit, fall
-   back to the tracker surface (`gh issue view`) if available.
+   back to the configured forge tracker surface if available.
 
 #### Phase 3: Claim — produce the session capstone
 
