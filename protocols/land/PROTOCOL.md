@@ -51,7 +51,10 @@ order:
 3. `close-out` records work-unit completion context.
 
 These operation names remain forge-invariant. Forge-specific mechanics may
-implement them, but the protocol does not prescribe those mechanics.
+implement them, but the protocol does not prescribe those mechanics. Resolve
+each operation through the `forge-operation` skill, which reads
+`GROUNDWORK_FORGE`, defaults to `github` when absent, and selects exactly one
+mechanic from the manifest matrix.
 
 ## Deliver `completion-record`
 

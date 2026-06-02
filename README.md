@@ -131,7 +131,24 @@ form or composite trigger.
 It also validates forge-tagged C-3 mechanic bindings. When a manifest
 `[[mechanics]]` entry declares `forge_tags = [...]`, each tag must resolve to
 `[[forge_tags]]` and exactly one `mechanics/**/*.toml` file whose `name` and
-`forge_tag` match that operation/tag pair.
+`forge_tag` match that operation/tag pair. Forge-tagged operation entries must
+cover every registered forge tag, and registered protocol bodies that reference
+forge-tagged operations are checked for forge-specific command leakage.
+
+## Forge Operation Resolution
+
+Agents resolve forge-invariant operations through the `forge-operation` skill:
+
+```bash
+python skills/forge-operation/groundwork-forge-operation resolve close-out
+python skills/forge-operation/groundwork-forge-operation render close-out --param name=value
+python skills/forge-operation/groundwork-forge-operation invoke close-out --param name=value
+```
+
+Resolution reads `GROUNDWORK_FORGE`, defaults to `github` when absent, and
+accepts `--forge` for standalone testing. Mechanics use `{{parameter}}`
+placeholders; ordinary single braces remain literal content for embedded JSON,
+GraphQL, and shell snippets.
 
 ## What Groundwork Believes
 

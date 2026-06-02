@@ -41,6 +41,11 @@ Revision delivery uses the invariant `revise` operation and then delivers the
 new proposal version. Both paths end in the same capstone: a
 `change-proposal` artifact.
 
+When invoking `deliver-change-proposal`, resolve the operation through the
+`forge-operation` skill. It reads the active forge from `GROUNDWORK_FORGE`,
+defaults to `github` when absent, and selects the forge-specific mechanic from
+the manifest matrix.
+
 The protocol must not encode forge-specific delivery language. The artifact's
 `handle` carries the forge-tagged reference needed by downstream review and
 apply mechanics while the protocol remains at the WHAT layer.

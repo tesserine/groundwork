@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -345,6 +346,7 @@ def _manifest_errors(manifest: dict[str, Any], root: Path) -> list[tuple[str, st
             )
 
     errors.extend(_manifest_mechanic_binding_errors(mechanic_entries, forge_tags, root))
+    errors.extend(_manifest_forge_leakage_errors(mechanic_entries, root))
 
     return errors
 
@@ -365,6 +367,16 @@ def _manifest_mechanic_binding_errors(
         if not isinstance(declared_forge_tags, list):
             errors.append((f"mechanics/{mechanic_index}/forge_tags", "forge_tags must be an array"))
             continue
+
+        declared_forge_tag_values = {forge_tag for forge_tag in declared_forge_tags if isinstance(forge_tag, str)}
+        if isinstance(name, str):
+            for missing_forge_tag in sorted(forge_tags - declared_forge_tag_values):
+                errors.append(
+                    (
+                        f"mechanics/{mechanic_index}/forge_tags",
+                        f"mechanic binding `{name}` does not declare forge tag `{missing_forge_tag}`",
+                    )
+                )
 
         for forge_tag_index, forge_tag in enumerate(declared_forge_tags):
             forge_tag_path = f"mechanics/{mechanic_index}/forge_tags/{forge_tag_index}"
@@ -405,6 +417,69 @@ def _c3_mechanic_bindings(directory: Path) -> list[tuple[str, str]]:
         if isinstance(name, str) and isinstance(forge_tag, str):
             bindings.append((name, forge_tag))
     return bindings
+
+
+def _manifest_forge_leakage_errors(
+    mechanic_entries: list[tuple[int, dict[str, Any]]],
+    root: Path,
+) -> list[tuple[str, str]]:
+    forge_operations = {
+        mechanic["name"]
+        for _mechanic_index, mechanic in mechanic_entries
+        if isinstance(mechanic.get("name"), str) and isinstance(mechanic.get("forge_tags"), list)
+    }
+    if not forge_operations:
+        return []
+
+    errors: list[tuple[str, str]] = []
+    for contract_path in sorted((root / "workflow-contracts").glob("*.toml")):
+        try:
+            contract = tomllib.loads(contract_path.read_text(encoding="utf-8"))
+        except (OSError, tomllib.TOMLDecodeError, UnicodeDecodeError):
+            continue
+        if not _contract_references_forge_operation(contract, forge_operations):
+            continue
+        protocol_name = contract.get("name")
+        if not isinstance(protocol_name, str):
+            continue
+        protocol_path = root / "protocols" / protocol_name / "PROTOCOL.md"
+        if not protocol_path.exists():
+            continue
+        try:
+            body = protocol_path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        for leak_name, pattern in _FORGE_LEAK_PATTERNS:
+            if pattern.search(body):
+                errors.append(
+                    (
+                        str(protocol_path.relative_to(root)),
+                        f"protocol body leaks forge-specific command `{leak_name}`",
+                    )
+                )
+    return errors
+
+
+def _contract_references_forge_operation(contract: dict[str, Any], forge_operations: set[str]) -> bool:
+    for node in contract.get("nodes", []):
+        if not isinstance(node, dict):
+            continue
+        mechanics = node.get("mechanics", [])
+        if isinstance(mechanics, list) and any(mechanic in forge_operations for mechanic in mechanics):
+            return True
+    return False
+
+
+_FORGE_LEAK_PATTERNS = [
+    ("gh issue", re.compile(r"\bgh\s+issue\b")),
+    ("gh pr", re.compile(r"\bgh\s+pr\b")),
+    ("github.com", re.compile(r"\bgithub[.]com\b")),
+    ("git.sr.ht", re.compile(r"\bgit[.]sr[.]ht\b")),
+    ("todo.sr.ht", re.compile(r"\btodo[.]sr[.]ht\b")),
+    ("lists.sr.ht", re.compile(r"\blists[.]sr[.]ht\b")),
+    ("create-pr", re.compile(r"\bcreate-pr\b")),
+    ("pr-merge", re.compile(r"\bpr-merge\b")),
+]
 
 
 def _named_manifest_entries(

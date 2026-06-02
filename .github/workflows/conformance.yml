@@ -1,0 +1,43 @@
+name: Conformance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "manifest.toml"
+      - "requirements-dev.txt"
+      - "schemas/**"
+      - "tooling/**"
+      - "workflow-contracts/**"
+      - "mechanics/**"
+      - "protocols/**"
+      - "skills/**"
+      - "tests/**"
+      - "scripts/groundwork-install"
+      - ".github/workflows/conformance.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  conformance:
+    name: Conformance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Run methodology conformance
+        run: python -m tooling.conformance
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -q

@@ -50,6 +50,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   resolves to the approved commit, and guards tree equality after plain
   `git am --3way`, and `reflect-disposition` records tracker-ticket state
   under `forge_tag = "sourcehut"`.
+- Runtime forge-operation resolution: the new `forge-operation` skill resolves
+  forge-invariant operations through `GROUNDWORK_FORGE` with `github` as the
+  default, renders `{{parameter}}` mechanic placeholders while preserving
+  literal braces, and is installed with a support bundle so interactive
+  sessions outside the checkout can resolve mechanics.
+- GitHub and SourceHut `close-out` C-3 mechanics now fill the reference arc
+  matrix and record work-unit completion context on their tracker surfaces.
 
 ### Changed
 
@@ -59,6 +66,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   only from `change-approved` while resolving the approved proposal by
   `(work_unit, against_version)`. The manifest-level `patch` artifact type and
   schema are retired (closes #340).
+- C-5 manifest conformance now enforces complete operation-by-forge matrices,
+  exact runtime resolution, and no forge-specific command leakage for registered
+  protocol bodies that reference forge-tagged operations (closes #350).
 
 ### Fixed
 

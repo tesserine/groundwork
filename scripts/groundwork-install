@@ -292,7 +292,23 @@ project_entry() {
     mv "$target/PROTOCOL.md" "$target/SKILL.md"
     insert_interactive_adapter "$target/SKILL.md" "$sha"
   fi
+  if [[ "$kind" == "skill" && "$name" == "forge-operation" ]]; then
+    project_forge_operation_support "$target" "$sha"
+  fi
   write_marker "$target/$MARKER" "$kind" "$name" "$sha"
+}
+
+project_forge_operation_support() {
+  local target="$1"
+  local sha="$2"
+  local support="$target/support"
+  mkdir -p "$support"
+  git -C "$source_path" show "$sha:manifest.toml" > "$support/manifest.toml" ||
+    die "source has no manifest.toml for forge-operation support"
+  git -C "$source_path" show "$sha:tooling/forge_operations.py" > "$support/forge_operations.py" ||
+    die "source has no tooling/forge_operations.py for forge-operation support"
+  mkdir -p "$support/mechanics"
+  git -C "$source_path" archive --format=tar "$sha:mechanics" | tar -xf - -C "$support/mechanics"
 }
 
 copy_entry() {

@@ -429,6 +429,35 @@ forge_tags = ["github"]
             " ".join(results[0].errors),
         )
 
+    def test_manifest_forge_tagged_mechanic_matrix_requires_every_registered_forge(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "manifest.toml"
+            manifest.write_text(
+                """
+[[forge_tags]]
+name = "github"
+
+[[forge_tags]]
+name = "sourcehut"
+
+[[mechanics]]
+name = "deliver-change-proposal"
+forge_tags = ["github"]
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([manifest])
+
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn(
+            "mechanic binding `deliver-change-proposal` does not declare forge tag `sourcehut`",
+            " ".join(results[0].errors),
+        )
+
     def test_manifest_forge_tagged_mechanic_binding_rejects_unknown_forge_tag(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -448,6 +477,81 @@ forge_tags = ["github"]
         self.assertEqual("C-5 manifest", results[0].category)
         self.assertFalse(results[0].passed)
         self.assertIn("forge tag `github` does not resolve in forge_tags", " ".join(results[0].errors))
+
+    def test_manifest_forge_invariance_rejects_leaking_registered_protocol_body(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "manifest.toml"
+            manifest.write_text(
+                """
+[[forge_tags]]
+name = "github"
+
+[[forge_tags]]
+name = "sourcehut"
+
+[[mechanics]]
+name = "close-out"
+forge_tags = ["github", "sourcehut"]
+""".lstrip(),
+                encoding="utf-8",
+            )
+            for forge_tag in ["github", "sourcehut"]:
+                mechanics = root / "mechanics" / forge_tag
+                mechanics.mkdir(parents=True, exist_ok=True)
+                (mechanics / "close-out.toml").write_text(
+                    f"""
+name = "close-out"
+purpose = "Close out on {forge_tag}."
+forge_tag = "{forge_tag}"
+default_invocation = "true"
+examples = ["true"]
+
+[outcome]
+description = "Closed."
+""".lstrip(),
+                    encoding="utf-8",
+                )
+            contracts = root / "workflow-contracts"
+            contracts.mkdir()
+            (contracts / "land.toml").write_text(
+                """
+name = "land"
+purpose = "Land."
+session_role = "release gate"
+preconditions = ["approval exists"]
+start_node = "close-out"
+failure_modes = ["close-out fails"]
+corruption_modes = ["forge leakage"]
+
+[[nodes]]
+name = "close-out"
+intent = "Close out."
+disciplines = []
+mechanics = ["close-out"]
+outcomes = ["closed"]
+
+[[edges]]
+from = "close-out"
+to = "completed"
+condition = { type = "always" }
+
+[[terminals]]
+name = "completed"
+outcome = "Completed."
+""".lstrip(),
+                encoding="utf-8",
+            )
+            protocol_dir = root / "protocols" / "land"
+            protocol_dir.mkdir(parents=True)
+            (protocol_dir / "PROTOCOL.md").write_text("# Land\n\nRun `gh issue close`.\n", encoding="utf-8")
+
+            results = run_conformance([manifest])
+
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("protocol body leaks forge-specific command `gh issue`", " ".join(results[0].errors))
 
     def test_manifest_forge_tagged_mechanic_binding_rejects_duplicate_c3_mechanics(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

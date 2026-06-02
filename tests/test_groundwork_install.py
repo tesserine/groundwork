@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import textwrap
 import unittest
@@ -265,6 +266,71 @@ class GroundworkInstallTests(unittest.TestCase):
                 with self.subTest(root=root, skill=skill):
                     self.assertNotIn(ADAPTER_BEGIN, body)
                     self.assertNotIn(ADAPTER_END, body)
+
+    def test_install_projects_forge_operation_support_bundle_for_installed_sessions(self) -> None:
+        fixture = self.add_fixture("forge-operation-support")
+        fixture.write(
+            "skills/forge-operation/SKILL.md",
+            """
+            ---
+            name: forge-operation
+            ---
+            # Forge Operation
+            """,
+        )
+        fixture.write(
+            "skills/forge-operation/groundwork-forge-operation",
+            """
+            import sys
+            from pathlib import Path
+
+            support = Path(__file__).resolve().parent / "support"
+            sys.path.insert(0, str(support))
+
+            from forge_operations import main
+
+            raise SystemExit(main())
+            """,
+        )
+        fixture.write(
+            "manifest.toml",
+            """
+            [[forge_tags]]
+            name = "github"
+
+            [[mechanics]]
+            name = "deliver-change-proposal"
+            forge_tags = ["github"]
+            """,
+        )
+        fixture.write(
+            "mechanics/github/deliver-change-proposal.toml",
+            """
+            name = "deliver-change-proposal"
+            purpose = "Deliver on GitHub."
+            forge_tag = "github"
+            default_invocation = "true"
+            examples = ["true"]
+
+            [outcome]
+            description = "Delivered."
+            """,
+        )
+        fixture.write("tooling/forge_operations.py", (ROOT / "tooling" / "forge_operations.py").read_text(encoding="utf-8"))
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        helper = install.target(".agents", "forge-operation") / "groundwork-forge-operation"
+        resolved = run(
+            [sys.executable, str(helper), "resolve", "deliver-change-proposal"],
+            install.home,
+        )
+        assert_success(self, resolved)
+        self.assertIn('"forge_tag": "github"', resolved.stdout)
+        self.assertTrue((install.target(".agents", "forge-operation") / "support" / "manifest.toml").is_file())
 
     def test_interactive_adapter_prose_carries_delivery_substitution_commitments(self) -> None:
         fixture = self.add_fixture("adapter-prose")
