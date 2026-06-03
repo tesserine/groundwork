@@ -171,16 +171,19 @@ surfaces. Full runa-native `decompose` — where work-units live as runa
 artifacts with tracker as an optional sync target — is separate future work.
 
 Deliver each `work-unit` artifact by invoking the `work-unit` MCP tool once
-per delivered artifact. For tracker-backed work-units, create the tracker
-ticket before invoking the `work-unit` MCP tool so the artifact can use the
-forge-assigned ticket identity. The object below is MCP tool input, not
-artifact body. `instance_id` is a tool parameter that names the artifact
-instance; it is extracted before validating artifact content, becomes the
-workspace filename, and must not appear in the artifact body. `work-unit` is a
-planning-phase artifact: the agent supplies the schema fields shown below, and
-runa does not inject `work_unit`. Work-unit artifact bodies have no top-level
-`work_unit` field and no forge-specific identity outside `handle`. Do not write
-the workspace JSON file directly.
+per delivered artifact. For tracker-backed work-units that decompose is newly
+creating, create the tracker ticket before invoking the `work-unit` MCP tool so
+the artifact can use the forge-assigned ticket identity. `create-ticket` is a
+first-delivery-only step: refinement never calls it, and decompose does not
+adopt a pre-existing tracker ticket into a new artifact. If a tracker ticket
+already exists, this delivery path must not create a second ticket for it. The
+object below is MCP tool input, not artifact body. `instance_id` is a tool
+parameter that names the artifact instance; it is extracted before validating
+artifact content, becomes the workspace filename, and must not appear in the
+artifact body. `work-unit` is a planning-phase artifact: the agent supplies the
+schema fields shown below, and runa does not inject `work_unit`. Work-unit
+artifact bodies have no top-level `work_unit` field and no forge-specific
+identity outside `handle`. Do not write the workspace JSON file directly.
 
 Use a fresh `instance_id` when creating a new work-unit. Reuse the existing
 `instance_id` when refining an already-delivered work-unit artifact so artifact
@@ -190,9 +193,12 @@ delivery then uses `work-unit-<N>-<short-slug>`, where `<N>` is the
 forge-assigned ticket number, and must populate `handle` exactly once from the
 identity returned by `create-ticket`. Non-tracker work-units omit `handle` and
 first delivery uses `<short-slug>` directly. Subsequent updates reuse the
-`instance_id` established at first delivery. In this section, "refining an
-existing work-unit" means refining an existing artifact, not merely refining a
-tracker item.
+`instance_id` established at first delivery. If the artifact is tracker-backed,
+subsequent updates also carry the existing `handle` through unchanged from the
+previously delivered artifact body. Do not call `create-ticket`, re-derive
+`handle`, or omit `handle` during refinement; MCP delivery persists the
+submitted body. In this section, "refining an existing work-unit" means
+refining an existing artifact, not merely refining a tracker item.
 
 For new tracker-backed work-units produced by `create-work-unit` or
 `decompose-epic`:
@@ -239,7 +245,12 @@ work-unit({
   acceptance_criteria: ["..."],
   scope: ["decompose delivery", "take framing"],
   out_of_scope: ["submit protocol", "land protocol"],
-  dependencies: ["work-unit-122-artifact-store-cleanup"]
+  dependencies: ["work-unit-122-artifact-store-cleanup"],
+  handle: {
+    forge_tag: "github",
+    url: "<existing issue URL from the delivered artifact handle>",
+    number: 123
+  }
 })
 ```
 
