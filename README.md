@@ -127,6 +127,15 @@ directly from their atoms. For GitHub, it derives `repository` as
 `<owner>/<name>`. The atoms are the only deployment facts; composed endpoints
 and remotes are not separate configuration values.
 
+The cross-repo seam for this ticket identity is documented in
+[`docs/architecture/connecting-structure.md`](docs/architecture/connecting-structure.md#phase-2-forge-tagging-seam).
+Groundwork owns the schema-as-contract shape of `work-unit.handle`, the
+mechanics that produce handles from active deployment identity, and the
+decompose delivery rules. runa owns scoped runtime enforcement: exact recorded
+`--work-unit` ids, tracker-handle consistency, duplicate-root rejection, and
+active deployment agreement. Cross-deployment work is composed from separate
+sessions; a handle never overrides the active deployment.
+
 The source checkout must be clean and pinned at a tag or full commit SHA. The
 command refuses branch checkouts because a branch is a moving source. To update
 to a different pinned Groundwork version, check out that ref and run:
