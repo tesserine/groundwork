@@ -26,11 +26,25 @@ a forge-tagged handle. The review disposition is the produced outcome type:
 `change-approved` cannot carry blocking findings, and `change-needs-revision`
 must carry at least one blocking finding.
 
-Change-proposal handle forge tags and mechanic-authored `forge_tag` values
-resolve against the declarative `[[forge_tags]]` registry in `manifest.toml`.
+`work-unit.schema.json` is the planning-to-execution bridge. It remains
+forge-neutral and unpartitioned: tracker-backed units may carry an optional
+forge-tagged ticket `handle`, while non-tracker units omit `handle`, and
+planning-phase work-unit bodies do not carry a top-level `work_unit` field.
+Supported ticket handles are GitHub issue handles
+`{ forge_tag, url, number }` and SourceHut ticket handles
+`{ forge_tag, tracker_id, number }`; Groundwork artifact validation enforces
+registry membership and GitHub URL/number agreement.
+
+Change-proposal and work-unit handle forge tags, plus mechanic-authored
+`forge_tag` values, resolve against the declarative `[[forge_tags]]` registry
+in `manifest.toml`.
 Manifest `[[mechanics]]` entries may declare `forge_tags = [...]` to bind an
 operation handle to forge-specific C-3 mechanics; conformance requires exactly
 one matching `mechanics/**/*.toml` file for each declared operation/tag pair.
+
+Downstream consumers that build against a Groundwork schema contract pin a
+release tag or the merged full commit SHA. They do not pin a branch name or
+pre-merge ref.
 
 `request.schema.json` is different: it is a vendored copy of the canonical
 request contract maintained by `tesserine/commons`. Groundwork keeps the runtime

@@ -1,0 +1,12 @@
+{
+  "title": "Reject mismatched GitHub work-unit handle",
+  "description": "GitHub work-unit handle URL and number must agree",
+  "acceptance_criteria": [
+    "GitHub URL and number mismatches are rejected"
+  ],
+  "handle": {
+    "forge_tag": "github",
+    "url": "https://github.com/tesserine/groundwork/issues/367",
+    "number": 368
+  }
+}

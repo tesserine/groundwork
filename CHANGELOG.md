@@ -61,6 +61,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `groundwork-mechanic` now supplies those parameters from `GROUNDWORK_*` atoms
   while deriving SourceHut endpoints/remotes and GitHub repository identity
   without call-site deployment bindings (closes #362).
+- Work-unit ticket handle contract: `work-unit` artifacts now accept an
+  optional forge-tagged tracker `handle` for GitHub issues and SourceHut
+  tickets, while preserving no-handle non-tracker units and rejecting scoped
+  top-level `work_unit` fields, malformed variants, unknown forge tags, and
+  GitHub URL/number mismatches (closes #368).
 
 ### Changed
 

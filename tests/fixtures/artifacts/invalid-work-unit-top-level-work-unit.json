@@ -1,0 +1,8 @@
+{
+  "work_unit": "issue-368",
+  "title": "Add work-unit handle contract",
+  "description": "Planning-phase work-unit artifacts must not carry a scoped work_unit field",
+  "acceptance_criteria": [
+    "Top-level work_unit is rejected"
+  ]
+}

@@ -89,6 +89,52 @@ class ArtifactSchemaTests(unittest.TestCase):
         self.assertIn("handle/forge_tag", context.exception.paths)
         self.assertIn("forge tag `sourcehut` does not resolve in registry", str(context.exception))
 
+    def test_work_unit_schema_accepts_optional_forge_ticket_handles(self) -> None:
+        for name in [
+            "valid-work-unit.json",
+            "valid-work-unit-github-handle.json",
+            "valid-work-unit-sourcehut-handle.json",
+        ]:
+            with self.subTest(fixture=name):
+                artifact = load_artifact("work-unit", self.fixture(name), registry=registry_from_manifest())
+
+                if "handle" in artifact:
+                    self.assertIn(artifact["handle"]["forge_tag"], {"github", "sourcehut"})
+
+    def test_work_unit_schema_rejects_top_level_work_unit_field(self) -> None:
+        with self.assertRaises(ArtifactSchemaError) as context:
+            load_artifact("work-unit", self.fixture("invalid-work-unit-top-level-work-unit.json"))
+
+        self.assertIn("<root>", context.exception.paths)
+
+    def test_work_unit_schema_rejects_wrong_handle_variant_for_tag(self) -> None:
+        with self.assertRaises(ArtifactSchemaError) as context:
+            load_artifact("work-unit", self.fixture("invalid-work-unit-wrong-handle-variant.json"))
+
+        self.assertIn("handle", context.exception.paths)
+
+    def test_work_unit_schema_rejects_malformed_handle(self) -> None:
+        with self.assertRaises(ArtifactSchemaError) as context:
+            load_artifact("work-unit", self.fixture("invalid-work-unit-malformed-handle.json"))
+
+        self.assertIn("handle", context.exception.paths)
+
+    def test_work_unit_schema_rejects_github_url_number_mismatch(self) -> None:
+        with self.assertRaises(ArtifactSchemaError) as context:
+            load_artifact("work-unit", self.fixture("invalid-work-unit-github-url-number-mismatch.json"))
+
+        self.assertIn("handle/url", context.exception.paths)
+        self.assertIn("does not agree with handle number", str(context.exception))
+
+    def test_work_unit_forge_tag_rejects_unknown_registry_value(self) -> None:
+        registry = MechanicRegistry(forge_tags={"github"})
+
+        with self.assertRaises(ArtifactSchemaError) as context:
+            load_artifact("work-unit", self.fixture("valid-work-unit-sourcehut-handle.json"), registry=registry)
+
+        self.assertIn("handle/forge_tag", context.exception.paths)
+        self.assertIn("forge tag `sourcehut` does not resolve in registry", str(context.exception))
+
     def test_change_needs_revision_schema_accepts_structured_findings(self) -> None:
         artifact = load_artifact("change-needs-revision", self.fixture("valid-change-needs-revision.json"))
 
