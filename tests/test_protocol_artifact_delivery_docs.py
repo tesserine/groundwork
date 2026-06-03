@@ -18,6 +18,10 @@ def normalized_protocol(name: str) -> str:
     return re.sub(r"\s+", " ", text)
 
 
+def protocol_text(name: str) -> str:
+    return (PROTOCOLS_DIR / name / "PROTOCOL.md").read_text(encoding="utf-8")
+
+
 class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
     def test_all_artifact_producing_protocols_explain_mcp_tool_input_boundary(self) -> None:
         producers = [protocol for protocol in manifest_protocols() if protocol["produces"]]
@@ -82,6 +86,49 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
                     validation_sentence.group(0),
                 )
                 self.assertNotIn("validates the payload against", validation_sentence.group(0))
+
+    def test_decompose_delivery_docs_preserve_ticket_backed_work_unit_identity_rules(self) -> None:
+        body = normalized_protocol("decompose")
+
+        for expected in [
+            "For tracker-backed work-units that decompose is newly creating, create the tracker ticket before invoking the `work-unit` MCP tool",
+            "`create-ticket` is a first-delivery-only step",
+            "refinement never calls it",
+            "decompose does not adopt a pre-existing tracker ticket into a new artifact",
+            "must not create a second ticket",
+            "`work-unit-<N>-<short-slug>`, where `<N>` is the forge-assigned ticket number",
+            "populate `handle` exactly once from the identity returned by `create-ticket`",
+            "carry the existing `handle` through unchanged",
+            "Do not call `create-ticket`, re-derive `handle`, or omit `handle` during refinement",
+            "Non-tracker work-units omit `handle`",
+            "no top-level `work_unit` field",
+            "no forge-specific identity outside `handle`",
+            "Dependency references must use canonical delivered work-unit `instance_id` values",
+            "not tracker shorthand such as `#123`, `123`, `work-unit-123`, or `issue-123`",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, body)
+
+    def test_decompose_refine_work_unit_example_carries_existing_handle(self) -> None:
+        body = protocol_text("decompose")
+        match = re.search(
+            r"For refinements produced by `refine-work-unit`:\n\n```(?P<example>.*?)```",
+            body,
+            flags=re.DOTALL,
+        )
+
+        self.assertIsNotNone(match)
+        example = match.group("example")
+
+        for expected in [
+            'instance_id: "<existing-instance-id>"',
+            "handle: {",
+            'forge_tag: "github"',
+            'url: "<existing issue URL from the delivered artifact handle>"',
+            "number: 123",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, example)
 
 
 if __name__ == "__main__":

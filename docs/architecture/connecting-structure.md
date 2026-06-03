@@ -938,15 +938,18 @@ how to know it's done, and whether it's ready to start.
 | out_of_scope | array of strings | no | Explicit nearby exclusions |
 | dependencies | array of work-unit refs | no | Work-units that must be complete before this starts, referenced by `instance_id` |
 
-Tracker-backed work-units use `instance_id` convention
-`work-unit-<N>-<short-slug>` on first delivery; work-units without tracker
-linkage use `<short-slug>`. Dependency references use those exact
-`instance_id` values.
+Tracker-backed work-units create the forge ticket before first delivery and
+use `instance_id` convention `work-unit-<N>-<short-slug>`, where `<N>` is the
+forge-assigned ticket number. Work-units without tracker linkage use
+`<short-slug>`. Dependency references use those exact `instance_id` values,
+not tracker shorthand.
 
-Tracker-backed work-units may also carry an optional forge-tagged ticket
-`handle`; non-tracker work-units omit it. The body remains unpartitioned and
-does not carry a top-level `work_unit` field. GitHub handles name an issue URL
-and number; SourceHut handles name a tracker ID and ticket number.
+Tracker-backed work-units populate `handle` exactly once from the
+forge-assigned ticket identity returned by `create-ticket`; non-tracker
+work-units omit it. The body remains unpartitioned and does not carry a
+top-level `work_unit` field or forge-specific identity outside `handle`.
+GitHub handles name an issue URL and number; SourceHut handles name a tracker
+ID and ticket number.
 
 ### Traceability Thread
 
