@@ -66,6 +66,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   tickets, while preserving no-handle non-tracker units and rejecting scoped
   top-level `work_unit` fields, malformed variants, unknown forge tags, and
   GitHub URL/number mismatches (closes #368).
+- Early-arc forge ticket mechanics: `create-ticket`, `read-ticket`,
+  `claim-work-unit`, and `record-progress` now resolve for both GitHub and
+  SourceHut, derive repository/tracker identity from `GROUNDWORK_*`
+  deployment atoms, validate expected API/GraphQL result fields, and expose
+  forge-assigned ticket identities for schema-conforming work-unit handles
+  (closes #369).
 
 ### Changed
 
@@ -78,6 +84,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- SourceHut `read-ticket` now resolves the active tracker through the live
+  todo GraphQL `user(username: ...) { tracker(name: ...) }` path instead of
+  passing the numeric deployment tracker id to `tracker(rid: ...)`.
 - SourceHut deployment-value resolution now consults each mechanic's declared
   `deployment_value` keys before reading environment atoms, so tracker-only
   operations do not require unrelated repo identity atoms.

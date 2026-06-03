@@ -75,6 +75,8 @@
           "type": "string",
           "enum": [
             "repository",
+            "owner",
+            "name",
             "todo_query_url",
             "git_query_url",
             "ssh_remote",

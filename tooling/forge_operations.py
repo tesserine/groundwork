@@ -55,12 +55,13 @@ def inspect_invocation(mechanic: Mapping[str, Any], values: Mapping[str, str]) -
 
 def render_shell_invocation(mechanic: Mapping[str, Any], values: Mapping[str, str]) -> tuple[str, dict[str, str]]:
     parameters = _parameters(mechanic)
-    deployment_values = _deployment_parameter_values(mechanic, os.environ)
-    provided_deployment_values = sorted(set(values) & set(deployment_values))
+    deployment_parameters = _deployment_parameters(mechanic)
+    provided_deployment_values = sorted(set(values) & set(deployment_parameters))
     if provided_deployment_values:
         raise ForgeOperationError(
             f"deployment-resolved parameter(s) must come from GROUNDWORK_*: {', '.join(provided_deployment_values)}"
         )
+    deployment_values = _deployment_parameter_values(mechanic, os.environ)
     resolved_values = {**values, **deployment_values}
     missing = [name for name, parameter in parameters.items() if parameter.get("required") and name not in resolved_values]
     if missing:
@@ -227,6 +228,10 @@ def _resolve_deployment_value(
     environment: Mapping[str, str],
 ) -> str:
     if forge_type == "github":
+        if deployment_value == "owner":
+            return _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
+        if deployment_value == "name":
+            return _required_environment(environment, "GROUNDWORK_FORGE_NAME")
         if deployment_value == "repository":
             owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
             name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")
@@ -235,6 +240,10 @@ def _resolve_deployment_value(
             f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`"
         )
     if forge_type == "sourcehut":
+        if deployment_value == "owner":
+            return _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
+        if deployment_value == "name":
+            return _required_environment(environment, "GROUNDWORK_FORGE_NAME")
         if deployment_value == "repository":
             owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
             name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")

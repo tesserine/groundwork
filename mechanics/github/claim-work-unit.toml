@@ -1,0 +1,26 @@
+name = "claim-work-unit"
+purpose = "Claim a GitHub work-unit issue by assigning it in the active repository."
+forge_tag = "github"
+default_invocation = '''response=$(mktemp) && trap 'rm -f "$response"' EXIT && gh api "repos/${repository}/issues/${ticket_number}" --method PATCH -F "assignees[]=${assignee}" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); url=payload.get("html_url"); number=payload.get("number"); sys.exit("GitHub claim-work-unit API response contained errors or omitted html_url/number") if "errors" in payload or not isinstance(url, str) or not url or not isinstance(number, int) else print(json.dumps({"handle":{"forge_tag":"github","url":url,"number":number}}, separators=(",", ":")))' "$response"'''
+examples = [
+  'gh api repos/tesserine/groundwork/issues/369 --method PATCH -F assignees[]=operator',
+]
+
+[[parameters]]
+name = "repository"
+purpose = "GitHub repository in OWNER/REPO form."
+required = true
+deployment_value = "repository"
+
+[[parameters]]
+name = "ticket_number"
+purpose = "GitHub issue number to claim."
+required = true
+
+[[parameters]]
+name = "assignee"
+purpose = "GitHub login to assign to the issue."
+required = true
+
+[outcome]
+description = "The GitHub issue is assigned and the updated issue identity is returned."
