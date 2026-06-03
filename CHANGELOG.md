@@ -72,6 +72,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   deployment atoms, validate expected API/GraphQL result fields, and expose
   forge-assigned ticket identities for schema-conforming work-unit handles
   (closes #369).
+- Ticket-backed decompose delivery: tracker-backed work-units now create the
+  tracker ticket before artifact delivery, use ticket-derived
+  `work-unit-<N>-<short-slug>` instance ids, populate `handle` from the
+  returned forge identity, and preserve unchanged bare-slug/no-handle delivery
+  for non-tracker work-units (closes #370).
 
 ### Changed
 

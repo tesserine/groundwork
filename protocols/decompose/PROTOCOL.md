@@ -171,26 +171,31 @@ surfaces. Full runa-native `decompose` — where work-units live as runa
 artifacts with tracker as an optional sync target — is separate future work.
 
 Deliver each `work-unit` artifact by invoking the `work-unit` MCP tool once
-per delivered artifact. The object below is MCP tool input, not artifact body.
-`instance_id` is a tool parameter that names the artifact instance; it is
-extracted before validating artifact content, becomes the workspace filename,
-and must not appear in the artifact body. `work-unit` is a planning-phase
-artifact: the agent supplies the schema fields shown below, and runa does not
-inject `work_unit`. Do not write the workspace JSON file directly.
+per delivered artifact. For tracker-backed work-units, create the tracker
+ticket before invoking the `work-unit` MCP tool so the artifact can use the
+forge-assigned ticket identity. The object below is MCP tool input, not
+artifact body. `instance_id` is a tool parameter that names the artifact
+instance; it is extracted before validating artifact content, becomes the
+workspace filename, and must not appear in the artifact body. `work-unit` is a
+planning-phase artifact: the agent supplies the schema fields shown below, and
+runa does not inject `work_unit`. Work-unit artifact bodies have no top-level
+`work_unit` field and no forge-specific identity outside `handle`. Do not write
+the workspace JSON file directly.
 
-Use a fresh `instance_id` when creating a new
-work-unit. Reuse the existing `instance_id` when refining an already-delivered
-work-unit artifact so artifact identity and inbound dependency references
-remain stable. For a work-unit that exists in the tracker but has not
-previously been delivered through this MCP flow, the first MCP delivery
-uses the reversible tracker-backed convention
-`work-unit-<N>-<short-slug>`, where `<N>` is the tracker identifier. For a
-work-unit with no tracker linkage, first delivery uses `<short-slug>` directly.
-Subsequent updates reuse the `instance_id` established at first delivery. In
-this section, "refining an existing work-unit" means refining an existing
-artifact, not merely refining a tracker item.
+Use a fresh `instance_id` when creating a new work-unit. Reuse the existing
+`instance_id` when refining an already-delivered work-unit artifact so artifact
+identity and inbound dependency references remain stable. A new tracker-backed
+work-unit first calls the active forge's `create-ticket` mechanic. First MCP
+delivery then uses `work-unit-<N>-<short-slug>`, where `<N>` is the
+forge-assigned ticket number, and must populate `handle` exactly once from the
+identity returned by `create-ticket`. Non-tracker work-units omit `handle` and
+first delivery uses `<short-slug>` directly. Subsequent updates reuse the
+`instance_id` established at first delivery. In this section, "refining an
+existing work-unit" means refining an existing artifact, not merely refining a
+tracker item.
 
-For new work-units produced by `create-work-unit` or `decompose-epic`:
+For new tracker-backed work-units produced by `create-work-unit` or
+`decompose-epic`:
 
 ```
 work-unit({
@@ -200,7 +205,27 @@ work-unit({
   acceptance_criteria: ["..."],
   scope: ["decompose delivery", "take framing"],
   out_of_scope: ["submit protocol", "land protocol"],
-  dependencies: ["work-unit-122-artifact-store-cleanup"]
+  dependencies: ["work-unit-122-artifact-store-cleanup"],
+  handle: {
+    forge_tag: "github",
+    url: "<issue URL returned by create-ticket>",
+    number: 123
+  }
+})
+```
+
+For new non-tracker work-units produced by `create-work-unit` or
+`decompose-epic`:
+
+```
+work-unit({
+  instance_id: "pipeline-refactor",
+  title: "<type(scope): what>",
+  description: "<what needs doing and why>",
+  acceptance_criteria: ["..."],
+  scope: ["decompose delivery", "take framing"],
+  out_of_scope: ["submit protocol", "land protocol"],
+  dependencies: ["artifact-store-cleanup"]
 })
 ```
 
@@ -225,13 +250,11 @@ one.
 Runa validates the remaining artifact body fields against the `work-unit`
 schema, persists the artifact under the given `instance_id`, and records it in
 the artifact store.
-The `dependencies` field takes the target work-units' exact `instance_id`
-values, not tracker references such as `#123`. For tracker-backed
-dependencies, first delivery uses the same reversible
-`work-unit-<N>-<short-slug>` convention, so later sessions can recover the
-tracker identifier directly from the artifact identifier without maintaining a
-separate mapping. For non-tracker-backed dependencies, use the dependency's
-bare `<short-slug>` `instance_id`.
+Dependency references must use canonical delivered work-unit `instance_id`
+values, not tracker shorthand such as `#123`, `123`, `work-unit-123`, or
+`issue-123`. For tracker-backed dependencies, first delivery uses the same
+`work-unit-<N>-<short-slug>` convention. For non-tracker-backed dependencies,
+use the dependency's bare `<short-slug>` `instance_id`.
 
 ## Triggers
 

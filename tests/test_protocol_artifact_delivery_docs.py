@@ -83,6 +83,22 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
                 )
                 self.assertNotIn("validates the payload against", validation_sentence.group(0))
 
+    def test_decompose_delivery_docs_preserve_ticket_backed_work_unit_identity_rules(self) -> None:
+        body = normalized_protocol("decompose")
+
+        for expected in [
+            "create the tracker ticket before invoking the `work-unit` MCP tool",
+            "`work-unit-<N>-<short-slug>`, where `<N>` is the forge-assigned ticket number",
+            "populate `handle` exactly once from the identity returned by `create-ticket`",
+            "Non-tracker work-units omit `handle`",
+            "no top-level `work_unit` field",
+            "no forge-specific identity outside `handle`",
+            "Dependency references must use canonical delivered work-unit `instance_id` values",
+            "not tracker shorthand such as `#123`, `123`, `work-unit-123`, or `issue-123`",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, body)
+
 
 if __name__ == "__main__":
     unittest.main()
