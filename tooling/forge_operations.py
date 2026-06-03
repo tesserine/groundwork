@@ -55,13 +55,20 @@ def inspect_invocation(mechanic: Mapping[str, Any], values: Mapping[str, str]) -
 
 def render_shell_invocation(mechanic: Mapping[str, Any], values: Mapping[str, str]) -> tuple[str, dict[str, str]]:
     parameters = _parameters(mechanic)
-    missing = [name for name, parameter in parameters.items() if parameter.get("required") and name not in values]
+    deployment_values = _deployment_parameter_values(mechanic, os.environ)
+    provided_deployment_values = sorted(set(values) & set(deployment_values))
+    if provided_deployment_values:
+        raise ForgeOperationError(
+            f"deployment-resolved parameter(s) must come from GROUNDWORK_*: {', '.join(provided_deployment_values)}"
+        )
+    resolved_values = {**values, **deployment_values}
+    missing = [name for name, parameter in parameters.items() if parameter.get("required") and name not in resolved_values]
     if missing:
         raise ForgeOperationError(f"missing required parameter(s): {', '.join(sorted(missing))}")
-    unknown = sorted(set(values) - set(parameters))
+    unknown = sorted(set(resolved_values) - set(parameters))
     if unknown:
         raise ForgeOperationError(f"unknown parameter(s): {', '.join(unknown)}")
-    return _invocation_body(mechanic), {name: str(value) for name, value in values.items()}
+    return _invocation_body(mechanic), {name: str(value) for name, value in resolved_values.items()}
 
 
 def run_invocation(
@@ -176,6 +183,88 @@ def _parameters(mechanic: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
 
 def _secret_parameters(mechanic: Mapping[str, Any]) -> set[str]:
     return {name for name, parameter in _parameters(mechanic).items() if parameter.get("secret") is True}
+
+
+def _deployment_parameters(mechanic: Mapping[str, Any]) -> dict[str, str]:
+    return {
+        name: str(parameter["deployment_value"])
+        for name, parameter in _parameters(mechanic).items()
+        if isinstance(parameter.get("deployment_value"), str)
+    }
+
+
+def _deployment_parameter_values(
+    mechanic: Mapping[str, Any],
+    environment: Mapping[str, str],
+) -> dict[str, str]:
+    deployments = _deployment_parameters(mechanic)
+    if not deployments:
+        return {}
+    forge_type = mechanic.get("forge_tag")
+    if not isinstance(forge_type, str):
+        raise ForgeOperationError("deployment-resolved parameters require mechanic forge_tag")
+    resolved = _resolved_deployment_values(forge_type, set(deployments.values()), environment)
+    values: dict[str, str] = {}
+    for name, deployment_value in deployments.items():
+        values[name] = resolved[deployment_value]
+    return values
+
+
+def _resolved_deployment_values(
+    forge_type: str,
+    deployment_values: set[str],
+    environment: Mapping[str, str],
+) -> dict[str, str]:
+    return {
+        deployment_value: _resolve_deployment_value(forge_type, deployment_value, environment)
+        for deployment_value in deployment_values
+    }
+
+
+def _resolve_deployment_value(
+    forge_type: str,
+    deployment_value: str,
+    environment: Mapping[str, str],
+) -> str:
+    if forge_type == "github":
+        if deployment_value == "repository":
+            owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
+            name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")
+            return f"{owner}/{name}"
+        raise ForgeOperationError(
+            f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`"
+        )
+    if forge_type == "sourcehut":
+        if deployment_value == "repository":
+            owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
+            name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")
+            return f"{owner}/{name}"
+        if deployment_value == "todo_query_url":
+            endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
+            return f"https://todo.{endpoint}/query"
+        if deployment_value == "git_query_url":
+            endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
+            return f"https://git.{endpoint}/query"
+        if deployment_value == "ssh_remote":
+            endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
+            owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
+            name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")
+            return f"git@git.{endpoint}:~{owner}/{name}"
+        if deployment_value == "tracker_id":
+            return _required_environment(environment, "GROUNDWORK_FORGE_TRACKER_ID")
+        if deployment_value == "repo_id":
+            return _required_environment(environment, "GROUNDWORK_FORGE_REPO_ID")
+        raise ForgeOperationError(
+            f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`"
+        )
+    raise ForgeOperationError(f"forge type `{forge_type}` does not support deployment identity")
+
+
+def _required_environment(environment: Mapping[str, str], name: str) -> str:
+    value = environment.get(name)
+    if value is None or value == "":
+        raise ForgeOperationError(f"missing required deployment identity atom `{name}`")
+    return value
 
 
 def _invocation_body(mechanic: Mapping[str, Any]) -> str:

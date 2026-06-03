@@ -49,6 +49,49 @@ class MechanicTests(unittest.TestCase):
 
         validate_mechanic(mechanic)
 
+    def test_schema_accepts_deployment_value_parameter_metadata(self) -> None:
+        mechanic = {
+            "name": "sourcehut-upload",
+            "purpose": "Upload to a configured forge repository.",
+            "default_invocation": 'printf "%s\\n" "$repo_number"',
+            "examples": ['printf "%s\\n" "$repo_number"'],
+            "parameters": [
+                {
+                    "name": "repo_number",
+                    "purpose": "Configured forge repository ID.",
+                    "required": True,
+                    "deployment_value": "repo_id",
+                }
+            ],
+            "outcome": {"description": "Printed."},
+        }
+
+        validate_mechanic(mechanic)
+
+    def test_schema_rejects_secret_deployment_value_parameter_conflict(self) -> None:
+        mechanic = {
+            "name": "sourcehut-upload",
+            "purpose": "Upload to a configured forge repository.",
+            "default_invocation": 'printf "%s\\n" "$repo_number"',
+            "examples": ['printf "%s\\n" "$repo_number"'],
+            "parameters": [
+                {
+                    "name": "repo_number",
+                    "purpose": "Configured forge repository ID.",
+                    "required": True,
+                    "secret": True,
+                    "deployment_value": "repo_id",
+                }
+            ],
+            "outcome": {"description": "Printed."},
+        }
+
+        with self.assertRaises(MechanicError) as context:
+            validate_mechanic(mechanic)
+
+        self.assertIn("parameters/0/deployment_value", context.exception.paths)
+        self.assertIn("must not also be secret", str(context.exception))
+
     def test_invocation_rejects_bare_placeholder_parameters(self) -> None:
         mechanic = {
             "name": "git-push",

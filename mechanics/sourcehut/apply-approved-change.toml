@@ -35,6 +35,7 @@ required = true
 name = "ssh_remote"
 purpose = "SourceHut Git SSH remote used to fetch the proposal ref and push the applied target ref."
 required = true
+deployment_value = "ssh_remote"
 
 [[parameters]]
 name = "target_ref"

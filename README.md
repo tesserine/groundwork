@@ -94,6 +94,28 @@ than from `NAME=VALUE` argv bindings. For example, pass
 from the current process environment without placing the secret value in the
 resolver command line.
 
+Forge deployment identity is also supplied by environment contract, not by
+mechanic call-site bindings. Mechanics mark deployment-resolved parameters with
+`deployment_value`, and `groundwork-mechanic` derives those values from these
+atoms:
+
+| Variable | Holds | Example | Forge-assigned? |
+|---|---|---|---|
+| `GROUNDWORK_FORGE_TYPE` | active forge selector, defaulting to `github` | `sourcehut` | no |
+| `GROUNDWORK_FORGE_ENDPOINT` | deployment host used to derive service hosts | `weforge.build` | no |
+| `GROUNDWORK_FORGE_OWNER` | tracker/repo owner handle | `operator` | no |
+| `GROUNDWORK_FORGE_NAME` | tracker/repo name | `weforge` | no |
+| `GROUNDWORK_FORGE_TRACKER_ID` | tracker integer ID | `4` | yes |
+| `GROUNDWORK_FORGE_REPO_ID` | git repo integer ID | `42` | yes |
+
+For SourceHut, the resolver derives `todo_query_url` as
+`https://todo.<endpoint>/query`, `git_query_url` as
+`https://git.<endpoint>/query`, and `ssh_remote` as
+`git@git.<endpoint>:~<owner>/<name>`, while `tracker_id` and `repo_id` come
+directly from their atoms. For GitHub, it derives `repository` as
+`<owner>/<name>`. The atoms are the only deployment facts; composed endpoints
+and remotes are not separate configuration values.
+
 The source checkout must be clean and pinned at a tag or full commit SHA. The
 command refuses branch checkouts because a branch is a moving source. To update
 to a different pinned Groundwork version, check out that ref and run:

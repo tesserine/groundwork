@@ -10,6 +10,7 @@ examples = [
 name = "repository"
 purpose = "GitHub repository in OWNER/REPO form."
 required = true
+deployment_value = "repository"
 
 [[parameters]]
 name = "pr_number"
