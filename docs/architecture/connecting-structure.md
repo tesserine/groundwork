@@ -951,6 +951,42 @@ top-level `work_unit` field or forge-specific identity outside `handle`.
 GitHub handles name an issue URL and number; SourceHut handles name a tracker
 ID and ticket number.
 
+### Phase-2 Forge-Tagging Seam
+
+The `work-unit.handle` field is the schema-as-contract seam between Groundwork
+and runa. Groundwork owns structural validity: the optional handle variants in
+`schemas/work-unit.schema.json`, conformance and artifact tooling, registered
+forge-tag membership, and GitHub `url`/`number` agreement. The released
+Groundwork contract was introduced by [#368](https://github.com/tesserine/groundwork/issues/368)
+and merged by [PR #372](https://github.com/tesserine/groundwork/pull/372);
+downstream consumers pin the release tag that contains that contract or the
+merged full commit SHA, never a branch or pre-merge ref.
+
+Groundwork also owns production of schema-conforming handles. The early-arc
+mechanics from [#369](https://github.com/tesserine/groundwork/issues/369) /
+[PR #373](https://github.com/tesserine/groundwork/pull/373) resolve active
+deployment identity from the `#362` `GROUNDWORK_*` atoms, create/read/claim
+tracker tickets, record progress, and return the forge-assigned identity needed
+for `handle`. The decompose delivery rules from
+[#370](https://github.com/tesserine/groundwork/issues/370) /
+[PR #374](https://github.com/tesserine/groundwork/pull/374) create the tracker
+ticket before first work-unit delivery, use the ticket-derived
+`work-unit-<N>-<short-slug>` instance id, and carry the returned handle exactly
+once. Together, the mechanics and decompose path act on the active `#362`
+deployment identity and produce schema-conforming handles. Those child issues
+carried their own local docs and changelog updates; this section ties their
+repo boundary together.
+
+runa owns runtime enforcement that cannot be expressed by Groundwork's schema.
+The guard in [tesserine/runa#163](https://github.com/tesserine/runa/issues/163)
+merged by [tesserine/runa#164](https://github.com/tesserine/runa/pull/164)
+implements the exact-or-reject `--work-unit` rule for recorded work-unit roots,
+checks instance-id/handle number agreement, rejects duplicate roots for the same
+forge ticket identity, and rejects valid tracker handles whose forge location
+does not match the active `GROUNDWORK_*` deployment. A session has one active
+deployment. Cross-deployment work is represented as separate sessions; runa does
+not switch deployment identity because a handle points somewhere else.
+
 ### Traceability Thread
 
 Acceptance criteria on the work-unit are the high-level "done" statements.

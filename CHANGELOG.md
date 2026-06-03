@@ -78,6 +78,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   from the returned forge identity, preserve that handle across refinements,
   and preserve unchanged bare-slug/no-handle delivery for non-tracker
   work-units (closes #370).
+- Phase-2 forge-tagging seam documentation: README-accessible architecture
+  docs now explain the boundary between Groundwork-owned handle structure,
+  mechanics/decompose handle production, and runa-owned scoped runtime
+  enforcement for exact work-unit ids and active deployment agreement
+  (closes #371).
 
 ### Changed
 
