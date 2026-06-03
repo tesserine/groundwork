@@ -71,6 +71,17 @@
         "secret": {
           "type": "boolean"
         },
+        "deployment_value": {
+          "type": "string",
+          "enum": [
+            "repository",
+            "todo_query_url",
+            "git_query_url",
+            "ssh_remote",
+            "tracker_id",
+            "repo_id"
+          ]
+        },
         "schema_ref": {
           "type": "string",
           "minLength": 1,

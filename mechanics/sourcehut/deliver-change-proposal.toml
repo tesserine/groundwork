@@ -25,11 +25,13 @@ required = true
 name = "repo_id"
 purpose = "SourceHut Git repository ID used by uploadArtifact."
 required = true
+deployment_value = "repo_id"
 
 [[parameters]]
 name = "ssh_remote"
 purpose = "SourceHut Git SSH remote receiving the stable proposal ref."
 required = true
+deployment_value = "ssh_remote"
 
 [[parameters]]
 name = "proposal_ref"
@@ -50,6 +52,7 @@ required = true
 name = "git_query_url"
 purpose = "SourceHut Git GraphQL endpoint used for uploadArtifact."
 required = true
+deployment_value = "git_query_url"
 
 [[parameters]]
 name = "token"

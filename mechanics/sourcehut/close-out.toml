@@ -10,6 +10,7 @@ examples = [
 name = "tracker_id"
 purpose = "todo.sr.ht tracker ID containing the work-unit ticket."
 required = true
+deployment_value = "tracker_id"
 
 [[parameters]]
 name = "ticket_id"
@@ -30,6 +31,7 @@ required = true
 name = "todo_query_url"
 purpose = "SourceHut todo GraphQL endpoint used for submitComment and updateTicketStatus."
 required = true
+deployment_value = "todo_query_url"
 
 [[parameters]]
 name = "token"

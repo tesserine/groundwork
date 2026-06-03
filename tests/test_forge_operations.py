@@ -239,6 +239,166 @@ class ForgeOperationTests(unittest.TestCase):
         self.assertNotIn(secret, child_argv)
         self.assertEqual(secret, exposed_secret)
 
+    def test_cli_resolves_declared_deployment_value_without_parameter_name_knowledge(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_deployment_probe_methodology(root)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "--forge-type",
+                    "sourcehut",
+                    "run",
+                    "probe",
+                ],
+                env={
+                    **os.environ,
+                    "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
+                    "GROUNDWORK_FORGE_OWNER": "operator",
+                    "GROUNDWORK_FORGE_NAME": "weforge",
+                    "GROUNDWORK_FORGE_TRACKER_ID": "4",
+                    "GROUNDWORK_FORGE_REPO_ID": "42",
+                },
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("42\n", result.stdout)
+
+    def test_cli_resolves_sourcehut_deployment_values_from_groundwork_atoms(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_sourcehut_deployment_probe_methodology(root)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "--forge-type",
+                    "sourcehut",
+                    "run",
+                    "probe",
+                ],
+                env={
+                    **os.environ,
+                    "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
+                    "GROUNDWORK_FORGE_OWNER": "operator",
+                    "GROUNDWORK_FORGE_NAME": "weforge",
+                    "GROUNDWORK_FORGE_TRACKER_ID": "4",
+                    "GROUNDWORK_FORGE_REPO_ID": "42",
+                },
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(
+            [
+                "https://todo.weforge.build/query",
+                "https://git.weforge.build/query",
+                "git@git.weforge.build:~operator/weforge",
+                "4",
+                "42",
+            ],
+            result.stdout.strip().splitlines(),
+        )
+
+    def test_cli_names_missing_sourcehut_deployment_atom(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_sourcehut_deployment_probe_methodology(root)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "--forge-type",
+                    "sourcehut",
+                    "run",
+                    "probe",
+                ],
+                env={
+                    **os.environ,
+                    "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
+                    "GROUNDWORK_FORGE_OWNER": "operator",
+                    "GROUNDWORK_FORGE_NAME": "weforge",
+                    "GROUNDWORK_FORGE_REPO_ID": "42",
+                },
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("GROUNDWORK_FORGE_TRACKER_ID", result.stderr)
+
+    def test_cli_resolves_github_repository_from_groundwork_atoms_with_default_forge_type(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_github_deployment_probe_methodology(root)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "run",
+                    "probe",
+                ],
+                env={
+                    **os.environ,
+                    "GROUNDWORK_FORGE_OWNER": "tesserine",
+                    "GROUNDWORK_FORGE_NAME": "groundwork",
+                },
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("tesserine/groundwork\n", result.stdout)
+
+    def test_cli_rejects_caller_supplied_deployment_value(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_github_deployment_probe_methodology(root)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "run",
+                    "probe",
+                    "repository=attacker/repo",
+                ],
+                env={
+                    **os.environ,
+                    "GROUNDWORK_FORGE_OWNER": "tesserine",
+                    "GROUNDWORK_FORGE_NAME": "groundwork",
+                },
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("deployment-resolved parameter(s)", result.stderr)
+        self.assertIn("repository", result.stderr)
+
     def write_secret_probe_methodology(self, root: Path, invocation: str) -> None:
         (root / "manifest.toml").write_text(
             textwrap.dedent(
@@ -268,6 +428,147 @@ class ForgeOperationTests(unittest.TestCase):
                 purpose = "Secret token."
                 required = true
                 secret = true
+
+                [outcome]
+                description = "Printed."
+                """
+            ).lstrip(),
+            encoding="utf-8",
+        )
+
+    def write_deployment_probe_methodology(self, root: Path) -> None:
+        (root / "manifest.toml").write_text(
+            textwrap.dedent(
+                """
+                [[forge_tags]]
+                name = "github"
+
+                [[forge_tags]]
+                name = "sourcehut"
+
+                [[mechanics]]
+                name = "probe"
+                forge_tags = ["sourcehut"]
+                """
+            ).lstrip(),
+            encoding="utf-8",
+        )
+        (root / "mechanics" / "sourcehut").mkdir(parents=True, exist_ok=True)
+        (root / "mechanics" / "sourcehut" / "probe.toml").write_text(
+            textwrap.dedent(
+                """
+                name = "probe"
+                purpose = "Probe deployment-value resolution."
+                forge_tag = "sourcehut"
+                default_invocation = 'printf "%s\\n" "$upload_repo_number"'
+                examples = ['printf "%s\\n" "$upload_repo_number"']
+
+                [[parameters]]
+                name = "upload_repo_number"
+                purpose = "Repo ID under a deliberately non-canonical parameter name."
+                required = true
+                deployment_value = "repo_id"
+
+                [outcome]
+                description = "Printed."
+                """
+            ).lstrip(),
+            encoding="utf-8",
+        )
+
+    def write_sourcehut_deployment_probe_methodology(self, root: Path) -> None:
+        (root / "manifest.toml").write_text(
+            textwrap.dedent(
+                """
+                [[forge_tags]]
+                name = "github"
+
+                [[forge_tags]]
+                name = "sourcehut"
+
+                [[mechanics]]
+                name = "probe"
+                forge_tags = ["sourcehut"]
+                """
+            ).lstrip(),
+            encoding="utf-8",
+        )
+        (root / "mechanics" / "sourcehut").mkdir(parents=True, exist_ok=True)
+        (root / "mechanics" / "sourcehut" / "probe.toml").write_text(
+            textwrap.dedent(
+                """
+                name = "probe"
+                purpose = "Probe SourceHut deployment-value resolution."
+                forge_tag = "sourcehut"
+                default_invocation = 'printf "%s\\n%s\\n%s\\n%s\\n%s\\n" "$todo_url" "$git_url" "$remote" "$tracker" "$repo"'
+                examples = ['printf "%s\\n" "$remote"']
+
+                [[parameters]]
+                name = "todo_url"
+                purpose = "Todo query URL."
+                required = true
+                deployment_value = "todo_query_url"
+
+                [[parameters]]
+                name = "git_url"
+                purpose = "Git query URL."
+                required = true
+                deployment_value = "git_query_url"
+
+                [[parameters]]
+                name = "remote"
+                purpose = "Git SSH remote."
+                required = true
+                deployment_value = "ssh_remote"
+
+                [[parameters]]
+                name = "tracker"
+                purpose = "Tracker ID."
+                required = true
+                deployment_value = "tracker_id"
+
+                [[parameters]]
+                name = "repo"
+                purpose = "Repo ID."
+                required = true
+                deployment_value = "repo_id"
+
+                [outcome]
+                description = "Printed."
+                """
+            ).lstrip(),
+            encoding="utf-8",
+        )
+
+    def write_github_deployment_probe_methodology(self, root: Path) -> None:
+        (root / "manifest.toml").write_text(
+            textwrap.dedent(
+                """
+                [[forge_tags]]
+                name = "github"
+
+                [[mechanics]]
+                name = "probe"
+                forge_tags = ["github"]
+                """
+            ).lstrip(),
+            encoding="utf-8",
+        )
+        (root / "mechanics" / "github").mkdir(parents=True, exist_ok=True)
+        (root / "mechanics" / "github" / "probe.toml").write_text(
+            textwrap.dedent(
+                """
+                name = "probe"
+                purpose = "Probe GitHub deployment-value resolution."
+                forge_tag = "github"
+                default_invocation = 'printf "%s\\n" "$repository"'
+                examples = ['printf "%s\\n" "$repository"']
+
+                [[parameters]]
+                name = "repository"
+                purpose = "GitHub repository."
+                required = true
+                deployment_value = "repository"
 
                 [outcome]
                 description = "Printed."

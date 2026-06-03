@@ -55,13 +55,20 @@ def inspect_invocation(mechanic: Mapping[str, Any], values: Mapping[str, str]) -
 
 def render_shell_invocation(mechanic: Mapping[str, Any], values: Mapping[str, str]) -> tuple[str, dict[str, str]]:
     parameters = _parameters(mechanic)
-    missing = [name for name, parameter in parameters.items() if parameter.get("required") and name not in values]
+    deployment_values = _deployment_parameter_values(mechanic, os.environ)
+    provided_deployment_values = sorted(set(values) & set(deployment_values))
+    if provided_deployment_values:
+        raise ForgeOperationError(
+            f"deployment-resolved parameter(s) must come from GROUNDWORK_*: {', '.join(provided_deployment_values)}"
+        )
+    resolved_values = {**values, **deployment_values}
+    missing = [name for name, parameter in parameters.items() if parameter.get("required") and name not in resolved_values]
     if missing:
         raise ForgeOperationError(f"missing required parameter(s): {', '.join(sorted(missing))}")
-    unknown = sorted(set(values) - set(parameters))
+    unknown = sorted(set(resolved_values) - set(parameters))
     if unknown:
         raise ForgeOperationError(f"unknown parameter(s): {', '.join(unknown)}")
-    return _invocation_body(mechanic), {name: str(value) for name, value in values.items()}
+    return _invocation_body(mechanic), {name: str(value) for name, value in resolved_values.items()}
 
 
 def run_invocation(
@@ -176,6 +183,60 @@ def _parameters(mechanic: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
 
 def _secret_parameters(mechanic: Mapping[str, Any]) -> set[str]:
     return {name for name, parameter in _parameters(mechanic).items() if parameter.get("secret") is True}
+
+
+def _deployment_parameters(mechanic: Mapping[str, Any]) -> dict[str, str]:
+    return {
+        name: str(parameter["deployment_value"])
+        for name, parameter in _parameters(mechanic).items()
+        if isinstance(parameter.get("deployment_value"), str)
+    }
+
+
+def _deployment_parameter_values(
+    mechanic: Mapping[str, Any],
+    environment: Mapping[str, str],
+) -> dict[str, str]:
+    deployments = _deployment_parameters(mechanic)
+    if not deployments:
+        return {}
+    forge_type = mechanic.get("forge_tag")
+    if not isinstance(forge_type, str):
+        raise ForgeOperationError("deployment-resolved parameters require mechanic forge_tag")
+    resolved = _resolved_deployment_values(forge_type, environment)
+    values: dict[str, str] = {}
+    for name, deployment_value in deployments.items():
+        if deployment_value not in resolved:
+            raise ForgeOperationError(
+                f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`"
+            )
+        values[name] = resolved[deployment_value]
+    return values
+
+
+def _resolved_deployment_values(forge_type: str, environment: Mapping[str, str]) -> dict[str, str]:
+    owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
+    name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")
+    if forge_type == "github":
+        return {"repository": f"{owner}/{name}"}
+    if forge_type == "sourcehut":
+        endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
+        return {
+            "repository": f"{owner}/{name}",
+            "todo_query_url": f"https://todo.{endpoint}/query",
+            "git_query_url": f"https://git.{endpoint}/query",
+            "ssh_remote": f"git@git.{endpoint}:~{owner}/{name}",
+            "tracker_id": _required_environment(environment, "GROUNDWORK_FORGE_TRACKER_ID"),
+            "repo_id": _required_environment(environment, "GROUNDWORK_FORGE_REPO_ID"),
+        }
+    raise ForgeOperationError(f"forge type `{forge_type}` does not support deployment identity")
+
+
+def _required_environment(environment: Mapping[str, str], name: str) -> str:
+    value = environment.get(name)
+    if value is None or value == "":
+        raise ForgeOperationError(f"missing required deployment identity atom `{name}`")
+    return value
 
 
 def _invocation_body(mechanic: Mapping[str, Any]) -> str:

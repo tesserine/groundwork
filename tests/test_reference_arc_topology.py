@@ -135,6 +135,36 @@ class ReferenceArcTopologyTests(unittest.TestCase):
                 self.assertIn(forge_tag, manifest_mechanics[operation]["forge_tags"])
                 self.assertEqual(1, sum(1 for mechanic in forge_mechanics if mechanic["name"] == operation))
 
+    def test_reference_arc_mechanics_declare_deployment_resolved_parameters(self) -> None:
+        expected = {
+            ("github", "deliver-change-proposal"): {"repository": "repository"},
+            ("github", "apply-approved-change"): {"repository": "repository"},
+            ("github", "reflect-disposition"): {"repository": "repository"},
+            ("github", "close-out"): {"repository": "repository"},
+            ("sourcehut", "deliver-change-proposal"): {
+                "repo_id": "repo_id",
+                "ssh_remote": "ssh_remote",
+                "git_query_url": "git_query_url",
+            },
+            ("sourcehut", "apply-approved-change"): {"ssh_remote": "ssh_remote"},
+            ("sourcehut", "reflect-disposition"): {
+                "tracker_id": "tracker_id",
+                "todo_query_url": "todo_query_url",
+            },
+            ("sourcehut", "close-out"): {
+                "tracker_id": "tracker_id",
+                "todo_query_url": "todo_query_url",
+            },
+        }
+
+        for (forge_tag, operation), deployment_values in expected.items():
+            with self.subTest(forge_tag=forge_tag, operation=operation):
+                mechanic = mechanic_for_forge(forge_tag, operation)
+                parameters = {parameter["name"]: parameter for parameter in mechanic["parameters"]}
+                for parameter_name, deployment_value in deployment_values.items():
+                    self.assertEqual(deployment_value, parameters[parameter_name].get("deployment_value"))
+                    self.assertTrue(parameters[parameter_name]["required"])
+
     def test_sourcehut_apply_mechanic_uses_proposal_ref_and_tree_equality_not_commit_identity(self) -> None:
         apply = mechanic_for_forge("sourcehut", "apply-approved-change")
         invocation = apply["default_invocation"]

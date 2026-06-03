@@ -56,6 +56,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   environment-parameterized shell bodies, installs a runtime resolver bundle
   for interactive sessions, and adds GitHub/SourceHut `close-out` mechanics
   bound in the manifest matrix (closes #350).
+- Tracker-identity environment contract: mechanics can declare
+  deployment-resolved parameters with `deployment_value`, and
+  `groundwork-mechanic` now supplies those parameters from `GROUNDWORK_*` atoms
+  while deriving SourceHut endpoints/remotes and GitHub repository identity
+  without call-site deployment bindings (closes #362).
 
 ### Changed
 

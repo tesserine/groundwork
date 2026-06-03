@@ -47,6 +47,8 @@ def validate_mechanic(mechanic: dict[str, Any], registry: MechanicRegistry | Non
     errors: list[tuple[str, str]] = []
     errors.extend(_schema_errors(mechanic))
     if not errors:
+        errors.extend(_parameter_category_errors(mechanic))
+    if not errors:
         errors.extend(_invocation_errors(mechanic))
     if registry is not None and not errors:
         errors.extend(_registry_errors(mechanic, registry))
@@ -67,6 +69,19 @@ def _schema_errors(mechanic: dict[str, Any]) -> list[tuple[str, str]]:
             path = f"{path}/{missing}" if path else missing
         errors.append((path or "<root>", error.message))
 
+    return errors
+
+
+def _parameter_category_errors(mechanic: dict[str, Any]) -> list[tuple[str, str]]:
+    errors: list[tuple[str, str]] = []
+    for parameter_index, parameter in enumerate(mechanic["parameters"]):
+        if parameter.get("secret") is True and "deployment_value" in parameter:
+            errors.append(
+                (
+                    f"parameters/{parameter_index}/deployment_value",
+                    "deployment-resolved parameter must not also be secret",
+                )
+            )
     return errors
 
 
