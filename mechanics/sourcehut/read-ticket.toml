@@ -1,7 +1,7 @@
 name = "read-ticket"
 purpose = "Read a SourceHut todo ticket that backs a tracker-linked work-unit."
 forge_tag = "sourcehut"
-default_invocation = ''': "$tracker_id" "$ticket_id" && response=$(mktemp) && trap 'rm -f "$response"' EXIT && curl --fail --silent --show-error --header "Authorization: Bearer ${token}" --header 'Content-Type: application/json' --data "@${payload_file}" "$todo_query_url" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); data=payload.get("data"); sys.exit("SourceHut read-ticket GraphQL response contained errors or omitted data") if "errors" in payload or not isinstance(data, dict) else print(json.dumps(data))' "$response"'''
+default_invocation = ''': "$tracker_id" "$ticket_id" && response=$(mktemp) && trap 'rm -f "$response"' EXIT && curl --fail --silent --show-error --header "Authorization: Bearer ${token}" --header 'Content-Type: application/json' --data "@${payload_file}" "$todo_query_url" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); data=payload.get("data"); tracker=data.get("tracker") if isinstance(data, dict) else None; ticket=tracker.get("ticket") if isinstance(tracker, dict) else None; sys.exit("SourceHut read-ticket GraphQL response contained errors or omitted data.tracker.ticket") if "errors" in payload or not isinstance(ticket, dict) else print(json.dumps(ticket))' "$response"'''
 examples = [
   ''': "$tracker_id" "$ticket_id" && curl --header "Authorization: Bearer ${token}" --data "@${payload_file}" "$todo_query_url"''',
 ]

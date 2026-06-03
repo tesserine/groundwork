@@ -79,6 +79,50 @@ class ReferenceArcTopologyTests(unittest.TestCase):
             stderr=subprocess.PIPE,
         )
 
+    def run_sourcehut_early_arc_response(self, operation: str, response_payload: dict) -> subprocess.CompletedProcess:
+        mechanic = mechanic_for_forge("sourcehut", operation)
+        with tempfile.TemporaryDirectory() as directory:
+            temp = Path(directory)
+            bin_dir = temp / "bin"
+            bin_dir.mkdir()
+            curl = bin_dir / "curl"
+            curl.write_text('#!/bin/sh\nprintf "%s\\n" "$GROUNDWORK_TEST_SOURCEHUT_RESPONSE"\n', encoding="utf-8")
+            curl.chmod(0o755)
+            payload_file = temp / "payload.json"
+            payload_file.write_text("{}", encoding="utf-8")
+
+            return self.run_mechanic_invocation(
+                mechanic["default_invocation"],
+                {
+                    "tracker_id": "4",
+                    "ticket_id": "7",
+                    "payload_file": str(payload_file),
+                    "todo_query_url": "https://todo.weforge.build/query",
+                    "token": "test-token",
+                    "GROUNDWORK_TEST_SOURCEHUT_RESPONSE": json.dumps(response_payload),
+                },
+                bin_dir,
+            )
+
+    def sourcehut_early_arc_success_payload(self, operation: str, result: dict) -> dict:
+        if operation == "read-ticket":
+            return {"data": {"tracker": {"ticket": result}}}
+        if operation == "create-ticket":
+            return {"data": {"submitTicket": result}}
+        return {"data": {"submitComment": result}}
+
+    def sourcehut_early_arc_null_payload(self, operation: str) -> dict:
+        if operation == "read-ticket":
+            return {"data": {"tracker": {"ticket": None}}}
+        if operation == "create-ticket":
+            return {"data": {"submitTicket": None}}
+        return {"data": {"submitComment": None}}
+
+    def sourcehut_early_arc_absent_payload(self, operation: str) -> dict:
+        if operation == "read-ticket":
+            return {"data": {"tracker": {}}}
+        return {"data": {}}
+
     def test_manifest_routes_submit_review_land_through_disposition_artifacts(self) -> None:
         artifact_types = {entry["name"] for entry in manifest()["artifact_types"]}
         mechanics = {entry["name"] for entry in manifest()["mechanics"]}
@@ -222,6 +266,46 @@ class ReferenceArcTopologyTests(unittest.TestCase):
 
                 self.assertTrue(token["secret"])
                 self.assertNotIn("WEFORGE_OPERATOR_PAT", mechanic["default_invocation"])
+
+    def test_sourcehut_early_arc_mechanics_reject_null_operation_results(self) -> None:
+        for operation in {"create-ticket", "read-ticket", "claim-work-unit", "record-progress"}:
+            with self.subTest(operation=operation):
+                result = self.run_sourcehut_early_arc_response(
+                    operation,
+                    self.sourcehut_early_arc_null_payload(operation),
+                )
+
+                self.assertNotEqual(0, result.returncode)
+                self.assertIn("omitted data", result.stderr)
+
+    def test_sourcehut_early_arc_mechanics_reject_absent_operation_results(self) -> None:
+        for operation in {"create-ticket", "read-ticket", "claim-work-unit", "record-progress"}:
+            with self.subTest(operation=operation):
+                result = self.run_sourcehut_early_arc_response(
+                    operation,
+                    self.sourcehut_early_arc_absent_payload(operation),
+                )
+
+                self.assertNotEqual(0, result.returncode)
+                self.assertIn("omitted data", result.stderr)
+
+    def test_sourcehut_early_arc_mechanics_emit_well_formed_operation_results(self) -> None:
+        expected = {
+            "create-ticket": {"id": 42, "ref": "~operator/weforge#42"},
+            "read-ticket": {"id": 7, "subject": "ticket"},
+            "claim-work-unit": {"id": 1001},
+            "record-progress": {"id": 1002},
+        }
+
+        for operation, operation_result in expected.items():
+            with self.subTest(operation=operation):
+                result = self.run_sourcehut_early_arc_response(
+                    operation,
+                    self.sourcehut_early_arc_success_payload(operation, operation_result),
+                )
+
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assertEqual(operation_result, json.loads(result.stdout))
 
     def test_sourcehut_apply_mechanic_uses_proposal_ref_and_tree_equality_not_commit_identity(self) -> None:
         apply = mechanic_for_forge("sourcehut", "apply-approved-change")

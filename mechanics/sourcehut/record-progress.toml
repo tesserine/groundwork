@@ -1,7 +1,7 @@
 name = "record-progress"
 purpose = "Record progress on the SourceHut todo ticket backing a work-unit."
 forge_tag = "sourcehut"
-default_invocation = ''': "$tracker_id" "$ticket_id" && response=$(mktemp) && trap 'rm -f "$response"' EXIT && curl --fail --silent --show-error --header "Authorization: Bearer ${token}" --header 'Content-Type: application/json' --data "@${payload_file}" "$todo_query_url" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); data=payload.get("data"); sys.exit("SourceHut record-progress GraphQL response contained errors or omitted data") if "errors" in payload or not isinstance(data, dict) else None' "$response"'''
+default_invocation = ''': "$tracker_id" "$ticket_id" && response=$(mktemp) && trap 'rm -f "$response"' EXIT && curl --fail --silent --show-error --header "Authorization: Bearer ${token}" --header 'Content-Type: application/json' --data "@${payload_file}" "$todo_query_url" > "$response" && python3 -c 'import json, sys; expected="submitComment"; payload=json.load(open(sys.argv[1], encoding="utf-8")); data=payload.get("data"); value=data.get(expected) if isinstance(data, dict) else None; sys.exit("SourceHut submitComment GraphQL response contained errors or omitted data.submitComment") if "errors" in payload or not isinstance(value, dict) else print(json.dumps(value))' "$response"'''
 examples = [
   ''': "$tracker_id" "$ticket_id" && curl --header "Authorization: Bearer ${token}" --data "@${payload_file}" "$todo_query_url"''',
 ]

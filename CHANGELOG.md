@@ -78,6 +78,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- SourceHut early-arc ticket mechanics now reject HTTP 200 GraphQL responses
+  whose expected operation result is null or absent, instead of treating any
+  `data` object as a successful ticket read/create/comment.
 - SourceHut deployment-value resolution now consults each mechanic's declared
   `deployment_value` keys before reading environment atoms, so tracker-only
   operations do not require unrelated repo identity atoms.
