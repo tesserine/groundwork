@@ -312,6 +312,38 @@ class ForgeOperationTests(unittest.TestCase):
             result.stdout.strip().splitlines(),
         )
 
+    def test_cli_resolves_only_declared_sourcehut_deployment_values(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_sourcehut_tracker_probe_methodology(root)
+            environment = {
+                **os.environ,
+                "GROUNDWORK_FORGE_TYPE": "sourcehut",
+                "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
+                "GROUNDWORK_FORGE_OWNER": "operator",
+                "GROUNDWORK_FORGE_NAME": "weforge",
+                "GROUNDWORK_FORGE_TRACKER_ID": "4",
+            }
+            environment.pop("GROUNDWORK_FORGE_REPO_ID", None)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "run",
+                    "probe",
+                ],
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(["https://todo.weforge.build/query", "4"], result.stdout.strip().splitlines())
+
     def test_cli_names_missing_sourcehut_deployment_atom(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -532,6 +564,49 @@ class ForgeOperationTests(unittest.TestCase):
                 purpose = "Repo ID."
                 required = true
                 deployment_value = "repo_id"
+
+                [outcome]
+                description = "Printed."
+                """
+            ).lstrip(),
+            encoding="utf-8",
+        )
+
+    def write_sourcehut_tracker_probe_methodology(self, root: Path) -> None:
+        (root / "manifest.toml").write_text(
+            textwrap.dedent(
+                """
+                [[forge_tags]]
+                name = "sourcehut"
+
+                [[mechanics]]
+                name = "probe"
+                forge_tags = ["sourcehut"]
+                """
+            ).lstrip(),
+            encoding="utf-8",
+        )
+        (root / "mechanics" / "sourcehut").mkdir(parents=True, exist_ok=True)
+        (root / "mechanics" / "sourcehut" / "probe.toml").write_text(
+            textwrap.dedent(
+                """
+                name = "probe"
+                purpose = "Probe tracker-only SourceHut deployment-value resolution."
+                forge_tag = "sourcehut"
+                default_invocation = 'printf "%s\\n%s\\n" "$todo_url" "$tracker"'
+                examples = ['printf "%s\\n" "$tracker"']
+
+                [[parameters]]
+                name = "todo_url"
+                purpose = "Todo query URL."
+                required = true
+                deployment_value = "todo_query_url"
+
+                [[parameters]]
+                name = "tracker"
+                purpose = "Tracker ID."
+                required = true
+                deployment_value = "tracker_id"
 
                 [outcome]
                 description = "Printed."

@@ -73,6 +73,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- SourceHut deployment-value resolution now consults each mechanic's declared
+  `deployment_value` keys before reading environment atoms, so tracker-only
+  operations do not require unrelated repo identity atoms.
 - `take` now halts on missing injected referenced work-unit context instead of
   falling back to a forge-specific tracker lookup, and C-5 conformance now scans
   `take` for forge leakage with the rest of the registered protocol bodies

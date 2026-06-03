@@ -203,32 +203,60 @@ def _deployment_parameter_values(
     forge_type = mechanic.get("forge_tag")
     if not isinstance(forge_type, str):
         raise ForgeOperationError("deployment-resolved parameters require mechanic forge_tag")
-    resolved = _resolved_deployment_values(forge_type, environment)
+    resolved = _resolved_deployment_values(forge_type, set(deployments.values()), environment)
     values: dict[str, str] = {}
     for name, deployment_value in deployments.items():
-        if deployment_value not in resolved:
-            raise ForgeOperationError(
-                f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`"
-            )
         values[name] = resolved[deployment_value]
     return values
 
 
-def _resolved_deployment_values(forge_type: str, environment: Mapping[str, str]) -> dict[str, str]:
-    owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
-    name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")
+def _resolved_deployment_values(
+    forge_type: str,
+    deployment_values: set[str],
+    environment: Mapping[str, str],
+) -> dict[str, str]:
+    return {
+        deployment_value: _resolve_deployment_value(forge_type, deployment_value, environment)
+        for deployment_value in deployment_values
+    }
+
+
+def _resolve_deployment_value(
+    forge_type: str,
+    deployment_value: str,
+    environment: Mapping[str, str],
+) -> str:
     if forge_type == "github":
-        return {"repository": f"{owner}/{name}"}
+        if deployment_value == "repository":
+            owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
+            name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")
+            return f"{owner}/{name}"
+        raise ForgeOperationError(
+            f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`"
+        )
     if forge_type == "sourcehut":
-        endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
-        return {
-            "repository": f"{owner}/{name}",
-            "todo_query_url": f"https://todo.{endpoint}/query",
-            "git_query_url": f"https://git.{endpoint}/query",
-            "ssh_remote": f"git@git.{endpoint}:~{owner}/{name}",
-            "tracker_id": _required_environment(environment, "GROUNDWORK_FORGE_TRACKER_ID"),
-            "repo_id": _required_environment(environment, "GROUNDWORK_FORGE_REPO_ID"),
-        }
+        if deployment_value == "repository":
+            owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
+            name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")
+            return f"{owner}/{name}"
+        if deployment_value == "todo_query_url":
+            endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
+            return f"https://todo.{endpoint}/query"
+        if deployment_value == "git_query_url":
+            endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
+            return f"https://git.{endpoint}/query"
+        if deployment_value == "ssh_remote":
+            endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
+            owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
+            name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")
+            return f"git@git.{endpoint}:~{owner}/{name}"
+        if deployment_value == "tracker_id":
+            return _required_environment(environment, "GROUNDWORK_FORGE_TRACKER_ID")
+        if deployment_value == "repo_id":
+            return _required_environment(environment, "GROUNDWORK_FORGE_REPO_ID")
+        raise ForgeOperationError(
+            f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`"
+        )
     raise ForgeOperationError(f"forge type `{forge_type}` does not support deployment identity")
 
 
