@@ -228,6 +228,10 @@ def _resolve_deployment_value(
     environment: Mapping[str, str],
 ) -> str:
     if forge_type == "github":
+        if deployment_value == "owner":
+            return _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
+        if deployment_value == "name":
+            return _required_environment(environment, "GROUNDWORK_FORGE_NAME")
         if deployment_value == "repository":
             owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
             name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")
@@ -236,6 +240,10 @@ def _resolve_deployment_value(
             f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`"
         )
     if forge_type == "sourcehut":
+        if deployment_value == "owner":
+            return _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
+        if deployment_value == "name":
+            return _required_environment(environment, "GROUNDWORK_FORGE_NAME")
         if deployment_value == "repository":
             owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
             name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")

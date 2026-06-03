@@ -243,6 +243,85 @@ class ForgeOperationTests(unittest.TestCase):
         self.assertNotEqual(0, result.returncode)
         self.assertIn("SourceHut submitTicket GraphQL response", result.stderr)
 
+    def test_sourcehut_read_ticket_reaches_tracker_by_owner_and_name_and_keeps_numeric_handle(self) -> None:
+        mechanic = resolve_operation(ROOT, "read-ticket", forge_type="sourcehut")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            response = root / "response.json"
+            payload = root / "payload.json"
+            self.write_fake_command(
+                bin_dir / "curl",
+                f'''
+for arg in "$@"; do
+  case "$arg" in
+    @*) cp "${{arg#@}}" "{payload}" ;;
+  esac
+done
+cat "{response}"
+''',
+            )
+            response.write_text(
+                '{"data":{"user":{"tracker":{"id":4,"ticket":{"id":369,"ref":"todo/369","subject":"Fix read","body":"Ticket body","status":"reported","resolution":null}}}}}\n',
+                encoding="utf-8",
+            )
+
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+                    "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
+                    "GROUNDWORK_FORGE_OWNER": "operator",
+                    "GROUNDWORK_FORGE_NAME": "weforge",
+                    "GROUNDWORK_FORGE_TRACKER_ID": "4",
+                },
+            ):
+                result = run_invocation(
+                    mechanic,
+                    {"ticket_number": "369", "token": "secret-token"},
+                    cwd=root,
+                )
+            graphql_payload = json.loads(payload.read_text(encoding="utf-8"))
+
+            response.write_text('{"errors":[{"message":"no"}],"data":{"user":{"tracker":{"ticket":null}}}}\n', encoding="utf-8")
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+                    "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
+                    "GROUNDWORK_FORGE_OWNER": "operator",
+                    "GROUNDWORK_FORGE_NAME": "weforge",
+                    "GROUNDWORK_FORGE_TRACKER_ID": "4",
+                },
+            ):
+                error_result = run_invocation(
+                    mechanic,
+                    {"ticket_number": "369", "token": "secret-token"},
+                    cwd=root,
+                )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(
+            {
+                "handle": {"forge_tag": "sourcehut", "tracker_id": 4, "number": 369},
+                "title": "Fix read",
+                "body": "Ticket body",
+                "state": "reported",
+            },
+            json.loads(result.stdout),
+        )
+        self.assertIn("user(username:", graphql_payload["query"])
+        self.assertIn("tracker(name:", graphql_payload["query"])
+        self.assertNotIn("tracker(rid:", graphql_payload["query"])
+        self.assertEqual(
+            {"trackerOwner": "operator", "trackerName": "weforge", "ticketId": 369},
+            graphql_payload["variables"],
+        )
+        self.assertNotEqual(0, error_result.returncode)
+        self.assertIn("SourceHut read-ticket GraphQL response", error_result.stderr)
+
     def test_early_arc_mechanics_reject_caller_supplied_deployment_identity(self) -> None:
         cases = [
             ("github", "create-ticket", {"repository": "attacker/repo"}),

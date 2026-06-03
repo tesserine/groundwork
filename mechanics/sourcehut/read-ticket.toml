@@ -1,10 +1,22 @@
 name = "read-ticket"
 purpose = "Read a SourceHut ticket from the active tracker and emit its ticket state with a work-unit handle."
 forge_tag = "sourcehut"
-default_invocation = '''payload_file=$(mktemp) && response=$(mktemp) && trap 'rm -f "$payload_file" "$response"' EXIT && python3 -c 'import json, sys; tracker_id=sys.argv[1]; ticket_number=int(sys.argv[2]); print(json.dumps({"query":"query readTicket($trackerId: ID!, $ticketId: Int!) { tracker(rid: $trackerId) { ticket(id: $ticketId) { id ref subject body status resolution } } }","variables":{"trackerId":tracker_id,"ticketId":ticket_number}}))' "$tracker_id" "$ticket_number" > "$payload_file" && curl --fail --silent --show-error --header "Authorization: Bearer ${token}" --header 'Content-Type: application/json' --data "@${payload_file}" "$todo_query_url" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); tracker_id=int(sys.argv[2]); data=payload.get("data"); tracker=data.get("tracker") if isinstance(data, dict) else None; ticket=tracker.get("ticket") if isinstance(tracker, dict) else None; number=ticket.get("id") if isinstance(ticket, dict) else None; subject=ticket.get("subject") if isinstance(ticket, dict) else None; body=ticket.get("body") if isinstance(ticket, dict) else None; status=ticket.get("status") if isinstance(ticket, dict) else None; sys.exit("SourceHut read-ticket GraphQL response contained errors or omitted data.tracker.ticket fields") if "errors" in payload or not isinstance(number, int) or not isinstance(subject, str) or body is not None and not isinstance(body, str) or not isinstance(status, str) else print(json.dumps({"handle":{"forge_tag":"sourcehut","tracker_id":tracker_id,"number":number},"title":subject,"body":body,"state":status}, separators=(",", ":")))' "$response" "$tracker_id"'''
+default_invocation = '''payload_file=$(mktemp) && response=$(mktemp) && trap 'rm -f "$payload_file" "$response"' EXIT && python3 -c 'import json, sys; tracker_owner=sys.argv[1]; tracker_name=sys.argv[2]; ticket_number=int(sys.argv[3]); print(json.dumps({"query":"query readTicket($trackerOwner: String!, $trackerName: String!, $ticketId: Int!) { user(username: $trackerOwner) { tracker(name: $trackerName) { id ticket(id: $ticketId) { id ref subject body status resolution } } } }","variables":{"trackerOwner":tracker_owner,"trackerName":tracker_name,"ticketId":ticket_number}}))' "$tracker_owner" "$tracker_name" "$ticket_number" > "$payload_file" && curl --fail --silent --show-error --header "Authorization: Bearer ${token}" --header 'Content-Type: application/json' --data "@${payload_file}" "$todo_query_url" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); tracker_id=int(sys.argv[2]); data=payload.get("data"); user=data.get("user") if isinstance(data, dict) else None; tracker=user.get("tracker") if isinstance(user, dict) else None; ticket=tracker.get("ticket") if isinstance(tracker, dict) else None; number=ticket.get("id") if isinstance(ticket, dict) else None; subject=ticket.get("subject") if isinstance(ticket, dict) else None; body=ticket.get("body") if isinstance(ticket, dict) else None; status=ticket.get("status") if isinstance(ticket, dict) else None; sys.exit("SourceHut read-ticket GraphQL response contained errors or omitted data.user.tracker.ticket fields") if "errors" in payload or not isinstance(number, int) or not isinstance(subject, str) or body is not None and not isinstance(body, str) or not isinstance(status, str) else print(json.dumps({"handle":{"forge_tag":"sourcehut","tracker_id":tracker_id,"number":number},"title":subject,"body":body,"state":status}, separators=(",", ":")))' "$response" "$tracker_id"'''
 examples = [
   '''curl --fail --silent --show-error --header "Authorization: Bearer $WEFORGE_OPERATOR_PAT" --header 'Content-Type: application/json' --data @/tmp/sourcehut-read-ticket.json https://todo.sr.ht/query''',
 ]
+
+[[parameters]]
+name = "tracker_owner"
+purpose = "SourceHut tracker owner handle."
+required = true
+deployment_value = "owner"
+
+[[parameters]]
+name = "tracker_name"
+purpose = "SourceHut tracker name."
+required = true
+deployment_value = "name"
 
 [[parameters]]
 name = "tracker_id"
