@@ -4,8 +4,10 @@ import subprocess
 import sys
 import tempfile
 import textwrap
+import tomllib
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from tooling.forge_operations import (
     ForgeOperationError,
@@ -17,6 +19,7 @@ from tooling.forge_operations import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+EARLY_ARC_OPERATIONS = ["create-ticket", "read-ticket", "claim-work-unit", "record-progress"]
 
 
 class ForgeOperationTests(unittest.TestCase):
@@ -120,6 +123,143 @@ class ForgeOperationTests(unittest.TestCase):
         self.assertIn("close-out", str(context.exception))
         self.assertIn("github", str(context.exception))
         self.assertIn("resolves to 2", str(context.exception))
+
+    def test_source_manifest_declares_early_arc_ticket_operations_for_each_forge(self) -> None:
+        manifest = tomllib.loads((ROOT / "manifest.toml").read_text(encoding="utf-8"))
+        mechanics = {entry["name"]: entry for entry in manifest["mechanics"]}
+
+        for operation in EARLY_ARC_OPERATIONS:
+            with self.subTest(operation=operation):
+                self.assertEqual(["github", "sourcehut"], mechanics[operation]["forge_tags"])
+
+    def test_source_tree_resolves_early_arc_ticket_operations_for_each_forge(self) -> None:
+        for operation in EARLY_ARC_OPERATIONS:
+            for forge_type in ["github", "sourcehut"]:
+                with self.subTest(operation=operation, forge_type=forge_type):
+                    mechanic = resolve_operation(ROOT, operation, forge_type=forge_type)
+                    self.assertEqual(operation, mechanic["name"])
+                    self.assertEqual(forge_type, mechanic["forge_tag"])
+
+    def test_github_create_ticket_emits_work_unit_handle_and_rejects_missing_result(self) -> None:
+        mechanic = resolve_operation(ROOT, "create-ticket", forge_type="github")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            response = root / "response.json"
+            args = root / "args.txt"
+            body = root / "body.md"
+            body.write_text("Ticket body\n", encoding="utf-8")
+            self.write_fake_command(bin_dir / "gh", f'printf "%s\\n" "$*" > "{args}"; cat "{response}"')
+            response.write_text('{"html_url":"https://github.com/tesserine/groundwork/issues/381","number":381}\n', encoding="utf-8")
+
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+                    "GROUNDWORK_FORGE_OWNER": "tesserine",
+                    "GROUNDWORK_FORGE_NAME": "groundwork",
+                },
+            ):
+                result = run_invocation(
+                    mechanic,
+                    {"title": "Add ticket", "body_file": str(body)},
+                    cwd=root,
+                )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual(
+                {"forge_tag": "github", "url": "https://github.com/tesserine/groundwork/issues/381", "number": 381},
+                json.loads(result.stdout),
+            )
+            self.assertIn("repos/tesserine/groundwork/issues", args.read_text(encoding="utf-8"))
+
+            response.write_text('{"message":"created but omitted issue identity"}\n', encoding="utf-8")
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+                    "GROUNDWORK_FORGE_OWNER": "tesserine",
+                    "GROUNDWORK_FORGE_NAME": "groundwork",
+                },
+            ):
+                result = run_invocation(
+                    mechanic,
+                    {"title": "Add ticket", "body_file": str(body)},
+                    cwd=root,
+                )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("GitHub create-ticket API response", result.stderr)
+
+    def test_sourcehut_create_ticket_emits_work_unit_handle_and_rejects_graphql_errors(self) -> None:
+        mechanic = resolve_operation(ROOT, "create-ticket", forge_type="sourcehut")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            response = root / "response.json"
+            args = root / "args.txt"
+            body = root / "body.md"
+            body.write_text("Ticket body\n", encoding="utf-8")
+            self.write_fake_command(bin_dir / "curl", f'printf "%s\\n" "$*" > "{args}"; cat "{response}"')
+            response.write_text('{"data":{"submitTicket":{"id":27,"ref":"todo/27","subject":"Add ticket"}}}\n', encoding="utf-8")
+
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+                    "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
+                    "GROUNDWORK_FORGE_TRACKER_ID": "4",
+                },
+            ):
+                result = run_invocation(
+                    mechanic,
+                    {"title": "Add ticket", "body_file": str(body), "token": "secret-token"},
+                    cwd=root,
+                )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual({"forge_tag": "sourcehut", "tracker_id": 4, "number": 27}, json.loads(result.stdout))
+            self.assertIn("https://todo.weforge.build/query", args.read_text(encoding="utf-8"))
+
+            response.write_text('{"errors":[{"message":"no"}],"data":{"submitTicket":null}}\n', encoding="utf-8")
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+                    "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
+                    "GROUNDWORK_FORGE_TRACKER_ID": "4",
+                },
+            ):
+                result = run_invocation(
+                    mechanic,
+                    {"title": "Add ticket", "body_file": str(body), "token": "secret-token"},
+                    cwd=root,
+                )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("SourceHut submitTicket GraphQL response", result.stderr)
+
+    def test_early_arc_mechanics_reject_caller_supplied_deployment_identity(self) -> None:
+        cases = [
+            ("github", "create-ticket", {"repository": "attacker/repo"}),
+            ("sourcehut", "create-ticket", {"tracker_id": "99"}),
+            ("sourcehut", "record-progress", {"todo_query_url": "https://attacker.invalid/query"}),
+        ]
+
+        for forge_type, operation, forbidden_values in cases:
+            with self.subTest(forge_type=forge_type, operation=operation):
+                mechanic = resolve_operation(ROOT, operation, forge_type=forge_type)
+                values = self.required_non_deployment_values(operation, forge_type)
+                values.update(forbidden_values)
+
+                with self.assertRaises(ForgeOperationError) as context:
+                    render_shell_invocation(mechanic, values)
+
+                self.assertIn("deployment-resolved parameter(s)", str(context.exception))
 
     def test_inspect_invocation_never_renders_secret_values(self) -> None:
         mechanic = {
@@ -430,6 +570,28 @@ class ForgeOperationTests(unittest.TestCase):
         self.assertNotEqual(0, result.returncode)
         self.assertIn("deployment-resolved parameter(s)", result.stderr)
         self.assertIn("repository", result.stderr)
+
+    def required_non_deployment_values(self, operation: str, forge_type: str) -> dict[str, str]:
+        if operation == "create-ticket":
+            values = {"title": "Title", "body_file": "/tmp/body.md"}
+        elif operation == "read-ticket":
+            values = {"ticket_number": "1"}
+        elif operation == "claim-work-unit":
+            values = {"ticket_number": "1", "assignee": "operator", "assignee_user_id": "7"}
+        elif operation == "record-progress":
+            values = {"ticket_number": "1", "body_file": "/tmp/progress.md"}
+        else:
+            values = {}
+        if forge_type == "github":
+            values.pop("assignee_user_id", None)
+        if forge_type == "sourcehut":
+            values.pop("assignee", None)
+            values["token"] = "secret-token"
+        return values
+
+    def write_fake_command(self, path: Path, body: str) -> None:
+        path.write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8")
+        path.chmod(0o755)
 
     def write_secret_probe_methodology(self, root: Path, invocation: str) -> None:
         (root / "manifest.toml").write_text(

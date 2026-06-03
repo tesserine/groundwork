@@ -1,0 +1,26 @@
+name = "record-progress"
+purpose = "Record progress on a GitHub work-unit issue in the active repository."
+forge_tag = "github"
+default_invocation = '''response=$(mktemp) && trap 'rm -f "$response"' EXIT && gh api "repos/${repository}/issues/${ticket_number}/comments" --method POST -F "body=@${body_file}" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); url=payload.get("html_url"); comment_id=payload.get("id"); sys.exit("GitHub record-progress API response contained errors or omitted comment id/html_url") if "errors" in payload or not isinstance(url, str) or not url or not isinstance(comment_id, int) else print(json.dumps({"comment_url":url,"id":comment_id}, separators=(",", ":")))' "$response"'''
+examples = [
+  'gh api repos/tesserine/groundwork/issues/369/comments --method POST -F body=@/tmp/progress.md',
+]
+
+[[parameters]]
+name = "repository"
+purpose = "GitHub repository in OWNER/REPO form."
+required = true
+deployment_value = "repository"
+
+[[parameters]]
+name = "ticket_number"
+purpose = "GitHub issue number receiving the progress comment."
+required = true
+
+[[parameters]]
+name = "body_file"
+purpose = "Path to a file containing progress text."
+required = true
+
+[outcome]
+description = "A GitHub issue comment records work-unit progress and stdout contains the comment identity."

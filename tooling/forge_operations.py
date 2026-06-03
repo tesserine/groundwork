@@ -55,12 +55,13 @@ def inspect_invocation(mechanic: Mapping[str, Any], values: Mapping[str, str]) -
 
 def render_shell_invocation(mechanic: Mapping[str, Any], values: Mapping[str, str]) -> tuple[str, dict[str, str]]:
     parameters = _parameters(mechanic)
-    deployment_values = _deployment_parameter_values(mechanic, os.environ)
-    provided_deployment_values = sorted(set(values) & set(deployment_values))
+    deployment_parameters = _deployment_parameters(mechanic)
+    provided_deployment_values = sorted(set(values) & set(deployment_parameters))
     if provided_deployment_values:
         raise ForgeOperationError(
             f"deployment-resolved parameter(s) must come from GROUNDWORK_*: {', '.join(provided_deployment_values)}"
         )
+    deployment_values = _deployment_parameter_values(mechanic, os.environ)
     resolved_values = {**values, **deployment_values}
     missing = [name for name, parameter in parameters.items() if parameter.get("required") and name not in resolved_values]
     if missing:

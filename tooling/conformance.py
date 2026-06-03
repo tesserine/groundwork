@@ -28,10 +28,14 @@ CATEGORY_UNKNOWN = "unknown"
 
 DIRECT_UNIT_DIRECTORY_NAMES = {"workflow-contracts", "mechanics", "schemas"}
 FORGE_TOUCHING_OPERATIONS = {
-    "deliver-change-proposal",
     "apply-approved-change",
-    "reflect-disposition",
+    "claim-work-unit",
     "close-out",
+    "create-ticket",
+    "deliver-change-proposal",
+    "read-ticket",
+    "record-progress",
+    "reflect-disposition",
 }
 FORGE_LEAKAGE_TOKEN_PATTERNS = {
     "gh": r"(?<![A-Za-z0-9_-])gh(?![A-Za-z0-9_-])",

@@ -1,0 +1,38 @@
+name = "create-ticket"
+purpose = "Create a SourceHut ticket in the active tracker and emit the forge-tagged work-unit handle identity."
+forge_tag = "sourcehut"
+default_invocation = '''payload_file=$(mktemp) && response=$(mktemp) && trap 'rm -f "$payload_file" "$response"' EXIT && python3 -c 'import json, sys; title=sys.argv[1]; body=open(sys.argv[2], encoding="utf-8").read(); tracker_id=int(sys.argv[3]); print(json.dumps({"query":"mutation submitTicket($trackerId: Int!, $input: SubmitTicketInput!) { submitTicket(trackerId: $trackerId, input: $input) { id ref subject } }","variables":{"trackerId":tracker_id,"input":{"subject":title,"body":body}}}))' "$title" "$body_file" "$tracker_id" > "$payload_file" && curl --fail --silent --show-error --header "Authorization: Bearer ${token}" --header 'Content-Type: application/json' --data "@${payload_file}" "$todo_query_url" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); tracker_id=int(sys.argv[2]); data=payload.get("data"); ticket=data.get("submitTicket") if isinstance(data, dict) else None; number=ticket.get("id") if isinstance(ticket, dict) else None; sys.exit("SourceHut submitTicket GraphQL response contained errors or omitted data.submitTicket.id") if "errors" in payload or not isinstance(number, int) else print(json.dumps({"forge_tag":"sourcehut","tracker_id":tracker_id,"number":number}, separators=(",", ":")))' "$response" "$tracker_id"'''
+examples = [
+  '''curl --fail --silent --show-error --header "Authorization: Bearer $WEFORGE_OPERATOR_PAT" --header 'Content-Type: application/json' --data @/tmp/sourcehut-create-ticket.json https://todo.sr.ht/query''',
+]
+
+[[parameters]]
+name = "tracker_id"
+purpose = "todo.sr.ht tracker ID containing work-unit tickets."
+required = true
+deployment_value = "tracker_id"
+
+[[parameters]]
+name = "todo_query_url"
+purpose = "SourceHut todo GraphQL endpoint used for submitTicket."
+required = true
+deployment_value = "todo_query_url"
+
+[[parameters]]
+name = "title"
+purpose = "Ticket subject for the tracker-backed work-unit."
+required = true
+
+[[parameters]]
+name = "body_file"
+purpose = "Path to a file containing the ticket body."
+required = true
+
+[[parameters]]
+name = "token"
+purpose = "SourceHut API token supplied at command time only; never hardcoded, written, echoed, or logged."
+required = true
+secret = true
+
+[outcome]
+description = "A SourceHut ticket exists in the active tracker and stdout contains a work-unit handle with forge_tag, tracker_id, and number."

@@ -88,6 +88,17 @@ configuration without reaching back into the source checkout. Installed
 protocol copies reference the managed resolver path directly, so users do not
 need to add `~/.groundwork/bin` to `PATH`.
 
+The early-arc tracker operations are forge-invariant at the call site and
+forge-tagged in the mechanic library: `create-ticket`, `read-ticket`,
+`claim-work-unit`, and `record-progress` resolve to either GitHub issue
+mechanics or SourceHut ticket mechanics. Ticket creation emits the
+forge-assigned identity needed for a `work-unit.handle`: GitHub emits
+`forge_tag`, issue `url`, and issue `number`; SourceHut emits `forge_tag`,
+`tracker_id`, and ticket `number`. The mechanics validate the expected API or
+GraphQL result field before accepting a response, so an HTTP- or CLI-successful
+response that contains application errors or omits the expected operation
+result is rejected.
+
 Secret mechanic parameters must be bound from an environment variable rather
 than from `NAME=VALUE` argv bindings. For example, pass
 `--secret-env token=WEFORGE_OPERATOR_PAT` to bind a secret `token` parameter

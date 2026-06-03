@@ -1,0 +1,33 @@
+name = "read-ticket"
+purpose = "Read a SourceHut ticket from the active tracker and emit its ticket state with a work-unit handle."
+forge_tag = "sourcehut"
+default_invocation = '''payload_file=$(mktemp) && response=$(mktemp) && trap 'rm -f "$payload_file" "$response"' EXIT && python3 -c 'import json, sys; tracker_id=sys.argv[1]; ticket_number=int(sys.argv[2]); print(json.dumps({"query":"query readTicket($trackerId: ID!, $ticketId: Int!) { tracker(rid: $trackerId) { ticket(id: $ticketId) { id ref subject body status resolution } } }","variables":{"trackerId":tracker_id,"ticketId":ticket_number}}))' "$tracker_id" "$ticket_number" > "$payload_file" && curl --fail --silent --show-error --header "Authorization: Bearer ${token}" --header 'Content-Type: application/json' --data "@${payload_file}" "$todo_query_url" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); tracker_id=int(sys.argv[2]); data=payload.get("data"); tracker=data.get("tracker") if isinstance(data, dict) else None; ticket=tracker.get("ticket") if isinstance(tracker, dict) else None; number=ticket.get("id") if isinstance(ticket, dict) else None; subject=ticket.get("subject") if isinstance(ticket, dict) else None; body=ticket.get("body") if isinstance(ticket, dict) else None; status=ticket.get("status") if isinstance(ticket, dict) else None; sys.exit("SourceHut read-ticket GraphQL response contained errors or omitted data.tracker.ticket fields") if "errors" in payload or not isinstance(number, int) or not isinstance(subject, str) or body is not None and not isinstance(body, str) or not isinstance(status, str) else print(json.dumps({"handle":{"forge_tag":"sourcehut","tracker_id":tracker_id,"number":number},"title":subject,"body":body,"state":status}, separators=(",", ":")))' "$response" "$tracker_id"'''
+examples = [
+  '''curl --fail --silent --show-error --header "Authorization: Bearer $WEFORGE_OPERATOR_PAT" --header 'Content-Type: application/json' --data @/tmp/sourcehut-read-ticket.json https://todo.sr.ht/query''',
+]
+
+[[parameters]]
+name = "tracker_id"
+purpose = "todo.sr.ht tracker ID containing work-unit tickets."
+required = true
+deployment_value = "tracker_id"
+
+[[parameters]]
+name = "todo_query_url"
+purpose = "SourceHut todo GraphQL endpoint used to read the ticket."
+required = true
+deployment_value = "todo_query_url"
+
+[[parameters]]
+name = "ticket_number"
+purpose = "SourceHut ticket number within the active tracker."
+required = true
+
+[[parameters]]
+name = "token"
+purpose = "SourceHut API token supplied at command time only; never hardcoded, written, echoed, or logged."
+required = true
+secret = true
+
+[outcome]
+description = "The SourceHut ticket state is read from the active tracker and returned with a schema-compatible work-unit handle."
