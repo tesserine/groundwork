@@ -89,6 +89,30 @@ class ArtifactSchemaTests(unittest.TestCase):
         self.assertIn("handle/forge_tag", context.exception.paths)
         self.assertIn("forge tag `sourcehut` does not resolve in registry", str(context.exception))
 
+    def test_work_unit_schema_accepts_ticket_handles_and_no_handle(self) -> None:
+        for name in [
+            "valid-work-unit.json",
+            "valid-work-unit-github-handle.json",
+            "valid-work-unit-sourcehut-handle.json",
+        ]:
+            with self.subTest(fixture=name):
+                load_artifact("work-unit", self.fixture(name), registry=registry_from_manifest())
+
+    def test_work_unit_schema_rejects_wrong_ticket_handle_variant(self) -> None:
+        with self.assertRaises(ArtifactSchemaError) as context:
+            load_artifact("work-unit", self.fixture("invalid-work-unit-wrong-handle-variant.json"))
+
+        self.assertIn("handle", context.exception.paths)
+
+    def test_work_unit_forge_tag_rejects_unknown_registry_value(self) -> None:
+        registry = MechanicRegistry(forge_tags={"github"})
+
+        with self.assertRaises(ArtifactSchemaError) as context:
+            load_artifact("work-unit", self.fixture("valid-work-unit-sourcehut-handle.json"), registry=registry)
+
+        self.assertIn("handle/forge_tag", context.exception.paths)
+        self.assertIn("forge tag `sourcehut` does not resolve in registry", str(context.exception))
+
     def test_change_needs_revision_schema_accepts_structured_findings(self) -> None:
         artifact = load_artifact("change-needs-revision", self.fixture("valid-change-needs-revision.json"))
 

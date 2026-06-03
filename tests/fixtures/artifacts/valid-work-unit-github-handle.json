@@ -1,0 +1,12 @@
+{
+  "title": "Add ticket-backed work-unit identity",
+  "description": "Add a tracker-backed work-unit handle for a GitHub issue.",
+  "acceptance_criteria": [
+    "Ticket-backed work-units carry the assigned issue number"
+  ],
+  "handle": {
+    "forge_tag": "github",
+    "url": "https://github.com/tesserine/groundwork/issues/363",
+    "number": 363
+  }
+}

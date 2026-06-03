@@ -29,6 +29,12 @@ design → implement executes through RED-GREEN-REFACTOR → verify gates
 completion with evidence → document ensures accuracy → submit packages the
 change → land merges and closes the loop.
 
+Tracker-backed work-units may carry a forge-tagged ticket `handle`. The
+delivered work-unit artifact id remains the `--work-unit` threading root, and
+runa enforces that the id's ticket number agrees with `handle.number` before
+scoped execution. Non-tracker work-units omit the handle and keep the normal
+forge-neutral threading behavior.
+
 Each protocol produces an artifact that the next protocol requires.
 → [`docs/architecture/connecting-structure.md`](docs/architecture/connecting-structure.md)
 

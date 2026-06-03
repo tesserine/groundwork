@@ -933,6 +933,7 @@ how to know it's done, and whether it's ready to start.
 | title | string | yes | What this work-unit is |
 | description | string | yes | What needs doing |
 | acceptance_criteria | array of strings | yes | Discrete, verifiable conditions for "done" |
+| handle | forge-tagged ticket handle | no | Tracker ticket identity for tracker-backed work-units |
 | scope | array of strings | no | In-scope boundaries for the session frame |
 | out_of_scope | array of strings | no | Explicit nearby exclusions |
 | dependencies | array of work-unit refs | no | Work-units that must be complete before this starts, referenced by `instance_id` |
@@ -940,7 +941,11 @@ how to know it's done, and whether it's ready to start.
 Tracker-backed work-units use `instance_id` convention
 `work-unit-<N>-<short-slug>` on first delivery; work-units without tracker
 linkage use `<short-slug>`. Dependency references use those exact
-`instance_id` values.
+`instance_id` values. For tracker-backed work-units, `handle` carries the
+forge-assigned ticket number: GitHub stores `forge_tag`, issue `url`, and
+`number`; SourceHut stores `forge_tag`, `tracker_id`, and `number`. Runa
+enforces canonical identity by checking that the exact `--work-unit` artifact id
+agrees with `handle.number` and that a ticket has only one delivered root.
 
 ### Traceability Thread
 

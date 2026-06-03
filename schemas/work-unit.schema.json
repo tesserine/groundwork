@@ -25,6 +25,17 @@
         "type": "string"
       }
     },
+    "handle": {
+      "description": "Optional forge-specific ticket reference for tracker-backed work units.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/github-ticket-handle"
+        },
+        {
+          "$ref": "#/$defs/sourcehut-ticket-handle"
+        }
+      ]
+    },
     "scope": {
       "type": "array",
       "description": "In-scope boundaries for this work unit.",
@@ -49,6 +60,48 @@
       "items": {
         "type": "string",
         "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+      }
+    }
+  },
+  "$defs": {
+    "github-ticket-handle": {
+      "type": "object",
+      "required": ["forge_tag", "url", "number"],
+      "additionalProperties": false,
+      "properties": {
+        "forge_tag": {
+          "const": "github"
+        },
+        "url": {
+          "type": "string",
+          "description": "GitHub issue URL.",
+          "pattern": "^https://github\\.com/[^/]+/[^/]+/issues/[0-9]+$"
+        },
+        "number": {
+          "type": "integer",
+          "description": "GitHub issue number.",
+          "minimum": 1
+        }
+      }
+    },
+    "sourcehut-ticket-handle": {
+      "type": "object",
+      "required": ["forge_tag", "tracker_id", "number"],
+      "additionalProperties": false,
+      "properties": {
+        "forge_tag": {
+          "const": "sourcehut"
+        },
+        "tracker_id": {
+          "type": "integer",
+          "description": "SourceHut tracker ID containing the ticket.",
+          "minimum": 1
+        },
+        "number": {
+          "type": "integer",
+          "description": "SourceHut ticket number.",
+          "minimum": 1
+        }
       }
     }
   }

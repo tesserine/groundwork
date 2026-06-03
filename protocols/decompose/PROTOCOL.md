@@ -190,6 +190,15 @@ Subsequent updates reuse the `instance_id` established at first delivery. In
 this section, "refining an existing work-unit" means refining an existing
 artifact, not merely refining a tracker item.
 
+When creating a tracker-backed work-unit, use the forge-tagged `create-ticket`
+mechanic for the active forge and populate `handle` from the forge-assigned
+ticket identity. GitHub handles carry `forge_tag`, issue `url`, and `number`.
+SourceHut handles carry `forge_tag`, `tracker_id`, and `number`; the URL
+derives from deployment identity and is not stored. The handle is the source of
+truth for ticket identity, and runa rejects scoped execution when a delivered
+tracker-backed `instance_id` disagrees with `handle.number` or duplicates
+another root for the same ticket.
+
 For new work-units produced by `create-work-unit` or `decompose-epic`:
 
 ```
@@ -200,6 +209,7 @@ work-unit({
   acceptance_criteria: ["..."],
   scope: ["decompose delivery", "take framing"],
   out_of_scope: ["submit protocol", "land protocol"],
+  handle: {"forge_tag": "<forge tag>", "...": "<forge-specific ticket fields>"},
   dependencies: ["work-unit-122-artifact-store-cleanup"]
 })
 ```

@@ -86,6 +86,22 @@ name = "deliver-change-proposal"
 forge_tags = ["github", "sourcehut"]
 
 [[mechanics]]
+name = "create-ticket"
+forge_tags = ["github", "sourcehut"]
+
+[[mechanics]]
+name = "read-ticket"
+forge_tags = ["github", "sourcehut"]
+
+[[mechanics]]
+name = "claim-work-unit"
+forge_tags = ["github", "sourcehut"]
+
+[[mechanics]]
+name = "record-progress"
+forge_tags = ["github", "sourcehut"]
+
+[[mechanics]]
 name = "revise"
 
 [[mechanics]]

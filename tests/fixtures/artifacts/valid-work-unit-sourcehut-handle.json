@@ -1,0 +1,12 @@
+{
+  "title": "Add ticket-backed work-unit identity",
+  "description": "Add a tracker-backed work-unit handle for a SourceHut ticket.",
+  "acceptance_criteria": [
+    "Ticket-backed work-units carry the assigned ticket number"
+  ],
+  "handle": {
+    "forge_tag": "sourcehut",
+    "tracker_id": 4,
+    "number": 363
+  }
+}

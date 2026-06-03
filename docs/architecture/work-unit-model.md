@@ -50,3 +50,4 @@ Epics with 4+ tasks include a dependency graph in two representations:
 - **Splitting**: when an in-progress work-unit exceeds session size, split remaining work into new work-units and close the original with a pointer.
 - **Merging**: when two work-units converge on the same deliverable, merge into one and close the duplicate with a cross-reference.
 - **Validation after mutation**: after adding, closing, splitting, or merging work-units, verify the graph has no orphaned dependencies or cycles.
+- **Tracker identity agreement**: tracker-backed work-units carry a forge-tagged `handle` whose ticket number is the source of truth. The delivered artifact id must use the same ticket number (`work-unit-<N>-<short-slug>`), and a ticket must not have multiple delivered roots.

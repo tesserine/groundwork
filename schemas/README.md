@@ -32,6 +32,13 @@ Manifest `[[mechanics]]` entries may declare `forge_tags = [...]` to bind an
 operation handle to forge-specific C-3 mechanics; conformance requires exactly
 one matching `mechanics/**/*.toml` file for each declared operation/tag pair.
 
+`work-unit.schema.json` also supports an optional forge-tagged ticket `handle`
+for tracker-backed units. The handle records the forge-assigned ticket number:
+GitHub handles store issue URL plus number, while SourceHut handles store
+tracker ID plus ticket number. Runa treats the handle as ticket identity and
+checks that the delivered `work-unit-<N>-<short-slug>` artifact id agrees with
+`handle.number` before scoped execution.
+
 `request.schema.json` is different: it is a vendored copy of the canonical
 request contract maintained by `tesserine/commons`. Groundwork keeps the runtime
 copy here so runtime consumers still read schemas from groundwork, not from

@@ -1,0 +1,21 @@
+name = "read-ticket"
+purpose = "Read a GitHub issue that backs a tracker-linked work-unit."
+forge_tag = "github"
+default_invocation = 'gh issue view "$issue_number" --repo "$repository" --json number,title,body,state,url,comments'
+examples = [
+  'gh issue view "$issue_number" --repo "$repository" --json number,title,body,state,url,comments',
+]
+
+[[parameters]]
+name = "repository"
+purpose = "GitHub repository in OWNER/REPO form."
+required = true
+deployment_value = "repository"
+
+[[parameters]]
+name = "issue_number"
+purpose = "GitHub issue number from work-unit.handle.number."
+required = true
+
+[outcome]
+description = "The GitHub issue context is available to the session."

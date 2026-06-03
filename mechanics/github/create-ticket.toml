@@ -1,0 +1,27 @@
+name = "create-ticket"
+purpose = "Create a GitHub issue for a tracker-backed work-unit and return the issue URL."
+forge_tag = "github"
+default_invocation = 'gh issue create --repo "$repository" --title "$title" --body-file "$body_file"'
+examples = [
+  'gh issue create --repo "$repository" --title "$title" --body-file "$body_file"',
+]
+
+[[parameters]]
+name = "repository"
+purpose = "GitHub repository in OWNER/REPO form."
+required = true
+deployment_value = "repository"
+
+[[parameters]]
+name = "title"
+purpose = "Issue title."
+required = true
+
+[[parameters]]
+name = "body_file"
+purpose = "Path to a file containing the issue body."
+required = true
+
+[outcome]
+description = "A GitHub issue exists for the work-unit and its URL can be recorded in work-unit.handle."
+artifact_type = "work-unit"

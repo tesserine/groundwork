@@ -61,6 +61,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `groundwork-mechanic` now supplies those parameters from `GROUNDWORK_*` atoms
   while deriving SourceHut endpoints/remotes and GitHub repository identity
   without call-site deployment bindings (closes #362).
+- Early-arc forge tagging for tracker-backed work-units: `work-unit` artifacts
+  can carry optional GitHub/SourceHut ticket handles, early-arc mechanics are
+  registered for ticket create/read/claim/progress operations, and docs now
+  state the exact `--work-unit` id plus id-to-handle agreement invariant
+  (refs #363).
 
 ### Changed
 

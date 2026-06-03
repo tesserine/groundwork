@@ -1,0 +1,38 @@
+name = "record-progress"
+purpose = "Record progress on the SourceHut todo ticket backing a work-unit."
+forge_tag = "sourcehut"
+default_invocation = ''': "$tracker_id" "$ticket_id" && response=$(mktemp) && trap 'rm -f "$response"' EXIT && curl --fail --silent --show-error --header "Authorization: Bearer ${token}" --header 'Content-Type: application/json' --data "@${payload_file}" "$todo_query_url" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); data=payload.get("data"); sys.exit("SourceHut record-progress GraphQL response contained errors or omitted data") if "errors" in payload or not isinstance(data, dict) else None' "$response"'''
+examples = [
+  ''': "$tracker_id" "$ticket_id" && curl --header "Authorization: Bearer ${token}" --data "@${payload_file}" "$todo_query_url"''',
+]
+
+[[parameters]]
+name = "tracker_id"
+purpose = "todo.sr.ht tracker ID containing the work-unit ticket."
+required = true
+deployment_value = "tracker_id"
+
+[[parameters]]
+name = "ticket_id"
+purpose = "SourceHut ticket number from work-unit.handle.number."
+required = true
+
+[[parameters]]
+name = "payload_file"
+purpose = "JSON GraphQL payload for the progress comment."
+required = true
+
+[[parameters]]
+name = "todo_query_url"
+purpose = "SourceHut todo GraphQL endpoint."
+required = true
+deployment_value = "todo_query_url"
+
+[[parameters]]
+name = "token"
+purpose = "SourceHut API token supplied from WEFORGE_OPERATOR_PAT at command time only; never hardcoded, written, echoed, or logged."
+required = true
+secret = true
+
+[outcome]
+description = "The SourceHut ticket records session progress."

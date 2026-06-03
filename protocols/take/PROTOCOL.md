@@ -122,6 +122,13 @@ legitimately spans 2–3 cohesive work-units that share a concern boundary,
 runa activates `take` on each in turn; the session may address them as a
 batch and package them as one PR at `submit`.
 
+For tracker-backed work-units, the artifact's optional `handle` is the source
+of truth for ticket identity. Runa has already checked that the active
+`--work-unit` value is the exact delivered artifact id and that its ticket
+number agrees with `handle.number`; `take` consumes that identity rather than
+reconstructing it from the command line. Use the forge-tagged `read-ticket`
+mechanic to read tracker context for the active handle.
+
 #### Phase 2: Preparation
 
 Set up the repository-local workspace for the selected work.
@@ -143,6 +150,9 @@ Set up the repository-local workspace for the selected work.
    a substrate-failure signal. Missing injected context is not benign absent
    input: `take` does not attempt retrieval through a tracker surface and does
    not proceed in a degraded state.
+4. For tracker-backed work-units, record the session claim through the
+   forge-tagged `claim-work-unit` mechanic against the ticket named by
+   `handle.number`.
 
 #### Phase 3: Claim — produce the session capstone
 
@@ -177,8 +187,8 @@ write files, construct filenames, or supply `work_unit`.
 ### session-close
 
 1. Reach a stable checkpoint (done increment or explicit WIP note).
-2. Update work-unit state and leave a concise progress comment on the active
-   forge tracker record.
+2. Update work-unit state and leave a concise progress comment through the
+   `record-progress` mechanic on the active forge tracker record.
 3. Record decisions, blockers, and the exact next step.
 4. Ensure any follow-up work is represented in the active forge tracker.
 5. Sync workspace and close.

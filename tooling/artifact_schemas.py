@@ -138,7 +138,9 @@ def _registry_errors(
     artifact: dict[str, Any],
     registry: MechanicRegistry,
 ) -> list[tuple[str, str]]:
-    if artifact_type != "change-proposal":
+    if artifact_type not in {"change-proposal", "work-unit"}:
+        return []
+    if "handle" not in artifact:
         return []
 
     forge_tag = artifact["handle"]["forge_tag"]

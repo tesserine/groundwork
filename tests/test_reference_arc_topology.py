@@ -135,6 +135,23 @@ class ReferenceArcTopologyTests(unittest.TestCase):
                 self.assertIn(forge_tag, manifest_mechanics[operation]["forge_tags"])
                 self.assertEqual(1, sum(1 for mechanic in forge_mechanics if mechanic["name"] == operation))
 
+    def test_early_arc_mechanics_are_bound_once_per_forge_in_manifest_and_c3(self) -> None:
+        operations = {
+            "create-ticket",
+            "read-ticket",
+            "claim-work-unit",
+            "record-progress",
+        }
+        manifest_mechanics = {entry["name"]: entry for entry in manifest()["mechanics"]}
+
+        for forge_tag in {"github", "sourcehut"}:
+            forge_mechanics = mechanics_for_forge(forge_tag)
+            for operation in operations:
+                with self.subTest(forge_tag=forge_tag, operation=operation):
+                    self.assertIn(operation, manifest_mechanics)
+                    self.assertIn(forge_tag, manifest_mechanics[operation]["forge_tags"])
+                    self.assertEqual(1, sum(1 for mechanic in forge_mechanics if mechanic["name"] == operation))
+
     def test_reference_arc_mechanics_declare_deployment_resolved_parameters(self) -> None:
         expected = {
             ("github", "deliver-change-proposal"): {"repository": "repository"},
@@ -164,6 +181,47 @@ class ReferenceArcTopologyTests(unittest.TestCase):
                 for parameter_name, deployment_value in deployment_values.items():
                     self.assertEqual(deployment_value, parameters[parameter_name].get("deployment_value"))
                     self.assertTrue(parameters[parameter_name]["required"])
+
+    def test_early_arc_mechanics_declare_deployment_resolved_parameters(self) -> None:
+        expected = {
+            ("github", "create-ticket"): {"repository": "repository"},
+            ("github", "read-ticket"): {"repository": "repository"},
+            ("github", "claim-work-unit"): {"repository": "repository"},
+            ("github", "record-progress"): {"repository": "repository"},
+            ("sourcehut", "create-ticket"): {
+                "tracker_id": "tracker_id",
+                "todo_query_url": "todo_query_url",
+            },
+            ("sourcehut", "read-ticket"): {
+                "tracker_id": "tracker_id",
+                "todo_query_url": "todo_query_url",
+            },
+            ("sourcehut", "claim-work-unit"): {
+                "tracker_id": "tracker_id",
+                "todo_query_url": "todo_query_url",
+            },
+            ("sourcehut", "record-progress"): {
+                "tracker_id": "tracker_id",
+                "todo_query_url": "todo_query_url",
+            },
+        }
+
+        for (forge_tag, operation), deployment_values in expected.items():
+            with self.subTest(forge_tag=forge_tag, operation=operation):
+                mechanic = mechanic_for_forge(forge_tag, operation)
+                parameters = {parameter["name"]: parameter for parameter in mechanic["parameters"]}
+                for parameter_name, deployment_value in deployment_values.items():
+                    self.assertEqual(deployment_value, parameters[parameter_name].get("deployment_value"))
+                    self.assertTrue(parameters[parameter_name]["required"])
+
+    def test_sourcehut_early_arc_mechanics_keep_token_secret(self) -> None:
+        for operation in {"create-ticket", "read-ticket", "claim-work-unit", "record-progress"}:
+            with self.subTest(operation=operation):
+                mechanic = mechanic_for_forge("sourcehut", operation)
+                token = {parameter["name"]: parameter for parameter in mechanic["parameters"]}["token"]
+
+                self.assertTrue(token["secret"])
+                self.assertNotIn("WEFORGE_OPERATOR_PAT", mechanic["default_invocation"])
 
     def test_sourcehut_apply_mechanic_uses_proposal_ref_and_tree_equality_not_commit_identity(self) -> None:
         apply = mechanic_for_forge("sourcehut", "apply-approved-change")

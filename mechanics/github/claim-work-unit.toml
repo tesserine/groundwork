@@ -1,0 +1,26 @@
+name = "claim-work-unit"
+purpose = "Record a session claim on the GitHub issue backing a work-unit."
+forge_tag = "github"
+default_invocation = 'gh issue comment "$issue_number" --repo "$repository" --body-file "$body_file"'
+examples = [
+  'gh issue comment "$issue_number" --repo "$repository" --body-file "$body_file"',
+]
+
+[[parameters]]
+name = "repository"
+purpose = "GitHub repository in OWNER/REPO form."
+required = true
+deployment_value = "repository"
+
+[[parameters]]
+name = "issue_number"
+purpose = "GitHub issue number from work-unit.handle.number."
+required = true
+
+[[parameters]]
+name = "body_file"
+purpose = "Path to a file containing the claim comment."
+required = true
+
+[outcome]
+description = "The GitHub issue records the active session claim."

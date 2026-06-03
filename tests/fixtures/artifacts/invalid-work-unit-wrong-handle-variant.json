@@ -1,0 +1,12 @@
+{
+  "title": "Add ticket-backed work-unit identity",
+  "description": "Reject a handle whose fields do not match its forge tag.",
+  "acceptance_criteria": [
+    "Mismatched handle variants are rejected"
+  ],
+  "handle": {
+    "forge_tag": "github",
+    "tracker_id": 4,
+    "number": 363
+  }
+}
