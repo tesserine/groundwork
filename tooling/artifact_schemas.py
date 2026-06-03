@@ -19,6 +19,9 @@ MANIFEST = ROOT / "manifest.toml"
 DATE_TIME_PATTERN = re.compile(
     r"^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[Zz]|[+-]\d{2}:\d{2})$"
 )
+GITHUB_WORK_UNIT_ISSUE_URL_PATTERN = re.compile(
+    r"^https://github[.]com/[^/]+/[^/]+/issues/([0-9]+)$"
+)
 
 
 class ArtifactSchemaError(ValueError):
@@ -71,6 +74,8 @@ def validate_artifact(
 ) -> None:
     errors: list[tuple[str, str]] = []
     errors.extend(_schema_errors(artifact_type, artifact))
+    if not errors:
+        errors.extend(_artifact_contract_errors(artifact_type, artifact))
     if registry is not None and not errors:
         errors.extend(_registry_errors(artifact_type, artifact, registry))
 
@@ -138,10 +143,24 @@ def _registry_errors(
     artifact: dict[str, Any],
     registry: MechanicRegistry,
 ) -> list[tuple[str, str]]:
-    if artifact_type != "change-proposal":
+    if artifact_type == "change-proposal":
+        forge_tag = artifact["handle"]["forge_tag"]
+    elif artifact_type == "work-unit" and "handle" in artifact:
+        forge_tag = artifact["handle"]["forge_tag"]
+    else:
         return []
 
-    forge_tag = artifact["handle"]["forge_tag"]
     if forge_tag not in registry.forge_tags:
         return [("handle/forge_tag", f"forge tag `{forge_tag}` does not resolve in registry")]
+    return []
+
+
+def _artifact_contract_errors(artifact_type: str, artifact: dict[str, Any]) -> list[tuple[str, str]]:
+    if artifact_type != "work-unit" or artifact.get("handle", {}).get("forge_tag") != "github":
+        return []
+
+    handle = artifact["handle"]
+    match = GITHUB_WORK_UNIT_ISSUE_URL_PATTERN.fullmatch(handle["url"])
+    if match is not None and int(match.group(1)) != handle["number"]:
+        return [("handle/url", "GitHub issue URL number does not agree with handle number")]
     return []

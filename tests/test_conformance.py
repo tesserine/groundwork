@@ -83,6 +83,28 @@ name = "successor"
         )
         self.assertTrue(all(result.passed for result in results))
 
+    def test_artifact_conformance_validates_work_unit_handle_contract(self) -> None:
+        results = run_conformance(
+            [
+                ARTIFACT_FIXTURES / "valid-work-unit-github-handle.json",
+                ARTIFACT_FIXTURES / "valid-work-unit-sourcehut-handle.json",
+                ARTIFACT_FIXTURES / "invalid-work-unit-github-url-number-mismatch.json",
+            ]
+        )
+
+        self.assertEqual(
+            [
+                "C-4 artifact-instance",
+                "C-4 artifact-instance",
+                "C-4 artifact-instance",
+            ],
+            [result.category for result in results],
+        )
+        self.assertTrue(results[0].passed)
+        self.assertTrue(results[1].passed)
+        self.assertFalse(results[2].passed)
+        self.assertIn("handle/url", " ".join(results[2].errors))
+
     def test_invalid_units_return_failures_without_raising(self) -> None:
         results = run_conformance(
             [

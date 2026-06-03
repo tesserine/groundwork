@@ -1,0 +1,12 @@
+{
+  "title": "Reject wrong work-unit handle variant",
+  "description": "GitHub work-unit handles must not carry SourceHut fields",
+  "acceptance_criteria": [
+    "Wrong forge handle variants are rejected"
+  ],
+  "handle": {
+    "forge_tag": "github",
+    "tracker_id": 4,
+    "number": 368
+  }
+}

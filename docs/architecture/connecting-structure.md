@@ -933,6 +933,7 @@ how to know it's done, and whether it's ready to start.
 | title | string | yes | What this work-unit is |
 | description | string | yes | What needs doing |
 | acceptance_criteria | array of strings | yes | Discrete, verifiable conditions for "done" |
+| handle | forge-tagged ticket handle | no | Forge-assigned tracker identity for tracker-backed work-units |
 | scope | array of strings | no | In-scope boundaries for the session frame |
 | out_of_scope | array of strings | no | Explicit nearby exclusions |
 | dependencies | array of work-unit refs | no | Work-units that must be complete before this starts, referenced by `instance_id` |
@@ -941,6 +942,11 @@ Tracker-backed work-units use `instance_id` convention
 `work-unit-<N>-<short-slug>` on first delivery; work-units without tracker
 linkage use `<short-slug>`. Dependency references use those exact
 `instance_id` values.
+
+Tracker-backed work-units may also carry an optional forge-tagged ticket
+`handle`; non-tracker work-units omit it. The body remains unpartitioned and
+does not carry a top-level `work_unit` field. GitHub handles name an issue URL
+and number; SourceHut handles name a tracker ID and ticket number.
 
 ### Traceability Thread
 
