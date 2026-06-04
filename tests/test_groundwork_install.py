@@ -82,6 +82,8 @@ class MethodologyFixture:
         run(["git", "init", "-q"], self.root, check=True)
         run(["git", "config", "user.name", "installer test"], self.root, check=True)
         run(["git", "config", "user.email", "installer-test@example.invalid"], self.root, check=True)
+        run(["git", "config", "commit.gpgsign", "false"], self.root, check=True)
+        run(["git", "config", "tag.gpgsign", "false"], self.root, check=True)
         run(["git", "checkout", "-q", "-b", "main"], self.root, check=True)
         run(["git", "add", "."], self.root, check=True)
         run(["git", "commit", "-q", "-m", "test: seed methodology"], self.root, check=True)
@@ -695,6 +697,53 @@ class GroundworkInstallTests(unittest.TestCase):
         install = InstallRun(self, fixture.root)
 
         result = install.run_installer("install")
+
+        assert_failure_contains(self, result, "dirty")
+
+    def test_install_from_branch_installs_committed_branch_head(self) -> None:
+        fixture = self.add_fixture("from-branch")
+        fixture.checkout_branch()
+        expected_sha = run(["git", "rev-parse", "HEAD"], fixture.root, check=True).stdout.strip()
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install", "--from-branch")
+
+        assert_success(self, result)
+        self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
+        recorded = {
+            line.split("\t")[3]
+            for line in install.state_file().read_text(encoding="utf-8").splitlines()
+        }
+        self.assertEqual(recorded, {expected_sha})
+
+    def test_sync_from_branch_converges_to_the_moving_branch_head(self) -> None:
+        fixture = self.add_fixture("sync-from-branch")
+        fixture.checkout_branch()
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install", "--from-branch"))
+
+        fixture.write("skills/added/SKILL.md", "---\nname: added\n---\n# Added\n")
+        run(["git", "add", "."], fixture.root, check=True)
+        run(["git", "commit", "-q", "-m", "test: advance branch"], fixture.root, check=True)
+        advanced_sha = run(["git", "rev-parse", "HEAD"], fixture.root, check=True).stdout.strip()
+
+        result = install.run_installer("sync", "--from-branch")
+
+        assert_success(self, result)
+        self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit", "added"})
+        recorded = {
+            line.split("\t")[3]
+            for line in install.state_file().read_text(encoding="utf-8").splitlines()
+        }
+        self.assertEqual(recorded, {advanced_sha})
+
+    def test_from_branch_does_not_bypass_dirty_source_checkouts(self) -> None:
+        fixture = self.add_fixture("from-branch-dirty")
+        fixture.checkout_branch()
+        fixture.write("skills/orient/SKILL.md", "# changed\n")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install", "--from-branch")
 
         assert_failure_contains(self, result, "dirty")
 

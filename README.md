@@ -149,6 +149,19 @@ removing entries that no longer exist upstream. `scripts/groundwork-install
 status` reports the recorded install state, and `scripts/groundwork-install
 uninstall` removes only entries the command created.
 
+Methodology authors who develop Groundwork itself and want their working branch
+reflected in the live discovery surface can pass `--from-branch` to install or
+sync the current branch HEAD instead of a detached pinned ref:
+
+```bash
+scripts/groundwork-install sync --from-branch
+```
+
+The checkout must still be clean — `--from-branch` relaxes only the pinned-ref
+requirement, not the clean-checkout requirement, so the recorded `source-sha`
+always identifies a real commit. Because a branch is a moving source, this is an
+opt-in for development; the default still requires a pinned tag or commit SHA.
+
 Ownership is tracked in both a per-entry marker file and an XDG state file at
 `${XDG_STATE_HOME:-~/.local/state}/groundwork-install/interactive-install.tsv`.
 Pre-existing entries, including unofficial symlinks with the same names, are
