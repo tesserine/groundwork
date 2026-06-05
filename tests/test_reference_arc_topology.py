@@ -316,45 +316,56 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertIn('"$todo_query_url"', invocation)
         self.assertNotIn("https://todo.sr.ht/query", invocation)
 
-    def test_sourcehut_deliver_is_idempotent_when_proposal_ref_already_points_at_commit(self) -> None:
+    def test_sourcehut_deliver_idempotent_proposal_ref_still_publishes_absent_or_stale_branch(self) -> None:
         deliver = mechanic_for_forge("sourcehut", "deliver-change-proposal")
 
-        with tempfile.TemporaryDirectory() as temporary_directory:
-            root = Path(temporary_directory)
-            remote = root / "remote.git"
-            source = root / "source"
-            proposal_ref = "refs/proposals/issue-376/1"
-            branch = "issue-376/sourcehut-change-proposal-handle"
+        for initial_branch_state in ["absent", "stale"]:
+            with self.subTest(initial_branch_state=initial_branch_state):
+                with tempfile.TemporaryDirectory() as temporary_directory:
+                    root = Path(temporary_directory)
+                    remote = root / "remote.git"
+                    source = root / "source"
+                    proposal_ref = "refs/proposals/issue-376/1"
+                    branch = "issue-376/sourcehut-change-proposal-handle"
 
-            run_git(["init", "--bare", str(remote)], root)
-            run_git(["init", str(source)], root)
-            run_git(["config", "user.name", "Groundwork Tests"], source)
-            run_git(["config", "user.email", "groundwork-tests@example.invalid"], source)
-            (source / "proposal.txt").write_text("proposal\n", encoding="utf-8")
-            run_git(["add", "proposal.txt"], source)
-            run_git(["commit", "-m", "test: proposal"], source)
-            commit = run_git(["rev-parse", "HEAD"], source)
-            run_git(["push", str(remote), f"{commit}:{proposal_ref}"], source)
+                    run_git(["init", "--bare", str(remote)], root)
+                    run_git(["init", str(source)], root)
+                    run_git(["config", "user.name", "Groundwork Tests"], source)
+                    run_git(["config", "user.email", "groundwork-tests@example.invalid"], source)
+                    (source / "base.txt").write_text("base\n", encoding="utf-8")
+                    run_git(["add", "base.txt"], source)
+                    run_git(["commit", "-m", "test: base"], source)
+                    base = run_git(["rev-parse", "HEAD"], source)
+                    (source / "proposal.txt").write_text("proposal\n", encoding="utf-8")
+                    run_git(["add", "proposal.txt"], source)
+                    run_git(["commit", "-m", "test: proposal"], source)
+                    commit = run_git(["rev-parse", "HEAD"], source)
+                    push_refs = [f"{commit}:{proposal_ref}"]
+                    if initial_branch_state == "stale":
+                        push_refs.append(f"{base}:refs/heads/{branch}")
+                    run_git(["push", str(remote), *push_refs], source)
 
-            result = self.run_mechanic_invocation(
-                deliver["default_invocation"],
-                {
-                    "branch": branch,
-                    "commit": commit,
-                    "proposal_ref": proposal_ref,
-                    "ssh_remote": str(remote),
-                },
-                root,
-                source,
-            )
+                    result = self.run_mechanic_invocation(
+                        deliver["default_invocation"],
+                        {
+                            "branch": branch,
+                            "commit": commit,
+                            "proposal_ref": proposal_ref,
+                            "ssh_remote": str(remote),
+                        },
+                        root,
+                        source,
+                    )
 
-            moved_ref = run_git(["ls-remote", str(remote), proposal_ref], source).split("\t", maxsplit=1)[0]
-            branch_ref = run_git(["ls-remote", str(remote), f"refs/heads/{branch}"], source)
+                    moved_ref = run_git(["ls-remote", str(remote), proposal_ref], source).split("\t", maxsplit=1)[0]
+                    branch_ref = run_git(["ls-remote", str(remote), f"refs/heads/{branch}"], source).split(
+                        "\t", maxsplit=1
+                    )[0]
 
-        self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual(proposal_ref, result.stdout.strip())
-        self.assertEqual(commit, moved_ref)
-        self.assertEqual("", branch_ref)
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assertEqual(proposal_ref, result.stdout.strip())
+                self.assertEqual(commit, moved_ref)
+                self.assertEqual(commit, branch_ref)
 
     def test_sourcehut_deliver_rejects_existing_descendant_proposal_ref_without_moving_it(self) -> None:
         deliver = mechanic_for_forge("sourcehut", "deliver-change-proposal")

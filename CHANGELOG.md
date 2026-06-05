@@ -113,6 +113,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `refs/proposals/...` ref instead of a separate mail-carrier artifact;
   delivery rejects an existing proposal ref at a different commit and apply
   binds by commit identity instead of replaying patch content (closes #376).
+- SourceHut `deliver-change-proposal` now publishes or advances the persistent
+  feature branch even when the immutable proposal ref already exists at the
+  submitted commit, so idempotent redelivery still preserves branch
+  reachability.
 - C-5 manifest conformance now rejects disposition-agnostic outputs of
   outcome-bearing protocols through `on_change`, `on_invalid`, and composite
   triggers, while preserving valid re-review triggers on protocol inputs.
