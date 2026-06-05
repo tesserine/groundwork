@@ -117,6 +117,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   feature branch even when the immutable proposal ref already exists at the
   submitted commit, so idempotent redelivery still preserves branch
   reachability.
+- SourceHut proposal delivery now matches remote refs by exact refname column,
+  creates `refs/proposals/...` pins through an unambiguous wildcard refspec, and
+  verifies the exact pin before emitting the proposal handle.
 - C-5 manifest conformance now rejects disposition-agnostic outputs of
   outcome-bearing protocols through `on_change`, `on_invalid`, and composite
   triggers, while preserving valid re-review triggers on protocol inputs.
