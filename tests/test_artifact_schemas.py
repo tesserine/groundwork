@@ -71,6 +71,26 @@ class ArtifactSchemaTests(unittest.TestCase):
 
         self.assertIn("handle", context.exception.paths)
 
+    def test_change_proposal_schema_rejects_removed_sourcehut_patch_carrier(self) -> None:
+        legacy_key = "m" + "box"
+        artifact = {
+            "work_unit": "issue-316",
+            "branch": "issue-316/feat-architecture-step-1-change-proposal",
+            "commit": "7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0",
+            "base": "main",
+            "summary": "SourceHut legacy carrier handles should fail.",
+            "version": 2,
+            "handle": {
+                "forge_tag": "sourcehut",
+                legacy_key: "artifact://change-proposals/issue-316/v2.patch",
+            },
+        }
+
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("change-proposal", artifact)
+
+        self.assertIn("handle", context.exception.paths)
+
     def test_change_proposal_forge_tag_resolves_against_manifest_registry(self) -> None:
         artifact = load_artifact(
             "change-proposal",

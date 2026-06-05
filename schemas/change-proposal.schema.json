@@ -72,16 +72,16 @@
     },
     "sourcehut-handle": {
       "type": "object",
-      "required": ["forge_tag", "mbox"],
+      "required": ["forge_tag", "proposal_ref"],
       "additionalProperties": false,
       "properties": {
         "forge_tag": {
           "const": "sourcehut"
         },
-        "mbox": {
+        "proposal_ref": {
           "type": "string",
-          "description": "Artifact-store path or URI for the mbox carrier.",
-          "minLength": 1
+          "description": "Immutable per-version SourceHut proposal ref used as the review and apply locator.",
+          "pattern": "^refs/proposals/.+"
         }
       }
     }

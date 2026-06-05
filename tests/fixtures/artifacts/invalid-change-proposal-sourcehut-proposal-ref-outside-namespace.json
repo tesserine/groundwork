@@ -3,10 +3,10 @@
   "branch": "issue-316/feat-architecture-step-1-change-proposal",
   "commit": "7f5a3ce0b626f15e445f4d9fb80663a9a10f4db0",
   "base": "main",
-  "summary": "Revise artifact schemas after review findings.",
+  "summary": "SourceHut proposal refs outside refs/proposals should fail.",
   "version": 2,
   "handle": {
     "forge_tag": "sourcehut",
-    "proposal_ref": "refs/proposals/issue-316/2"
+    "proposal_ref": "refs/heads/issue-316/proposal"
   }
 }

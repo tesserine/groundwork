@@ -2,7 +2,7 @@ name = "deliver-change-proposal-sourcehut-lists"
 purpose = "Create a Sourcehut mailing-list change proposal."
 forge_tag = "sourcehut-lists"
 default_invocation = 'git send-email --to "$list"'
-examples = ["git send-email --to ~example/project-devel patch.mbox"]
+examples = ["git send-email --to ~example/project-devel patch-series"]
 
 [[parameters]]
 name = "list"

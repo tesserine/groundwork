@@ -24,7 +24,11 @@ submit -> review handoff from ADR-0002 and ADR-0003. `change-proposal`
 replaces the old PR-shaped `patch` artifact with a forge-neutral envelope plus
 a forge-tagged handle. The review disposition is the produced outcome type:
 `change-approved` cannot carry blocking findings, and `change-needs-revision`
-must carry at least one blocking finding.
+must carry at least one blocking finding. GitHub change proposals carry
+`{ forge_tag, url, number }`; SourceHut change proposals carry
+`{ forge_tag, proposal_ref }`, where `proposal_ref` is the immutable
+per-version `refs/proposals/...` locator distinct from the mutable envelope
+`branch`.
 
 `work-unit.schema.json` is the planning-to-execution bridge. It remains
 forge-neutral and unpartitioned: tracker-backed units may carry an optional
