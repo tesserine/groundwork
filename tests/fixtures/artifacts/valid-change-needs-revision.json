@@ -5,7 +5,7 @@
   "reviewed_at": "2026-05-28T12:00:00Z",
   "findings": [
     {
-      "observation": "SourceHut handle must name its mbox carrier field.",
+      "observation": "SourceHut handle must name its immutable proposal ref.",
       "classification": "blocking",
       "location": "handle"
     },

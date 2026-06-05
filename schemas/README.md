@@ -22,9 +22,10 @@ rather than inferring parameter categories from names.
 `change-needs-revision.schema.json` are the C-4 artifact schemas for the
 submit -> review handoff from ADR-0002 and ADR-0003. `change-proposal`
 replaces the old PR-shaped `patch` artifact with a forge-neutral envelope plus
-a forge-tagged handle. The review disposition is the produced outcome type:
-`change-approved` cannot carry blocking findings, and `change-needs-revision`
-must carry at least one blocking finding.
+a forge-tagged handle: GitHub proposals point at a pull request, and SourceHut
+proposals point at an immutable `refs/proposals/...` ref. The review disposition
+is the produced outcome type: `change-approved` cannot carry blocking findings,
+and `change-needs-revision` must carry at least one blocking finding.
 
 `work-unit.schema.json` is the planning-to-execution bridge. It remains
 forge-neutral and unpartitioned: tracker-backed units may carry an optional
