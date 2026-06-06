@@ -250,7 +250,7 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertIn('"$approved_resolved:$base_ref"', invocation)
         self.assertLess(invocation.index('git check-ref-format "$proposal_ref"'), invocation.index('git fetch "$ssh_remote" "$proposal_ref"'))
         self.assertLess(invocation.index('git check-ref-format "$base_ref"'), invocation.index('git fetch "$ssh_remote" "$proposal_ref"'))
-        self.assertLess(invocation.index("approved_resolved="), invocation.index('git fetch "$ssh_remote" "$proposal_ref"'))
+        self.assertLess(invocation.index('git fetch "$ssh_remote" "$proposal_ref"'), invocation.index("approved_resolved="))
         self.assertIn("resolved by work_unit and against_version", apply["purpose"])
         self.assertNotIn('git am', invocation)
         self.assertNotIn("expected_tree", invocation)
@@ -341,6 +341,65 @@ class ReferenceArcTopologyTests(unittest.TestCase):
 
             fetched_commit = run_git(["rev-parse", "FETCH_HEAD"], consumer)
             self.assertEqual(commit, fetched_commit)
+
+    def test_sourcehut_apply_fetches_proposal_before_resolving_approved_commit_from_clean_checkout(self) -> None:
+        apply = mechanic_for_forge("sourcehut", "apply-approved-change")
+        proposal_ref = load_fixture("valid-change-proposal-sourcehut-v2.json")["handle"]["proposal_ref"]
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            remote = root / "remote.git"
+            source = root / "source"
+            consumer = root / "consumer"
+
+            run_git(["init", "--bare", str(remote)], root)
+            run_git(["init", str(source)], root)
+            run_git(["config", "user.name", "Groundwork Tests"], source)
+            run_git(["config", "user.email", "groundwork-tests@example.invalid"], source)
+            (source / "base.txt").write_text("base\n", encoding="utf-8")
+            run_git(["add", "base.txt"], source)
+            run_git(["commit", "-m", "test: base"], source)
+            base = run_git(["rev-parse", "HEAD"], source)
+
+            (source / "proposal.txt").write_text("approved\n", encoding="utf-8")
+            run_git(["add", "proposal.txt"], source)
+            run_git(["commit", "-m", "test: approved proposal"], source)
+            approved_commit = run_git(["rev-parse", "HEAD"], source)
+            push_remote_ref(remote, "refs/heads/main", base, source)
+            push_remote_ref(remote, proposal_ref, approved_commit, source)
+
+            run_git(["init", str(consumer)], root)
+            run_git(["config", "user.name", "Groundwork Tests"], consumer)
+            run_git(["config", "user.email", "groundwork-tests@example.invalid"], consumer)
+            run_git(["fetch", str(remote), "refs/heads/main"], consumer)
+            run_git(["checkout", "-B", "main", "FETCH_HEAD"], consumer)
+            missing_before_apply = subprocess.run(
+                ["git", "cat-file", "-e", f"{approved_commit}^{{commit}}"],
+                cwd=consumer,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+            result = self.run_mechanic_invocation(
+                apply["default_invocation"],
+                {
+                    "ssh_remote": str(remote),
+                    "proposal_ref": proposal_ref,
+                    "approved_commit": approved_commit,
+                    "base": "main",
+                },
+                root,
+                consumer,
+            )
+
+            target_ref = remote_ref_commit(remote, "refs/heads/main", consumer)
+            fetched_commit = run_git(["rev-parse", "FETCH_HEAD^{commit}"], consumer)
+
+        self.assertNotEqual(0, missing_before_apply.returncode)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(approved_commit, fetched_commit)
+        self.assertEqual(approved_commit, target_ref)
 
     def test_sourcehut_apply_refuses_proposal_ref_at_unapproved_commit_before_pushing_target(self) -> None:
         apply = mechanic_for_forge("sourcehut", "apply-approved-change")
