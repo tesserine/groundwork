@@ -95,6 +95,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- GitHub `deliver-change-proposal` now validates branch-shaped inputs before
+  remote or PR operations, resolves the declared proposal commit, uses
+  force-with-lease to update the PR head branch to exactly that commit, and
+  reuses an existing PR for idempotent redelivery.
 - SourceHut `read-ticket` now resolves the active tracker through the live
   todo GraphQL `user(username: ...) { tracker(name: ...) }` path instead of
   passing the numeric deployment tracker id to `tracker(rid: ...)`.

@@ -15,7 +15,8 @@
     "branch": {
       "type": "string",
       "description": "Feature branch name carrying the proposed change.",
-      "minLength": 1
+      "minLength": 1,
+      "pattern": "^(?!.*\\.\\.)[^:\\s\\u0000-\\u001F\\u007F]+$"
     },
     "commit": {
       "type": "string",
@@ -25,7 +26,8 @@
     "base": {
       "type": "string",
       "description": "Base branch or revision the proposal targets.",
-      "minLength": 1
+      "minLength": 1,
+      "pattern": "^(?!.*\\.\\.)[^:\\s\\u0000-\\u001F\\u007F]+$"
     },
     "summary": {
       "type": "string",

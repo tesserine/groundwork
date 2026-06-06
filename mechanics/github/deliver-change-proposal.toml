@@ -1,9 +1,9 @@
 name = "deliver-change-proposal"
-purpose = "Deliver a GitHub pull request for review while preserving the forge-neutral change-proposal envelope."
+purpose = "Deliver a GitHub pull request for review with the pull request head bound to the declared change-proposal commit."
 forge_tag = "github"
-default_invocation = 'git push origin "$branch" && gh pr create --repo "$repository" --base "$base" --head "$branch" --title "$title" --body-file "$body_file"'
+default_invocation = '''branch_ref="refs/heads/${branch}" && base_ref="refs/heads/${base}" && git check-ref-format "$branch_ref" && git check-ref-format "$base_ref" && commit_resolved=$(git rev-parse --verify --quiet --end-of-options "${commit}^{commit}") && branch_commit=$(git ls-remote origin "$branch_ref" | awk -v ref="$branch_ref" '$2 == ref { print $1; exit }') && if test "$branch_commit" = "$commit_resolved"; then :; elif test -n "$branch_commit"; then git push --force-with-lease="$branch_ref:$branch_commit" origin "$commit_resolved:$branch_ref"; else git push --force-with-lease="$branch_ref:" origin "$commit_resolved:$branch_ref"; fi && post_push_commit=$(git ls-remote origin "$branch_ref" | awk -v ref="$branch_ref" '$2 == ref { print $1; exit }') && if test "$post_push_commit" != "$commit_resolved"; then printf "%s\n" "GitHub branch $branch_ref resolves to ${post_push_commit:-<absent>}, expected $commit_resolved" >&2; exit 1; fi && existing_pr_url=$(gh pr list --repo "$repository" --head "$branch" --base "$base" --state open --json number,url --jq '.[0].url // ""') && if test -n "$existing_pr_url"; then printf "%s\n" "$existing_pr_url"; else gh pr create --repo "$repository" --base "$base" --head "$branch" --title "$title" --body-file "$body_file"; fi'''
 examples = [
-  'git push origin "$branch" && gh pr create --repo "$repository" --base "$base" --head "$branch" --title "$title" --body-file "$body_file"',
+  '''branch_ref="refs/heads/issue-380/github-deliver-commit-bound" && base_ref="refs/heads/main" && git check-ref-format "$branch_ref" && git check-ref-format "$base_ref" && commit_resolved=$(git rev-parse --verify --quiet --end-of-options "5ef2870a5958971f84ec33b46d389dd920d4933a^{commit}") && branch_commit=$(git ls-remote origin "$branch_ref" | awk -v ref="$branch_ref" '$2 == ref { print $1; exit }') && if test "$branch_commit" = "$commit_resolved"; then :; elif test -n "$branch_commit"; then git push --force-with-lease="$branch_ref:$branch_commit" origin "$commit_resolved:$branch_ref"; else git push --force-with-lease="$branch_ref:" origin "$commit_resolved:$branch_ref"; fi && post_push_commit=$(git ls-remote origin "$branch_ref" | awk -v ref="$branch_ref" '$2 == ref { print $1; exit }') && if test "$post_push_commit" != "$commit_resolved"; then printf "%s\n" "GitHub branch $branch_ref resolves to ${post_push_commit:-<absent>}, expected $commit_resolved" >&2; exit 1; fi && existing_pr_url=$(gh pr list --repo "tesserine/groundwork" --head "issue-380/github-deliver-commit-bound" --base "main" --state open --json number,url --jq '.[0].url // ""') && if test -n "$existing_pr_url"; then printf "%s\n" "$existing_pr_url"; else gh pr create --repo "tesserine/groundwork" --base "main" --head "issue-380/github-deliver-commit-bound" --title "GitHub deliver: commit-bound delivery" --body-file "/tmp/pr-body.md"; fi''',
 ]
 
 [[parameters]]
@@ -23,6 +23,11 @@ purpose = "Base branch or revision targeted by the proposal."
 required = true
 
 [[parameters]]
+name = "commit"
+purpose = "Proposal commit that must become the GitHub pull request head."
+required = true
+
+[[parameters]]
 name = "title"
 purpose = "Pull request title."
 required = true
@@ -33,5 +38,5 @@ purpose = "Path to a file containing the pull request body."
 required = true
 
 [outcome]
-description = "A GitHub pull request exists and can be recorded as a change-proposal handle."
+description = "A GitHub pull request exists with its head branch equal to the declared change-proposal commit, and stdout contains the pull request URL."
 artifact_type = "change-proposal"
