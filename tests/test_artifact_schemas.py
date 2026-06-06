@@ -139,6 +139,30 @@ class ArtifactSchemaTests(unittest.TestCase):
 
                 self.assertIn("handle", context.exception.paths)
 
+    def test_change_proposal_schema_rejects_branch_and_base_refspec_injection_shapes(self) -> None:
+        cases = [
+            ("branch", "issue-316/bad:refs/heads/main"),
+            ("branch", "issue-316/bad branch"),
+            ("branch", "issue-316/bad\nbranch"),
+            ("branch", "issue-316/bad\x7fbranch"),
+            ("branch", "issue-316/../main"),
+            ("base", "main:refs/heads/other"),
+            ("base", "release candidate"),
+            ("base", "main\tunsafe"),
+            ("base", "main\x7funsafe"),
+            ("base", "release/../main"),
+        ]
+
+        for field, value in cases:
+            with self.subTest(field=field, value=repr(value)):
+                artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
+                artifact[field] = value
+
+                with self.assertRaises(ArtifactSchemaError) as context:
+                    validate_artifact("change-proposal", artifact)
+
+                self.assertIn(field, context.exception.paths)
+
     def test_change_proposal_forge_tag_resolves_against_manifest_registry(self) -> None:
         artifact = load_artifact(
             "change-proposal",

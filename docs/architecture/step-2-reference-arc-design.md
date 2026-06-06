@@ -131,8 +131,9 @@ an immutable per-version ref recorded in
 lists.sr.ht. Apply fetches that proposal ref, verifies the fetched ref resolves
 to the approved commit by commit identity, and advances the explicit target ref
 to that commit; `base` remains proposal metadata and is not converted into a
-branch ref. GitHub remains intentionally different and keeps the
-commit-identity guard through `gh pr merge --match-head-commit`.
+branch ref. GitHub remains intentionally different: delivery makes the pull
+request head branch equal the proposal's declared `commit`, and apply keeps the
+same commit-identity guard through `gh pr merge --match-head-commit`.
 
 ## Downstream Constraints
 

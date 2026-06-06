@@ -124,6 +124,68 @@ def logged_git_commands(log_path: Path) -> list[str]:
     return log_path.read_text(encoding="utf-8").splitlines()
 
 
+def write_fake_gh(bin_dir: Path, log_path: Path, *, existing_pr_url: str = "") -> None:
+    create_body = (
+        f"""printf '%s\\n' "create called despite existing pull request" >&2
+    exit 99"""
+        if existing_pr_url
+        else 'printf \'%s\\n\' "https://github.com/tesserine/groundwork/pull/380"'
+    )
+    (bin_dir / "gh").write_text(
+        f"""#!/bin/sh
+printf '%s\\n' "gh $*" >> {log_path}
+case "$1 $2" in
+  "pr list")
+    printf '%s\\n' "{existing_pr_url}"
+    ;;
+  "pr create")
+    {create_body}
+    ;;
+  *)
+    printf '%s\\n' "unexpected gh command: gh $*" >&2
+    exit 98
+    ;;
+esac
+""",
+        encoding="utf-8",
+    )
+    (bin_dir / "gh").chmod(0o755)
+
+
+def write_stateful_fake_gh(bin_dir: Path, log_path: Path, state_path: Path) -> None:
+    (bin_dir / "gh").write_text(
+        f"""#!/bin/sh
+url="https://github.com/tesserine/groundwork/pull/380"
+printf '%s\\n' "gh $*" >> {log_path}
+case "$1 $2" in
+  "pr list")
+    if test -f {state_path}; then printf '%s\\n' "$url"; fi
+    ;;
+  "pr create")
+    if test -f {state_path}; then
+      printf '%s\\n' "a pull request already exists for this branch" >&2
+      exit 99
+    fi
+    printf '%s\\n' created > {state_path}
+    printf '%s\\n' "$url"
+    ;;
+  *)
+    printf '%s\\n' "unexpected gh command: gh $*" >&2
+    exit 98
+    ;;
+esac
+""",
+        encoding="utf-8",
+    )
+    (bin_dir / "gh").chmod(0o755)
+
+
+def logged_gh_commands(log_path: Path) -> list[str]:
+    if not log_path.exists():
+        return []
+    return log_path.read_text(encoding="utf-8").splitlines()
+
+
 def assert_no_remote_or_ref_mutating_git(test: unittest.TestCase, commands: list[str]) -> None:
     dangerous = (" fetch ", " push ", " update-ref ", " ls-remote ")
     test.assertFalse(
@@ -300,6 +362,237 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertIn("handle.proposal_ref", combined)
         self.assertIn("no lists.sr.ht", combined)
         self.assertNotIn("git send-email", combined)
+
+    def test_github_deliver_mechanic_binds_pr_head_to_declared_commit(self) -> None:
+        deliver = mechanic_for_forge("github", "deliver-change-proposal")
+        invocation = deliver["default_invocation"]
+        parameters = {parameter["name"] for parameter in deliver["parameters"]}
+        combined = " ".join([deliver["purpose"], invocation, deliver["outcome"]["description"], *deliver["examples"]])
+
+        self.assertIn("commit", parameters)
+        self.assertIn('branch_ref="refs/heads/${branch}"', invocation)
+        self.assertIn('base_ref="refs/heads/${base}"', invocation)
+        self.assertIn('git check-ref-format "$branch_ref"', invocation)
+        self.assertIn('git check-ref-format "$base_ref"', invocation)
+        self.assertIn('commit_resolved=$(git rev-parse --verify --quiet --end-of-options "${commit}^{commit}")', invocation)
+        self.assertIn('git push --force-with-lease="$branch_ref:" origin "$commit_resolved:$branch_ref"', invocation)
+        self.assertIn('git push --force-with-lease="$branch_ref:$branch_commit" origin "$commit_resolved:$branch_ref"', invocation)
+        self.assertIn('post_push_commit=$(git ls-remote origin "$branch_ref"', invocation)
+        self.assertIn('gh pr list --repo "$repository" --head "$branch" --base "$base" --state open', invocation)
+        self.assertIn('gh pr create --repo "$repository" --base "$base" --head "$branch"', invocation)
+        self.assertLess(invocation.index('git check-ref-format "$branch_ref"'), invocation.index('git ls-remote origin "$branch_ref"'))
+        self.assertLess(invocation.index('git check-ref-format "$base_ref"'), invocation.index('git ls-remote origin "$branch_ref"'))
+        self.assertLess(invocation.index("commit_resolved="), invocation.index('git ls-remote origin "$branch_ref"'))
+        self.assertNotIn('git push origin "$branch"', invocation)
+        self.assertNotIn("refs/proposals", combined)
+        self.assertNotIn("merge-base", invocation)
+
+    def test_github_deliver_sets_remote_branch_to_declared_commit_regardless_of_local_branch(self) -> None:
+        deliver = mechanic_for_forge("github", "deliver-change-proposal")
+
+        for initial_branch_state in ["absent", "behind", "descendant", "divergent"]:
+            with self.subTest(initial_branch_state=initial_branch_state):
+                with tempfile.TemporaryDirectory() as temporary_directory:
+                    root = Path(temporary_directory)
+                    remote = root / "remote.git"
+                    source = root / "source"
+                    bin_dir = root / "bin"
+                    bin_dir.mkdir()
+                    branch = "issue-380/github-deliver-commit-bound"
+                    gh_log = root / "gh.log"
+                    write_fake_gh(bin_dir, gh_log)
+
+                    run_git(["init", "--bare", str(remote)], root)
+                    run_git(["init", str(source)], root)
+                    run_git(["config", "user.name", "Groundwork Tests"], source)
+                    run_git(["config", "user.email", "groundwork-tests@example.invalid"], source)
+                    run_git(["remote", "add", "origin", str(remote)], source)
+                    (source / "base.txt").write_text("base\n", encoding="utf-8")
+                    run_git(["add", "base.txt"], source)
+                    run_git(["commit", "-m", "test: base"], source)
+                    base = run_git(["rev-parse", "HEAD"], source)
+                    push_remote_ref(remote, "refs/heads/main", base, source)
+
+                    (source / "proposal.txt").write_text("proposal\n", encoding="utf-8")
+                    run_git(["add", "proposal.txt"], source)
+                    run_git(["commit", "-m", "test: proposal"], source)
+                    proposal_commit = run_git(["rev-parse", "HEAD"], source)
+                    run_git(["checkout", "-B", branch, proposal_commit], source)
+                    (source / "local.txt").write_text("local branch tip\n", encoding="utf-8")
+                    run_git(["add", "local.txt"], source)
+                    run_git(["commit", "-m", "test: local branch tip"], source)
+                    local_tip = run_git(["rev-parse", "HEAD"], source)
+
+                    if initial_branch_state == "behind":
+                        push_remote_ref(remote, f"refs/heads/{branch}", base, source)
+                    elif initial_branch_state == "descendant":
+                        push_remote_ref(remote, f"refs/heads/{branch}", local_tip, source)
+                    elif initial_branch_state == "divergent":
+                        run_git(["checkout", "--detach", base], source)
+                        (source / "divergent.txt").write_text("divergent\n", encoding="utf-8")
+                        run_git(["add", "divergent.txt"], source)
+                        run_git(["commit", "-m", "test: divergent branch tip"], source)
+                        divergent_tip = run_git(["rev-parse", "HEAD"], source)
+                        push_remote_ref(remote, f"refs/heads/{branch}", divergent_tip, source)
+                        run_git(["checkout", branch], source)
+
+                    result = self.run_mechanic_invocation(
+                        deliver["default_invocation"],
+                        {
+                            "repository": "tesserine/groundwork",
+                            "branch": branch,
+                            "base": "main",
+                            "commit": proposal_commit,
+                            "title": "GitHub deliver: commit-bound delivery",
+                            "body_file": "/dev/null",
+                        },
+                        bin_dir,
+                        source,
+                    )
+
+                    branch_commit = remote_ref_commit(remote, f"refs/heads/{branch}", source)
+
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assertEqual("https://github.com/tesserine/groundwork/pull/380", result.stdout.strip())
+                self.assertEqual(proposal_commit, branch_commit)
+
+    def test_github_deliver_reuses_existing_pr_while_force_updating_rewritten_revision(self) -> None:
+        deliver = mechanic_for_forge("github", "deliver-change-proposal")
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            remote = root / "remote.git"
+            source = root / "source"
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            branch = "issue-380/github-deliver-commit-bound"
+            gh_log = root / "gh.log"
+            gh_state = root / "gh-state"
+            write_stateful_fake_gh(bin_dir, gh_log, gh_state)
+
+            run_git(["init", "--bare", str(remote)], root)
+            run_git(["init", str(source)], root)
+            run_git(["config", "user.name", "Groundwork Tests"], source)
+            run_git(["config", "user.email", "groundwork-tests@example.invalid"], source)
+            run_git(["remote", "add", "origin", str(remote)], source)
+            (source / "base.txt").write_text("base\n", encoding="utf-8")
+            run_git(["add", "base.txt"], source)
+            run_git(["commit", "-m", "test: base"], source)
+            base = run_git(["rev-parse", "HEAD"], source)
+            push_remote_ref(remote, "refs/heads/main", base, source)
+
+            (source / "proposal.txt").write_text("first proposal\n", encoding="utf-8")
+            run_git(["add", "proposal.txt"], source)
+            run_git(["commit", "-m", "test: first proposal"], source)
+            first_commit = run_git(["rev-parse", "HEAD"], source)
+
+            first_result = self.run_mechanic_invocation(
+                deliver["default_invocation"],
+                {
+                    "repository": "tesserine/groundwork",
+                    "branch": branch,
+                    "base": "main",
+                    "commit": first_commit,
+                    "title": "GitHub deliver: commit-bound delivery",
+                    "body_file": "/dev/null",
+                },
+                bin_dir,
+                source,
+            )
+
+            run_git(["checkout", "--detach", base], source)
+            (source / "proposal.txt").write_text("rewritten proposal\n", encoding="utf-8")
+            run_git(["add", "proposal.txt"], source)
+            run_git(["commit", "-m", "test: rewritten proposal"], source)
+            rewritten_commit = run_git(["rev-parse", "HEAD"], source)
+
+            second_result = self.run_mechanic_invocation(
+                deliver["default_invocation"],
+                {
+                    "repository": "tesserine/groundwork",
+                    "branch": branch,
+                    "base": "main",
+                    "commit": rewritten_commit,
+                    "title": "GitHub deliver: commit-bound delivery",
+                    "body_file": "/dev/null",
+                },
+                bin_dir,
+                source,
+            )
+
+            branch_commit = remote_ref_commit(remote, f"refs/heads/{branch}", source)
+            gh_commands = logged_gh_commands(gh_log)
+
+        self.assertEqual(0, first_result.returncode, first_result.stderr)
+        self.assertEqual(0, second_result.returncode, second_result.stderr)
+        self.assertEqual("https://github.com/tesserine/groundwork/pull/380", first_result.stdout.strip())
+        self.assertEqual("https://github.com/tesserine/groundwork/pull/380", second_result.stdout.strip())
+        self.assertEqual(rewritten_commit, branch_commit)
+        self.assertEqual(2, sum(1 for command in gh_commands if command.startswith("gh pr list ")))
+        self.assertEqual(1, sum(1 for command in gh_commands if command.startswith("gh pr create ")))
+
+    def test_github_deliver_rejects_invalid_inputs_before_push_or_pr_create(self) -> None:
+        deliver = mechanic_for_forge("github", "deliver-change-proposal")
+
+        cases = [
+            (
+                "branch",
+                {
+                    "branch": "issue-380/bad branch",
+                    "base": "main",
+                    "commit": "HEAD",
+                },
+                "git check-ref-format refs/heads/issue-380/bad branch",
+            ),
+            (
+                "base",
+                {
+                    "branch": "issue-380/github-deliver-commit-bound",
+                    "base": "bad base",
+                    "commit": "HEAD",
+                },
+                "git check-ref-format refs/heads/bad base",
+            ),
+            (
+                "commit",
+                {
+                    "branch": "issue-380/github-deliver-commit-bound",
+                    "base": "main",
+                    "commit": "missing-commit",
+                },
+                "git rev-parse --verify --quiet --end-of-options missing-commit^{commit}",
+            ),
+        ]
+
+        for field, replacements, expected_command in cases:
+            with self.subTest(field=field):
+                with tempfile.TemporaryDirectory() as temporary_directory:
+                    root = Path(temporary_directory)
+                    bin_dir = root / "bin"
+                    bin_dir.mkdir()
+                    git_log = root / "git.log"
+                    gh_log = root / "gh.log"
+                    write_logging_git(bin_dir, git_log)
+                    write_fake_gh(bin_dir, gh_log)
+
+                    result = self.run_mechanic_invocation(
+                        deliver["default_invocation"],
+                        {
+                            "repository": "tesserine/groundwork",
+                            "title": "GitHub deliver: commit-bound delivery",
+                            "body_file": "/dev/null",
+                            **replacements,
+                        },
+                        bin_dir,
+                        ROOT,
+                    )
+                    git_commands = logged_git_commands(git_log)
+                    gh_commands = logged_gh_commands(gh_log)
+
+                self.assertNotEqual(0, result.returncode)
+                self.assertIn(expected_command, git_commands)
+                assert_no_remote_or_ref_mutating_git(self, git_commands)
+                self.assertEqual([], gh_commands)
 
     def test_sourcehut_deliver_and_apply_use_full_proposal_ref_namespace(self) -> None:
         proposal = load_fixture("valid-change-proposal-sourcehut-v2.json")
