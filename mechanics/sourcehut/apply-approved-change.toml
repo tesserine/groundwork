@@ -1,9 +1,9 @@
 name = "apply-approved-change"
-purpose = "Apply the SourceHut mbox resolved by work_unit and against_version, verify the proposal ref still resolves to the approved commit, verify tree equality, and push the applied target ref over SSH."
+purpose = "Apply the SourceHut proposal ref resolved by work_unit and against_version, verify it resolves to the approved commit, and push that commit to the explicit target ref over SSH."
 forge_tag = "sourcehut"
-default_invocation = ': "$work_unit" "$against_version" && git fetch "$ssh_remote" "refs/heads/$proposal_ref" && fetched_commit=$(git rev-parse FETCH_HEAD) && approved_resolved=$(git rev-parse "${approved_commit}^{commit}") && if test "$fetched_commit" != "$approved_resolved"; then printf "%s\n" "SourceHut proposal ref resolved to $fetched_commit, expected $approved_resolved" >&2; exit 1; fi && expected_tree=$(git rev-parse "${approved_commit}^{tree}") && git am --3way "$mbox_file" && test "$(git rev-parse HEAD^{tree})" = "$expected_tree" && git push "$ssh_remote" "HEAD:$target_ref" && test "$(git ls-remote "$ssh_remote" "$target_ref" | cut -f1 | xargs -I{} git rev-parse {}^{tree})" = "$expected_tree"'
+default_invocation = ''': "$work_unit" "$against_version" "$base" && git check-ref-format "$proposal_ref" && git check-ref-format "$target_ref" && git fetch "$ssh_remote" "$proposal_ref" && fetched_commit=$(git rev-parse FETCH_HEAD^{commit}) && approved_resolved=$(git rev-parse --verify --quiet --end-of-options "${approved_commit}^{commit}") && if test "$fetched_commit" != "$approved_resolved"; then printf "%s\n" "SourceHut proposal ref resolved to $fetched_commit, expected $approved_resolved" >&2; exit 1; fi && git push "$ssh_remote" "$approved_resolved:$target_ref" && test "$(git ls-remote "$ssh_remote" "$target_ref" | awk -v ref="$target_ref" '$2 == ref { print $1; exit }')" = "$approved_resolved"'''
 examples = [
-  ': "$work_unit" "$against_version" && git fetch "$ssh_remote" "refs/heads/$proposal_ref" && fetched_commit=$(git rev-parse FETCH_HEAD) && approved_resolved=$(git rev-parse "${approved_commit}^{commit}") && if test "$fetched_commit" != "$approved_resolved"; then printf "%s\n" "SourceHut proposal ref resolved to $fetched_commit, expected $approved_resolved" >&2; exit 1; fi && expected_tree=$(git rev-parse "${approved_commit}^{tree}") && git am --3way "$mbox_file" && test "$(git rev-parse HEAD^{tree})" = "$expected_tree" && git push "$ssh_remote" "HEAD:$target_ref" && test "$(git ls-remote "$ssh_remote" "$target_ref" | cut -f1 | xargs -I{} git rev-parse {}^{tree})" = "$expected_tree"',
+  ''': "$work_unit" "$against_version" "$base" && git check-ref-format "$proposal_ref" && git check-ref-format "$target_ref" && git fetch "$ssh_remote" "$proposal_ref" && fetched_commit=$(git rev-parse FETCH_HEAD^{commit}) && approved_resolved=$(git rev-parse --verify --quiet --end-of-options "${approved_commit}^{commit}") && if test "$fetched_commit" != "$approved_resolved"; then printf "%s\n" "SourceHut proposal ref resolved to $fetched_commit, expected $approved_resolved" >&2; exit 1; fi && git push "$ssh_remote" "$approved_resolved:$target_ref" && test "$(git ls-remote "$ssh_remote" "$target_ref" | awk -v ref="$target_ref" '$2 == ref { print $1; exit }')" = "$approved_resolved"''',
 ]
 
 [[parameters]]
@@ -18,17 +18,12 @@ required = true
 
 [[parameters]]
 name = "proposal_ref"
-purpose = "Bare SourceHut proposal branch resolved from the approved change-proposal branch field."
-required = true
-
-[[parameters]]
-name = "mbox_file"
-purpose = "Local materialization of the uploaded mbox referenced by the resolved change-proposal handle."
+purpose = "Full immutable SourceHut proposal ref resolved from the approved change-proposal handle."
 required = true
 
 [[parameters]]
 name = "approved_commit"
-purpose = "Approved proposal commit whose tree must match the applied result."
+purpose = "Approved proposal commit whose identity must match the fetched proposal ref."
 required = true
 
 [[parameters]]
@@ -38,9 +33,14 @@ required = true
 deployment_value = "ssh_remote"
 
 [[parameters]]
+name = "base"
+purpose = "Base revision metadata recorded by the approved proposal; not used to derive the pushed ref."
+required = true
+
+[[parameters]]
 name = "target_ref"
-purpose = "Throwaway or release target ref to update on the SourceHut remote."
+purpose = "Full branch ref advanced by the approved proposal."
 required = true
 
 [outcome]
-description = "The approved SourceHut proposal ref is fetched, FETCH_HEAD matches the approved proposal commit, the mbox is applied with git am, and the applied and pushed trees match the approved proposal tree."
+description = "The approved SourceHut proposal ref is fetched, FETCH_HEAD matches the approved proposal commit, and target_ref is advanced to that exact commit."

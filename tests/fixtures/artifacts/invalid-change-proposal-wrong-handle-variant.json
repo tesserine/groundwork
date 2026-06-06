@@ -7,6 +7,6 @@
   "version": 1,
   "handle": {
     "forge_tag": "github",
-    "mbox": "artifact://change-proposals/issue-316/v1.mbox"
+    "proposal_ref": "refs/proposals/issue-316/1"
   }
 }

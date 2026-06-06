@@ -47,6 +47,14 @@ class ArtifactSchemaTests(unittest.TestCase):
 
                 self.assertIn(artifact["handle"]["forge_tag"], {"github", "sourcehut"})
 
+    def test_change_proposal_schema_accepts_sourcehut_proposal_ref_handle(self) -> None:
+        artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-sourcehut-v2.json"))
+
+        self.assertEqual("sourcehut", artifact["handle"]["forge_tag"])
+        self.assertIn("proposal_ref", artifact["handle"])
+        self.assertTrue(artifact["handle"]["proposal_ref"].startswith("refs/proposals/"))
+        self.assertNotIn("m" + "box", artifact["handle"])
+
     def test_change_proposal_schema_accepts_multi_version_sequence(self) -> None:
         first = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
         second = load_artifact("change-proposal", self.fixture("valid-change-proposal-sourcehut-v2.json"))
@@ -70,6 +78,66 @@ class ArtifactSchemaTests(unittest.TestCase):
             load_artifact("change-proposal", self.fixture("invalid-change-proposal-wrong-handle-variant.json"))
 
         self.assertIn("handle", context.exception.paths)
+
+    def test_change_proposal_schema_rejects_sourcehut_legacy_mail_carrier_handle(self) -> None:
+        artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
+        legacy_carrier = "m" + "box"
+        artifact["handle"] = {
+            "forge_tag": "sourcehut",
+            legacy_carrier: "artifact://change-proposals/issue-316/v2",
+        }
+
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("change-proposal", artifact)
+
+        self.assertIn("handle", context.exception.paths)
+
+    def test_change_proposal_schema_rejects_sourcehut_handle_missing_proposal_ref(self) -> None:
+        artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
+        artifact["handle"] = {"forge_tag": "sourcehut"}
+
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("change-proposal", artifact)
+
+        self.assertIn("handle", context.exception.paths)
+
+    def test_change_proposal_schema_rejects_sourcehut_proposal_ref_outside_namespace(self) -> None:
+        artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
+        artifact["handle"] = {
+            "forge_tag": "sourcehut",
+            "proposal_ref": "refs/heads/issue-316/2",
+        }
+
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("change-proposal", artifact)
+
+        self.assertIn("handle", context.exception.paths)
+
+    def test_change_proposal_schema_rejects_sourcehut_proposal_ref_refspec_injection(self) -> None:
+        artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
+        artifact["handle"] = {
+            "forge_tag": "sourcehut",
+            "proposal_ref": "refs/proposals/x:refs/heads/main",
+        }
+
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("change-proposal", artifact)
+
+        self.assertIn("handle", context.exception.paths)
+
+    def test_change_proposal_schema_rejects_sourcehut_proposal_ref_whitespace_and_control(self) -> None:
+        for proposal_ref in ["refs/proposals/issue 316/2", "refs/proposals/issue-316/\n2"]:
+            with self.subTest(proposal_ref=proposal_ref):
+                artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
+                artifact["handle"] = {
+                    "forge_tag": "sourcehut",
+                    "proposal_ref": proposal_ref,
+                }
+
+                with self.assertRaises(ArtifactSchemaError) as context:
+                    validate_artifact("change-proposal", artifact)
+
+                self.assertIn("handle", context.exception.paths)
 
     def test_change_proposal_forge_tag_resolves_against_manifest_registry(self) -> None:
         artifact = load_artifact(

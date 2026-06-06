@@ -11,7 +11,7 @@ WHAT/HOW separation is sound, but the *placement* of the line leaked
 forge-specifics into the WHAT layer, and a one-forge derivation cannot prove
 forge-neutrality. This revision re-derives the line against two
 topologically-different forges — GitHub (branch + PR + platform merge) and
-SourceHut (patch-series / mbox + `git am` + push, no platform merge, status as
+SourceHut (pushed proposal ref + SSH ref update, no platform merge, status as
 metadata) — and resequences the rollout so the forge-touching arc proves the
 architecture rather than trailing it.
 
@@ -39,8 +39,8 @@ and "merge" are HOW and never appear in a workflow contract. This supersedes the
 `base`, `summary`) plus a **required `version`** (each review round is an
 immutable version on both forges; GitHub's mutable PR is the degenerate case)
 and a **forge-tagged `handle` variant** (`oneOf` keyed by `forge_tag`: GitHub →
-PR URL, a pointer outward to a server object; SourceHut → an mbox reference, a
-carrier we own — under the no-lists decision there is no server pointer). A new
+PR URL, a pointer outward to a server object; SourceHut → an immutable proposal
+ref under `refs/proposals/`). A new
 **`review-findings`** artifact carries the review disposition, and `land`
 triggers on that disposition, not on the raw proposal (folds #243). The
 `patch.pr_reference`-required schema is retired.

@@ -7,6 +7,6 @@
   "version": 2,
   "handle": {
     "forge_tag": "sourcehut",
-    "mbox": "artifact://change-proposals/issue-316/v2.mbox"
+    "proposal_ref": "refs/proposals/issue-316/2"
   }
 }
