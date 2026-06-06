@@ -1,9 +1,9 @@
 name = "apply-approved-change"
-purpose = "Apply the SourceHut proposal ref resolved by work_unit and against_version, verify it resolves to the approved commit, and push that commit to the target ref over SSH."
+purpose = "Apply the SourceHut proposal ref resolved by work_unit and against_version, verify it resolves to the approved commit, and push that commit to the base ref over SSH."
 forge_tag = "sourcehut"
-default_invocation = ''': "$work_unit" "$against_version" && git fetch "$ssh_remote" "$proposal_ref" && fetched_commit=$(git rev-parse FETCH_HEAD^{commit}) && approved_resolved=$(git rev-parse "${approved_commit}^{commit}") && if test "$fetched_commit" != "$approved_resolved"; then printf "%s\n" "SourceHut proposal ref resolved to $fetched_commit, expected $approved_resolved" >&2; exit 1; fi && git push "$ssh_remote" "$approved_resolved:$target_ref" && test "$(git ls-remote "$ssh_remote" "$target_ref" | awk -v ref="$target_ref" '$2 == ref { print $1; exit }')" = "$approved_resolved"'''
+default_invocation = ''': "$work_unit" "$against_version" && git check-ref-format "$proposal_ref" && base_ref="refs/heads/${base}" && git check-ref-format "$base_ref" && approved_resolved=$(git rev-parse --verify --quiet --end-of-options "${approved_commit}^{commit}") && git fetch "$ssh_remote" "$proposal_ref" && fetched_commit=$(git rev-parse FETCH_HEAD^{commit}) && if test "$fetched_commit" != "$approved_resolved"; then printf "%s\n" "SourceHut proposal ref resolved to $fetched_commit, expected $approved_resolved" >&2; exit 1; fi && git push "$ssh_remote" "$approved_resolved:$base_ref" && test "$(git ls-remote "$ssh_remote" "$base_ref" | awk -v ref="$base_ref" '$2 == ref { print $1; exit }')" = "$approved_resolved"'''
 examples = [
-  ''': "$work_unit" "$against_version" && git fetch "$ssh_remote" "$proposal_ref" && fetched_commit=$(git rev-parse FETCH_HEAD^{commit}) && approved_resolved=$(git rev-parse "${approved_commit}^{commit}") && if test "$fetched_commit" != "$approved_resolved"; then printf "%s\n" "SourceHut proposal ref resolved to $fetched_commit, expected $approved_resolved" >&2; exit 1; fi && git push "$ssh_remote" "$approved_resolved:$target_ref" && test "$(git ls-remote "$ssh_remote" "$target_ref" | awk -v ref="$target_ref" '$2 == ref { print $1; exit }')" = "$approved_resolved"''',
+  ''': "$work_unit" "$against_version" && git check-ref-format "$proposal_ref" && base_ref="refs/heads/${base}" && git check-ref-format "$base_ref" && approved_resolved=$(git rev-parse --verify --quiet --end-of-options "${approved_commit}^{commit}") && git fetch "$ssh_remote" "$proposal_ref" && fetched_commit=$(git rev-parse FETCH_HEAD^{commit}) && if test "$fetched_commit" != "$approved_resolved"; then printf "%s\n" "SourceHut proposal ref resolved to $fetched_commit, expected $approved_resolved" >&2; exit 1; fi && git push "$ssh_remote" "$approved_resolved:$base_ref" && test "$(git ls-remote "$ssh_remote" "$base_ref" | awk -v ref="$base_ref" '$2 == ref { print $1; exit }')" = "$approved_resolved"''',
 ]
 
 [[parameters]]
@@ -33,9 +33,9 @@ required = true
 deployment_value = "ssh_remote"
 
 [[parameters]]
-name = "target_ref"
-purpose = "Throwaway or release target ref to update on the SourceHut remote."
+name = "base"
+purpose = "Base branch targeted by the approved proposal; applied as refs/heads/{base}."
 required = true
 
 [outcome]
-description = "The approved SourceHut proposal ref is fetched, FETCH_HEAD matches the approved proposal commit, and the target ref is advanced to that exact commit."
+description = "The approved SourceHut proposal ref is fetched, FETCH_HEAD matches the approved proposal commit, and refs/heads/{base} is advanced to that exact commit."

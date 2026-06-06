@@ -81,7 +81,7 @@
         "proposal_ref": {
           "type": "string",
           "description": "Immutable SourceHut proposal ref for this review-round version.",
-          "pattern": "^refs/proposals/.+"
+          "pattern": "^refs/proposals/[^:\\s\\u0000-\\u001F\\u007F]+$"
         }
       }
     }

@@ -26,6 +26,8 @@ a forge-tagged handle: GitHub proposals point at a pull request, and SourceHut
 proposals point at an immutable `refs/proposals/...` ref. The review disposition
 is the produced outcome type: `change-approved` cannot carry blocking findings,
 and `change-needs-revision` must carry at least one blocking finding.
+The SourceHut proposal-ref schema pattern is only a coarse fail-fast filter;
+mechanics use `git check-ref-format` as the authoritative ref-name boundary.
 
 `work-unit.schema.json` is the planning-to-execution bridge. It remains
 forge-neutral and unpartitioned: tracker-backed units may carry an optional

@@ -113,6 +113,32 @@ class ArtifactSchemaTests(unittest.TestCase):
 
         self.assertIn("handle", context.exception.paths)
 
+    def test_change_proposal_schema_rejects_sourcehut_proposal_ref_refspec_injection(self) -> None:
+        artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
+        artifact["handle"] = {
+            "forge_tag": "sourcehut",
+            "proposal_ref": "refs/proposals/x:refs/heads/main",
+        }
+
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("change-proposal", artifact)
+
+        self.assertIn("handle", context.exception.paths)
+
+    def test_change_proposal_schema_rejects_sourcehut_proposal_ref_whitespace_and_control(self) -> None:
+        for proposal_ref in ["refs/proposals/issue 316/2", "refs/proposals/issue-316/\n2"]:
+            with self.subTest(proposal_ref=proposal_ref):
+                artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
+                artifact["handle"] = {
+                    "forge_tag": "sourcehut",
+                    "proposal_ref": proposal_ref,
+                }
+
+                with self.assertRaises(ArtifactSchemaError) as context:
+                    validate_artifact("change-proposal", artifact)
+
+                self.assertIn("handle", context.exception.paths)
+
     def test_change_proposal_forge_tag_resolves_against_manifest_registry(self) -> None:
         artifact = load_artifact(
             "change-proposal",

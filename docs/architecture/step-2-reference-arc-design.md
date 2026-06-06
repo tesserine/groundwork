@@ -129,9 +129,9 @@ the persistent feature branch recorded in `change-proposal.branch` and creates
 an immutable per-version ref recorded in
 `change-proposal.handle.proposal_ref`; it does not send the patch to
 lists.sr.ht. Apply fetches that proposal ref, verifies the fetched ref resolves
-to the approved commit by commit identity, and advances the target ref to that
-commit. GitHub remains intentionally different and keeps the commit-identity
-guard through `gh pr merge --match-head-commit`.
+to the approved commit by commit identity, and advances the base branch ref to
+that commit. GitHub remains intentionally different and keeps the
+commit-identity guard through `gh pr merge --match-head-commit`.
 
 ## Downstream Constraints
 
