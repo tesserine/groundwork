@@ -64,7 +64,7 @@ more than one disposition.
 
 This gate preserves handle-only forge sovereignty: review consumes the
 forge-neutral `change-proposal` artifact and produces methodology-owned outcome
-artifacts. It does not prescribe how a human or external reviewer inspects the
+artifacts. It does not prescribe how a reviewer inspects the
 change.
 
 ## Corruption Modes
