@@ -240,16 +240,15 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         parameters = {parameter["name"] for parameter in apply["parameters"]}
 
         self.assertIn("base", parameters)
-        self.assertNotIn("target_ref", parameters)
+        self.assertIn("target_ref", parameters)
         self.assertIn('git check-ref-format "$proposal_ref"', invocation)
-        self.assertIn('base_ref="refs/heads/${base}"', invocation)
-        self.assertIn('git check-ref-format "$base_ref"', invocation)
+        self.assertIn('git check-ref-format "$target_ref"', invocation)
         self.assertIn('git fetch "$ssh_remote" "$proposal_ref"', invocation)
         self.assertIn("git rev-parse FETCH_HEAD", invocation)
         self.assertIn('approved_resolved=$(git rev-parse --verify --quiet --end-of-options "${approved_commit}^{commit}")', invocation)
-        self.assertIn('"$approved_resolved:$base_ref"', invocation)
+        self.assertIn('"$approved_resolved:$target_ref"', invocation)
         self.assertLess(invocation.index('git check-ref-format "$proposal_ref"'), invocation.index('git fetch "$ssh_remote" "$proposal_ref"'))
-        self.assertLess(invocation.index('git check-ref-format "$base_ref"'), invocation.index('git fetch "$ssh_remote" "$proposal_ref"'))
+        self.assertLess(invocation.index('git check-ref-format "$target_ref"'), invocation.index('git fetch "$ssh_remote" "$proposal_ref"'))
         self.assertLess(invocation.index('git fetch "$ssh_remote" "$proposal_ref"'), invocation.index("approved_resolved="))
         self.assertIn("resolved by work_unit and against_version", apply["purpose"])
         self.assertNotIn('git am', invocation)
@@ -284,7 +283,8 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertIn('git check-ref-format "$branch_ref"', invocation)
         self.assertIn('commit_resolved=$(git rev-parse --verify --quiet --end-of-options "${commit}^{commit}")', invocation)
         self.assertIn('branch_ref="refs/heads/${branch}"', invocation)
-        self.assertIn('git push "$ssh_remote" "$commit_resolved:$branch_ref"', invocation)
+        self.assertIn('git push --force-with-lease="$branch_ref:" "$ssh_remote" "$commit_resolved:$branch_ref"', invocation)
+        self.assertIn('git push --force-with-lease="$branch_ref:$branch_commit" "$ssh_remote" "$commit_resolved:$branch_ref"', invocation)
         self.assertIn('"$proposal_source_prefix/*:refs/proposals/*"', invocation)
         self.assertIn("awk -v ref=", invocation)
         self.assertNotIn("| cut", invocation)
@@ -315,6 +315,7 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertIn('git fetch "$ssh_remote" "$proposal_ref"', apply_invocation)
         self.assertNotIn("refs/heads/${proposal_ref}", deliver_invocation)
         self.assertNotIn('refs/heads/$proposal_ref', apply_invocation)
+        self.assertNotIn('refs/heads/${base}', apply_invocation)
 
     def test_sourcehut_proposal_ref_pushes_and_fetches_end_to_end(self) -> None:
         proposal_ref = load_fixture("valid-change-proposal-sourcehut-v2.json")["handle"]["proposal_ref"]
@@ -388,6 +389,7 @@ class ReferenceArcTopologyTests(unittest.TestCase):
                     "proposal_ref": proposal_ref,
                     "approved_commit": approved_commit,
                     "base": "main",
+                    "target_ref": "refs/heads/main",
                 },
                 root,
                 consumer,
@@ -400,6 +402,58 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual(approved_commit, fetched_commit)
         self.assertEqual(approved_commit, target_ref)
+
+    def test_sourcehut_apply_uses_explicit_target_ref_when_base_is_revision_metadata(self) -> None:
+        apply = mechanic_for_forge("sourcehut", "apply-approved-change")
+        proposal_ref = load_fixture("valid-change-proposal-sourcehut-v2.json")["handle"]["proposal_ref"]
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            remote = root / "remote.git"
+            source = root / "source"
+            consumer = root / "consumer"
+
+            run_git(["init", "--bare", str(remote)], root)
+            run_git(["init", str(source)], root)
+            run_git(["config", "user.name", "Groundwork Tests"], source)
+            run_git(["config", "user.email", "groundwork-tests@example.invalid"], source)
+            (source / "base.txt").write_text("base\n", encoding="utf-8")
+            run_git(["add", "base.txt"], source)
+            run_git(["commit", "-m", "test: base"], source)
+            base_revision = run_git(["rev-parse", "HEAD"], source)
+
+            (source / "proposal.txt").write_text("approved\n", encoding="utf-8")
+            run_git(["add", "proposal.txt"], source)
+            run_git(["commit", "-m", "test: approved proposal"], source)
+            approved_commit = run_git(["rev-parse", "HEAD"], source)
+            push_remote_ref(remote, "refs/heads/main", base_revision, source)
+            push_remote_ref(remote, proposal_ref, approved_commit, source)
+
+            run_git(["init", str(consumer)], root)
+            run_git(["config", "user.name", "Groundwork Tests"], consumer)
+            run_git(["config", "user.email", "groundwork-tests@example.invalid"], consumer)
+            run_git(["fetch", str(remote), "refs/heads/main"], consumer)
+            run_git(["checkout", "-B", "main", "FETCH_HEAD"], consumer)
+
+            result = self.run_mechanic_invocation(
+                apply["default_invocation"],
+                {
+                    "ssh_remote": str(remote),
+                    "proposal_ref": proposal_ref,
+                    "approved_commit": approved_commit,
+                    "base": base_revision,
+                    "target_ref": "refs/heads/main",
+                },
+                root,
+                consumer,
+            )
+
+            target_ref = remote_ref_commit(remote, "refs/heads/main", consumer)
+            synthetic_ref = remote_ref_commit(remote, f"refs/heads/{base_revision}", consumer)
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(approved_commit, target_ref)
+        self.assertEqual("", synthetic_ref)
 
     def test_sourcehut_apply_refuses_proposal_ref_at_unapproved_commit_before_pushing_target(self) -> None:
         apply = mechanic_for_forge("sourcehut", "apply-approved-change")
@@ -448,6 +502,7 @@ class ReferenceArcTopologyTests(unittest.TestCase):
                     "proposal_ref": proposal_ref,
                     "approved_commit": approved_commit,
                     "base": "dogfood/force-updated-proposal",
+                    "target_ref": "refs/heads/dogfood/force-updated-proposal",
                 },
                 root,
                 consumer,
@@ -513,7 +568,7 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertIn("git check-ref-format refs/heads/issue-376/bad branch", commands)
         assert_no_remote_or_ref_mutating_git(self, commands)
 
-    def test_sourcehut_apply_rejects_invalid_base_before_remote_or_ref_mutating_git(self) -> None:
+    def test_sourcehut_apply_rejects_invalid_target_ref_before_remote_or_ref_mutating_git(self) -> None:
         apply = mechanic_for_forge("sourcehut", "apply-approved-change")
 
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -529,7 +584,8 @@ class ReferenceArcTopologyTests(unittest.TestCase):
                     "ssh_remote": "git@example.invalid:repo",
                     "proposal_ref": "refs/proposals/issue-376/1",
                     "approved_commit": "HEAD",
-                    "base": "main\tunsafe",
+                    "base": "metadata-only",
+                    "target_ref": "refs/heads/main\tunsafe",
                 },
                 bin_dir,
                 ROOT,
@@ -679,6 +735,70 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertEqual(proposal_ref, result.stdout.strip())
         self.assertEqual(commit, proposal_commit)
         self.assertEqual(commit, branch_commit)
+
+    def test_sourcehut_deliver_force_updates_rewritten_feature_branch_and_creates_new_pin(self) -> None:
+        deliver = mechanic_for_forge("sourcehut", "deliver-change-proposal")
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            remote = root / "remote.git"
+            source = root / "source"
+            previous_proposal_ref = "refs/proposals/issue-376/1"
+            revised_proposal_ref = "refs/proposals/issue-376/2"
+            branch = "issue-376/sourcehut-change-proposal-handle"
+
+            run_git(["init", "--bare", str(remote)], root)
+            run_git(["init", str(source)], root)
+            run_git(["config", "user.name", "Groundwork Tests"], source)
+            run_git(["config", "user.email", "groundwork-tests@example.invalid"], source)
+            (source / "base.txt").write_text("base\n", encoding="utf-8")
+            run_git(["add", "base.txt"], source)
+            run_git(["commit", "-m", "test: base"], source)
+            base = run_git(["rev-parse", "HEAD"], source)
+
+            (source / "proposal.txt").write_text("previous proposal\n", encoding="utf-8")
+            run_git(["add", "proposal.txt"], source)
+            run_git(["commit", "-m", "test: previous proposal"], source)
+            previous_commit = run_git(["rev-parse", "HEAD"], source)
+            push_remote_ref(remote, previous_proposal_ref, previous_commit, source)
+            push_remote_ref(remote, f"refs/heads/{branch}", previous_commit, source)
+
+            run_git(["checkout", "--detach", base], source)
+            (source / "proposal.txt").write_text("rewritten proposal\n", encoding="utf-8")
+            run_git(["add", "proposal.txt"], source)
+            run_git(["commit", "-m", "test: rewritten proposal"], source)
+            rewritten_commit = run_git(["rev-parse", "HEAD"], source)
+
+            rewrite_check = subprocess.run(
+                ["git", "merge-base", "--is-ancestor", previous_commit, rewritten_commit],
+                cwd=source,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+            result = self.run_mechanic_invocation(
+                deliver["default_invocation"],
+                {
+                    "branch": branch,
+                    "commit": rewritten_commit,
+                    "proposal_ref": revised_proposal_ref,
+                    "ssh_remote": str(remote),
+                },
+                root,
+                source,
+            )
+
+            previous_pin = remote_ref_commit(remote, previous_proposal_ref, source)
+            revised_pin = remote_ref_commit(remote, revised_proposal_ref, source)
+            branch_commit = remote_ref_commit(remote, f"refs/heads/{branch}", source)
+
+        self.assertNotEqual(0, rewrite_check.returncode)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(revised_proposal_ref, result.stdout.strip())
+        self.assertEqual(previous_commit, previous_pin)
+        self.assertEqual(rewritten_commit, revised_pin)
+        self.assertEqual(rewritten_commit, branch_commit)
 
     def test_sourcehut_deliver_succeeds_when_branch_descends_from_existing_pin(self) -> None:
         deliver = mechanic_for_forge("sourcehut", "deliver-change-proposal")

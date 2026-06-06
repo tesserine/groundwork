@@ -121,9 +121,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   creates `refs/proposals/...` pins through an unambiguous wildcard refspec, and
   verifies the exact pin before emitting the proposal handle.
 - SourceHut change-proposal delivery and apply now validate proposal refs,
-  feature branches, and base refs with `git check-ref-format`, and resolve
-  proposal commits with `git rev-parse --verify` before any remote fetch, push,
-  or ref update.
+  feature branches, and explicit apply target refs with `git check-ref-format`,
+  resolve proposal commits with `git rev-parse --verify` before any remote
+  fetch, push, or ref update, and lease-guard mutable SourceHut feature-branch
+  updates across rewritten revisions.
 - C-5 manifest conformance now rejects disposition-agnostic outputs of
   outcome-bearing protocols through `on_change`, `on_invalid`, and composite
   triggers, while preserving valid re-review triggers on protocol inputs.
