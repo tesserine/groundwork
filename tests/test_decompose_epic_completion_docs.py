@@ -13,6 +13,16 @@ def normalized(path: Path) -> str:
 
 
 class DecomposeEpicCompletionDocsTests(unittest.TestCase):
+    def capability_epic_example(self) -> str:
+        body = DECOMPOSE_TEMPLATES.read_text(encoding="utf-8")
+        match = re.search(
+            r"### Example: epic issue\n\n```markdown\n(?P<example>.*?)\n```\n\n---\n\n## Bug Report",
+            body,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(match)
+        return match.group("example")
+
     def test_protocol_names_epic_completion_taxonomy_and_terminal_steps(self) -> None:
         body = normalized(DECOMPOSE_PROTOCOL)
 
@@ -31,6 +41,20 @@ class DecomposeEpicCompletionDocsTests(unittest.TestCase):
         for phrase in expected:
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, body)
+
+    def test_capability_epic_example_includes_terminal_ecosystem_release_task(self) -> None:
+        example = self.capability_epic_example()
+        task_issues = re.search(
+            r"## Task issues\n(?P<section>.*?)\n## Dependency graph",
+            example,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(task_issues)
+
+        self.assertRegex(
+            task_issues.group("section"),
+            r"- \[ \] #\d+ .*ecosystem-release.*public fact",
+        )
 
     def test_protocol_references_commons_release_authority_without_reimplementing_it(self) -> None:
         body = normalized(DECOMPOSE_PROTOCOL)

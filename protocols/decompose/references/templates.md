@@ -155,13 +155,19 @@ capability -> component release work plus terminal ecosystem-release work-unit
 - [ ] #9 — `loadout install` (depends on #5, #7, #8)
 - [ ] #10 — `loadout clean` (depends on #5, #8)
 
+### Ecosystem release
+
+- [ ] #11 — terminal ecosystem-release work-unit: publish the shipped `loadout install` and `loadout clean` commands as public fact (depends on #9, #10)
+
 ## Dependency graph
 
 ```
-#5 config ──────┬── #9 install
-#6 frontmatter ─┤
-#7 skill/mod ───┤── #10 clean
-#8 linker ──────┘
+#5 config ──────┐
+#6 frontmatter ─┼── #9 install ──┐
+#7 skill/mod ───┤                │
+#8 linker ──────┘                ├── #11 ecosystem release
+#5 config ──────┐                │
+#8 linker ──────┴── #10 clean ───┘
 ```
 
 ## Acceptance criteria
@@ -169,6 +175,7 @@ capability -> component release work plus terminal ecosystem-release work-unit
 - [ ] `loadout install` produces identical symlink layout to `install.sh`
 - [ ] No Python dependency at runtime
 - [ ] `cargo install --path .` places binary in `~/.cargo/bin/loadout`
+- [ ] Ecosystem release makes the Rust parity capability public fact
 ```
 
 ---
