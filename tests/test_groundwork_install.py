@@ -11,9 +11,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "scripts" / "groundwork-install"
-ADAPTER_RELATIVE_PATH = "scripts/interactive-artifact-delivery-adapter.md"
-ADAPTER_BEGIN = "<!-- groundwork-install:interactive-artifact-delivery-adapter begin -->"
-ADAPTER_END = "<!-- groundwork-install:interactive-artifact-delivery-adapter end -->"
+HANDOFF_RELATIVE_PATH = "scripts/interactive-session-surface-handoff.md"
+HANDOFF_BEGIN = "<!-- groundwork-install:interactive-session-surface-handoff begin -->"
+HANDOFF_END = "<!-- groundwork-install:interactive-session-surface-handoff end -->"
 
 
 def run(
@@ -70,7 +70,7 @@ class MethodologyFixture:
             path.unlink()
 
     def write_initial_surface(self) -> None:
-        self.write(ADAPTER_RELATIVE_PATH, (ROOT / ADAPTER_RELATIVE_PATH).read_text(encoding="utf-8"))
+        self.write(HANDOFF_RELATIVE_PATH, (ROOT / HANDOFF_RELATIVE_PATH).read_text(encoding="utf-8"))
         self.write("skills/orient/SKILL.md", "---\nname: orient\n---\n# Orient\n")
         self.write("skills/reckon/SKILL.md", "---\nname: reckon\n---\n# Reckon\n")
         self.write("skills/reckon/references/example.md", "reckon reference\n")
@@ -177,8 +177,8 @@ class GroundworkInstallTests(unittest.TestCase):
                 )
         return stats
 
-    def adapter_text(self, fixture: MethodologyFixture) -> str:
-        return (fixture.root / ADAPTER_RELATIVE_PATH).read_text(encoding="utf-8")
+    def handoff_text(self, fixture: MethodologyFixture) -> str:
+        return (fixture.root / HANDOFF_RELATIVE_PATH).read_text(encoding="utf-8")
 
     def write_runtime_surface(self, fixture: MethodologyFixture) -> None:
         fixture.write(
@@ -216,9 +216,9 @@ class GroundworkInstallTests(unittest.TestCase):
             )
         fixture.write("tooling/forge_operations.py", (ROOT / "tooling" / "forge_operations.py").read_text(encoding="utf-8"))
 
-    def assert_adapter_projected_once(self, body: str) -> None:
-        self.assertEqual(body.count(ADAPTER_BEGIN), 1)
-        self.assertEqual(body.count(ADAPTER_END), 1)
+    def assert_handoff_projected_once(self, body: str) -> None:
+        self.assertEqual(body.count(HANDOFF_BEGIN), 1)
+        self.assertEqual(body.count(HANDOFF_END), 1)
 
     def test_install_projects_skills_and_protocols_into_both_discovery_roots(self) -> None:
         fixture = self.add_fixture("clean-install")
@@ -229,7 +229,7 @@ class GroundworkInstallTests(unittest.TestCase):
         assert_success(self, result)
         self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
         take_body = (install.target(".claude", "take") / "SKILL.md").read_text(encoding="utf-8")
-        self.assert_adapter_projected_once(take_body)
+        self.assert_handoff_projected_once(take_body)
         self.assertTrue((install.target(".agents", "take") / "references" / "example.md").is_file())
         self.assertTrue((install.target(".agents", "reckon") / "references" / "example.md").is_file())
 
@@ -336,8 +336,8 @@ class GroundworkInstallTests(unittest.TestCase):
         assert_success(self, resolved)
         self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
 
-    def test_install_projects_interactive_adapter_into_every_protocol_entry(self) -> None:
-        fixture = self.add_fixture("adapter-all-protocols")
+    def test_install_projects_session_surface_handoff_into_every_protocol_entry(self) -> None:
+        fixture = self.add_fixture("handoff-all-protocols")
         producer_protocols = [
             "survey",
             "decompose",
@@ -370,20 +370,26 @@ class GroundworkInstallTests(unittest.TestCase):
         result = install.run_installer("install")
 
         assert_success(self, result)
-        adapter = self.adapter_text(fixture)
+        handoff = self.handoff_text(fixture)
         for root in [".claude", ".agents"]:
             for protocol in producer_protocols:
                 body = (install.target(root, protocol) / "SKILL.md").read_text(encoding="utf-8")
                 with self.subTest(root=root, protocol=protocol):
-                    self.assert_adapter_projected_once(body)
-                    self.assertIn(adapter, body)
-                    self.assertLess(body.index("# "), body.index(ADAPTER_BEGIN))
-                    self.assertLess(body.index(ADAPTER_END), body.index("## Procedures"))
+                    self.assert_handoff_projected_once(body)
+                    self.assertIn(handoff, body)
+                    self.assertLess(body.index("# "), body.index(HANDOFF_BEGIN))
+                    self.assertLess(body.index(HANDOFF_END), body.index("## Procedures"))
 
-    def test_install_projects_interactive_adapter_into_every_real_protocol_entry(self) -> None:
+    def test_install_projects_session_surface_handoff_into_every_real_protocol_entry(self) -> None:
         source = Path(tempfile.mkdtemp(prefix="groundwork-install-real-source-"))
         self.addCleanup(lambda: shutil.rmtree(source, ignore_errors=True))
         run(["git", "clone", "-q", str(ROOT), str(source)], ROOT, check=True)
+        run(["git", "config", "user.name", "installer test"], source, check=True)
+        run(["git", "config", "user.email", "installer-test@example.invalid"], source, check=True)
+        run(["git", "config", "commit.gpgsign", "false"], source, check=True)
+        shutil.copy2(ROOT / HANDOFF_RELATIVE_PATH, source / HANDOFF_RELATIVE_PATH)
+        run(["git", "add", HANDOFF_RELATIVE_PATH], source, check=True)
+        run(["git", "commit", "-q", "-m", "test: include session surface handoff"], source, check=True)
         run(["git", "checkout", "-q", "--detach", "HEAD"], source, check=True)
         protocol_names = sorted(path.parent.name for path in source.glob("protocols/*/PROTOCOL.md"))
         self.assertNotEqual(protocol_names, [])
@@ -396,10 +402,10 @@ class GroundworkInstallTests(unittest.TestCase):
             for protocol in protocol_names:
                 body = (install.target(root, protocol) / "SKILL.md").read_text(encoding="utf-8")
                 with self.subTest(root=root, protocol=protocol):
-                    self.assert_adapter_projected_once(body)
+                    self.assert_handoff_projected_once(body)
 
-    def test_install_does_not_project_interactive_adapter_into_skill_entries(self) -> None:
-        fixture = self.add_fixture("adapter-skills")
+    def test_install_does_not_project_session_surface_handoff_into_skill_entries(self) -> None:
+        fixture = self.add_fixture("handoff-skills")
         install = InstallRun(self, fixture.root)
 
         result = install.run_installer("install")
@@ -409,27 +415,35 @@ class GroundworkInstallTests(unittest.TestCase):
             for skill in ["orient", "reckon"]:
                 body = (install.target(root, skill) / "SKILL.md").read_text(encoding="utf-8")
                 with self.subTest(root=root, skill=skill):
-                    self.assertNotIn(ADAPTER_BEGIN, body)
-                    self.assertNotIn(ADAPTER_END, body)
+                    self.assertNotIn(HANDOFF_BEGIN, body)
+                    self.assertNotIn(HANDOFF_END, body)
 
-    def test_interactive_adapter_prose_carries_delivery_substitution_commitments(self) -> None:
-        fixture = self.add_fixture("adapter-prose")
-        adapter = " ".join(self.adapter_text(fixture).split())
+    def test_session_surface_handoff_prose_carries_non_bypassing_commitments(self) -> None:
+        fixture = self.add_fixture("handoff-prose")
+        handoff = " ".join(self.handoff_text(fixture).split())
 
         for expected in [
-            "complete runa-served artifact delivery transform",
-            "produced artifact body",
-            "not the MCP tool-input object",
-            "`instance_id`",
-            "must not appear inside the artifact body",
-            "`work_unit`",
-            "scoped",
-            "unscoped",
-            "ask the human",
-            "does not persist artifacts",
+            "`runa go --work-unit <canonical-work-unit-id>`",
+            "operator issues only `go`",
+            "`next-protocol-context`",
+            "current output tool",
+            "`advance`",
+            "validated by runa",
+            "Do not assemble artifact bodies manually",
+            "Do not write workspace JSON files directly",
         ]:
             with self.subTest(expected=expected):
-                self.assertIn(expected, adapter)
+                self.assertIn(expected, handoff)
+
+        for bypass_phrase in [
+            "no runa runtime",
+            "no artifact tool",
+            "no artifact store",
+            "Present that artifact body to the human",
+            "does not persist artifacts",
+        ]:
+            with self.subTest(bypass_phrase=bypass_phrase):
+                self.assertNotIn(bypass_phrase, handoff)
 
     def test_install_is_idempotent_for_the_same_pinned_source(self) -> None:
         fixture = self.add_fixture("idempotent")
@@ -505,7 +519,7 @@ class GroundworkInstallTests(unittest.TestCase):
 
         assert_success(self, result)
         orient_body = (install.target(".agents", "orient") / "SKILL.md").read_text(encoding="utf-8")
-        self.assert_adapter_projected_once(orient_body)
+        self.assert_handoff_projected_once(orient_body)
         self.assertIn("kind=protocol\n", (install.target(".agents", "orient") / ".groundwork-install").read_text(encoding="utf-8"))
         self.assertIn("\torient\tprotocol\t", install.state_file().read_text(encoding="utf-8"))
 

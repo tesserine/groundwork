@@ -4,7 +4,7 @@ set -euo pipefail
 PROGRAM="groundwork-install"
 MARKER=".groundwork-install"
 STATE_FILE_NAME="interactive-install.tsv"
-INTERACTIVE_ADAPTER_PATH="scripts/interactive-artifact-delivery-adapter.md"
+SESSION_SURFACE_HANDOFF_PATH="scripts/interactive-session-surface-handoff.md"
 
 usage() {
   cat <<'EOF'
@@ -110,8 +110,8 @@ validate_source() {
   if [[ "$allow_branch" -ne 1 ]] && git -C "$source_path" symbolic-ref -q --short HEAD >/dev/null; then
     die "source must be a pinned checkout at a tag or full commit SHA, not a branch (pass --from-branch to install the current branch HEAD)"
   fi
-  git -C "$source_path" cat-file -e "$(source_sha):$INTERACTIVE_ADAPTER_PATH" 2>/dev/null ||
-    die "source has no interactive artifact delivery adapter at $INTERACTIVE_ADAPTER_PATH"
+  git -C "$source_path" cat-file -e "$(source_sha):$SESSION_SURFACE_HANDOFF_PATH" 2>/dev/null ||
+    die "source has no interactive session surface handoff at $SESSION_SURFACE_HANDOFF_PATH"
 }
 
 source_sha() {
@@ -312,21 +312,21 @@ kind=$kind
 EOF
 }
 
-insert_interactive_adapter() {
+insert_session_surface_handoff() {
   local skill_path="$1"
   local sha="$2"
-  local adapter_tmp output_tmp
-  adapter_tmp="$(mktemp "${skill_path}.adapter.XXXXXX")"
+  local handoff_tmp output_tmp
+  handoff_tmp="$(mktemp "${skill_path}.handoff.XXXXXX")"
   output_tmp="$(mktemp "${skill_path}.projected.XXXXXX")"
-  git -C "$source_path" show "$sha:$INTERACTIVE_ADAPTER_PATH" > "$adapter_tmp" ||
-    die "source has no interactive artifact delivery adapter at $INTERACTIVE_ADAPTER_PATH"
+  git -C "$source_path" show "$sha:$SESSION_SURFACE_HANDOFF_PATH" > "$handoff_tmp" ||
+    die "source has no interactive session surface handoff at $SESSION_SURFACE_HANDOFF_PATH"
 
-  awk -v adapter="$adapter_tmp" '
-    function print_adapter(  line) {
-      while ((getline line < adapter) > 0) {
+  awk -v handoff="$handoff_tmp" '
+    function print_handoff(  line) {
+      while ((getline line < handoff) > 0) {
         print line
       }
-      close(adapter)
+      close(handoff)
     }
 
     NR == 1 && $0 == "---" {
@@ -346,7 +346,7 @@ insert_interactive_adapter() {
     !inserted && /^# / {
       print
       print ""
-      print_adapter()
+      print_handoff()
       inserted = 1
       next
     }
@@ -358,13 +358,13 @@ insert_interactive_adapter() {
     END {
       if (!inserted) {
         print ""
-        print_adapter()
+        print_handoff()
       }
     }
   ' "$skill_path" > "$output_tmp"
 
   mv "$output_tmp" "$skill_path"
-  rm -f "$adapter_tmp"
+  rm -f "$handoff_tmp"
 }
 
 localize_runtime_resolver_command() {
@@ -398,7 +398,7 @@ project_entry() {
   if [[ "$kind" == "protocol" ]]; then
     rm -f "$target/SKILL.md"
     mv "$target/PROTOCOL.md" "$target/SKILL.md"
-    insert_interactive_adapter "$target/SKILL.md" "$sha"
+    insert_session_surface_handoff "$target/SKILL.md" "$sha"
     localize_runtime_resolver_command "$target/SKILL.md"
   fi
   write_marker "$target/$MARKER" "$kind" "$name" "$sha"
