@@ -91,6 +91,16 @@ when it's complete.]
 
 Full spec: [link to design doc or roadmap section]
 
+## Completion boundary
+
+Classify the epic by the terminal step that makes its output real for its
+recipient.
+
+- capability -> component release work plus terminal ecosystem-release work-unit
+- knowledge/spike -> ADR or recorded decision
+- decomposition/planning -> filed sub-issues
+- process/ceremony -> adopted process
+
 ## Task issues
 
 ### [Layer name] (e.g., Library modules, CLI commands)
@@ -126,6 +136,10 @@ Replace the three bash scripts with a single Rust binary. The
 with zero Python dependency at runtime.
 
 Full spec: docs/ROADMAP.md — Phase 2
+
+## Completion boundary
+
+capability -> component release work plus terminal ecosystem-release work-unit
 
 ## Task issues
 
