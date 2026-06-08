@@ -51,11 +51,14 @@ triggers on that disposition, not on the raw proposal (folds #243). The
 holds - land gates on the review disposition rather than the raw proposal - but
 the disposition is now the produced artifact type.
 
-**Correction 4 — two orthogonal HOW axes.** HOW varies by *forge* (PR vs patch
-mechanics, apply mechanic, status target) and independently by *mode*
-(autonomous → runa artifact store; interactive → session working file, already
-handled by the interactive-artifact-delivery adapter). Forge mechanics compose
-with the mode adapter; no mechanic is authored per (forge × mode) cell.
+**Correction 4 — forge HOW stays orthogonal to mode cadence.** HOW varies by
+*forge* (PR vs patch mechanics, apply mechanic, status target). Mode does not
+create a second artifact path: autonomous and interactive sessions both reach
+runa's validated session surface and artifact store. Interactive mode differs
+by cadence only — the operator issues `runa go --work-unit <id>` one tick at a
+time while the configured agent speaks the cascade tools inside that tick.
+Forge mechanics therefore compose with the runa session surface; no mechanic is
+authored per (forge × mode) cell.
 Status-reflection is a forge-tagged mechanic invoked at stage edges (GitHub →
 PR/issue state; SourceHut → tracker-ticket state), mandatory in practice but
 producing no artifact, so it stays HOW. lists.sr.ht / patchset submission for

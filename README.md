@@ -72,12 +72,13 @@ The installer writes user-owned entries only, with no root or sudo requirement:
 
 Every directory under `skills/` is copied as a skill entry. Every directory
 under `protocols/` is copied as a skill-shaped entry with `PROTOCOL.md`
-projected to `SKILL.md` and an interactive artifact delivery adapter inserted
-near the top of the installed protocol. The adapter tells an interactive agent
-how to present the produced artifact body to the human instead of calling the
-runa MCP artifact tool. Installed entries are copies, not source-checkout
-symlinks, so later changes to the checkout do not drift into the active
-discovery surface.
+projected to `SKILL.md` and an interactive session surface handoff inserted
+near the top of the installed protocol. The handoff directs interactive
+sessions through `runa go --work-unit <id>`: the operator issues only `go`,
+while the configured agent reaches `next-protocol-context`, the current output
+tool, and `advance` inside runa's validated cascade. Installed entries are
+copies, not source-checkout symlinks, so later changes to the checkout do not
+drift into the active discovery surface.
 
 When `manifest.toml`, `mechanics/`, and the forge-operation resolver are
 present, the installer also projects a managed runtime bundle under

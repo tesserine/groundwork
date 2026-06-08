@@ -149,8 +149,8 @@ same commit-identity guard through `gh pr merge --match-head-commit`.
   field predicate.
 - #333/#334: GitHub and SourceHut mechanics implement the invariant operation
   handles through `forge_tag`-selected C-3 mechanics. They do not create
-  per-(forge x mode) mechanics; the interactive artifact-delivery adapter remains
-  the mode layer.
+  per-(forge x mode) mechanics; interactive mode reaches the same runa session
+  surface as autonomous mode, with `runa go` controlling cadence.
 
 ## Deliberate Deferrals
 

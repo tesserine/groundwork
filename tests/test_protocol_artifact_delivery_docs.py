@@ -23,6 +23,28 @@ def protocol_text(name: str) -> str:
 
 
 class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
+    def test_public_docs_do_not_describe_interactive_adapter_bypass(self) -> None:
+        checked_paths = [
+            ROOT / "README.md",
+            ROOT / "scripts" / "groundwork-install",
+            *sorted((ROOT / "docs").rglob("*.md")),
+            *sorted((ROOT / "scripts").glob("*.md")),
+        ]
+        forbidden = [
+            "interactive-artifact-delivery-adapter",
+            "interactive artifact-delivery adapter",
+            "interactive artifact delivery adapter",
+            "session working file",
+            "no runa runtime",
+            "does not persist artifacts",
+        ]
+
+        for path in checked_paths:
+            body = path.read_text(encoding="utf-8")
+            for phrase in forbidden:
+                with self.subTest(path=path.relative_to(ROOT), phrase=phrase):
+                    self.assertNotIn(phrase, body)
+
     def test_all_artifact_producing_protocols_explain_mcp_tool_input_boundary(self) -> None:
         producers = [protocol for protocol in manifest_protocols() if protocol["produces"]]
 

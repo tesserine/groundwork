@@ -86,6 +86,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Interactive Groundwork protocol sessions now route through runa's validated
+  session surface via `runa go --work-unit <id>` instead of the manual
+  artifact-delivery adapter, preserving the operator/agent layering where the
+  configured agent speaks `next-protocol-context`, output tools, and `advance`
+  inside the cascade (closes #382).
 - Submit and land now complete the disposition-gated reference arc:
   `submit` produces `change-proposal`, review emits `change-approved` or
   `change-needs-revision`, revision reactivates submit, and `land` activates
@@ -154,9 +159,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   outside shell quoting, malformed shell, unexpanded declared parameters,
   incomplete forge-operation matrices, and registered protocol bodies that leak
   forge-specific command tokens.
-- Interactive install now projects the artifact delivery adapter into every
-  protocol entry without depending on protocol prose formatting, so wrapped MCP
-  delivery text cannot omit the adapter from installed protocol skills.
+- Interactive install now projects the session surface handoff into every
+  protocol entry without depending on protocol prose formatting, so installed
+  protocol skills preserve the runa-driven interactive execution path.
 - Interactive install now rewrites installed protocol resolver references to
   a shell-quoted managed runtime command path, reports a missing expected
   managed runtime as a status failure, rejects unmanaged `~/.groundwork`
