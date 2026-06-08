@@ -75,6 +75,23 @@ For epics with 4+ tasks, include a dependency graph showing execution layers
 (see [`work-unit-model.md`](../../docs/architecture/work-unit-model.md) § Dependency
 Graph Format) so implementers can parallelize independent work.
 
+**Epic completion is recipient-facing.** An epic is complete when its output is
+real for its recipient, not merely when its task list is empty. Classify the
+epic by the terminal step that makes the output real:
+
+- **capability epics** deliver operator-facing capability. Their decomposition
+  includes the required component release work plus a terminal
+  ecosystem-release work-unit. That terminal work-unit depends on the component
+  release inputs and makes the capability public fact.
+- **knowledge/spike epics** terminate in an ADR or recorded decision.
+- **decomposition/planning epics** terminate in filed sub-issues.
+- **process/ceremony epics** terminate in the adopted process.
+
+Capability-epic release identity belongs to the commons release authority:
+ADR-0011, ADR-0012, ADR-0014, and `ECOSYSTEM-RELEASE.md`. Decompose requires
+the terminal ecosystem-release step, but does not define the manifest schema,
+version choice, verification, or publication procedure.
+
 ### The work-unit as contract
 
 **Must stand alone without external context.** A work-unit is a contract, not a
@@ -112,13 +129,18 @@ work-unit bodies against template schemas.
    against actual need — not against the requirements document's
    framing or the existing system's structure.
 2. Extract deliverables — artifacts that must exist when done.
-3. Split into vertical slices that are independently verifiable.
-4. Group by module boundary where it clarifies ownership.
-5. Build dependency graph (Mermaid `graph TD` + layered text summary —
+3. Classify the epic completion boundary: capability, knowledge/spike,
+   decomposition/planning, or process/ceremony. If the epic mixes boundaries,
+   split it or reckon the primary recipient-facing completion boundary before
+   filing tasks.
+4. Split into vertical slices that are independently verifiable, including the
+   terminal completion work for the selected boundary.
+5. Group by module boundary where it clarifies ownership.
+6. Build dependency graph (Mermaid `graph TD` + layered text summary —
    see [`work-unit-model.md`](../../docs/architecture/work-unit-model.md) § Dependency Graph Format).
-6. Size-check each candidate: split if oversized, merge if trivial.
-7. Create task work-units in topological order (lowest execution layer first).
-8. Create or update parent epic with task checklist and dependency graph.
+7. Size-check each candidate: split if oversized, merge if trivial.
+8. Create task work-units in topological order (lowest execution layer first).
+9. Create or update parent epic with task checklist and dependency graph.
 
 ### define-task-boundary
 

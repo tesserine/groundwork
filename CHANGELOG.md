@@ -86,6 +86,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Decompose now codifies recipient-facing epic completion boundaries, including
+  the capability-epic convention that component release work feeds a terminal
+  ecosystem-release work-unit (closes #383).
 - Interactive Groundwork protocol sessions now route through runa's validated
   session surface via `runa go --work-unit <id>` instead of the manual
   artifact-delivery adapter, preserving the operator/agent layering where the
