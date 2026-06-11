@@ -373,7 +373,7 @@ to start?" If the answer references unfinished work, that is a dependency.
   schemas.
 - `reckon`: establishes the verified constraints a record states; fire it
   before framing the work-unit.
-- [`docs/architecture/work-unit-model.md`](../../docs/architecture/work-unit-model.md):
+- [`docs/architecture/work-unit-model.md`](https://github.com/tesserine/groundwork/blob/main/docs/architecture/work-unit-model.md):
   the work-unit state model and dependency graph format the record
   participates in.
 
