@@ -50,15 +50,20 @@ evaluation discipline; this protocol supplies the routing obligation.
    produced artifact type; a review run that emits zero or two dispositions
    is invalid.
 
-## The Gate's Authority
+## The Independence of the Gate
 
-Review is the human gate of the scoped pipeline, by design: transition
+Review is the scoped pipeline's independent-judgment gate. Transition
 authority lives in this typed disposition, not in per-operation approval
-elsewhere (per runa's session-surface contract). The reviewer may be a
-fresh agent context, an external review agent, or the operator — the
-capstone is the same typed outcome either way, and the disposition records
-the reviewer identity. What the gate may never become is the author's own
-momentum approving itself without examination.
+elsewhere (per runa's session-surface contract) — so what the gate enforces
+is not a human signature but **independence from the author**: the change is
+judged by a context that did not produce it. The author's own momentum must
+never approve itself.
+
+Independence is satisfied by a context separate from the one that built the
+change — a fresh or separate agent context by default, the operator when
+chosen. The capstone is the same typed outcome either way, and the
+disposition records the reviewer identity. Who reviews is a choice; that the
+reviewer is independent of the author is the invariant.
 
 ## Corruption Modes
 

@@ -139,16 +139,21 @@ context to fire passively — with full expositions in references.
    algebra would force a second artifact vocabulary and review/land would
    need to handle both — two methodologies wearing one manifest
    (Parsimony; "without forking into two methodologies").
-6. **The human gate** → it is `review`, by constitution: runa's session
-   surface contract places transition authority in typed disposition
-   artifacts and explicitly excludes per-operation human approval. The
-   pipeline auto-carries through `submit` — a proposal must exist to be
-   reviewable, and an undelivered change is invisible to judgment. The
-   operator who wants tick-by-tick cadence has interactive mode (`runa go`);
-   the operator who wants to *be* the reviewer reviews at the forge surface
-   the proposal handle names, and the disposition records reviewer
-   identity. Flows that "stopped short of submit" were accidents of the
-   session framing removed in (2).
+6. **Where judgment about the change is exercised** → `review`, the
+   independent-judgment gate. runa's session-surface contract places
+   transition authority in typed disposition artifacts and explicitly
+   excludes per-operation human approval — so the gate does not enforce a
+   human signature; it enforces **independence from the author**, a change
+   judged by a context that did not produce it. That context is a fresh or
+   separate agent by default, the operator when chosen; human review is an
+   available choice, not the gate's definition. The pipeline auto-carries
+   through `submit` — a proposal must exist to be reviewable, and an
+   undelivered change is invisible to judgment. The operator who wants
+   tick-by-tick cadence has interactive mode (`runa go`); the operator who
+   wants to *be* the reviewer reviews at the forge surface the proposal
+   handle names, and the disposition records reviewer identity. Flows that
+   "stopped short of submit" were accidents of the session framing removed
+   in (2).
 7. **The crisp entry tool** → out of methodology scope; flagged below as a
    coordinated runtime dependency.
 
@@ -193,12 +198,16 @@ context to fire passively — with full expositions in references.
   re-fire it. This trades a sliver of gate purity for line movement; the
   alternative (fail the verify tick and require operator intervention) is
   available by policy if preferred.
-- **Best-of-field call — reviewer independence.** Review names the
-  rubber-stamp risk and records reviewer identity, but the methodology does
-  not mandate *who* reviews (fresh agent context, external agent, or
+- **Best-of-field call — reviewer independence.** The invariant the gate
+  protects is independence from the author, not human review: the change is
+  judged by a context that did not produce it. The methodology names the
+  rubber-stamp risk and records reviewer identity, but does not mandate
+  *who* the independent context is (fresh agent context, external agent, or
   operator). Mandating an operator-only review would contradict the session
   surface contract's no-per-operation-approval invariant; mandating a
-  separate agent identity is runtime policy, not methodology.
+  particular agent identity is runtime policy, not methodology. Human review
+  is therefore an available choice within the gate, never the gate's
+  definition.
 
 ## Consequences
 
