@@ -16,5 +16,10 @@
       "scenarios": ["pass-valid-record"],
       "failures": ["pass-valid-record"]
     }
-  ]
+  ],
+  "documentation": {
+    "updated": ["README.md"],
+    "verified_accurate": ["docs/api-reference.md"],
+    "follow_up_work_units": []
+  }
 }

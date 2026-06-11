@@ -1,15 +1,17 @@
 name = "verify"
-purpose = "Gate completion claims by comparing fresh verification evidence against the behavior contract."
+purpose = "Gate completion claims with fresh verification evidence against the behavior contract, and record the documentation impact of the change."
 session_role = "verification gate"
 preconditions = ["behavior-contract, test-evidence, and work-unit artifacts exist"]
 start_node = "identify-verification"
 failure_modes = [
   "verification command is stale or partial",
   "test evidence does not cover claimed behavior",
+  "documentation impact is not recorded",
 ]
 corruption_modes = [
   "evidence-before-assertion loss",
   "partial verification treated as completion",
+  "documentation drift recorded as accurate or deferred untracked",
 ]
 
 [[nodes]]
@@ -38,6 +40,13 @@ from = "identify-verification"
 to = "run-verification"
 condition = { type = "always" }
 
+[[nodes]]
+name = "review-documentation-impact"
+intent = "Map the change to affected documentation, classify drift, update in the same change, and track deeper follow-up."
+disciplines = ["orient"]
+mechanics = ["inspect-worktree"]
+outcomes = ["documentation impact is recorded"]
+
 [[edges]]
 from = "run-verification"
 to = "assess-completion"
@@ -45,11 +54,16 @@ condition = { type = "always" }
 
 [[edges]]
 from = "assess-completion"
+to = "review-documentation-impact"
+condition = { type = "always" }
+
+[[edges]]
+from = "review-documentation-impact"
 to = "completion-covered"
 condition = { type = "case", field = "coverage_status", equals = "covered" }
 
 [[edges]]
-from = "assess-completion"
+from = "review-documentation-impact"
 to = "completion-incomplete"
 condition = { type = "default", field = "coverage_status" }
 

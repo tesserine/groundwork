@@ -22,12 +22,19 @@ Work moves through two phases connected by the work-unit artifact.
 Survey examines what actually needs doing; decompose breaks that into work
 units with acceptance criteria and dependency edges.
 
-**Execution** takes one work-unit and carries it through to a merged increment:
-take claims the work-unit and opens the session → specify writes the behavior
-contract as Given/When/Then scenarios → plan converges on a decision-complete
-design → implement executes through RED-GREEN-REFACTOR → verify gates
-completion with evidence → document ensures accuracy → submit packages the
-change → land merges and closes the loop.
+**Entry** into the scoped pipeline happens one of two ways: a work-unit newly
+created by decompose, or one the acquire skill materializes from an existing
+forge ticket (the "start on ticket #N" path). Either way take activates on a
+work-unit artifact.
+
+**The scoped pipeline** takes one work-unit and carries it through to a merged
+increment: take prepares the workspace and writes the behavior contract as
+Given/When/Then scenarios — the spine threaded through every later stage →
+plan converges on a decision-complete design → implement executes through
+RED-GREEN-REFACTOR → verify gates completion with evidence and documentation
+review → submit delivers an immutable change-proposal version → review emits
+exactly one typed disposition → land applies the approved version and closes
+the loop.
 
 Each protocol produces an artifact that the next protocol requires.
 → [`docs/architecture/connecting-structure.md`](docs/architecture/connecting-structure.md)
@@ -40,9 +47,10 @@ stage-specific judgment:
 - **debug** — root cause investigation when failures appear
 - **resolve** — structural friction resolution when obstacles impede
 - **research** — external evidence gathering when facts are missing
-- **contract** — behavior traceability through execution
+- **contract** — the BDD home: contract authoring at entry, traceability through execution
 - **work-unit-craft** — the discipline for authoring work-unit tracker records
 - **code-review** — review judgment for submitted change proposals
+- **acquire** — entry from an existing forge ticket: materializes the work-unit artifact take activates on
 
 Not every piece of work needs every stage. A bug with an existing work-unit enters
 at execution. A new capability enters at planning. The constraint is sequence,
@@ -229,11 +237,12 @@ define interfaces and decisions, not scripts to follow.
 
 ### How work is executed
 
-**Behavior is the thread.** The behavior contract written during specify traces
-through every subsequent stage. Plans link design decisions to behavior
+**Behavior is the thread.** The behavior contract written at take — the entry —
+traces through every subsequent stage. Plans link design decisions to behavior
 scenarios. Tests verify named scenarios. Verification cites behavior-level
-evidence. Landing records what coverage shipped.
-→ [`protocols/specify/PROTOCOL.md`](protocols/specify/PROTOCOL.md),
+evidence. Review judges against the contract. Landing records what coverage
+shipped.
+→ [`protocols/take/PROTOCOL.md`](protocols/take/PROTOCOL.md),
 [`skills/contract/SKILL.md`](skills/contract/SKILL.md)
 
 **Evidence before assertion.** No completion claims without fresh verification
@@ -250,12 +259,12 @@ gets written. Code written before its test gets deleted and restarted.
 **Code is ground truth.** When documentation and code disagree, code behavior
 is descriptive truth. Documentation is a claim that must be verified against
 the code.
-→ [`protocols/document/PROTOCOL.md`](protocols/document/PROTOCOL.md)
+→ [`protocols/verify/references/documentation-review.md`](protocols/verify/references/documentation-review.md)
 
 **Documentation obligation.** User-facing changes carry documentation
-requirements. Documentation ships in the same PR as the code that caused it.
+requirements. Documentation ships with the code change that caused it.
 Drifted documentation compounds.
-→ [`protocols/document/PROTOCOL.md`](protocols/document/PROTOCOL.md),
+→ [`protocols/verify/PROTOCOL.md`](protocols/verify/PROTOCOL.md),
 [`skills/orient/SKILL.md`](skills/orient/SKILL.md)
 
 ### How obstacles are handled

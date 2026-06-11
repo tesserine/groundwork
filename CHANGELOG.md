@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Acquisition: entry from an existing forge ticket** (ADR-0004). The new
+  `acquire` skill reads a ticket already on the tracker through the existing
+  `read-ticket` mechanic and materializes a `work-unit` artifact from it
+  (`skills/acquire/scripts/materialize.py`), so scoped work can start from a
+  ticket reference ("take runa#14"). Derivation is one-way (ticket → artifact;
+  no ticket is created, nothing is written back); the artifact adopts the
+  ticket's handle and decompose's `work-unit-<N>-<short-slug>` convention, so
+  acquired and decomposed work-units are indistinguishable downstream. Ticket
+  content that does not map onto the schema (no acceptance criteria, empty
+  body, non-open ticket) routes to decompose's `refine-work-unit` discipline
+  rather than being invented. The cold-start runtime entrypoint that opens the
+  session from a bare reference remains flagged as tesserine/runa#188.
 - `work-unit-craft` skill: the forge-agnostic discipline for authoring
   work-unit tracker records — outcomes over prescription, the sovereignty
   test, body-vs-comment authority, and the corruption-mode catalogue.
@@ -16,6 +28,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Review reframed as the independent-judgment gate, not a "human gate."**
+  Agents execute review like every protocol, and the session-surface contract
+  places transition authority in the typed disposition; the invariant the gate
+  protects is independence from the author (a context that did not produce the
+  change), satisfiable by a fresh/separate agent by default and the operator
+  when chosen. Wording corrected in `protocols/review/PROTOCOL.md` and ADR-0004;
+  gate function, dispositions, and routing unchanged.
+- **Scoped pipeline redesigned contract-first** (ADR-0004). The pipeline is
+  now seven stations — `take → plan → implement → verify → submit → review →
+  land` — with the behavior contract as the spine: `take` authors it at
+  entry, every judgment station (`plan`, `implement`, `verify`, `submit`,
+  `review`) requires it, and `land` accepts it for the completion record.
+  - `specify` merged into `take`: the entry is contract-first; the
+    Given/When/Then authoring discipline now lives in the `contract` skill,
+    the BDD home for both authoring and carrying.
+  - `document` merged into `verify`: documentation accuracy is completion
+    evidence; the review method lives in
+    `protocols/verify/references/documentation-review.md` and the outcome
+    in `completion-evidence.documentation`.
+  - Artifact types `claim` and `documentation-record` removed; the
+    `completion-evidence` schema gains a required `documentation` section.
+  - `review` now requires the behavior contract and accepts the work-unit,
+    plan, and completion evidence — the reviewer judges against the
+    contract and evidence, not the diff alone.
+  - `submit` triggers on `completion-evidence` (or `change-needs-revision`
+    for revision rounds) and requires the behavior contract.
+- Protocols and skills rewritten to the architecture standard: 3–7
+  high-level steps per main file, depth factored into `references/`
+  subdirectories (`take`, `plan`, `implement`, `verify`, `submit`, `review`,
+  `land`; `contract`, `orient`, `reckon`, `debug`, `research`).
+- Workflow contracts updated: `verify.toml` gains a
+  `review-documentation-impact` node; `submit.toml` and `review.toml`
+  preconditions reflect the new edges.
 - Reckon consults the canonical principles corpus at
   [pentaxis93/principles](https://github.com/pentaxis93/principles) for its
   navigational principles instead of carrying its own definitions; principle

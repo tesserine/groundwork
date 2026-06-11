@@ -2,9 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/completion-evidence.schema.json",
   "title": "Completion Evidence",
-  "description": "Validates the content of a completion-evidence artifact. Reports coverage at the acceptance-criterion level by joining work-unit criteria, behavior-contract scenarios, and test results.",
+  "description": "Validates the content of a completion-evidence artifact. Reports coverage at the acceptance-criterion level by joining work-unit criteria, behavior-contract scenarios, and test results, and records the documentation impact of the change.",
   "type": "object",
-  "required": ["work_unit", "criterion_coverage"],
+  "required": ["work_unit", "criterion_coverage", "documentation"],
   "additionalProperties": false,
   "properties": {
     "work_unit": {
@@ -19,6 +19,9 @@
       "items": {
         "$ref": "#/$defs/coverage-entry"
       }
+    },
+    "documentation": {
+      "$ref": "#/$defs/documentation-impact"
     }
   },
   "$defs": {
@@ -50,6 +53,38 @@
           "description": "Scenario names that failed for this criterion.",
           "items": {
             "type": "string"
+          }
+        }
+      }
+    },
+    "documentation-impact": {
+      "type": "object",
+      "description": "Documentation impact of the change: what was updated, what was reviewed and confirmed accurate, and what deeper work was filed as follow-up.",
+      "required": ["updated", "verified_accurate", "follow_up_work_units"],
+      "additionalProperties": false,
+      "properties": {
+        "updated": {
+          "type": "array",
+          "description": "Documentation files updated in this change. Empty if none.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "verified_accurate": {
+          "type": "array",
+          "description": "Documentation reviewed and confirmed accurate without edits. Empty if none.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "follow_up_work_units": {
+          "type": "array",
+          "description": "Work-units filed for documentation follow-up that exceeds this change. Empty if none.",
+          "items": {
+            "type": "string",
+            "minLength": 1
           }
         }
       }

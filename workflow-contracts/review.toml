@@ -1,7 +1,7 @@
 name = "review"
 purpose = "Review a submitted change proposal and produce exactly one disposition outcome."
 session_role = "review gate"
-preconditions = ["change-proposal exists"]
+preconditions = ["change-proposal and behavior-contract exist"]
 start_node = "inspect-change-proposal"
 failure_modes = [
   "review cannot inspect the proposed change",

@@ -1,113 +1,131 @@
 ---
 name: contract
-description: Use when carrying a behavior contract through implementation and verification. This skill keeps code changes, tests, and completion claims traceable to the specified behaviors instead of drifting toward implementation convenience.
+description: >-
+  The behavior-driven development discipline: authoring the behavior contract
+  at entry and carrying it unbroken through implementation, verification, and
+  closure. Use when refining acceptance criteria into Given/When/Then
+  scenarios, when deciding what behavior to implement next, and whenever code
+  changes, tests, or completion claims need to stay traceable to specified
+  behaviors instead of drifting toward implementation convenience.
 metadata:
-  version: "1.0.0"
-  updated: "2026-03-17"
+  version: "2.0.0"
+  updated: "2026-06-11"
 ---
 
 # Contract
 
-The behavior contract remains the source of truth after specification is
-written. This skill is the discipline of carrying that contract through
-implementation, verification, and closure without losing traceability.
+The behavior contract is the executable definition of done. This skill is
+the BDD home: it authors the contract where work begins (`take`) and carries
+it as the source of truth through every later stage. Behavior is specified
+once, then everything traces to it — plans link decisions to scenarios,
+tests prove named scenarios, verification reports scenario-level coverage,
+landing records what coverage shipped.
 
-## Lifecycle Role
+Reference: [Dan North, Introducing BDD](https://dannorth.net/introducing-bdd/).
+Language-specific patterns:
+[references/language-patterns.md](references/language-patterns.md).
 
-This skill is cross-cutting, not planning-only. Dropping the behavior contract
-at any phase breaks traceability.
+## Authoring the Contract
 
-- **Implementation:** behavior gaps drive execution order. Each implementation
-  increment maps to one or more behavior statements. Work that cannot be
-  traced to a behavior is unanchored.
-- **Verification:** completion means passing evidence for each claimed
-  behavior, not just "tests pass." Report behavior coverage, not command
-  output.
-- **Closure:** shipped work should still name what behaviors were covered and
-  what gaps remain.
+1. **Start from the criteria.** Each work-unit acceptance criterion is
+   refined into one or more scenarios. Every scenario names the criterion it
+   refines — no orphan scenarios, no uncovered criteria.
+2. **Ask behavior before mechanics.** "What should this do?" precedes "how
+   to test it?" The behavior question surfaces the right scenario; the
+   mechanics question optimizes the wrong one.
+3. **Name scenarios as sentences.** A scenario name is a behavior statement
+   readable as specification: `rejects_expired_tokens_with_401`, not
+   `test_auth`. If the names alone don't describe what the system does, the
+   specification has disappeared and only code remains.
+4. **Structure as Given/When/Then.** Given establishes context (setup only),
+   When performs one action (the behavior trigger), Then asserts observable
+   outcomes — never internal state.
+5. **One behavior per scenario.** A scenario proving three things masks
+   which one broke. Split it.
+6. **Rank by behavior gap.** Happy path first, core before edge, foundation
+   before dependents, user-visible before internal.
 
-## Discipline
+### Example
 
-**Implementation maps to behavior.** Every implementation increment connects to
-one or more behavior statements. If you cannot name which behavior a code
-change advances, the change is unanchored. This traceability runs the full
-chain: from specification through implementation to verification evidence.
+```python
+def test_rejects_expired_tokens_with_401():
+    """Expired authentication tokens return 401, not a silent fallback."""
+    # Given
+    token = create_token(expires_at=one_hour_ago)
+    client = create_test_client()
 
-**Behavior is the unit of progress.** Execution order follows behavior gaps,
-not code adjacency or convenience. Work advances by proving another behavior,
-not by accumulating unanchored edits.
+    # When
+    response = client.get("/api/protected", headers=auth_header(token))
 
-**Completion is behavior coverage.** "All tests pass" is incomplete if you
-cannot name which claimed behaviors those tests verify.
+    # Then
+    assert response.status_code == 401
+    assert "expired" in response.json()["error"].lower()
+```
 
-## Procedures
+The name is the specification line; the assertions check observable
+outcomes. A test asserting `validator._cache` or `result.internal_state`
+breaks on refactor and specifies nothing.
 
-### map-behaviour-to-implementation
+## Carrying the Contract
 
-1. For each planned implementation step, name the behavior statements it
-   advances.
-2. New RED tests during implementation must correspond to named behavior
-   scenarios.
-3. Reject implementation steps that cannot be traced to behavior requirements;
-   they indicate scope creep or missing specification.
+- **Implementation maps to behavior.** Every implementation increment names
+  the scenario it advances. Each RED test corresponds to a named scenario.
+  Work that cannot be traced to a scenario is unanchored — scope creep or a
+  missing specification; resolve which before proceeding.
+- **Behavior is the unit of progress.** Execution order follows behavior
+  gaps, not code adjacency. Work advances by proving another scenario.
+- **Completion is behavior coverage.** "All tests pass" is incomplete unless
+  it names which scenarios those tests prove and which criteria those
+  scenarios cover. Report coverage, not command output.
 
-### verify-behaviour-contract
+### When an existing test fails after a change
 
-1. For each claimed completed behavior, cite passing evidence (test name +
-   pass).
-2. For failing or deferred behaviors, mark explicit gaps.
-3. Report completion status as behavior coverage, not only command success.
-   "All tests pass" is not "all behaviors verified."
+Classify before touching it:
 
-### evaluate-existing-tests
+- **Bug introduced** — the behavior is still required; fix the
+  implementation.
+- **Behavior moved** — the behavior lives elsewhere now; redirect the test.
+- **Behavior obsolete** — the system no longer needs it; delete the test
+  (and its scenario). Never weaken assertions to make a failure go away.
 
-When a test fails after a change, classify the failure:
-
-- **Bug introduced:** the behavior is still required and the implementation
-  broke it. Fix the implementation.
-- **Behavior moved:** the behavior still exists but lives somewhere else.
-  Redirect the test.
-- **Behavior obsolete:** the system no longer needs this behavior. Delete the
-  test.
-
-Resist the urge to fix failing tests by weakening assertions. If the behavior
-matters, fix the implementation. If it does not, delete the test.
-
-## Triggers
-
-- Implementing work-unit acceptance criteria
-- Deciding what to implement next from an existing behavior contract
-- Mapping plan tasks to behavior statements
-- Validating completion claims against behavior coverage
-- Evaluating whether existing tests still represent required behavior
+**Delete freely.** Scenarios and tests for behaviors nobody needs are noise,
+not safety.
 
 ## Corruption Modes
 
-**Testing implementation.** Asserting internal state, private methods, or
-implementation details instead of observable behavior.
-*Recognition:* Your test would break if you refactored the internals without
-changing behavior. Your assertions reference private fields, internal data
-structures, or intermediate state that users never see.
+**Contract dropoff.** The contract is treated as a phase that ended when
+coding began. *Recognition:* completion claims say "tests pass" without
+citing which behaviors have evidence.
 
-**Contract dropoff.** Treating behavior specification as a phase that ends when
-coding begins.
-*Recognition:* You wrote behavior specs, then implemented without checking work
-against them. At completion, you report "tests pass" without citing which
-behaviors have evidence.
+**Testing implementation.** Assertions reference private fields, internals,
+or intermediate state. *Recognition:* the test would break on a
+behavior-preserving refactor.
 
-**Test hoarding.** Retaining tests for behaviors the system no longer needs.
-*Recognition:* Tests pass but describe behavior nobody requires. You are afraid
-to delete them because "they might catch something."
+**Vague names.** Test names are labels, not behavior statements.
+*Recognition:* you cannot reconstruct what the module does from names alone.
+
+**Multi-behavior scenarios.** One scenario, several When/Then sequences.
+*Recognition:* a failure could mean any of several behaviors broke.
+
+**Test hoarding.** Tests kept for behaviors the system no longer needs.
+*Recognition:* fear of deleting because "they might catch something."
+
+**Framework overthinking.** Evaluating test frameworks instead of writing
+behaviors. *Recognition:* runners configured, assertion libraries compared,
+no behavior specified yet.
 
 ## Principles
 
-**Single pipeline.** Specification and `implement` execution are complementary
-stages in one flow, not alternatives. Specification decides what to prove.
-Execution proves it. Verification reports the resulting behavior coverage.
+- **Words shape thinking.** "Given," "when," "then," "should" force thought
+  about what the system does rather than how it is built. The language is
+  the method.
+- **Specification, not verification.** The contract's primary value is
+  stating what the system does; catching regressions is the byproduct.
 
 ## Cross-References
 
-- `specify`: produces the behavior contract this skill carries forward.
-- `implement`: executes RED-GREEN-REFACTOR for the named behaviors.
-- `verify`: requires behavior-level evidence before completion claims.
-- `land`: records shipped behavior coverage and explicit gaps.
+- `take` (protocol): authors the contract at entry using this discipline.
+- `plan` (protocol): maps scenarios to a decision-complete design.
+- `implement` (protocol): executes RED-GREEN-REFACTOR per named scenario.
+- `verify` (protocol): gates completion on scenario and criterion coverage.
+- `land` (protocol): records shipped behavior coverage and explicit gaps.
