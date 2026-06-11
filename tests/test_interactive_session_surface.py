@@ -61,10 +61,10 @@ def append_agent_command_config(project_dir: Path, command: list[Path]) -> None:
 
 def groundwork_env() -> dict[str, str]:
     env = os.environ.copy()
-    env.pop("GROUNDWORK_FORGE_TYPE", None)
-    env.pop("GROUNDWORK_FORGE_TRACKER_ID", None)
-    env["GROUNDWORK_FORGE_OWNER"] = "tesserine"
-    env["GROUNDWORK_FORGE_NAME"] = "groundwork"
+    env.pop("RUNA_FORGE_TYPE", None)
+    env.pop("RUNA_FORGE_TRACKER_ID", None)
+    env["RUNA_FORGE_OWNER"] = "tesserine"
+    env["RUNA_FORGE_NAME"] = "groundwork"
     return env
 
 

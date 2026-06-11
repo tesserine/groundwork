@@ -84,7 +84,7 @@ When `manifest.toml`, `mechanics/`, and the forge-operation resolver are
 present, the installer also projects a managed runtime bundle under
 `~/.groundwork/`. The bundle contains the manifest, mechanic library, resolver
 module, and `bin/groundwork-mechanic`, so installed protocol sessions can
-resolve forge-invariant operations through the active `GROUNDWORK_FORGE_TYPE`
+resolve forge-invariant operations through the active `RUNA_FORGE_TYPE`
 configuration without reaching back into the source checkout. Installed
 protocol copies reference the managed resolver path directly, so users do not
 need to add `~/.groundwork/bin` to `PATH`.
@@ -113,11 +113,11 @@ atoms:
 
 | Variable | Holds | Example | Forge-assigned? |
 |---|---|---|---|
-| `GROUNDWORK_FORGE_TYPE` | active forge selector, defaulting to `github` | `sourcehut` | no |
+| `RUNA_FORGE_TYPE` | active forge selector, defaulting to `github` | `sourcehut` | no |
+| `RUNA_FORGE_OWNER` | tracker/repo owner handle | `operator` | no |
+| `RUNA_FORGE_NAME` | tracker/repo name | `weforge` | no |
+| `RUNA_FORGE_TRACKER_ID` | tracker integer ID | `4` | yes |
 | `GROUNDWORK_FORGE_ENDPOINT` | deployment host used to derive service hosts | `weforge.build` | no |
-| `GROUNDWORK_FORGE_OWNER` | tracker/repo owner handle | `operator` | no |
-| `GROUNDWORK_FORGE_NAME` | tracker/repo name | `weforge` | no |
-| `GROUNDWORK_FORGE_TRACKER_ID` | tracker integer ID | `4` | yes |
 | `GROUNDWORK_FORGE_REPO_ID` | git repo integer ID | `42` | yes |
 
 For SourceHut, the resolver derives `todo_query_url` as
@@ -125,8 +125,10 @@ For SourceHut, the resolver derives `todo_query_url` as
 `https://git.<endpoint>/query`, and `ssh_remote` as
 `git@git.<endpoint>:~<owner>/<name>`, while `tracker_id` and `repo_id` come
 directly from their atoms. For GitHub, it derives `repository` as
-`<owner>/<name>`. The atoms are the only deployment facts; composed endpoints
-and remotes are not separate configuration values.
+`<owner>/<name>`. Runa owns the four scoped identity atoms it injects into
+agent and MCP environments; Groundwork still owns endpoint and repo-id atoms
+that are not part of runtime scoped identity. The atoms are the only deployment
+facts; composed endpoints and remotes are not separate configuration values.
 
 The cross-repo seam for this ticket identity is documented in
 [`docs/architecture/connecting-structure.md`](docs/architecture/connecting-structure.md#phase-2-forge-tagging-seam).

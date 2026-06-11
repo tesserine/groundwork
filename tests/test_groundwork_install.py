@@ -247,7 +247,7 @@ class GroundworkInstallTests(unittest.TestCase):
         resolved = run(
             [str(resolver), "resolve", "close-out"],
             install.runtime_root(),
-            env={**os.environ, "GROUNDWORK_FORGE_TYPE": "sourcehut"},
+            env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut"},
         )
         assert_success(self, resolved)
         self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
@@ -294,7 +294,7 @@ class GroundworkInstallTests(unittest.TestCase):
             resolved = run(
                 argv,
                 install.runtime_root(),
-                env={**os.environ, "GROUNDWORK_FORGE_TYPE": "sourcehut", "PATH": "/usr/bin:/bin"},
+                env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut", "PATH": "/usr/bin:/bin"},
             )
             assert_success(self, resolved)
             self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
@@ -331,7 +331,7 @@ class GroundworkInstallTests(unittest.TestCase):
         resolved = run(
             argv,
             install.runtime_root(),
-            env={**os.environ, "GROUNDWORK_FORGE_TYPE": "sourcehut", "PATH": "/usr/bin:/bin"},
+            env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut", "PATH": "/usr/bin:/bin"},
         )
         assert_success(self, resolved)
         self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
