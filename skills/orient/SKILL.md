@@ -6,8 +6,8 @@ description: >-
   documentation-writing guidance. Activates the full skill system as one
   connected methodology and carries the always-on documentation discipline.
 metadata:
-  version: "3.1.0"
-  updated: "2026-03-17"
+  version: "3.2.0"
+  updated: "2026-06-11"
 ---
 
 # Orient
@@ -58,6 +58,8 @@ These thread across the topology. They aren't phases — they're disciplines tha
 **Behavior traceability.** The behavior contract from stage 2 should be traceable at every subsequent stage. Plans link design decisions to behavior statements. Work-units map acceptance criteria to behaviors. Tests correspond to named scenarios. Verification cites behavior-level evidence. Landing records what coverage shipped.
 
 **Documentation obligation.** User-facing changes carry documentation obligations: acceptance criteria include doc updates, completion claims include doc accuracy evidence, and landing records documentation coverage status. User-visible changes require a CHANGELOG entry.
+
+**Records carry the delegation.** A work-unit's tracker record is the spec an implementing agent reads — the body is the standalone specification, comments are a log. When authoring or re-scoping a record, `work-unit-craft` provides the discipline: outcomes over prescription, and the corruption modes that make records mis-steer their readers.
 
 **Reckon re-fires.** `reckon` is not step-one-once. New generative work mid-session requires reckoning anew. The trigger is creation, not sequence position.
 

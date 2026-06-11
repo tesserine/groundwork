@@ -41,6 +41,7 @@ stage-specific judgment:
 - **resolve** — structural friction resolution when obstacles impede
 - **research** — external evidence gathering when facts are missing
 - **contract** — behavior traceability through execution
+- **work-unit-craft** — the discipline for authoring work-unit tracker records
 - **code-review** — review judgment for submitted change proposals
 
 Not every piece of work needs every stage. A bug with an existing work-unit enters
@@ -223,7 +224,8 @@ memory.
 **Sovereignty.** Every handoff passes outcomes — what must be true — never
 implementation steps. Work-units define acceptance criteria, not procedure. Plans
 define interfaces and decisions, not scripts to follow.
-→ [`protocols/decompose/PROTOCOL.md`](protocols/decompose/PROTOCOL.md)
+→ [`protocols/decompose/PROTOCOL.md`](protocols/decompose/PROTOCOL.md),
+[`skills/work-unit-craft/SKILL.md`](skills/work-unit-craft/SKILL.md)
 
 ### How work is executed
 

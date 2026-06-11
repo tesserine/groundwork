@@ -121,7 +121,10 @@ the earlier discussion" to understand, it is incomplete.
    `<type>(<scope>): <what>`.
 
 A structural linter is available at `scripts/issue_lint.py` for validating
-work-unit bodies against template schemas.
+work-unit bodies against template schemas. The `work-unit-craft` skill
+carries the full authoring discipline — the sovereignty test, body-vs-comment
+authority, and the corruption modes that make records mis-steer implementing
+agents; consult it when authoring or re-scoping a record.
 
 ### decompose-epic
 
