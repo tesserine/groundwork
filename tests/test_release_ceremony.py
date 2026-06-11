@@ -8,8 +8,11 @@ import textwrap
 import unittest
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts import release_lib
 
 
 def run(
@@ -221,6 +224,35 @@ class ReleaseCeremonyTests(unittest.TestCase):
             self,
             result,
             "CHANGELOG.md has duplicate release heading for [1.2.3-rc.1]",
+        )
+
+    def test_manifest_version_must_match_latest_released_changelog_heading(self) -> None:
+        fixture = self.add_fixture("manifest-release-mismatch", "1.2.3")
+        fixture.write(
+            "manifest.toml",
+            """
+            name = "groundwork"
+            version = "1.2.4"
+
+            [[artifact_types]]
+            name = "claim"
+
+            [[protocols]]
+            name = "take"
+            requires = ["claim"]
+            accepts = []
+            produces = ["claim"]
+            may_produce = []
+            trigger = { type = "on_artifact", name = "claim" }
+            """,
+        )
+
+        result = fixture.run_release_check("metadata")
+
+        assert_failure_contains(
+            self,
+            result,
+            "manifest version 1.2.4 disagrees with release-of-record 1.2.3",
         )
 
     def test_notes_emit_matching_changelog_section_without_outer_blank_lines(self) -> None:
@@ -448,7 +480,7 @@ class ReleaseRepositoryContractTests(unittest.TestCase):
         return (ROOT / relative).read_text(encoding="utf-8")
 
     def test_manifest_declares_current_methodology_version(self) -> None:
-        self.assertIn('version = "0.2.0"', self.read("manifest.toml"))
+        self.assertEqual(release_lib.manifest_version(ROOT), release_lib.latest_released_version(ROOT))
 
     def test_release_workflow_verifies_annotated_tags_and_has_no_path_filter(self) -> None:
         workflow = self.read(".github/workflows/release.yml")

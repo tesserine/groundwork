@@ -80,6 +80,12 @@ def release_heading_for(version: str) -> str | None:
     return prefix
 
 
+def _release_heading_version(line: str) -> str | None:
+    if not RELEASE_HEADING_RE.fullmatch(line):
+        return None
+    return line[len("## [") : line.index("]")]
+
+
 def check_changelog_structure(root: Path) -> None:
     changelog = changelog_path(root)
     lines = changelog.read_text(encoding="utf-8").splitlines()
@@ -96,13 +102,24 @@ def check_changelog_structure(root: Path) -> None:
             if seen_release:
                 die("CHANGELOG.md places ## [Unreleased] after a release heading")
             continue
-        if not RELEASE_HEADING_RE.fullmatch(line):
+        version = _release_heading_version(line)
+        if version is None:
             die(f"CHANGELOG.md release heading is malformed: {line}")
-        version = line[len("## [") : line.index("]")]
         if version in seen_versions:
             die(f"CHANGELOG.md has duplicate release heading for [{version}]")
         seen_versions.add(version)
         seen_release = True
+
+
+def latest_released_version(root: Path) -> str:
+    check_changelog_structure(root)
+    lines = changelog_path(root).read_text(encoding="utf-8").splitlines()
+    start = lines.index("## [Unreleased]") + 1
+    for line in lines[start:]:
+        version = _release_heading_version(line)
+        if version is not None:
+            return version
+    die("CHANGELOG.md has no release heading")
 
 
 def require_release_heading(root: Path, version: str) -> None:
@@ -220,8 +237,11 @@ def check_release_surface_files(root: Path) -> None:
 
 
 def run_metadata(root: Path) -> None:
-    manifest_version(root)
+    current = manifest_version(root)
     check_changelog_structure(root)
+    release_of_record = latest_released_version(root)
+    if current != release_of_record:
+        die(f"manifest version {current} disagrees with release-of-record {release_of_record}")
     check_methodology_integrity(root)
     check_release_surface_files(root)
 
