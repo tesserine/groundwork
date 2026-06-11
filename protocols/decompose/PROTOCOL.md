@@ -341,6 +341,10 @@ use the dependency's bare `<short-slug>` `instance_id`.
 
 - `reckon`: first-principles constraint verification before work-unit framing,
   refinement, and epic decomposition.
+- `acquire` (skill): the mirror of this protocol's create path — decompose
+  creates the ticket it delivers; acquire adopts the ticket it is given and
+  creates none. A ticket-quality gap acquire surfaces routes to
+  `refine-work-unit` here.
 - `take`: session-level prioritization and execution discipline.
 - `contract` (skill): behavior framing and scenario naming discipline.
 - `plan`: design convergence before implementation.

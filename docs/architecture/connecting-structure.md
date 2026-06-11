@@ -90,6 +90,19 @@ is not needed: work-unit identity is runtime-enforced (runa injects
 `work_unit` into every scoped artifact and validates canonical ids), so the
 entry's capstone can be the contract itself.
 
+The `work-unit` artifact take activates on arrives one of two ways: created
+by `decompose`, or materialized from an existing forge ticket by the
+`acquire` skill. Acquisition is skill-side intake — the mirror of
+decompose's create path — and reaches runa's store through decompose's own
+`work-unit` output tool, the same way the `research` skill's output reaches
+the store through a protocol's `may_produce` tool (see *Skill-Produced
+Artifacts*). It creates no ticket, derives the artifact one-way from the
+ticket (ticket = planning home, artifact = execution snapshot, `handle` =
+back-link), and uses decompose's tracker-backed `instance_id` convention, so
+acquired and decomposed work-units are indistinguishable downstream. The
+manifest producer of `work-unit` therefore remains `decompose` alone; the
+single-producer rule is unaffected.
+
 ## Input Edge Principle
 
 Runa's interface contract defines two input edge types:
@@ -335,7 +348,7 @@ trigger = { type = "on_artifact", name = "change-approved" }
 |---------------|----------|
 | request | external |
 | requirements | survey |
-| work-unit | decompose |
+| work-unit | decompose (the `acquire` skill also delivers through decompose's tool; see *Take — contract-first entry*) |
 | behavior-contract | take |
 | implementation-plan | plan |
 | test-evidence | implement |

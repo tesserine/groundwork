@@ -40,6 +40,11 @@ Two phases, connected by the work-unit artifact.
 establishes what actually needs doing; `decompose` breaks it into
 work-units with acceptance criteria and dependency edges.
 
+**Entry.** A work-unit reaches the scoped pipeline one of two ways: newly
+created by `decompose`, or materialized from an existing forge ticket by the
+`acquire` skill (the "start on ticket #N" path). Either way the result is a
+work-unit artifact, indistinguishable downstream, that `take` activates on.
+
 **The scoped pipeline (per work-unit).** Seven stations carry one selected
 work-unit to a landed change. The behavior contract is the spine: created
 at entry, threaded unbroken to the close.
@@ -93,6 +98,9 @@ These are not stations; they engage when their trigger fires, at any stage.
   the codebase.
 - **`code-review`** — the evaluation discipline `review` applies to a
   change proposal.
+- **`acquire`** — entry from an existing forge ticket: reads the ticket and
+  materializes the work-unit artifact `take` activates on. Fires at the
+  cold-start boundary, when work begins from a ticket reference.
 
 ## Integration Principles
 

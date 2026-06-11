@@ -14,9 +14,11 @@ metadata:
 # Take — Contract-First Entry
 
 Take opens work on a single work-unit. Selection happened upstream — the
-work-unit exists and runa activates take on it. Entry's real job is to stand
-on prepared ground and state, precisely and verifiably, what will be true
-when this work is done.
+work-unit artifact exists and runa activates take on it, having arrived
+either from `decompose` (a newly created work-unit) or from the `acquire`
+skill (materialized from an existing forge ticket). Entry's real job is to
+stand on prepared ground and state, precisely and verifiably, what will be
+true when this work is done.
 
 That statement is the `behavior-contract`: development here is
 behavior-driven, and it begins at the door. The contract authored in this
@@ -124,6 +126,8 @@ begins — the dose is proportional.
   or contested, reckon before contracting.
 - `decompose` (protocol): owns work-unit boundaries and acceptance-criteria
   quality. A work-unit that cannot be framed or contracted routes back there.
+- `acquire` (skill): the other entry source — materializes the work-unit
+  artifact from an existing forge ticket before take activates on it.
 - `plan` (protocol): the next station — consumes the contract and converges
   on a decision-complete design.
 - `land` (protocol): the closing bookend — take establishes what done means;

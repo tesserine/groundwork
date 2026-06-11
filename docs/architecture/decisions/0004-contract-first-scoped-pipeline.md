@@ -83,6 +83,56 @@ a boundary that is load-bearing; merging take+specify and verify+document
 removed boundaries that were not (entry/contract share the boundary "work
 begins"; verification/documentation share the boundary "work is complete").
 
+### Entry: two sources, one artifact
+
+The scoped pipeline activates on a `work-unit` artifact, but the live
+planning surface is the forge tracker, and before this redesign the only
+path to a work-unit artifact was `decompose`'s create path — which refuses
+to adopt a pre-existing ticket (`create-ticket` is first-delivery-only).
+The natural developer entry, "start on ticket #N" for a ticket already on
+the tracker, had no path: `decompose` would not adopt it, `runa take <id>`
+was retired, and runa-native decompose is future work.
+
+The **methodology half** of that entry is decided here: the `acquire` skill.
+Given a reference to an existing forge ticket on either forge, an agent in a
+scoped session reads the ticket through the existing `read-ticket` mechanic
+and materializes a `work-unit` artifact from it, after which `take` proceeds
+unchanged. The governing constraints:
+
+- **Acquisition produces the work-unit artifact; take's contract is
+  untouched** (take still requires/triggers on `work-unit`).
+- **One-way derivation**, ticket → artifact (Single Home): the ticket is the
+  planning home, the artifact its execution-scoped snapshot, `handle` the
+  back-link. Nothing in acquisition writes content back to the ticket.
+- **Adopt, don't create.** Acquisition is the mirror of decompose's create
+  path — decompose creates the ticket it delivers; acquisition adopts the
+  ticket it is given — and creates no ticket. `handle` is the ticket's, and
+  the tracker-backed `work-unit-<N>-<short-slug>` instance-id convention
+  matches decompose's, so acquired and decomposed work-units are
+  indistinguishable downstream.
+- **No new mechanic, artifact type, or schema.** The forge read resolves
+  through `read-ticket`; delivery is through the existing `work-unit` MCP
+  tool. Acquisition is skill-side intake reaching the store through
+  decompose's declared output tool — the same shape as `research`-record's
+  `may_produce` bridge — so `decompose` remains the sole manifest producer
+  of `work-unit`.
+- **Gaps route to refinement, never to invention.** Where ticket content
+  does not map onto required schema fields (no extractable acceptance
+  criteria, empty body, non-open ticket), the materializer surfaces a named
+  work-unit-quality defect routed to `decompose`'s `refine-work-unit`
+  discipline rather than fabricating content.
+- **Claiming stays take's.** Acquisition materializes; take claims the
+  tracker in its workspace-prep step. The one-way boundary stays clean.
+
+The **runtime half** — a cold-start entrypoint that accepts a ticket
+reference and opens the scoped session in which acquisition runs (so the
+operator types the equivalent of "take runa#14" against an empty store) —
+needs a runtime change and stays flagged below as
+[tesserine/runa#188](https://github.com/tesserine/runa/issues/188). The
+methodology half is exercisable today: acquisition runs in a `decompose`-
+scoped session (which serves the `work-unit` tool), and once the artifact
+exists the cascade computes `take` next.
+
 ### Friction map — what each station removes
 
 | Station | Unsupervised-agent failure it prevents |
@@ -154,8 +204,12 @@ context to fire passively — with full expositions in references.
    handle names, and the disposition records reviewer identity. Flows that
    "stopped short of submit" were accidents of the session framing removed
    in (2).
-7. **The crisp entry tool** → out of methodology scope; flagged below as a
-   coordinated runtime dependency.
+7. **The crisp entry tool** → split by layer. The methodology half — a
+   ticket → work-unit materialization path — is decided here as the
+   `acquire` skill (see *Entry: two sources, one artifact*). The runtime
+   half — a cold-start entrypoint that opens the session acquisition runs in
+   — stays flagged below as a coordinated runtime dependency
+   ([tesserine/runa#188](https://github.com/tesserine/runa/issues/188)).
 
 ### What was deliberately preserved
 
@@ -181,11 +235,17 @@ context to fire passively — with full expositions in references.
 
 ## Flagged for the operator
 
-- **Coordinated runtime dependency — entry acquisition.** Entry assumes a
-  `work-unit` artifact exists. A first-class acquisition affordance (fetch a
-  tracker ticket, materialize the work-unit artifact — the retired
-  `runa take <id>` shape) would complete the entry experience. The redesign
-  is shaped so that affordance slots in front of `take` without change.
+- **Coordinated runtime dependency — cold-start acquisition entrypoint.**
+  The methodology half of acquisition is delivered here (the `acquire`
+  skill; see *Entry: two sources, one artifact*), and runs today inside a
+  `decompose`-scoped session. What remains runtime-side is the cold-start
+  affordance: an entrypoint that takes a bare ticket reference against an
+  empty store and opens the scoped session acquisition runs in — so the
+  operator types "take runa#14" with nothing materialized yet. That is the
+  retired `runa take <id>` shape, filed as
+  [tesserine/runa#188](https://github.com/tesserine/runa/issues/188); the
+  redesign is shaped so the entrypoint slots in front of `take` without
+  further methodology change.
 - **Forge identity namespace.** The protocols reference only invariant
   operations resolved through `groundwork-mechanic`; the resolver reads the
   runtime-owned `RUNA_FORGE_*` identity atoms (the #389/#390 repair, on

@@ -22,6 +22,11 @@ Work moves through two phases connected by the work-unit artifact.
 Survey examines what actually needs doing; decompose breaks that into work
 units with acceptance criteria and dependency edges.
 
+**Entry** into the scoped pipeline happens one of two ways: a work-unit newly
+created by decompose, or one the acquire skill materializes from an existing
+forge ticket (the "start on ticket #N" path). Either way take activates on a
+work-unit artifact.
+
 **The scoped pipeline** takes one work-unit and carries it through to a merged
 increment: take prepares the workspace and writes the behavior contract as
 Given/When/Then scenarios — the spine threaded through every later stage →
@@ -45,6 +50,7 @@ stage-specific judgment:
 - **contract** — the BDD home: contract authoring at entry, traceability through execution
 - **work-unit-craft** — the discipline for authoring work-unit tracker records
 - **code-review** — review judgment for submitted change proposals
+- **acquire** — entry from an existing forge ticket: materializes the work-unit artifact take activates on
 
 Not every piece of work needs every stage. A bug with an existing work-unit enters
 at execution. A new capability enters at planning. The constraint is sequence,

@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Acquisition: entry from an existing forge ticket** (ADR-0004). The new
+  `acquire` skill reads a ticket already on the tracker through the existing
+  `read-ticket` mechanic and materializes a `work-unit` artifact from it
+  (`skills/acquire/scripts/materialize.py`), so scoped work can start from a
+  ticket reference ("take runa#14"). Derivation is one-way (ticket → artifact;
+  no ticket is created, nothing is written back); the artifact adopts the
+  ticket's handle and decompose's `work-unit-<N>-<short-slug>` convention, so
+  acquired and decomposed work-units are indistinguishable downstream. Ticket
+  content that does not map onto the schema (no acceptance criteria, empty
+  body, non-open ticket) routes to decompose's `refine-work-unit` discipline
+  rather than being invented. The cold-start runtime entrypoint that opens the
+  session from a bare reference remains flagged as tesserine/runa#188.
 - `work-unit-craft` skill: the forge-agnostic discipline for authoring
   work-unit tracker records — outcomes over prescription, the sovereignty
   test, body-vs-comment authority, and the corruption-mode catalogue.
@@ -16,6 +28,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Review reframed as the independent-judgment gate, not a "human gate."**
+  Agents execute review like every protocol, and the session-surface contract
+  places transition authority in the typed disposition; the invariant the gate
+  protects is independence from the author (a context that did not produce the
+  change), satisfiable by a fresh/separate agent by default and the operator
+  when chosen. Wording corrected in `protocols/review/PROTOCOL.md` and ADR-0004;
+  gate function, dispositions, and routing unchanged.
 - **Scoped pipeline redesigned contract-first** (ADR-0004). The pipeline is
   now seven stations — `take → plan → implement → verify → submit → review →
   land` — with the behavior contract as the spine: `take` authors it at
