@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `work-unit-craft` skill: the forge-agnostic discipline for authoring
+  work-unit tracker records — outcomes over prescription, the sovereignty
+  test, body-vs-comment authority, and the corruption-mode catalogue.
+  Adapted from the operator's upstream issue-craft methodology and renamed
+  for groundwork's forge-agnostic vocabulary (closes #395).
+
 ### Changed
 
 - Reckon consults the canonical principles corpus at
