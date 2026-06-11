@@ -406,6 +406,8 @@ cat "{response}"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.write_secret_probe_methodology(root, 'printf "%s\\n" "$token"')
+            environment = os.environ.copy()
+            environment.pop("RUNA_FORGE_TYPE", None)
 
             result = subprocess.run(
                 [
@@ -417,6 +419,7 @@ cat "{response}"
                     "probe",
                     "token=super-secret",
                 ],
+                env=environment,
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -438,6 +441,8 @@ cat "{response}"
                     "print(data); print(os.environ[\"token\"])'"
                 ),
             )
+            environment = {**os.environ, "GROUNDWORK_TEST_TOKEN": secret}
+            environment.pop("RUNA_FORGE_TYPE", None)
 
             result = subprocess.run(
                 [
@@ -450,7 +455,7 @@ cat "{response}"
                     "--secret-env",
                     "token=GROUNDWORK_TEST_TOKEN",
                 ],
-                env={**os.environ, "GROUNDWORK_TEST_TOKEN": secret},
+                env=environment,
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -601,6 +606,12 @@ cat "{response}"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.write_github_deployment_probe_methodology(root)
+            environment = {
+                **os.environ,
+                "RUNA_FORGE_OWNER": "tesserine",
+                "RUNA_FORGE_NAME": "groundwork",
+            }
+            environment.pop("RUNA_FORGE_TYPE", None)
 
             result = subprocess.run(
                 [
@@ -611,11 +622,7 @@ cat "{response}"
                     "run",
                     "probe",
                 ],
-                env={
-                    **os.environ,
-                    "RUNA_FORGE_OWNER": "tesserine",
-                    "RUNA_FORGE_NAME": "groundwork",
-                },
+                env=environment,
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -628,6 +635,12 @@ cat "{response}"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.write_github_deployment_probe_methodology(root)
+            environment = {
+                **os.environ,
+                "RUNA_FORGE_OWNER": "tesserine",
+                "RUNA_FORGE_NAME": "groundwork",
+            }
+            environment.pop("RUNA_FORGE_TYPE", None)
 
             result = subprocess.run(
                 [
@@ -639,11 +652,7 @@ cat "{response}"
                     "probe",
                     "repository=attacker/repo",
                 ],
-                env={
-                    **os.environ,
-                    "RUNA_FORGE_OWNER": "tesserine",
-                    "RUNA_FORGE_NAME": "groundwork",
-                },
+                env=environment,
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
