@@ -229,14 +229,14 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         )
 
         submit = protocol("submit")
-        self.assertEqual(["completion-evidence", "documentation-record"], submit["requires"])
+        self.assertEqual(["completion-evidence", "behavior-contract"], submit["requires"])
         self.assertEqual(["change-proposal", "change-needs-revision"], submit["accepts"])
         self.assertEqual(["change-proposal"], submit["produces"])
         self.assertEqual(
             {
                 "type": "any_of",
                 "conditions": [
-                    {"type": "on_artifact", "name": "documentation-record"},
+                    {"type": "on_artifact", "name": "completion-evidence"},
                     {"type": "on_artifact", "name": "change-needs-revision"},
                 ],
             },
@@ -244,7 +244,7 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         )
 
         review = protocol("review")
-        self.assertEqual(["change-proposal"], review["requires"])
+        self.assertEqual(["change-proposal", "behavior-contract"], review["requires"])
         self.assertEqual({"change-approved", "change-needs-revision"}, set(review["required_output_choices"][0]["members"]))
 
         land = protocol("land")

@@ -38,15 +38,18 @@ These survived prior reckoning sessions and are ground for this design.
 The full flow for a single work-unit is:
 
 ```
-take → specify → plan → implement → verify → document → submit → review → land
+take → plan → implement → verify → submit → review → land
 ```
 
 Survey and decompose precede take when project-level planning is needed.
 Survey produces requirements; decompose breaks requirements into work-unit
-artifacts. Take picks up a work-unit and starts the work-unit lifecycle.
+artifacts. Take picks up a work-unit and starts the scoped pipeline.
 
-Document sits between verify and submit. Documentation is submitted
-together with the code it explains. Submit is gated on documentation-record.
+Take is contract-first: its capstone is the behavior-contract, the spine
+threaded through every downstream protocol. Documentation review lives
+inside verify — documentation ships with the code it explains, and the
+completion-evidence artifact records both criterion coverage and
+documentation impact.
 
 ## Output Artifact Analysis
 
@@ -56,12 +59,10 @@ together with the code it explains. Submit is gated on documentation-record.
 |-----------|----------|---------------------|
 | survey    | requirements | Declaration of what needs doing, at any scope |
 | decompose | work-unit | Work-units decomposed from requirements |
-| take      | claim | Root node: work-unit identity and orientation |
-| specify   | behavior-contract | Behavioral scenarios for the work-unit |
+| take      | behavior-contract | Contract-first entry: the executable definition of done that threads every downstream artifact |
 | plan      | implementation-plan | Design decisions informing execution |
 | implement | test-evidence | Proof of correct implementation — passing tests mapped to scenarios |
-| verify    | completion-evidence | Aggregated behavior coverage status |
-| document  | documentation-record | Documentation coverage and tracking |
+| verify    | completion-evidence | Criterion coverage plus documentation impact |
 | submit    | change-proposal | Forge-neutral proposal ready for review |
 | review    | change-approved or change-needs-revision | Typed review disposition |
 | land      | completion-record | Final state: coverage, gaps, merge ref |
@@ -76,20 +77,18 @@ artifact graph.
 |---------------|--------|---------|
 | request | External: change request, question, bug report, feature idea | Enters the system and triggers survey |
 
-### Take — the missing artifact
+### Take — contract-first entry
 
-Take currently produces no artifact for runa. It should. Take does the
-most consequential work in the topology — selecting and orienting to a
-work-unit — but leaves no trace in the artifact system.
+In work-unit-first entry, selection is no longer take's job: the work-unit
+is already the entry, and runa activates take on it. What entry truly is —
+once selection is gone — is the place where done gets defined. Take
+prepares the workspace, frames the work, and authors the behavior-contract.
 
-Take's capstone is the **root node** of the work-unit artifact chain.
-It establishes the work-unit identifier that every downstream artifact
-references. Without it, runa cannot thread related artifacts together.
-
-The take artifact is a threading mechanism: work-unit identifier plus
-enough orientation for downstream protocols. Not a context dump — the
-forge tracker record carries the full context, and the work-unit graph is the
-right place for that.
+The behavior-contract is the root of the scoped artifact chain and the
+spine of the pipeline. A separate threading artifact (the former `claim`)
+is not needed: work-unit identity is runtime-enforced (runa injects
+`work_unit` into every scoped artifact and validates canonical ids), so the
+entry's capstone can be the contract itself.
 
 ## Input Edge Principle
 
@@ -132,10 +131,9 @@ With no signals, every link between protocols is an artifact.
 The complete chain across both phases:
 
 ```
-request → requirements → work-unit → claim → behavior-contract
+request → requirements → work-unit → behavior-contract
 → implementation-plan → test-evidence → completion-evidence
-→ documentation-record → change-proposal → change-approved
-→ completion-record
+→ change-proposal → change-approved → completion-record
 ```
 
 The revision loop is `change-needs-revision → submit → change-proposal`;
@@ -186,9 +184,6 @@ name = "requirements"
 name = "work-unit"
 
 [[artifact_types]]
-name = "claim"
-
-[[artifact_types]]
 name = "behavior-contract"
 
 [[artifact_types]]
@@ -199,9 +194,6 @@ name = "test-evidence"
 
 [[artifact_types]]
 name = "completion-evidence"
-
-[[artifact_types]]
-name = "documentation-record"
 
 [[artifact_types]]
 name = "change-proposal"
@@ -220,9 +212,8 @@ name = "research-record"
 
 # --- Protocols ---
 #
-# Planning phase: survey → decompose
-# Execution phase: take → specify → plan → implement → verify
-#                  → document → submit → land
+# Planning phase (unscoped): survey → decompose
+# Scoped pipeline: take → plan → implement → verify → submit → review → land
 
 [[protocols]]
 name = "survey"
@@ -244,25 +235,16 @@ trigger = { type = "on_artifact", name = "requirements" }
 name = "take"
 scoped = true
 requires = ["work-unit"]
-accepts = []
-produces = ["claim"]
-may_produce = []
-trigger = { type = "on_artifact", name = "work-unit" }
-
-[[protocols]]
-name = "specify"
-scoped = true
-requires = ["claim", "work-unit"]
 accepts = ["research-record"]
 produces = ["behavior-contract"]
 may_produce = ["research-record"]
-trigger = { type = "on_artifact", name = "claim" }
+trigger = { type = "on_artifact", name = "work-unit" }
 
 [[protocols]]
 name = "plan"
 scoped = true
 requires = ["behavior-contract"]
-accepts = ["research-record"]
+accepts = ["work-unit", "research-record"]
 produces = ["implementation-plan"]
 may_produce = ["research-record"]
 trigger = { type = "on_artifact", name = "behavior-contract" }
@@ -280,37 +262,28 @@ trigger = { type = "on_artifact", name = "implementation-plan" }
 name = "verify"
 scoped = true
 requires = ["behavior-contract", "test-evidence", "work-unit"]
-accepts = []
+accepts = ["implementation-plan"]
 produces = ["completion-evidence"]
 may_produce = []
 trigger = { type = "on_artifact", name = "test-evidence" }
 
 [[protocols]]
-name = "document"
-scoped = true
-requires = ["completion-evidence"]
-accepts = ["behavior-contract", "implementation-plan"]
-produces = ["documentation-record"]
-may_produce = []
-trigger = { type = "on_artifact", name = "completion-evidence" }
-
-[[protocols]]
 name = "submit"
 scoped = true
-requires = ["completion-evidence", "documentation-record"]
+requires = ["completion-evidence", "behavior-contract"]
 accepts = ["change-proposal", "change-needs-revision"]
 produces = ["change-proposal"]
 may_produce = []
 trigger = { type = "any_of", conditions = [
-  { type = "on_artifact", name = "documentation-record" },
+  { type = "on_artifact", name = "completion-evidence" },
   { type = "on_artifact", name = "change-needs-revision" },
 ] }
 
 [[protocols]]
 name = "review"
 scoped = true
-requires = ["change-proposal"]
-accepts = []
+requires = ["change-proposal", "behavior-contract"]
+accepts = ["work-unit", "implementation-plan", "completion-evidence"]
 produces = []
 may_produce = []
 trigger = { type = "on_change", name = "change-proposal" }
@@ -323,38 +296,35 @@ members = ["change-approved", "change-needs-revision"]
 name = "land"
 scoped = true
 requires = ["change-approved", "change-proposal"]
-accepts = ["completion-evidence", "behavior-contract", "documentation-record", "work-unit"]
+accepts = ["behavior-contract", "completion-evidence", "work-unit"]
 produces = ["completion-record"]
 may_produce = []
 trigger = { type = "on_artifact", name = "change-approved" }
 ```
 
-### Changes from current manifest
+### Changes from the nine-protocol topology (2026-06 redesign)
 
-**Protocols renamed:**
-- `propose` → `submit`
-- `test` → `implement`
-
-**Protocols unchanged in name:**
-- survey, decompose, take, specify, plan, verify, document, land
-
-**Artifact types added:**
-- request, requirements, work-unit, claim, change-proposal, change-approved,
-  change-needs-revision
+**Protocols merged:**
+- `specify` merged into `take` — the entry is contract-first; the
+  behavior-contract is authored where work begins.
+- `document` merged into `verify` — documentation accuracy is completion
+  evidence; the review method lives in
+  `protocols/verify/references/documentation-review.md`.
 
 **Artifact types removed:**
-- assessment (replaced by requirements), patch (replaced by change-proposal)
+- `claim` — invented to give take a capstone; superseded by the contract
+  as the entry's capstone, with work-unit identity runtime-enforced.
+- `documentation-record` — folded into `completion-evidence.documentation`.
 
-**Artifact types renamed:**
-- none (all surviving types keep their names)
-
-**Structural changes:**
-- All `on_signal` triggers replaced with `on_artifact` triggers
-- All protocols now produce artifacts (take, decompose, submit were gaps)
-- Document moved from parallel/floating to sequential between verify
-  and submit
-- Specify now requires work-unit (for acceptance criteria traceability)
-- Verify now requires work-unit (for criterion-level gap detection)
+**Edge changes:**
+- The behavior-contract is required by every judgment station (plan,
+  implement, verify, submit, review) and accepted by land. The spine is
+  unbroken from entry to close.
+- review now requires the behavior-contract and accepts work-unit,
+  implementation-plan, and completion-evidence — the reviewer judges
+  against the contract and evidence, not the diff alone.
+- submit triggers on completion-evidence (or change-needs-revision for
+  revision rounds).
 
 ### Synthesis Verification
 
@@ -366,12 +336,10 @@ trigger = { type = "on_artifact", name = "change-approved" }
 | request | external |
 | requirements | survey |
 | work-unit | decompose |
-| claim | take |
-| behavior-contract | specify |
+| behavior-contract | take |
 | implementation-plan | plan |
 | test-evidence | implement |
 | completion-evidence | verify |
-| documentation-record | document |
 | change-proposal | submit |
 | change-approved | review |
 | change-needs-revision | review |
@@ -402,11 +370,12 @@ but doesn't trigger on.
 **No cycles.** The requires graph is a DAG. Verified by walking the
 full chain from request through completion-record.
 
-**Most-referenced artifacts.** behavior-contract is required by three
-protocols (plan, implement, verify). work-unit is required by three
-protocols (take, specify, verify). These are the central artifacts
-of the execution phase — the behavioral spec and the acceptance
-criteria it traces to.
+**Most-referenced artifacts.** behavior-contract is required by five
+protocols (plan, implement, verify, submit, review) and accepted by land —
+it is the spine of the scoped pipeline. work-unit is required by take and
+verify and accepted by plan, review, and land. The behavioral spec and the
+acceptance criteria it traces to are the central artifacts of the scoped
+pipeline.
 
 ## Runtime Layers
 
@@ -534,8 +503,8 @@ reader verifies the wiring by checking each declaration against the
 protocol's actual needs, not against the other field.
 
 In the current manifest, research-record falls into the "both" case
-for survey, decompose, specify, and plan, and into "neither" for the
-other six.
+for survey, decompose, take, and plan, and into "neither" for the
+other five.
 
 ### Authoring a new skill-produced artifact
 
@@ -589,7 +558,7 @@ for the eligibility rules and how unscoped sessions interact with
 `work_unit`-bearing schemas.
 
 The agent calls one of these tools by its type name. Concretely, an
-agent inside a specify session producing a behavior-contract calls:
+agent inside a take session producing a behavior-contract calls:
 
 ```
 behavior-contract({
@@ -735,9 +704,9 @@ The topology has two specification artifacts at different scales:
   Consumed by decompose, which breaks it into work-units.
   This is the project-level specification.
 
-- **behavior-contract** (produced by specify) — declares how a single
-  work-unit should behave as Given/When/Then scenarios. This is the
-  implementation-level specification.
+- **behavior-contract** (produced by take, the scoped-pipeline entry) —
+  declares how a single work-unit should behave as Given/When/Then
+  scenarios. This is the implementation-level specification.
 
 Decompose bridges the two levels. It consumes requirements and produces
 work-unit artifacts — the work-units that take picks up.
@@ -750,10 +719,10 @@ The work-unit artifact bridges two phases:
 External input enters as a request artifact, survey produces requirements,
 decompose breaks requirements into work-unit artifacts.
 
-**Execution phase:** work-unit → take → specify → plan → implement → verify →
-document → submit → land. Take picks up a work-unit artifact whose
-dependencies are satisfied, the forward flow produces artifacts that runa
-tracks and threads by work-unit identity.
+**Scoped pipeline:** work-unit → take → plan → implement → verify →
+submit → review → land. Take picks up a work-unit artifact whose
+dependencies are satisfied, authors the behavior contract, and the forward
+flow produces artifacts that runa tracks and threads by work-unit identity.
 
 ## Input Edges — Protocol by Protocol
 
@@ -773,31 +742,25 @@ tracks and threads by work-unit identity.
 
 ### take
 
-- **requires:** work-unit. A work-unit whose dependencies are satisfied.
-- **accepts:** nothing. Planning-phase artifacts feed decompose, not
-  take. The work-unit artifact is the bridge.
+- **requires:** work-unit. A work-unit whose dependencies are satisfied —
+  it supplies the acceptance criteria the contract refines.
+- **accepts:** research-record. Contract authoring may need external
+  evidence.
+- **produces:** behavior-contract — the contract-first capstone.
 - **trigger:** `on_artifact("work-unit")`
-
-### specify
-
-- **requires:** claim, work-unit. The claim provides work-unit identity.
-  The work-unit provides acceptance criteria that specify transforms into
-  behavioral scenarios — traceability requires seeing the criteria.
-- **accepts:** research-record. Research may inform behavioral scenarios,
-  but specify can produce valid GWT scenarios without it.
-- **trigger:** `on_artifact("claim")`
 
 ### plan
 
 - **requires:** behavior-contract. Cannot design an implementation
   without knowing what behavior is being implemented.
-- **accepts:** research-record. Research may inform design decisions.
+- **accepts:** work-unit (scope boundaries), research-record (design
+  evidence).
 - **trigger:** `on_artifact("behavior-contract")`
 
 ### implement
 
 - **requires:** behavior-contract, implementation-plan. The behavior
-  scenarios ARE the tests (written in specify). The plan provides the
+  scenarios ARE the tests (authored at take). The plan provides the
   design approach. Implement does RED-GREEN-REFACTOR: write failing
   tests from scenarios, write code to pass them, refactor.
 - **accepts:** nothing currently identified.
@@ -810,29 +773,26 @@ tracks and threads by work-unit identity.
   The work-unit is required because verify must detect acceptance criteria
   that have no scenario coverage — gaps that only the original criteria
   list reveals.
-- **accepts:** nothing currently identified.
+- **accepts:** implementation-plan. The affected-files list helps map the
+  change to the documentation it touches.
 - **trigger:** `on_artifact("test-evidence")`
-
-### document
-
-- **requires:** completion-evidence. Documentation is reviewed after
-  completion is verified. Docs are submitted with the code they explain.
-- **accepts:** behavior-contract, implementation-plan. Context for what
-  needs documenting.
-- **trigger:** `on_artifact("completion-evidence")`
 
 ### submit
 
-- **requires:** completion-evidence, documentation-record. Cannot submit
-  unverified work, and docs must accompany the code.
+- **requires:** completion-evidence, behavior-contract. Cannot submit
+  unverified work, and the proposal summary is the contract's public
+  claim.
 - **accepts:** change-proposal, change-needs-revision. Revision rounds see the
   prior proposal and the review disposition that requested changes.
 - **produces:** change-proposal.
-- **trigger:** `any_of(on_artifact("documentation-record"), on_artifact("change-needs-revision"))`
+- **trigger:** `any_of(on_artifact("completion-evidence"), on_artifact("change-needs-revision"))`
 
 ### review
 
-- **requires:** change-proposal. Cannot review until a proposal exists.
+- **requires:** change-proposal, behavior-contract. The reviewer judges the
+  proposal against the contract, not the diff alone.
+- **accepts:** work-unit (scope honesty), implementation-plan (design
+  context), completion-evidence (evidence quality).
 - **produces:** exactly one required-choice outcome: change-approved or
   change-needs-revision.
 - **trigger:** `on_change("change-proposal")`
@@ -841,21 +801,20 @@ tracks and threads by work-unit identity.
 
 - **requires:** change-approved, change-proposal. Cannot land without typed
   approval and the proposal detail approved by review.
-- **accepts:** completion-evidence, behavior-contract, documentation-record,
-  work-unit. Context for the completion record. Completion-evidence already
-  carries criterion-level coverage, so work-unit is enrichment not structural.
+- **accepts:** behavior-contract, completion-evidence, work-unit. Context
+  for the completion record. Completion-evidence already carries
+  criterion-level coverage, so work-unit is enrichment not structural.
 - **trigger:** `on_artifact("change-approved")`
 
-## Document Protocol vs Document Skill
+## Where Documentation Discipline Lives
 
-The document *protocol* is a runa-managed process: review and update
-documentation after completion, before submission. It sits between verify
-and submit in the forward flow.
-
-The document *skill* would be inline documentation during development —
-comments, docstrings, README updates as part of writing code. Agent-invoked
-during test. This skill does not currently exist in the codebase. Not a
-design blocker for the connecting structure, but a noted gap.
+Documentation review is part of verification: verify's
+documentation-impact step maps the change to affected documents,
+classifies drift, updates in the same change, and records the outcome in
+`completion-evidence.documentation`. The always-on documentation-writing
+stance (audience, artifact choice, depth) is carried by the `orient` skill
+(`skills/orient/references/documentation.md`); inline documentation is
+written alongside code during implement's GREEN and REFACTOR phases.
 
 ## Schema Design Principles
 
@@ -867,8 +826,9 @@ Not from a guess about what the producer might write.
 
 ### Common envelope
 
-**Execution-phase artifacts** (claim through completion-record) carry a
-`work_unit` field — the work-unit reference that threads them together. Runa
+**Scoped-pipeline artifacts** (behavior-contract through completion-record)
+carry a `work_unit` field — the work-unit reference that threads them
+together. Runa
 uses this to scope context injection: when plan activates, it delivers
 the behavior-contract for this work-unit, not every behavior-contract in
 the workspace.
@@ -924,9 +884,12 @@ decomposition.
 
 ### work-unit
 
-**Consumer:** take.
-**What take needs:** understand the work-unit being claimed — what to do,
-how to know it's done, and whether it's ready to start.
+**Consumers:** take, verify (requires); plan, review, land (accepts).
+**What take needs:** the work to frame and the acceptance criteria the
+contract refines — what to do, how to know it's done, and whether it's
+ready to start. **What verify needs:** the criteria list, to detect
+acceptance criteria with no scenario coverage. The accepting consumers read
+scope boundaries (plan, review) and closure context (land).
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
@@ -996,10 +959,10 @@ full length of the execution chain:
 
 ```
 work-unit (acceptance_criteria)
-  → claim (carries work-unit ref)
-    → behavior-contract (scenarios trace to acceptance criteria)
-      → test-evidence (results trace to scenarios)
-        → completion-evidence (coverage at acceptance-criterion level)
+  → behavior-contract (scenarios trace to acceptance criteria)
+    → test-evidence (results trace to scenarios)
+      → completion-evidence (coverage at acceptance-criterion level,
+        plus documentation impact)
 ```
 
 Schema implications:
@@ -1009,44 +972,24 @@ Schema implications:
   level, not just the scenario level — so verify can answer "are all
   acceptance criteria covered?"
 
-### claim
-
-**Consumer:** specify (and all downstream protocols via work_unit threading).
-**What specify needs:** the work-unit identity and a reference to the work-unit
-being implemented. The claim is the threading root — thin by design.
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| work_unit | string (work-unit ref) | yes | The work-unit being claimed — threads all downstream artifacts |
-| scope | string | yes | Brief statement of what's being claimed from the work-unit |
-
-The claim does not duplicate acceptance criteria from the work-unit. Runa's
-context injection delivers a protocol's own requires and accepts — not
-transitive dependencies. Protocols that need the acceptance criteria
-must declare the work-unit artifact in their own edges.
-
 ### Context Injection Is Not Transitive
 
 Runa injects a protocol's declared requires and accepts instances. It
-does not inject transitive dependencies. If specify needs the work-unit
-artifact (to read acceptance criteria), specify must declare it in its
-own edges. The claim alone is not sufficient — it carries the work-unit
-reference but not the work-unit content.
-
-This means protocols downstream of claim may need to declare the work-unit
-artifact explicitly when they need access to acceptance criteria for
-traceability purposes.
+does not inject transitive dependencies. If a protocol needs the work-unit
+content (to read acceptance criteria), it must declare the work-unit
+artifact in its own edges — the `work_unit` reference carried by every
+scoped artifact identifies the work-unit but does not carry its content.
 
 ### behavior-contract
 
-**Consumers:** plan, test, verify, document (via accepts).
+**Producer:** take — the contract-first entry.
+**Consumers:** plan, implement, verify, submit, review (requires); land
+(accepts).
 **What consumers need:** behavioral scenarios that trace to acceptance
 criteria, structured as executable Given/When/Then.
 
-The existing schema had the right core — title and GWT scenarios. Two
-changes from this design: each scenario now carries a `criterion`
-reference for traceability, and the common `work_unit` field threads it
-to the work-unit.
+Each scenario carries a `criterion` reference for traceability, and the
+common `work_unit` field threads it to the work-unit.
 
 The existing `metadata` block (produced_by, date) is eliminated.
 Runa knows the producing protocol from the manifest. It tracks
@@ -1079,11 +1022,14 @@ from its own state does not belong in artifact content. This eliminates
 
 ### implementation-plan
 
-**Consumers:** implement (requires), document (accepts).
+**Consumers:** implement (requires); verify, review (accepts).
 **What implement needs:** the design approach — what to change, how, and which
-behavioral scenarios map to which implementation steps.
+behavioral scenarios map to which implementation steps. **What verify needs:**
+the affected-files list, to map the change to the documentation it touches.
+**What review needs:** the recorded design decisions, as context for judging
+the proposal.
 
-The plan bridges behavior (from specify) to code (in implement). Without
+The plan bridges behavior (from the contract) to code (in implement). Without
 the plan, the agent implements without design — which is what the plan
 exists to prevent.
 
@@ -1133,24 +1079,21 @@ here.
 
 ### completion-evidence
 
-**Consumers:** document (requires), submit (requires), land (accepts).
-**What document needs:** confirmation that implementation is verified
-before documentation review begins. What submit needs: proof that work
-is verified before packaging. What land needs: coverage context for the
-final record.
+**Consumers:** submit (requires), review (accepts), land (accepts).
+**What submit needs:** proof that work is verified before packaging. What
+review needs: the evidence-quality basis for judgment. What land needs:
+coverage context for the final record.
 
 Verify produces this by joining work-unit (acceptance criteria), behavior-
-contract (scenario-to-criterion mapping), and test-evidence (results).
-The output reports coverage at the acceptance-criterion level.
-
-The existing schema's review-artifact and documentation-artifact fields
-are eliminated — document comes after verify in this topology, and
-submit handles the PR. Those fields belonged to a different flow.
+contract (scenario-to-criterion mapping), and test-evidence (results), and
+by reviewing the documentation impact of the change. The output reports
+coverage at the acceptance-criterion level plus the documentation outcome.
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
 | work_unit | string (work-unit ref) | yes | Common envelope |
 | criterion_coverage | array of coverage-entry | yes (min 1) | Per-criterion coverage status |
+| documentation | object | yes | Documentation impact: `updated`, `verified_accurate`, `follow_up_work_units` |
 
 **Coverage-entry fields:**
 
@@ -1160,22 +1103,6 @@ submit handles the PR. Those fields belonged to a different flow.
 | status | enum: covered, partial, uncovered | yes | Coverage status |
 | scenarios | array of strings | no | Scenario names that cover this criterion |
 | failures | array of strings | no | Scenario names that failed for this criterion |
-
-### documentation-record
-
-**Consumers:** submit (requires), land (accepts).
-**What submit needs:** confirmation that documentation review is complete
-before packaging. What land needs: documentation coverage context for
-the final record.
-
-The existing schema structure survives — it tracks the right things.
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| work_unit | string (work-unit ref) | yes | Common envelope |
-| updated_docs | array of strings | yes | Documentation files updated in this change |
-| verified_accurate_docs | array of strings | yes | Documentation reviewed and confirmed accurate |
-| tracking_work_units | array of strings | yes | Work-units filed for documentation follow-up |
 
 ### change-proposal
 
@@ -1228,7 +1155,7 @@ The record distills the conclusion.
 
 ### research-record
 
-**Consumers:** specify (accepts), plan (accepts), survey (accepts),
+**Consumers:** take (accepts), plan (accepts), survey (accepts),
 decompose (accepts).
 **What consumers need:** research findings and their sources, scoped
 by topic. May serve multiple work-units when cross-cutting, or be

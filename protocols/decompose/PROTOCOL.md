@@ -342,8 +342,8 @@ use the dependency's bare `<short-slug>` `instance_id`.
 - `reckon`: first-principles constraint verification before work-unit framing,
   refinement, and epic decomposition.
 - `take`: session-level prioritization and execution discipline.
-- `specify`: behavior framing and test naming discipline.
+- `contract` (skill): behavior framing and scenario naming discipline.
 - `plan`: design convergence before implementation.
 - `land`: merge-and-close completion events.
-- `document`: documentation updates as acceptance criteria for user-facing
+- `verify`: documentation updates as acceptance criteria for user-facing
   changes.

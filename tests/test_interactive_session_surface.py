@@ -121,7 +121,7 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                     printf '%s\\n' '{{"jsonrpc":"2.0","id":1,"method":"initialize","params":{{"protocolVersion":"2024-11-05","capabilities":{{}},"clientInfo":{{"name":"groundwork-go-smoke","version":"1.0.0"}}}}}}'
                     printf '%s\\n' '{{"jsonrpc":"2.0","method":"notifications/initialized"}}'
                     printf '%s\\n' '{{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{{"name":"next-protocol-context","arguments":{{}}}}}}'
-                    printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"claim","arguments":{{"instance_id":"claim-1","scope":"claim the session-surface conformance work"}}}}}}'
+                    printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"behavior-contract","arguments":{{"instance_id":"contract-1","title":"Interactive sessions use the session surface","scenarios":[{{"name":"records output through the session surface","criterion":"Interactive sessions reach take through the runa session surface","given":"a scoped interactive session","when":"the agent records the protocol output","then":"the artifact is validated and persisted by runa"}}]}}}}}}'
                     printf '%s\\n' '{{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{{"name":"advance","arguments":{{}}}}}}'
                     sleep 1
                 }} | "$3" --session --work-unit {WORK_UNIT_ID} > "$4"
@@ -155,9 +155,14 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
             self.assertEqual(mcp_config["args"], ["--session", "--work-unit", WORK_UNIT_ID])
             self.assertIn("runa-mcp", mcp_config["command"])
 
-            claim = json.loads((workspace / "claim" / "claim-1.json").read_text(encoding="utf-8"))
-            self.assertEqual(claim["work_unit"], WORK_UNIT_ID)
-            self.assertEqual(claim["scope"], "claim the session-surface conformance work")
+            contract = json.loads(
+                (workspace / "behavior-contract" / "contract-1.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(contract["work_unit"], WORK_UNIT_ID)
+            self.assertEqual(
+                contract["scenarios"][0]["criterion"],
+                "Interactive sessions reach take through the runa session surface",
+            )
 
 
 if __name__ == "__main__":

@@ -17,9 +17,6 @@ name = "requirements"
 name = "work-unit"
 
 [[artifact_types]]
-name = "claim"
-
-[[artifact_types]]
 name = "behavior-contract"
 
 [[artifact_types]]
@@ -30,9 +27,6 @@ name = "test-evidence"
 
 [[artifact_types]]
 name = "completion-evidence"
-
-[[artifact_types]]
-name = "documentation-record"
 
 [[artifact_types]]
 name = "change-proposal"
@@ -127,9 +121,13 @@ name = "run-test"
 
 # --- Protocols ---
 #
-# Planning phase: survey → decompose
-# Execution phase: take → specify → plan → implement → verify
-#                  → document → submit → review → land
+# Planning phase (unscoped): survey → decompose
+# Scoped pipeline (per work unit):
+#   take → plan → implement → verify → submit → review → land
+#
+# The behavior contract is the spine: take produces it at entry, and every
+# judgment station (plan, implement, verify, submit, review) requires it.
+# land, the mechanical applier, accepts it for the completion record.
 
 [[protocols]]
 name = "survey"
@@ -151,25 +149,16 @@ trigger = { type = "on_artifact", name = "requirements" }
 name = "take"
 scoped = true
 requires = ["work-unit"]
-accepts = []
-produces = ["claim"]
-may_produce = []
-trigger = { type = "on_artifact", name = "work-unit" }
-
-[[protocols]]
-name = "specify"
-scoped = true
-requires = ["claim", "work-unit"]
 accepts = ["research-record"]
 produces = ["behavior-contract"]
 may_produce = ["research-record"]
-trigger = { type = "on_artifact", name = "claim" }
+trigger = { type = "on_artifact", name = "work-unit" }
 
 [[protocols]]
 name = "plan"
 scoped = true
 requires = ["behavior-contract"]
-accepts = ["research-record"]
+accepts = ["work-unit", "research-record"]
 produces = ["implementation-plan"]
 may_produce = ["research-record"]
 trigger = { type = "on_artifact", name = "behavior-contract" }
@@ -187,37 +176,28 @@ trigger = { type = "on_artifact", name = "implementation-plan" }
 name = "verify"
 scoped = true
 requires = ["behavior-contract", "test-evidence", "work-unit"]
-accepts = []
+accepts = ["implementation-plan"]
 produces = ["completion-evidence"]
 may_produce = []
 trigger = { type = "on_artifact", name = "test-evidence" }
 
 [[protocols]]
-name = "document"
-scoped = true
-requires = ["completion-evidence"]
-accepts = ["behavior-contract", "implementation-plan"]
-produces = ["documentation-record"]
-may_produce = []
-trigger = { type = "on_artifact", name = "completion-evidence" }
-
-[[protocols]]
 name = "submit"
 scoped = true
-requires = ["completion-evidence", "documentation-record"]
+requires = ["completion-evidence", "behavior-contract"]
 accepts = ["change-proposal", "change-needs-revision"]
 produces = ["change-proposal"]
 may_produce = []
 trigger = { type = "any_of", conditions = [
-  { type = "on_artifact", name = "documentation-record" },
+  { type = "on_artifact", name = "completion-evidence" },
   { type = "on_artifact", name = "change-needs-revision" },
 ] }
 
 [[protocols]]
 name = "review"
 scoped = true
-requires = ["change-proposal"]
-accepts = []
+requires = ["change-proposal", "behavior-contract"]
+accepts = ["work-unit", "implementation-plan", "completion-evidence"]
 produces = []
 may_produce = []
 trigger = { type = "on_change", name = "change-proposal" }
@@ -230,7 +210,7 @@ members = ["change-approved", "change-needs-revision"]
 name = "land"
 scoped = true
 requires = ["change-approved", "change-proposal"]
-accepts = ["completion-evidence", "behavior-contract", "documentation-record", "work-unit"]
+accepts = ["behavior-contract", "completion-evidence", "work-unit"]
 produces = ["completion-record"]
 may_produce = []
 trigger = { type = "on_artifact", name = "change-approved" }

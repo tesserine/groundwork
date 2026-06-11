@@ -16,6 +16,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Scoped pipeline redesigned contract-first** (ADR-0004). The pipeline is
+  now seven stations — `take → plan → implement → verify → submit → review →
+  land` — with the behavior contract as the spine: `take` authors it at
+  entry, every judgment station (`plan`, `implement`, `verify`, `submit`,
+  `review`) requires it, and `land` accepts it for the completion record.
+  - `specify` merged into `take`: the entry is contract-first; the
+    Given/When/Then authoring discipline now lives in the `contract` skill,
+    the BDD home for both authoring and carrying.
+  - `document` merged into `verify`: documentation accuracy is completion
+    evidence; the review method lives in
+    `protocols/verify/references/documentation-review.md` and the outcome
+    in `completion-evidence.documentation`.
+  - Artifact types `claim` and `documentation-record` removed; the
+    `completion-evidence` schema gains a required `documentation` section.
+  - `review` now requires the behavior contract and accepts the work-unit,
+    plan, and completion evidence — the reviewer judges against the
+    contract and evidence, not the diff alone.
+  - `submit` triggers on `completion-evidence` (or `change-needs-revision`
+    for revision rounds) and requires the behavior contract.
+- Protocols and skills rewritten to the architecture standard: 3–7
+  high-level steps per main file, depth factored into `references/`
+  subdirectories (`take`, `plan`, `implement`, `verify`, `submit`, `review`,
+  `land`; `contract`, `orient`, `reckon`, `debug`, `research`).
+- Workflow contracts updated: `verify.toml` gains a
+  `review-documentation-impact` node; `submit.toml` and `review.toml`
+  preconditions reflect the new edges.
 - Reckon consults the canonical principles corpus at
   [pentaxis93/principles](https://github.com/pentaxis93/principles) for its
   navigational principles instead of carrying its own definitions; principle

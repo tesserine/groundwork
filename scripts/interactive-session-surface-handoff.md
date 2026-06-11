@@ -10,8 +10,8 @@ the runa MCP tools.
 Inside that cascade, the configured agent calls `next-protocol-context`, follows
 the rendered protocol prompt, records the protocol output through the current
 output tool, calls `advance`, and stops. For example, a ready `take` step
-records `claim` through the current output tool; the operator does not call
-`claim` or `advance` beside `go`.
+records `behavior-contract` through the current output tool; the operator does
+not call `behavior-contract` or `advance` beside `go`.
 
 Artifacts produced in interactive mode are validated by runa, persisted in the
 runa workspace, and threaded downstream by the same graph rules used in

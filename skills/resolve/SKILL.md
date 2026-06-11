@@ -136,6 +136,6 @@ When filing an issue, still apply a **minimum viable workaround** for the curren
 ## Cross-References
 
 - `reckon`: Step 2 of the move uses `reckon`'s Orient to assess what the environment should enable. Full reckoning is rarely needed for friction resolution, but the orient question is essential.
-- `document`: Structural fixes frequently involve documentation updates. The `document` protocol's review mode applies when the fix involves creating or updating docs.
+- `orient`: carries the always-on documentation discipline that applies when the structural fix involves creating or updating docs.
 - `decompose`: When friction exceeds side-quest scope, file an issue using `decompose`. The issue is the structural fix at the meta-level.
 - `orient`: `resolve` is an integration principle in `orient`, alongside "Reckon re-fires" and "Research fires at any stage." It fires at any stage.
