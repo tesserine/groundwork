@@ -20,6 +20,20 @@ from tooling.forge_operations import (
 
 ROOT = Path(__file__).resolve().parents[1]
 EARLY_ARC_OPERATIONS = ["create-ticket", "read-ticket", "claim-work-unit", "record-progress"]
+RUNA_FORGE_ENVIRONMENT_ATOMS = (
+    "RUNA_FORGE_TYPE",
+    "RUNA_FORGE_OWNER",
+    "RUNA_FORGE_NAME",
+    "RUNA_FORGE_TRACKER_ID",
+)
+
+
+def forge_cli_environment(**values: str) -> dict[str, str]:
+    environment = os.environ.copy()
+    for atom in RUNA_FORGE_ENVIRONMENT_ATOMS:
+        environment.pop(atom, None)
+    environment.update(values)
+    return environment
 
 
 class ForgeOperationTests(unittest.TestCase):
@@ -73,10 +87,13 @@ class ForgeOperationTests(unittest.TestCase):
         self.assertEqual("github", active_forge_type({}, None))
 
     def test_active_forge_type_uses_explicit_override_before_environment(self) -> None:
-        self.assertEqual("sourcehut", active_forge_type({"GROUNDWORK_FORGE_TYPE": "github"}, "sourcehut"))
+        self.assertEqual("sourcehut", active_forge_type({"RUNA_FORGE_TYPE": "github"}, "sourcehut"))
 
-    def test_active_forge_type_uses_groundwork_forge_type_environment(self) -> None:
-        self.assertEqual("sourcehut", active_forge_type({"GROUNDWORK_FORGE_TYPE": "sourcehut"}, None))
+    def test_active_forge_type_uses_runa_forge_type_environment(self) -> None:
+        self.assertEqual("sourcehut", active_forge_type({"RUNA_FORGE_TYPE": "sourcehut"}, None))
+
+    def test_active_forge_type_does_not_fall_back_to_groundwork_forge_type_environment(self) -> None:
+        self.assertEqual("github", active_forge_type({"GROUNDWORK_FORGE_TYPE": "sourcehut"}, None))
 
     def test_resolve_operation_returns_exact_active_forge_mechanic(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -104,6 +121,7 @@ class ForgeOperationTests(unittest.TestCase):
                     "resolve",
                     "close-out",
                 ],
+                env=forge_cli_environment(),
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -158,8 +176,8 @@ class ForgeOperationTests(unittest.TestCase):
                 os.environ,
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    "GROUNDWORK_FORGE_OWNER": "tesserine",
-                    "GROUNDWORK_FORGE_NAME": "groundwork",
+                    "RUNA_FORGE_OWNER": "tesserine",
+                    "RUNA_FORGE_NAME": "groundwork",
                 },
             ):
                 result = run_invocation(
@@ -180,8 +198,8 @@ class ForgeOperationTests(unittest.TestCase):
                 os.environ,
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    "GROUNDWORK_FORGE_OWNER": "tesserine",
-                    "GROUNDWORK_FORGE_NAME": "groundwork",
+                    "RUNA_FORGE_OWNER": "tesserine",
+                    "RUNA_FORGE_NAME": "groundwork",
                 },
             ):
                 result = run_invocation(
@@ -212,7 +230,7 @@ class ForgeOperationTests(unittest.TestCase):
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
                     "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
-                    "GROUNDWORK_FORGE_TRACKER_ID": "4",
+                    "RUNA_FORGE_TRACKER_ID": "4",
                 },
             ):
                 result = run_invocation(
@@ -231,7 +249,7 @@ class ForgeOperationTests(unittest.TestCase):
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
                     "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
-                    "GROUNDWORK_FORGE_TRACKER_ID": "4",
+                    "RUNA_FORGE_TRACKER_ID": "4",
                 },
             ):
                 result = run_invocation(
@@ -273,9 +291,9 @@ cat "{response}"
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
                     "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
-                    "GROUNDWORK_FORGE_OWNER": "operator",
-                    "GROUNDWORK_FORGE_NAME": "weforge",
-                    "GROUNDWORK_FORGE_TRACKER_ID": "4",
+                    "RUNA_FORGE_OWNER": "operator",
+                    "RUNA_FORGE_NAME": "weforge",
+                    "RUNA_FORGE_TRACKER_ID": "4",
                 },
             ):
                 result = run_invocation(
@@ -291,9 +309,9 @@ cat "{response}"
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
                     "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
-                    "GROUNDWORK_FORGE_OWNER": "operator",
-                    "GROUNDWORK_FORGE_NAME": "weforge",
-                    "GROUNDWORK_FORGE_TRACKER_ID": "4",
+                    "RUNA_FORGE_OWNER": "operator",
+                    "RUNA_FORGE_NAME": "weforge",
+                    "RUNA_FORGE_TRACKER_ID": "4",
                 },
             ):
                 error_result = run_invocation(
@@ -414,6 +432,7 @@ cat "{response}"
                     "probe",
                     "token=super-secret",
                 ],
+                env=forge_cli_environment(),
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -447,7 +466,7 @@ cat "{response}"
                     "--secret-env",
                     "token=GROUNDWORK_TEST_TOKEN",
                 ],
-                env={**os.environ, "GROUNDWORK_TEST_TOKEN": secret},
+                env=forge_cli_environment(GROUNDWORK_TEST_TOKEN=secret),
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -474,14 +493,13 @@ cat "{response}"
                     "run",
                     "probe",
                 ],
-                env={
-                    **os.environ,
-                    "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
-                    "GROUNDWORK_FORGE_OWNER": "operator",
-                    "GROUNDWORK_FORGE_NAME": "weforge",
-                    "GROUNDWORK_FORGE_TRACKER_ID": "4",
-                    "GROUNDWORK_FORGE_REPO_ID": "42",
-                },
+                env=forge_cli_environment(
+                    GROUNDWORK_FORGE_ENDPOINT="weforge.build",
+                    RUNA_FORGE_OWNER="operator",
+                    RUNA_FORGE_NAME="weforge",
+                    RUNA_FORGE_TRACKER_ID="4",
+                    GROUNDWORK_FORGE_REPO_ID="42",
+                ),
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -490,7 +508,7 @@ cat "{response}"
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual("42\n", result.stdout)
 
-    def test_cli_resolves_sourcehut_deployment_values_from_groundwork_atoms(self) -> None:
+    def test_cli_resolves_sourcehut_deployment_values_from_runtime_and_groundwork_atoms(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.write_sourcehut_deployment_probe_methodology(root)
@@ -506,14 +524,13 @@ cat "{response}"
                     "run",
                     "probe",
                 ],
-                env={
-                    **os.environ,
-                    "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
-                    "GROUNDWORK_FORGE_OWNER": "operator",
-                    "GROUNDWORK_FORGE_NAME": "weforge",
-                    "GROUNDWORK_FORGE_TRACKER_ID": "4",
-                    "GROUNDWORK_FORGE_REPO_ID": "42",
-                },
+                env=forge_cli_environment(
+                    GROUNDWORK_FORGE_ENDPOINT="weforge.build",
+                    RUNA_FORGE_OWNER="operator",
+                    RUNA_FORGE_NAME="weforge",
+                    RUNA_FORGE_TRACKER_ID="4",
+                    GROUNDWORK_FORGE_REPO_ID="42",
+                ),
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -535,14 +552,13 @@ cat "{response}"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.write_sourcehut_tracker_probe_methodology(root)
-            environment = {
-                **os.environ,
-                "GROUNDWORK_FORGE_TYPE": "sourcehut",
-                "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
-                "GROUNDWORK_FORGE_OWNER": "operator",
-                "GROUNDWORK_FORGE_NAME": "weforge",
-                "GROUNDWORK_FORGE_TRACKER_ID": "4",
-            }
+            environment = forge_cli_environment(
+                RUNA_FORGE_TYPE="sourcehut",
+                GROUNDWORK_FORGE_ENDPOINT="weforge.build",
+                RUNA_FORGE_OWNER="operator",
+                RUNA_FORGE_NAME="weforge",
+                RUNA_FORGE_TRACKER_ID="4",
+            )
             environment.pop("GROUNDWORK_FORGE_REPO_ID", None)
 
             result = subprocess.run(
@@ -579,22 +595,21 @@ cat "{response}"
                     "run",
                     "probe",
                 ],
-                env={
-                    **os.environ,
-                    "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
-                    "GROUNDWORK_FORGE_OWNER": "operator",
-                    "GROUNDWORK_FORGE_NAME": "weforge",
-                    "GROUNDWORK_FORGE_REPO_ID": "42",
-                },
+                env=forge_cli_environment(
+                    GROUNDWORK_FORGE_ENDPOINT="weforge.build",
+                    RUNA_FORGE_OWNER="operator",
+                    RUNA_FORGE_NAME="weforge",
+                    GROUNDWORK_FORGE_REPO_ID="42",
+                ),
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
 
         self.assertNotEqual(0, result.returncode)
-        self.assertIn("GROUNDWORK_FORGE_TRACKER_ID", result.stderr)
+        self.assertIn("RUNA_FORGE_TRACKER_ID", result.stderr)
 
-    def test_cli_resolves_github_repository_from_groundwork_atoms_with_default_forge_type(self) -> None:
+    def test_cli_resolves_github_repository_from_runtime_atoms_with_default_forge_type(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.write_github_deployment_probe_methodology(root)
@@ -608,11 +623,10 @@ cat "{response}"
                     "run",
                     "probe",
                 ],
-                env={
-                    **os.environ,
-                    "GROUNDWORK_FORGE_OWNER": "tesserine",
-                    "GROUNDWORK_FORGE_NAME": "groundwork",
-                },
+                env=forge_cli_environment(
+                    RUNA_FORGE_OWNER="tesserine",
+                    RUNA_FORGE_NAME="groundwork",
+                ),
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -636,11 +650,10 @@ cat "{response}"
                     "probe",
                     "repository=attacker/repo",
                 ],
-                env={
-                    **os.environ,
-                    "GROUNDWORK_FORGE_OWNER": "tesserine",
-                    "GROUNDWORK_FORGE_NAME": "groundwork",
-                },
+                env=forge_cli_environment(
+                    RUNA_FORGE_OWNER="tesserine",
+                    RUNA_FORGE_NAME="groundwork",
+                ),
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

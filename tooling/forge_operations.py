@@ -9,6 +9,10 @@ from typing import Any, Mapping
 
 
 ROOT = Path(__file__).resolve().parents[1]
+RUNA_FORGE_TYPE = "RUNA_FORGE_TYPE"
+RUNA_FORGE_OWNER = "RUNA_FORGE_OWNER"
+RUNA_FORGE_NAME = "RUNA_FORGE_NAME"
+RUNA_FORGE_TRACKER_ID = "RUNA_FORGE_TRACKER_ID"
 
 
 class ForgeOperationError(ValueError):
@@ -18,7 +22,7 @@ class ForgeOperationError(ValueError):
 def active_forge_type(environment: Mapping[str, str], override: str | None) -> str:
     if override:
         return override
-    return environment.get("GROUNDWORK_FORGE_TYPE") or "github"
+    return environment.get(RUNA_FORGE_TYPE) or "github"
 
 
 def resolve_operation(root: Path | str, operation: str, *, forge_type: str | None = None) -> dict[str, Any]:
@@ -59,7 +63,7 @@ def render_shell_invocation(mechanic: Mapping[str, Any], values: Mapping[str, st
     provided_deployment_values = sorted(set(values) & set(deployment_parameters))
     if provided_deployment_values:
         raise ForgeOperationError(
-            f"deployment-resolved parameter(s) must come from GROUNDWORK_*: {', '.join(provided_deployment_values)}"
+            f"deployment-resolved parameter(s) must come from the configured forge environment: {', '.join(provided_deployment_values)}"
         )
     deployment_values = _deployment_parameter_values(mechanic, os.environ)
     resolved_values = {**values, **deployment_values}
@@ -96,7 +100,7 @@ def run_invocation(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Resolve and invoke Groundwork forge operations.")
     parser.add_argument("--root", default=str(ROOT), help="Groundwork methodology root. Defaults to this checkout.")
-    parser.add_argument("--forge-type", help="Active forge type override. Defaults to GROUNDWORK_FORGE_TYPE, then github.")
+    parser.add_argument("--forge-type", help="Active forge type override. Defaults to RUNA_FORGE_TYPE, then github.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     resolve_parser = subparsers.add_parser("resolve", help="Print the resolved mechanic path-equivalent name.")
@@ -229,24 +233,24 @@ def _resolve_deployment_value(
 ) -> str:
     if forge_type == "github":
         if deployment_value == "owner":
-            return _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
+            return _required_environment(environment, RUNA_FORGE_OWNER)
         if deployment_value == "name":
-            return _required_environment(environment, "GROUNDWORK_FORGE_NAME")
+            return _required_environment(environment, RUNA_FORGE_NAME)
         if deployment_value == "repository":
-            owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
-            name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")
+            owner = _required_environment(environment, RUNA_FORGE_OWNER)
+            name = _required_environment(environment, RUNA_FORGE_NAME)
             return f"{owner}/{name}"
         raise ForgeOperationError(
             f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`"
         )
     if forge_type == "sourcehut":
         if deployment_value == "owner":
-            return _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
+            return _required_environment(environment, RUNA_FORGE_OWNER)
         if deployment_value == "name":
-            return _required_environment(environment, "GROUNDWORK_FORGE_NAME")
+            return _required_environment(environment, RUNA_FORGE_NAME)
         if deployment_value == "repository":
-            owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
-            name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")
+            owner = _required_environment(environment, RUNA_FORGE_OWNER)
+            name = _required_environment(environment, RUNA_FORGE_NAME)
             return f"{owner}/{name}"
         if deployment_value == "todo_query_url":
             endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
@@ -256,11 +260,11 @@ def _resolve_deployment_value(
             return f"https://git.{endpoint}/query"
         if deployment_value == "ssh_remote":
             endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
-            owner = _required_environment(environment, "GROUNDWORK_FORGE_OWNER")
-            name = _required_environment(environment, "GROUNDWORK_FORGE_NAME")
+            owner = _required_environment(environment, RUNA_FORGE_OWNER)
+            name = _required_environment(environment, RUNA_FORGE_NAME)
             return f"git@git.{endpoint}:~{owner}/{name}"
         if deployment_value == "tracker_id":
-            return _required_environment(environment, "GROUNDWORK_FORGE_TRACKER_ID")
+            return _required_environment(environment, RUNA_FORGE_TRACKER_ID)
         if deployment_value == "repo_id":
             return _required_environment(environment, "GROUNDWORK_FORGE_REPO_ID")
         raise ForgeOperationError(
