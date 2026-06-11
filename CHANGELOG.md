@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Reckon consults the canonical principles corpus at
+  [pentaxis93/principles](https://github.com/pentaxis93/principles) for its
+  navigational principles instead of carrying its own definitions; principle
+  selection now resolves by link to canonical principle documents, and the
+  skill retains only the cognition methodology (closes #387).
+
 ## [0.3.0-rc.1] — 2026-06-08
 
 ### Added

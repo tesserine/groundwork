@@ -11,8 +11,8 @@ description: >-
   earning its chain (momentum). Dead reckoning: advance from an established
   fix using trusted constants.
 metadata:
-  version: "4.1.0"
-  updated: "2026-04-03"
+  version: "5.0.0"
+  updated: "2026-06-11"
 ---
 
 # Reckon
@@ -23,7 +23,7 @@ metadata:
 
 Six steps. Always the same.
 
-0. **Orient.** Before touching anything, establish the purpose of the inquiry and the principles you will reason from. For design: What must this enable? Who does it serve? What do they need to accomplish? For analysis: What is actually being examined? What question are we trying to answer? For cost or structure: What is the claimed structure, and what is the actual structure? These answers are the actual constraints. Everything else — existing code, existing patterns, existing implementations, current prices, current processes — is evidence about one attempt or one state, not the constraints themselves. Select the navigational principles (below) that govern reasoning in this domain. They are the trusted constants you will reason FROM.
+0. **Orient.** Before touching anything, establish the purpose of the inquiry and the principles you will reason from. For design: What must this enable? Who does it serve? What do they need to accomplish? For analysis: What is actually being examined? What question are we trying to answer? For cost or structure: What is the claimed structure, and what is the actual structure? These answers are the actual constraints. Everything else — existing code, existing patterns, existing implementations, current prices, current processes — is evidence about one attempt or one state, not the constraints themselves. Select the navigational principles that govern reasoning in this domain — the §Navigational Principles section directs you to the canonical corpus where they live. They are the trusted constants you will reason FROM.
 
 1. **Decompose.** Strip the situation to its actual constituents. Orient determines the decomposition mode:
    - *Requirements decomposition* — for design work: What must be true? What is assumed? What was inherited from the prompt, the existing system, or the adjacent example?
@@ -58,42 +58,17 @@ Six steps. Always the same.
 
 ## Navigational Principles
 
-These are first principles you reason FROM during reconstruction. They are not goals to optimize — they are constants that govern how verified constraints compose into solutions. Select the principles relevant to the domain during Orient. They fire during Reconstruct.
+First principles you reason FROM during reconstruction. They are not goals to optimize — they are constants that govern how verified constraints compose into solutions. Select the ones relevant to the domain during Orient; they fire during Reconstruct.
 
-### 1. Parsimony
+The principles are defined in the canonical corpus at [pentaxis93/principles](https://github.com/pentaxis93/principles), not here — they are consulted, never duplicated, which is itself one of them ([Single Home](https://github.com/pentaxis93/principles/blob/main/principles/single-home.md)). Consult the [corpus index](https://github.com/pentaxis93/principles#readme) during Orient and select what governs reasoning in this domain. What stays in this skill is the cognition methodology — the move, the chain discipline, the recognition-and-corrective machinery — not the principle definitions.
 
-One mechanism over two. If two explanations or designs account for the same constraints, the one with fewer moving parts is correct until proven otherwise.
+Reckon's two faces resolve to three universals that govern most reasoning here:
 
-***Recognition:*** Your design introduces a second mechanism, layer, or concept where one would satisfy the constraints. The additional complexity is not demanded by any verified constraint.
-***Corrective:*** "Does a single mechanism cover these constraints?" Remove the second until a constraint demands it.
+- **Position** grounds in [Grounding](https://github.com/pentaxis93/principles/blob/main/principles/grounding.md): reason from what is needed, not from what exists — an adjacent problem's solution is evidence, not a template.
+- **Momentum** answers to [Traceability](https://github.com/pentaxis93/principles/blob/main/principles/traceability.md): every inference earns its chain back to ground or principle.
+- **Shape** answers to [Parsimony](https://github.com/pentaxis93/principles/blob/main/principles/parsimony.md): everything earns its place — among rival designs meeting the same constraints, fewer moving parts win until a constraint demands more.
 
-### 2. Elegance
-
-Form follows function. Structure arises from the problem, not from the designer's habits or adjacent examples. An elegant solution is one whose form is isomorphic to the problem it solves — nothing is imposed.
-
-***Recognition:*** Your design's structure came from somewhere other than the constraints — a familiar pattern, a preferred style, an adjacent system's architecture. It looks good but the shape was not derived.
-***Corrective:*** "What structure does the problem itself demand?" Derive form from constraints, then compare with what you have.
-
-### 3. Sufficiency
-
-What is needed, no more. A solution is sufficient when it meets every verified constraint and no element exists without a constraint that demands it.
-
-***Recognition:*** Your design includes elements that serve no verified constraint — future-proofing, optional flexibility, "nice to have" features, defensive generality. Each unjustified element is a carrying cost.
-***Corrective:*** "Which constraint demands this element?" If none, remove it. Sufficiency is not minimalism — it is disciplined completeness.
-
-### 4. Traceability
-
-Every inference earns its chain back to ground or principle. A conclusion is trustworthy only when the chain from ground through intermediate inferences to conclusion is explicit and auditable.
-
-***Recognition:*** You have reached a conclusion but cannot articulate the chain of reasoning that produced it. The conclusion "feels right" or "follows naturally" without each step being traceable. Or the chain is stated but one or more links invoke analogy, precedent, or familiarity rather than ground or principle.
-***Corrective:*** "What is the chain from verified ground to this conclusion, and does every link trace to ground or principle?" Rebuild the chain explicitly. If a link is missing or analogical, re-derive from the last verified link.
-
-### 5. Independence
-
-Reason from this problem, not from that other one. Each problem is reckoned from its own constraints. Solutions from adjacent problems are evidence, not templates.
-
-***Recognition:*** Your reasoning imports a conclusion, structure, or approach from a different problem without re-deriving it from this problem's constraints. The import feels efficient — "we already solved this." But the constraints may differ in ways that the borrowed solution obscures.
-***Corrective:*** "Am I reasoning from this problem's constraints or from that other solution?" Re-derive. If the same solution emerges, it is validated. If not, the borrowed solution was wrong for this context.
+The in-file register these three replace — each item raised to or attached within its canonical universal — is classified item by item in the corpus [SOURCES.md](https://github.com/pentaxis93/principles/blob/main/SOURCES.md), Register 5.
 
 ---
 
