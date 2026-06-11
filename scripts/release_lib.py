@@ -237,8 +237,11 @@ def check_release_surface_files(root: Path) -> None:
 
 
 def run_metadata(root: Path) -> None:
-    manifest_version(root)
+    current = manifest_version(root)
     check_changelog_structure(root)
+    release_of_record = latest_released_version(root)
+    if current != release_of_record:
+        die(f"manifest version {current} disagrees with release-of-record {release_of_record}")
     check_methodology_integrity(root)
     check_release_surface_files(root)
 
