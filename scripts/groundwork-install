@@ -143,6 +143,41 @@ runtime_available() {
     git -C "$source_path" cat-file -e "$sha:tooling/forge_operations.py" 2>/dev/null
 }
 
+principles_available() {
+  git -C "$source_path" cat-file -e "$(source_sha):principles" 2>/dev/null &&
+    git -C "$source_path" cat-file -e "$(source_sha):tooling/corpus_resolution.py" 2>/dev/null
+}
+
+principles_config_path() {
+  if [[ -n "${XDG_CONFIG_HOME:-}" ]]; then
+    printf '%s/groundwork/principles.toml\n' "$XDG_CONFIG_HOME"
+  else
+    printf '%s/.config/groundwork/principles.toml\n' "$home_path"
+  fi
+}
+
+run_corpus_resolution() {
+  PYTHONPATH="$source_path" python3 "$source_path/tooling/corpus_resolution.py" \
+    --config "$(principles_config_path)" \
+    --embedded "$source_path/principles" \
+    --target "$(runtime_root)/principles" \
+    "$@"
+}
+
+preflight_principles_corpus() {
+  principles_available || return 0
+  runtime_available || return 0
+  command_exists python3 || die "python3 is required for principles-corpus resolution"
+  run_corpus_resolution --check-only || die "principles-corpus configuration is not resolvable"
+}
+
+resolve_principles_corpus() {
+  principles_available || return 0
+  runtime_available || return 0
+  command_exists python3 || die "python3 is required for principles-corpus resolution"
+  run_corpus_resolution || die "principles-corpus resolution failed"
+}
+
 desired_entries() {
   local sha name rel
   sha="$(source_sha)"
@@ -519,6 +554,7 @@ install_or_sync() {
   local sha kind name src root target
   sha="$(source_sha)"
   preflight_runtime_bundle "$sha"
+  preflight_principles_corpus
   remove_obsolete_entries
   while IFS=$'\t' read -r kind name src; do
     while IFS= read -r root; do
@@ -534,6 +570,7 @@ install_or_sync() {
     done < <(target_roots)
   done < <(desired_entries)
   install_runtime_bundle "$sha"
+  resolve_principles_corpus
   write_state
   printf '%s: installed %s\n' "$PROGRAM" "$sha"
 }

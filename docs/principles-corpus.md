@@ -69,7 +69,37 @@ The shape is schema-validated
 parsing and validation live in
 [`tooling/principles_config.py`](../tooling/principles_config.py). A
 present-but-invalid configuration fails loudly with named errors — it
-never silently degrades to the default.
+never silently degrades to the default. (The operational validator is
+stdlib-only so resolution runs in deployments without third-party
+packages; the JSON Schema is the documentation and conformance contract,
+and CI holds the two in agreement.)
+
+## Materialization: when, where, how to refresh
+
+Resolution is performed by
+[`tooling/corpus_resolution.py`](../tooling/corpus_resolution.py), wired
+into [`scripts/groundwork-install`](../scripts/groundwork-install):
+
+- **When:** at install/setup — every `groundwork-install install` or
+  `sync` run. Never during reasoning: no code path fetches the corpus
+  inside a reckon step, and a remote source is fetched exactly once per
+  resolution.
+- **Where:** into `~/.groundwork/principles/` (the resolved local corpus,
+  under the managed runtime root). Materialization stages into a
+  temporary sibling directory and swaps atomically, so a failed
+  resolution never corrupts or removes an existing resolved corpus.
+- **Checks:** the install preflights the configuration before touching
+  any target (an invalid config halts the install before anything is
+  projected), and a resolved corpus must carry a readable index
+  (`PRINCIPLES.md` or `README.md`) at its root.
+- **Refresh:** rerun `groundwork-install sync` from the checkout. There
+  is no in-session synchronization — a stale resolved corpus is refreshed
+  at the next setup run, by design.
+
+Failure modes are loud and named, with nonzero exit: a
+present-but-invalid config, a missing local source directory, an
+unreachable remote, a corpus without an index, or a missing `python3`
+where resolution is required.
 
 ## What this surface deliberately does not do
 
