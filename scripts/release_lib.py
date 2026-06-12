@@ -1,3 +1,13 @@
+"""groundwork-owned implementation of the Tesserine release ceremony.
+
+Convention canonical: commons RELEASE.md + ADR-0006/0011/0012
+(https://github.com/tesserine/commons). This library verifies groundwork's
+own release surface (manifest.toml version-of-record, methodology
+integrity). Sibling release-check implementations in agentd, base, commons,
+and runa share ancestry (commons#21) but are independently owned: no repo
+is the tooling upstream and fixes do not propagate automatically.
+"""
+
 from __future__ import annotations
 
 import argparse

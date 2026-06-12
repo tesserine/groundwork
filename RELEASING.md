@@ -15,6 +15,19 @@ Tag grammar follows commons ADR-0012 exactly: numeric identifiers do not allow
 leading zeroes, release candidates start at `rc.1`, and alpha, beta, and build
 metadata forms are outside this repo's release surface.
 
+## Tooling Provenance
+
+`scripts/release-check`, `scripts/release-cut`, and the `release_lib.py`
+library behind them are groundwork-owned implementations of the shared
+release ceremony — convention canonical in
+[commons RELEASE.md](https://github.com/tesserine/commons/blob/main/RELEASE.md)
+and ADR-0006/0011/0012. groundwork's implementation is a distinct Python
+lineage; the bash siblings in agentd, base, commons, and runa share ancestry
+([commons#21](https://github.com/tesserine/commons/issues/21)) but every
+implementation is independently owned: no repo is the tooling upstream, and
+fixes do not propagate automatically. Ownership details:
+[base RELEASING.md § Release Tooling Ownership](https://github.com/tesserine/base/blob/main/RELEASING.md#release-tooling-ownership).
+
 ## Pre-Release Gate
 
 A releasable commit is on `main`, up to date with `origin/main`, and has a

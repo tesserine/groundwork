@@ -28,6 +28,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `RELEASING.md` Tooling Provenance section and a `release_lib.py`
+  provenance docstring: the release scripts are groundwork-owned (a
+  distinct Python lineage), the ceremony convention is canonical in
+  commons, and no repo is the tooling upstream.
 - `docs/architecture/decisions/README.md` — decision register with a status
   rubric: Proposed/Provisional decisions are binding descriptions of the
   current design pending operator ratification, which is why shipped
