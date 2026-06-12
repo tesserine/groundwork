@@ -157,7 +157,9 @@ principles_config_path() {
 }
 
 run_corpus_resolution() {
-  PYTHONPATH="$source_path" python3 "$source_path/tooling/corpus_resolution.py" \
+  # -B: never write bytecode into the pinned source checkout — a dirty
+  # source would fail the next run's clean-checkout gate.
+  PYTHONPATH="$source_path" python3 -B "$source_path/tooling/corpus_resolution.py" \
     --config "$(principles_config_path)" \
     --embedded "$source_path/principles" \
     --target "$(runtime_root)/principles" \
