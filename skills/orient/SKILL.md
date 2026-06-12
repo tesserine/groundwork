@@ -30,7 +30,7 @@ work, or orienting mid-task, the graph tells you where you are: what's in
 progress, what's blocked, what's next. Agent sessions are bounded — context
 windows end, agents rotate — and the work-unit graph is the persistence
 layer that survives those boundaries. Work from the graph, not from memory.
-See [work-unit-model.md](https://github.com/tesserine/groundwork/blob/main/docs/architecture/work-unit-model.md).
+See [work-unit-model.md](../../docs/architecture/work-unit-model.md).
 
 ## The Shape of the Work
 
@@ -143,4 +143,4 @@ These are not stations; they engage when their trigger fires, at any stage.
 
 For the connecting structure — artifacts, manifest edges, schemas, and
 protocol topology — see
-[connecting-structure.md](https://github.com/tesserine/groundwork/blob/main/docs/architecture/connecting-structure.md).
+[connecting-structure.md](../../docs/architecture/connecting-structure.md).
