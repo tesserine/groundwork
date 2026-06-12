@@ -824,6 +824,108 @@ class GroundworkInstallTests(unittest.TestCase):
         self.assertFalse(install.default_state_file().exists())
         self.assertFalse(install.target(".agents", "orient").exists())
 
+    def write_principles_surface(self, fixture: MethodologyFixture) -> None:
+        self.write_runtime_surface(fixture)
+        fixture.write(
+            "principles/PRINCIPLES.md",
+            """
+            # Default Principles
+
+            1. **Check.** Verify claims against reality.
+            """,
+        )
+        for module in ["corpus_resolution.py", "principles_config.py"]:
+            fixture.write(f"tooling/{module}", (ROOT / "tooling" / module).read_text(encoding="utf-8"))
+        fixture.write(
+            "schemas/principles-config.schema.json",
+            (ROOT / "schemas" / "principles-config.schema.json").read_text(encoding="utf-8"),
+        )
+
+    def corpus_env(self, config_home: Path) -> dict[str, str]:
+        return {**os.environ, "XDG_CONFIG_HOME": str(config_home)}
+
+    def test_install_materializes_embedded_corpus_offline_with_no_configuration(self) -> None:
+        fixture = self.add_fixture("corpus-embedded-default")
+        self.write_principles_surface(fixture)
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+        config_home = install.home / ".config"
+
+        result = install.run_installer("install", env=self.corpus_env(config_home))
+
+        assert_success(self, result)
+        resolved = install.runtime_root() / "principles" / "PRINCIPLES.md"
+        self.assertTrue(resolved.is_file())
+        self.assertIn("Default Principles", resolved.read_text(encoding="utf-8"))
+
+    def test_install_materializes_a_configured_external_corpus(self) -> None:
+        fixture = self.add_fixture("corpus-configured-path")
+        self.write_principles_surface(fixture)
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+        external = install.home / "external-corpus"
+        external.mkdir(parents=True)
+        (external / "README.md").write_text("# External Corpus\n", encoding="utf-8")
+        config_home = install.home / ".config"
+        config_file = config_home / "groundwork" / "principles.toml"
+        config_file.parent.mkdir(parents=True)
+        config_file.write_text(f'[corpus]\nsource = "path"\npath = "{external}"\n', encoding="utf-8")
+
+        result = install.run_installer("install", env=self.corpus_env(config_home))
+
+        assert_success(self, result)
+        resolved = install.runtime_root() / "principles"
+        self.assertTrue((resolved / "README.md").is_file())
+        self.assertFalse((resolved / "PRINCIPLES.md").exists())
+
+    def test_install_fails_loudly_when_the_configured_remote_is_unreachable(self) -> None:
+        fixture = self.add_fixture("corpus-unreachable-remote")
+        self.write_principles_surface(fixture)
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+        config_home = install.home / ".config"
+        config_file = config_home / "groundwork" / "principles.toml"
+        config_file.parent.mkdir(parents=True)
+        missing = install.home / "no-such-repo"
+        config_file.write_text(f'[corpus]\nsource = "git"\nurl = "{missing}"\n', encoding="utf-8")
+
+        result = install.run_installer("install", env=self.corpus_env(config_home))
+
+        assert_failure_contains(self, result, "principles-corpus resolution failed")
+
+    def test_install_fails_in_preflight_before_projecting_when_config_is_invalid(self) -> None:
+        fixture = self.add_fixture("corpus-invalid-config")
+        self.write_principles_surface(fixture)
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+        config_home = install.home / ".config"
+        config_file = config_home / "groundwork" / "principles.toml"
+        config_file.parent.mkdir(parents=True)
+        config_file.write_text('[corpus]\nsource = "carrier-pigeon"\n', encoding="utf-8")
+
+        result = install.run_installer("install", env=self.corpus_env(config_home))
+
+        assert_failure_contains(self, result, "principles-corpus configuration is not resolvable")
+        self.assertFalse(install.runtime_root().exists())
+        for root in [".claude", ".agents"]:
+            skills_dir = install.home / root / "skills"
+            self.assertEqual([], list(skills_dir.iterdir()) if skills_dir.exists() else [])
+
+    def test_sync_refreshes_the_resolved_corpus(self) -> None:
+        fixture = self.add_fixture("corpus-sync-refresh")
+        self.write_principles_surface(fixture)
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+        config_home = install.home / ".config"
+        assert_success(self, install.run_installer("install", env=self.corpus_env(config_home)))
+        resolved = install.runtime_root() / "principles" / "PRINCIPLES.md"
+        resolved.write_text("# Drifted\n", encoding="utf-8")
+
+        result = install.run_installer("sync", env=self.corpus_env(config_home))
+
+        assert_success(self, result)
+        self.assertIn("Default Principles", resolved.read_text(encoding="utf-8"))
+
 
 if __name__ == "__main__":
     unittest.main()

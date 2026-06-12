@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Principles-corpus materialization at setup** (#400). `groundwork-install`
+  now resolves the configured corpus into `~/.groundwork/principles/` — the
+  resolved local corpus reckon consults — on every `install`/`sync` run:
+  `embedded` copies the in-tree default, `path` copies the configured
+  directory, `git` fetches once at setup (never during reasoning). The
+  configuration is preflighted before any target mutation; materialization
+  stages and swaps atomically so a failed resolution never corrupts an
+  existing resolved corpus; every failure mode (invalid config, missing
+  local source, unreachable remote, index-less corpus, missing python3)
+  halts setup loudly with a named error. `tooling/principles_config.py`
+  validation is now stdlib-only so resolution runs in deployments without
+  third-party packages, with CI holding the code validator and the JSON
+  Schema contract in agreement. Rerunning `sync` is the documented refresh
+  (closes #400).
 - **Minimal embedded default principles corpus** at `principles/PRINCIPLES.md`:
   eight sequenced, near-universal principles with one gloss each, framed
   explicitly as the standalone fallback/default — not the Tesserine ecosystem

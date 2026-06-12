@@ -1,11 +1,14 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
 
 from tooling.principles_config import (
     EMBEDDED_CORPUS_PATH,
+    PRINCIPLES_CONFIG_SCHEMA,
     PrinciplesConfigError,
     PrinciplesCorpusConfig,
+    _schema_errors,
     default_config_path,
     load_principles_config,
     parse_principles_config,
@@ -150,6 +153,46 @@ class NamedConceptTests(unittest.TestCase):
 
     def test_embedded_corpus_path_is_in_tree(self) -> None:
         self.assertEqual(EMBEDDED_CORPUS_PATH, ROOT / "principles")
+
+
+class SchemaAgreementTests(unittest.TestCase):
+    """The stdlib structural validator (the operational home, usable in
+    deployments without third-party packages) and the JSON Schema (the
+    documentation and conformance contract) must judge the same documents
+    the same way. Absolute-path enforcement is a semantic check layered on
+    top of structure and is deliberately outside this matrix."""
+
+    DOCUMENTS = [
+        {},
+        {"corpus": {"source": "embedded"}},
+        {"corpus": {"source": "path", "path": "/srv/corpus"}},
+        {"corpus": {"source": "git", "url": "https://example.org/owner/corpus"}},
+        {"corpus": {"source": "git", "url": "https://example.org/owner/corpus", "ref": "v1"}},
+        {"corpus": {"source": "carrier-pigeon"}},
+        {"corpus": {"source": "git"}},
+        {"corpus": {"source": "path"}},
+        {"corpus": {"source": "path", "path": ""}},
+        {"corpus": {"source": "git", "url": ""}},
+        {"corpus": {"source": "git", "url": "https://example.org/x", "ref": ""}},
+        {"corpus": {"source": "embedded", "url": "https://example.org/x"}},
+        {"corpus": {"source": "path", "path": "/srv/corpus", "url": "https://example.org/x"}},
+        {"corpus": "not-a-table"},
+        {"corpus": {}},
+        {"corpse": {"source": "embedded"}},
+        {"corpus": {"source": "embedded"}, "extra": 1},
+    ]
+
+    def test_code_validator_agrees_with_the_schema_contract(self) -> None:
+        from jsonschema import Draft202012Validator
+
+        validator = Draft202012Validator(json.loads(PRINCIPLES_CONFIG_SCHEMA.read_text(encoding="utf-8")))
+
+        for document in self.DOCUMENTS:
+            with self.subTest(document=document):
+                self.assertEqual(
+                    validator.is_valid(document),
+                    not _schema_errors(document),
+                )
 
 
 if __name__ == "__main__":

@@ -19,14 +19,11 @@ resolution layer (setup time), not here.
 
 from __future__ import annotations
 
-import json
 import os
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
-
-from jsonschema import Draft202012Validator
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -143,16 +140,55 @@ def parse_principles_config(document: dict[str, Any]) -> PrinciplesCorpusConfig:
     return PrinciplesCorpusConfig(source=SOURCE_GIT, url=corpus["url"], ref=corpus.get("ref"))
 
 
+_CORPUS_KEYS_BY_SOURCE: dict[str, dict[str, set[str]]] = {
+    SOURCE_EMBEDDED: {"required": set(), "allowed": {"source"}},
+    SOURCE_PATH: {"required": {"path"}, "allowed": {"source", "path"}},
+    SOURCE_GIT: {"required": {"url"}, "allowed": {"source", "url", "ref"}},
+}
+
+
 def _schema_errors(document: dict[str, Any]) -> list[tuple[str, str]]:
-    schema = json.loads(PRINCIPLES_CONFIG_SCHEMA.read_text(encoding="utf-8"))
-    validator = Draft202012Validator(schema)
+    """Structural validation of the config document.
+
+    Deliberately stdlib-only: setup-time resolution runs in deployments
+    that carry no third-party packages (the same constraint
+    ``tooling/forge_operations.py`` observes). The JSON Schema at
+    ``schemas/principles-config.schema.json`` remains the documentation
+    and conformance contract for the same shape; CI holds the two in
+    agreement (tests/test_principles_config.py).
+    """
     errors: list[tuple[str, str]] = []
 
-    for error in sorted(validator.iter_errors(document), key=lambda item: list(item.path)):
-        path = "/".join(str(part) for part in error.path)
-        if error.validator == "required":
-            missing = error.message.split("'")[1]
-            path = f"{path}/{missing}" if path else missing
-        errors.append((path or "<root>", error.message))
+    for key in document:
+        if key != "corpus":
+            errors.append((key, f"unknown key `{key}`; the config holds only a `corpus` table"))
+    if errors:
+        return errors
+
+    if "corpus" not in document:
+        return errors
+
+    corpus = document["corpus"]
+    if not isinstance(corpus, dict):
+        return [("corpus", "corpus must be a table")]
+
+    source = corpus.get("source")
+    if not isinstance(source, str) or source not in _CORPUS_KEYS_BY_SOURCE:
+        return [
+            (
+                "corpus/source",
+                "corpus must declare source as one of `embedded` | `path` | `git`",
+            )
+        ]
+
+    keys = _CORPUS_KEYS_BY_SOURCE[source]
+    for key in sorted(keys["required"] - corpus.keys()):
+        errors.append((f"corpus/{key}", f"corpus source `{source}` requires `{key}`"))
+    for key in sorted(corpus.keys() - keys["allowed"]):
+        errors.append((f"corpus/{key}", f"`{key}` is not a valid key for corpus source `{source}`"))
+    for key in sorted(keys["allowed"] - {"source"}):
+        value = corpus.get(key)
+        if value is not None and (not isinstance(value, str) or not value):
+            errors.append((f"corpus/{key}", f"`{key}` must be a non-empty string"))
 
     return errors
