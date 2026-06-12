@@ -40,6 +40,13 @@ tree at:
 ${XDG_CONFIG_HOME:-~/.config}/groundwork/principles.toml
 ```
 
+Operators can write the file by hand, or have the self-installer record
+it: `scripts/install install --corpus-git URL [--corpus-ref REF]`
+(likewise `--corpus-path PATH` or `--corpus-embedded`) writes the
+supplied source into this file before materializing it. An existing file
+that already expresses the same source is left byte-untouched, so a
+hand-written config survives re-recording.
+
 It declares a single `[corpus]` table discriminated by `source`:
 
 ```toml
@@ -78,12 +85,14 @@ and CI holds the two in agreement.)
 
 Resolution is performed by
 [`tooling/corpus_resolution.py`](../tooling/corpus_resolution.py), wired
-into [`scripts/groundwork-install`](../scripts/groundwork-install):
+into both installers — [`scripts/install`](../scripts/install) (the
+self-install for runtime-driven deployments) and the legacy
+[`scripts/groundwork-install`](../scripts/groundwork-install):
 
-- **When:** at install/setup — every `groundwork-install install` or
-  `sync` run. Never during reasoning: no code path fetches the corpus
-  inside a reckon step, and a remote source is fetched exactly once per
-  resolution.
+- **When:** at install/setup — every `scripts/install install` or
+  `groundwork-install install`/`sync` run. Never during reasoning: no
+  code path fetches the corpus inside a reckon step, and a remote source
+  is fetched exactly once per resolution.
 - **Where:** into `~/.groundwork/principles/` (the resolved local corpus,
   under the managed runtime root). Materialization stages into a
   temporary sibling directory and swaps atomically, so a failed
@@ -92,9 +101,10 @@ into [`scripts/groundwork-install`](../scripts/groundwork-install):
   any target (an invalid config halts the install before anything is
   projected), and a resolved corpus must carry a readable index
   (`PRINCIPLES.md` or `README.md`) at its root.
-- **Refresh:** rerun `groundwork-install sync` from the checkout. There
-  is no in-session synchronization — a stale resolved corpus is refreshed
-  at the next setup run, by design.
+- **Refresh:** rerun the installer from the checkout (`scripts/install
+  install`, or `groundwork-install sync` on the legacy path). There is no
+  in-session synchronization — a stale resolved corpus is refreshed at
+  the next setup run, by design.
 
 Failure modes are loud and named, with nonzero exit: a
 present-but-invalid config, a missing local source directory, an

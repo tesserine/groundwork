@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Methodology self-install for runtime-driven deployments** (#416).
+  `scripts/install` (logic in `tooling/install.py`, stdlib-only) installs
+  exactly what the methodology interface contract channel does not deliver:
+  skills verbatim into `~/.claude/skills` and `~/.agents/skills` (no
+  PROTOCOL.md→SKILL.md projection, no handoff insertion, no resolver
+  rewriting), the `~/.groundwork` methodology runtime bundle, and the
+  principles corpus — recording the operator's `--corpus-git`/`--corpus-path`/
+  `--corpus-embedded` input into the deployment-owned `principles.toml`
+  (ADR-0005) before materializing it through the existing resolution layer.
+  Idempotent convergence (a second run exits 0 with no managed-state change;
+  skills removed from the tree are pruned), loud named-path preflights,
+  disjoint ownership identity from the legacy installer (legacy-placed
+  entries are conflicts directed to `groundwork-install uninstall`, never
+  adopted), and commit-traceable markers. `tooling/principles_config.py`
+  gains `render_principles_config`/`write_principles_config` with a parse
+  round-trip invariant. Decision record:
+  `docs/architecture/decisions/0006-runtime-driven-self-install-surface.md`.
+  Coverage in `tests/test_install.py`. The legacy `scripts/groundwork-install`
+  is deprecated in favor of this surface; retirement is tracked in #415.
+
 ### Changed
 
 - README hero rewritten for the ecosystem README pass: groundwork positioned

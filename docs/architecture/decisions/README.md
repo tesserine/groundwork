@@ -33,5 +33,6 @@ only that the operator may still revise the decision.
 | [0003](0003-disposition-as-artifact-type.md) | Disposition as Artifact Type | Provisional | 2026-05-31 |
 | [0004](0004-contract-first-scoped-pipeline.md) | Contract-First Scoped Pipeline | Proposed — delivered for operator review | 2026-06-11 |
 | [0005](0005-principles-corpus-configuration.md) | Principles Corpus Configuration | Provisional | 2026-06-12 |
+| [0006](0006-runtime-driven-self-install-surface.md) | Runtime-Driven Self-Install Surface | Proposed — delivered for operator review | 2026-06-12 |
 
 New decisions add a row here in the same change.
