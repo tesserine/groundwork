@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- README hero rewritten for the ecosystem README pass: groundwork positioned
+  as software delivery expressed as an enforceable methodology — evidence-
+  gated completion, CI-gated documentation coherence, forge-agnostic
+  mechanics — with its place in the Tesserine stack and the source-of-truth
+  map linked.
+
 ### Fixed
 
 - **Dependency-graph notation conflict resolved.** `templates.md` mandated

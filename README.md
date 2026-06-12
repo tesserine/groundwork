@@ -1,18 +1,31 @@
 # Groundwork
 
+**Software delivery as an executable methodology — completion requires
+evidence, and the discipline is enforced, not exhorted.**
+
 Groundwork is a methodology plugin for [runa](https://github.com/tesserine/runa),
 a cognitive runtime for AI coding agents.
 It encodes opinions about how software should be built into protocols, skills,
 and artifact schemas that a runa instance orchestrates. It is not a runtime, a
-CLI, or a framework — it is a methodology definition.
+CLI, or a framework — it is a methodology definition: an entire engineering
+discipline expressed as data that a runtime can enforce.
 
-Groundwork serves teams that use AI coding agents for software delivery. It
-connects the stages from problem framing through shipped change so that agent
-work traces from requirement to merged code, completion claims require evidence,
-and progress survives session boundaries.
+That expression has teeth. Agent work traces from requirement to merged code
+through typed artifacts; completion claims are gated on evidence, not
+assertion; progress survives session boundaries because state lives in the
+work-unit graph, not in any one agent's memory. The methodology practices
+what it enforces: every belief below traces to its enforcing file, the
+dependency-graph notation and every script path in its instructions are
+CI-gated against drift, and the forge layer is abstracted so the same
+methodology runs against GitHub or SourceHut unchanged
+([mechanics/](mechanics/)).
 
 For what methodology plugins are and how runa executes them, see runa's
-[core concepts](https://github.com/tesserine/runa#core-concepts).
+[core concepts](https://github.com/tesserine/runa#core-concepts). Groundwork
+is the first methodology of the [Tesserine](https://github.com/tesserine)
+stack's **Declare** tier — [gazette](https://github.com/tesserine/gazette)
+is the proof the tier generalizes beyond code (ecosystem map:
+[commons SOURCE-OF-TRUTH.md](https://github.com/tesserine/commons/blob/main/SOURCE-OF-TRUTH.md)).
 
 ## The Shape of the Methodology
 
