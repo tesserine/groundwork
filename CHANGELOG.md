@@ -39,6 +39,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Stale principle-authority references healed: ADR-0002 and ADR-0003 now
+  trace Sovereignty, Parsimony, and Scale-Honest Design to the canonical
+  corpus at [pentaxis93/principles](https://github.com/pentaxis93/principles)
+  instead of the superseded `tesserine/commons` PRINCIPLES.md mirror, commons
+  ADR-0001 stub, and legacy `with-claude` register. The original citation
+  routes are preserved as provenance notes; commons references that correctly
+  cite shared contracts, schemas, and live ecosystem ADRs stand unchanged
+  (closes #403).
 - **Review reframed as the independent-judgment gate, not a "human gate."**
   Agents execute review like every protocol, and the session-surface contract
   places transition authority in the typed disposition; the invariant the gate

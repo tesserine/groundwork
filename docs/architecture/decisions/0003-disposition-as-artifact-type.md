@@ -3,9 +3,15 @@
 **Status:** Provisional \
 **Date:** 2026-05-31 \
 **Traces to:** ADR-0002 (Methodology Sovereignty); `tesserine/runa`
-`docs/interface-contract.md` (the three-primitive interface); `tesserine/commons`
-PRINCIPLES.md P1 (Sovereignty). Governed by `with-claude` principles #5
-(Parsimony) and #10 (Scale-Honest Design).
+`docs/interface-contract.md` (the three-primitive interface);
+[Sovereignty](https://github.com/pentaxis93/principles/blob/main/principles/sovereignty.md).
+Governed by
+[Parsimony](https://github.com/pentaxis93/principles/blob/main/principles/parsimony.md)
+and [Evolvability](https://github.com/pentaxis93/principles/blob/main/principles/evolvability.md)
+(corollary *scale honesty*) — all at
+[pentaxis93/principles](https://github.com/pentaxis93/principles), the
+canonical corpus. (Originally cited via `tesserine/commons` PRINCIPLES.md P1
+and `with-claude` principles #5/#10, since ascended.)
 
 ## Revision (2026-05-31): outcomes are a required-choice output, not `may_produce`
 

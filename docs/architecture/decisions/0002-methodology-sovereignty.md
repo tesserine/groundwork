@@ -2,7 +2,10 @@
 
 **Status:** Provisional — revised 2026-05-28 (regrounded on a second forge; see Revision below) \
 **Date:** 2026-05-02 (revised 2026-05-28) \
-**Traces to:** `tesserine/commons` PRINCIPLES.md P1 (Sovereignty); `tesserine/commons` ADR-0001 (Sovereignty).
+**Traces to:** [Sovereignty](https://github.com/pentaxis93/principles/blob/main/principles/sovereignty.md)
+— [pentaxis93/principles](https://github.com/pentaxis93/principles), the
+canonical principles corpus. (Originally cited via `tesserine/commons`
+PRINCIPLES.md P1 and commons ADR-0001, since ascended to the canonical home.)
 
 ## Revision (2026-05-28): regrounded on two forges
 
@@ -111,16 +114,18 @@ methodology layer is unavailable — when a unit's behavior is entangled in
 mixed-shape prose, no parser-level check applies, and substring-presence on
 prose strings becomes the entire verification surface for protocol behavior.
 
-The principle this decision rests on is `tesserine/commons` PRINCIPLES.md P1
-(Sovereignty), which declares: *the operator declares WHAT — direction,
-vision, intent; the agent owns HOW — execution, implementation, craft. It
-applies at every interface, at every scale.* A methodology document is a
-human-authored artifact addressed to an agent; the document plays the
-operator role, the invoking agent plays the agent role, and a unit that
-mixes WHAT and HOW crosses the sovereignty boundary inside its own
-boundary. ADR-0001 (Sovereignty) enumerates illustrative interfaces; the
-methodology-document interface is covered by P1's general fractal claim and
-does not require enumeration extension.
+The principle this decision rests on is
+[Sovereignty](https://github.com/pentaxis93/principles/blob/main/principles/sovereignty.md),
+cited at decision time in its commons form (`PRINCIPLES.md` P1, since
+ascended to the canonical corpus), which declares: *the operator declares
+WHAT — direction, vision, intent; the agent owns HOW — execution,
+implementation, craft. It applies at every interface, at every scale.* A
+methodology document is a human-authored artifact addressed to an agent;
+the document plays the operator role, the invoking agent plays the agent
+role, and a unit that mixes WHAT and HOW crosses the sovereignty boundary
+inside its own boundary. The methodology-document interface is covered by
+Sovereignty's general fractal claim ("it applies at every scale of
+interface") and does not require enumeration extension.
 
 ## Decision
 
