@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Minimal embedded default principles corpus** at `principles/PRINCIPLES.md`:
+  eight sequenced, near-universal principles with one gloss each, framed
+  explicitly as the standalone fallback/default — not the Tesserine ecosystem
+  authority and not a digest of any external corpus. Authored fresh from the
+  near-universal criterion; independence and smallness are test-gated
+  (`tests/test_embedded_corpus.py`: short, sequenced, fallback-framed, zero
+  external references). Resolution selects it whenever no corpus is
+  configured (closes #401).
 - **Principles-corpus configuration surface** (ADR-0005). The principles
   corpus reckon consults now resolves through deployment-owned methodology
   configuration at `${XDG_CONFIG_HOME:-~/.config}/groundwork/principles.toml`:
