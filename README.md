@@ -60,6 +60,17 @@ not completeness.
 For how runa orchestrates this topology at runtime, see the
 [interface contract](https://github.com/tesserine/runa/blob/main/docs/interface-contract.md).
 
+## The Principles Corpus
+
+Reckon reasons from navigational principles selected during Orient. The
+corpus they are selected from is not hard-coded: it resolves through
+methodology configuration and is materialized locally at setup, so reckon
+reads local content during reasoning. With zero configuration the corpus
+is the minimal embedded default at [`principles/`](principles/) — a bare
+checkout reasons offline, out of the box. Deployments that want a richer
+corpus configure one (any git repository or local directory).
+→ [`docs/principles-corpus.md`](docs/principles-corpus.md)
+
 ## Interactive Installation
 
 Runa-served agents consume Groundwork through the methodology mount. Interactive
@@ -288,6 +299,7 @@ becomes a work-unit.
 | [`protocols/`](protocols/) | Protocol definitions for methodology stages |
 | [`skills/`](skills/) | Skills for orientation, cross-cutting disciplines, and stage-specific judgment |
 | [`schemas/`](schemas/) | JSON Schema contracts for artifacts and authoring substrates |
+| [`principles/`](principles/) | Embedded default principles corpus (standalone fallback; see [`docs/principles-corpus.md`](docs/principles-corpus.md)) |
 | [`tooling/`](tooling/) | Authoring-time parsers and validators |
 | [`docs/architecture/`](docs/architecture/) | Topology design rationale and work-unit state model |
 | [`docs/authoring/`](docs/authoring/) | Follow-direct guides for methodology authors |
