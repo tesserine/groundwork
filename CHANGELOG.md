@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Principles-corpus configuration surface** (ADR-0005). The principles
+  corpus reckon consults now resolves through deployment-owned methodology
+  configuration at `${XDG_CONFIG_HOME:-~/.config}/groundwork/principles.toml`:
+  a `[corpus]` table discriminated by `source` (`embedded` | `path` | `git`),
+  schema-validated (`schemas/principles-config.schema.json`) and parsed with
+  named errors (`tooling/principles_config.py`). The configured source is
+  distinct from the resolved local corpus the resolution layer materializes
+  at setup; absent configuration selects the embedded default, and a present
+  but invalid configuration fails loudly rather than silently degrading.
+  Documented for ordinary (zero-config) and power-user (external corpus)
+  paths in `docs/principles-corpus.md` (closes #399).
 - **Acquisition: entry from an existing forge ticket** (ADR-0004). The new
   `acquire` skill reads a ticket already on the tracker through the existing
   `read-ticket` mechanic and materializes a `work-unit` artifact from it
