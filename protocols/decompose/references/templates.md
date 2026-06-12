@@ -110,10 +110,16 @@ recipient.
 
 ## Dependency graph
 
+```mermaid
+graph TD
+  A[#A task-title] --> C[#C task-title]
+  A --> D[#D task-title]
+  B[#B task-title] --> D
 ```
-#A ──┬── #C
-     │
-#B ──┴── #D
+
+```
+Layer 0 (no deps):  #A, #B
+Layer 1 (needs 0):  #C, #D
 ```
 
 ## Acceptance criteria
@@ -161,13 +167,22 @@ capability -> component release work plus terminal ecosystem-release work-unit
 
 ## Dependency graph
 
+```mermaid
+graph TD
+  A[#5 config] --> E[#9 install]
+  B[#6 frontmatter] --> E
+  C[#7 skill/mod] --> E
+  D[#8 linker] --> E
+  A --> F[#10 clean]
+  D --> F
+  E --> G[#11 ecosystem release]
+  F --> G
 ```
-#5 config ──────┐
-#6 frontmatter ─┼── #9 install ──┐
-#7 skill/mod ───┤                │
-#8 linker ──────┘                ├── #11 ecosystem release
-#5 config ──────┐                │
-#8 linker ──────┴── #10 clean ───┘
+
+```
+Layer 0 (no deps):  #5, #6, #7, #8
+Layer 1 (needs 0):  #9, #10
+Layer 2 (needs 1):  #11
 ```
 
 ## Acceptance criteria
@@ -327,37 +342,32 @@ end state (correct attribution posture) without prescribing the solution.
 
 ## Dependency Graph Notation
 
-Use ASCII art for dependency graphs in epic issues. Keep it simple.
+Canonical format:
+[`work-unit-model.md` § Dependency Graph Format](../../../docs/architecture/work-unit-model.md#dependency-graph-format).
+Epic issues with 4+ tasks carry the graph in **both** representations; no
+other notation (ASCII art included) is valid.
 
-### Linear chain
+### Mermaid diagram
 
-```
-#5 config → #7 skill → #9 install
-```
+Arrows mean "must complete before":
 
-### Fan-out (one foundation, many dependents)
-
-```
-#5 config ──┬── #9 install
-             ├── #10 clean
-             ├── #11 list
-             └── #13 new
-```
-
-### Diamond (multiple foundations merge)
-
-```
-#5 config ──────┬── #9 install
-#7 skill ───────┤
-#8 linker ──────┘
+```mermaid
+graph TD
+  A[#5 config] --> B[#7 skill]
+  B --> C[#9 install]
+  A --> D[#10 clean]
 ```
 
-### Layered (with labels)
+### Layered text summary
+
+For machine readability:
 
 ```
-Foundation:   #5 config    #6 frontmatter    #8 linker
-                  │              │                │
-Integration:  #7 skill (depends on #5, #6)       │
-                  │                               │
-Commands:     #9 install (depends on #5, #7, #8) ─┘
+Layer 0 (no deps):  #5
+Layer 1 (needs 0):  #7, #10
+Layer 2 (needs 1):  #9
 ```
+
+Keep node labels short: issue number plus a one- or two-word title. The
+layered summary lists every issue exactly once, at the lowest layer its
+dependencies allow.

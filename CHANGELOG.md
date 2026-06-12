@@ -6,7 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Dependency-graph notation conflict resolved.** `templates.md` mandated
+  ASCII art while the decompose protocol and `work-unit-model.md` mandated
+  Mermaid `graph TD` plus a layered text summary. The Mermaid + layered
+  format is now canonical everywhere (`work-unit-model.md` § Dependency
+  Graph Format); the templates reference, epic template, and worked epic
+  example all use it, and `tests/test_dependency_graph_notation.py` fails
+  if a competing notation reappears.
+- **Script paths resolve from the methodology root.** The work-unit-craft
+  skill cited `scripts/issue_lint.py` (a path that resolves from nowhere);
+  the decompose protocol and acquire skill cited script paths that resolved
+  only from their own directories. All script references now use
+  methodology-root-relative paths with the root stated, and
+  `test_reference_links.py` gains a gate requiring every slash-containing
+  `.py`/`.sh` path in instruction files to resolve from the root.
+- **Own-repo absolute GitHub links converted to relative** in the orient
+  and work-unit-craft skills, bringing them under the existing relative
+  link gate. Issue and PR references remain absolute by design.
+
 ### Added
+
+- `docs/architecture/decisions/README.md` — decision register with a status
+  rubric: Proposed/Provisional decisions are binding descriptions of the
+  current design pending operator ratification, which is why shipped
+  topology (ADR-0004) can carry Proposed status.
 
 - **Corpus lifecycle documentation and durable coherence gates** closing the
   configurable-principles-corpus epic (#397). README gains "The Principles

@@ -53,8 +53,10 @@ session that entrypoint opens.
    the materializer:
 
    ```
-   ... | python3 scripts/materialize.py
+   ... | python3 skills/acquire/scripts/materialize.py
    ```
+
+   (Script path from the groundwork methodology root.)
 
    It derives the work-unit body — `title`, `description`, and
    `acceptance_criteria` from the ticket content, `handle` carried through
