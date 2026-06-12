@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Corpus lifecycle documentation and durable coherence gates** closing the
+  configurable-principles-corpus epic (#397). README gains "The Principles
+  Corpus" section and contents-table rows; `docs/principles-corpus.md` gains
+  what reckon reads during Orient and why nothing pre-digests the corpus,
+  the post-repair authority scoping (canonical corpus vs commons as
+  contracts/schemas/ecosystem decisions), and a "Verifying the coherence
+  upgrade" command section. New `tests/test_principles_coherence.py` holds
+  the epic's invariants permanently in CI: reckon carries no hard-coded
+  corpus repository, no methodology text names a privileged principle
+  subset, the pre-selection phrase is absent from every tracked file, and
+  no tracked file links to the legacy commons principle mirrors or stub
+  ADRs (closes #405).
 - **Principles-corpus materialization at setup** (#400). `groundwork-install`
   now resolves the configured corpus into `~/.groundwork/principles/` — the
   resolved local corpus reckon consults — on every `install`/`sync` run:

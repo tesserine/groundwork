@@ -101,6 +101,21 @@ present-but-invalid config, a missing local source directory, an
 unreachable remote, a corpus without an index, or a missing `python3`
 where resolution is required.
 
+## What reckon reads during Orient
+
+Reckon's Orient step reads the **resolved local corpus** — never a remote
+— starting from its index (`PRINCIPLES.md` or `README.md` at the corpus
+root) and selects the principles that govern reasoning in the domain at
+hand. Selection happens live, per inquiry.
+
+That is why no layer of this design pre-digests the corpus: reckon's
+skill text names no privileged subset, the embedded default is not a
+summary of any richer corpus, and no "most important principles" list
+exists anywhere in the methodology. A pre-selection made before Orient
+would pre-empt the very judgment Orient exists to perform, and would
+silently bias every reconstruction toward whoever made the selection.
+The corpus speaks for itself.
+
 ## What this surface deliberately does not do
 
 - It names no privileged external corpus in code. `pentaxis93/principles`
@@ -114,3 +129,45 @@ where resolution is required.
 
 Design rationale for the surface choice is recorded in
 [ADR-0005](architecture/decisions/0005-principles-corpus-configuration.md).
+
+## Where authority lives after the source repair
+
+- **`pentaxis93/principles`** is the canonical principles corpus for the
+  Tesserine ecosystem's own deployments — configured, never hard-coded.
+- **`tesserine/commons`** is scoped as shared contracts, schemas, and
+  ecosystem-specific decisions (exit codes, the request contract, release
+  machinery, live ecosystem ADRs). It is no longer a principles home; its
+  legacy principle mirrors and pointer-stub ADRs are being retired under
+  [tesserine/commons#55](https://github.com/tesserine/commons/issues/55),
+  gated on every inbound reference being repointed first.
+- **Groundwork's ADRs** trace principle authority to the canonical corpus
+  (or this configured abstraction), with historical citation routes
+  preserved as provenance notes.
+
+## Verifying the coherence upgrade
+
+From a fresh clone, the upgrade's invariants verify mechanically:
+
+```bash
+python -m pip install -r requirements-dev.txt
+python -m unittest discover -s tests      # includes the durable gates
+python -m tooling.conformance
+```
+
+The durable gates live in `tests/test_principles_coherence.py` (reckon
+carries no hard-coded corpus repository; no methodology text names a
+privileged principle subset; no tracked file links to the legacy commons
+principle mirrors) and run in CI on every PR. Functional resolution gates
+live in `tests/test_corpus_resolution.py` and
+`tests/test_groundwork_install.py` (offline zero-config default,
+external-corpus materialization, loud named failures); embedded-default
+gates in `tests/test_embedded_corpus.py` (short, sequenced,
+fallback-framed, standalone).
+
+Equivalent manual inspections:
+
+```bash
+grep -rn "pentaxis93/principles" skills/reckon/          # expect: no hits
+grep -rniE "three\s+universals" .                        # expect: no hits
+grep -rnE "tesserine/commons/(blob|raw|tree)/\S*(PRINCIPLES|DESIGN-PRINCIPLES|adr/00(0[1-4]|07|13))" .   # expect: no hits
+```
