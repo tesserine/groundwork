@@ -382,8 +382,17 @@ def write_state(options: Options, sha: str, skills: list[str]) -> None:
     temporary.replace(state_file)
 
 
-def state_owns_target(state_rows: list[tuple[str, str, str, str, str]], target: Path) -> bool:
-    return any(row[0] == str(target) for row in state_rows)
+def state_owns_target(
+    options: Options,
+    state_rows: list[tuple[str, str, str, str, str]],
+    target: Path,
+) -> bool:
+    """A state row is only evidence; the marker is the ownership authority."""
+    return any(
+        row_target == str(target)
+        and marker_matches(target, options.source, sha, kind, name)
+        for row_target, name, kind, sha, _root in state_rows
+    )
 
 
 def install_skill(source: Path, sha: str, name: str, target: Path) -> None:
@@ -423,7 +432,7 @@ def preflight_conflicts(options: Options, skills: list[str]) -> None:
     for root in target_roots(options.home):
         for name in skills:
             target = root / name
-            if target.exists() and not state_owns_target(state_rows, target):
+            if target.exists() and not state_owns_target(options, state_rows, target):
                 conflicts.append(target)
     runtime_root = options.home / ".groundwork"
     if runtime_root.exists() and not (runtime_root / MARKER_NAME).is_file():
@@ -474,7 +483,11 @@ def converge_skills(options: Options, sha: str, skills: list[str]) -> None:
             target = root / name
             if skill_is_current(options, state_rows, sha, name, root, desired):
                 continue
-            if state_owns_target(state_rows, target) and target.is_dir() and tree_payload(target) == desired:
+            if (
+                state_owns_target(options, state_rows, target)
+                and target.is_dir()
+                and tree_payload(target) == desired
+            ):
                 write_marker(target, options.source, sha, "skill", name)
                 continue
             install_skill(options.source, sha, name, target)

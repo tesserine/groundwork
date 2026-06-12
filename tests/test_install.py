@@ -450,6 +450,60 @@ class SelfInstallTests(unittest.TestCase):
         self.assertFalse((install.home / ".agents").exists(), "preflight must halt before any install")
         self.assertFalse(install.runtime_root().exists(), "preflight must halt before any install")
 
+    def test_state_listed_skill_missing_marker_fails_loudly_and_preserves_drift(self) -> None:
+        fixture = self.add_fixture("state-listed-missing-marker")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        target = install.target(".agents", "orient")
+        (target / MARKER_NAME).unlink()
+        (target / "SKILL.md").write_text("operator rewrite\n", encoding="utf-8")
+        local_only = target / "operator-note.md"
+        local_only.write_text("operator note\n", encoding="utf-8")
+
+        result = install.run_installer("install")
+
+        assert_failure_contains(self, result, "unmanaged conflict")
+        assert_failure_contains(self, result, str(target))
+        self.assertEqual((target / "SKILL.md").read_text(encoding="utf-8"), "operator rewrite\n")
+        self.assertEqual(local_only.read_text(encoding="utf-8"), "operator note\n")
+
+    def test_state_listed_skill_replaced_without_marker_fails_loudly(self) -> None:
+        fixture = self.add_fixture("state-listed-replaced")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        target = install.target(".agents", "reckon")
+        shutil.rmtree(target)
+        target.mkdir()
+        replacement = target / "SKILL.md"
+        replacement.write_text("operator replacement\n", encoding="utf-8")
+
+        result = install.run_installer("install")
+
+        assert_failure_contains(self, result, "unmanaged conflict")
+        assert_failure_contains(self, result, str(target))
+        self.assertEqual(replacement.read_text(encoding="utf-8"), "operator replacement\n")
+        self.assertFalse((target / MARKER_NAME).exists())
+
+    def test_state_listed_skill_with_valid_marker_updates_normally(self) -> None:
+        fixture = self.add_fixture("state-listed-valid-marker")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        body = "---\nname: orient\n---\n# Orient v2\n"
+        fixture.write("skills/orient/SKILL.md", body)
+        fixture.commit("update orient")
+        sha = fixture.head_sha()
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        for root in [".claude", ".agents"]:
+            target = install.target(root, "orient")
+            self.assertEqual((target / "SKILL.md").read_text(encoding="utf-8"), body)
+            self.assertIn(
+                f"source-sha={sha}\n",
+                (target / MARKER_NAME).read_text(encoding="utf-8"),
+            )
+
 
     def test_legacy_installed_entry_is_a_named_conflict_directing_to_legacy_uninstall(self) -> None:
         fixture = self.add_fixture("legacy-conflict")
