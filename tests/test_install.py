@@ -13,6 +13,8 @@ import textwrap
 import unittest
 from pathlib import Path
 
+from tooling.principles_config import PrinciplesCorpusConfig, load_principles_config
+
 
 ROOT = Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "scripts" / "install"
@@ -166,7 +168,7 @@ class InstallRun:
         self,
         *args: str,
         include_state_dir: bool = True,
-        env: dict[str, str] | None = None,
+        env: dict[str, str | None] | None = None,
     ) -> subprocess.CompletedProcess[str]:
         self.test.assertTrue(INSTALLER.is_file(), f"installer missing at {INSTALLER}")
         command = [
@@ -185,7 +187,11 @@ class InstallRun:
             "XDG_CONFIG_HOME": str(self.home / ".config"),
         }
         if env:
-            run_env.update(env)
+            for key, value in env.items():
+                if value is None:
+                    run_env.pop(key, None)
+                else:
+                    run_env[key] = value
         return run(command, self.source, env=run_env)
 
     def target(self, root: str, name: str) -> Path:
@@ -300,6 +306,45 @@ class SelfInstallTests(unittest.TestCase):
         )
         self.assertFalse((install.runtime_root() / "principles" / ".git").exists())
 
+    def test_home_option_supplies_derived_paths_over_ambient_environment(self) -> None:
+        fixture = self.add_fixture("home-derived-paths")
+        corpus = self.make_corpus_repository("home-derived")
+        install = InstallRun(self, fixture.root)
+        ambient_home = Path(tempfile.mkdtemp(prefix="groundwork-self-install-ambient-home-"))
+        ambient_state = Path(tempfile.mkdtemp(prefix="groundwork-self-install-ambient-state-"))
+        self.addCleanup(lambda: shutil.rmtree(ambient_home, ignore_errors=True))
+        self.addCleanup(lambda: shutil.rmtree(ambient_state, ignore_errors=True))
+
+        result = install.run_installer(
+            "install",
+            "--corpus-git",
+            f"file://{corpus}",
+            include_state_dir=False,
+            env={
+                "HOME": str(ambient_home),
+                "XDG_CONFIG_HOME": None,
+                "XDG_STATE_HOME": str(ambient_state),
+            },
+        )
+
+        assert_success(self, result)
+        self.assertTrue(install.config_file().is_file())
+        self.assertEqual(
+            load_principles_config(install.config_file()),
+            PrinciplesCorpusConfig(source="git", url=f"file://{corpus}"),
+        )
+        self.assertFalse(
+            (ambient_home / ".config" / "groundwork").exists(),
+            "ambient HOME config tree must be untouched",
+        )
+        self.assertTrue(
+            (install.home / ".local" / "state" / "groundwork" / "install.tsv").is_file()
+        )
+        self.assertFalse(
+            (ambient_state / "groundwork").exists(),
+            "ambient XDG_STATE_HOME must not receive derived state",
+        )
+
 
     def test_absent_input_honors_existing_config(self) -> None:
         fixture = self.add_fixture("existing-config")
@@ -333,6 +378,22 @@ class SelfInstallTests(unittest.TestCase):
         assert_success(self, result)
         after = install.config_file().stat()
         self.assertEqual((before.st_ino, before.st_mtime_ns), (after.st_ino, after.st_mtime_ns))
+
+    def test_explicit_corpus_input_replaces_invalid_existing_config(self) -> None:
+        fixture = self.add_fixture("explicit-input-replaces-invalid-config")
+        corpus = self.make_corpus_repository("recovery")
+        install = InstallRun(self, fixture.root)
+        url = f"file://{corpus}"
+        install.config_file().parent.mkdir(parents=True)
+        install.config_file().write_text("[corpus\n", encoding="utf-8")
+
+        result = install.run_installer("install", "--corpus-git", url)
+
+        assert_success(self, result)
+        self.assertEqual(
+            load_principles_config(install.config_file()),
+            PrinciplesCorpusConfig(source="git", url=url),
+        )
 
 
     def stat_snapshot(self, *directories: Path) -> dict[str, tuple[int, int]]:
@@ -535,6 +596,11 @@ class SelfInstallTests(unittest.TestCase):
         assert_failure_contains(self, result, "cannot fetch corpus repository")
         for surface in [".claude", ".agents", ".groundwork"]:
             self.assertFalse((install.home / surface).exists(), f"{surface} must be untouched")
+        self.assertEqual(
+            list(install.home.glob(".groundwork.corpus.*")),
+            [],
+            "failed materialization must remove corpus staging directories",
+        )
 
     def test_no_shell_startup_file_created_or_modified(self) -> None:
         fixture = self.add_fixture("no-startup-files")

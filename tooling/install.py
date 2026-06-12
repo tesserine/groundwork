@@ -81,6 +81,7 @@ def parse_args(argv: list[str], environment: dict[str, str]) -> Options:
 
     source = Path(".")
     home = Path(environment["HOME"]) if environment.get("HOME") else None
+    home_from_argument = False
     state_dir: Path | None = None
     corpus_flags: dict[str, str | bool] = {}
     index = 0
@@ -93,6 +94,7 @@ def parse_args(argv: list[str], environment: dict[str, str]) -> Options:
             index += 2
         elif flag == "--home":
             home = Path(arguments[index + 1])
+            home_from_argument = True
             index += 2
         elif flag == "--state-dir":
             state_dir = Path(arguments[index + 1])
@@ -116,11 +118,13 @@ def parse_args(argv: list[str], environment: dict[str, str]) -> Options:
     corpus_input = parse_corpus_input(corpus_flags)
     home = home.resolve()
     if state_dir is None:
-        xdg_state_home = environment.get("XDG_STATE_HOME")
+        xdg_state_home = None if home_from_argument else environment.get("XDG_STATE_HOME")
         state_root = Path(xdg_state_home) if xdg_state_home else home / ".local" / "state"
         state_dir = state_root / "groundwork"
     config_environment = dict(environment)
-    config_environment.setdefault("HOME", str(home))
+    if home_from_argument:
+        config_environment.pop("XDG_CONFIG_HOME", None)
+    config_environment["HOME"] = str(home)
     return Options(
         mode=mode,
         source=source.resolve(),
@@ -496,7 +500,11 @@ def record_corpus_config(options: Options) -> None:
     if options.corpus_input is None:
         return
     if options.config_path.exists():
-        if load_principles_config(options.config_path) == options.corpus_input:
+        try:
+            existing_config = load_principles_config(options.config_path)
+        except PrinciplesConfigError:
+            existing_config = None
+        if existing_config == options.corpus_input:
             return
     write_principles_config(options.corpus_input, options.config_path)
 
@@ -508,7 +516,11 @@ def stage_corpus(options: Options, config: PrinciplesCorpusConfig) -> Path:
     index-less corpus aborts the run with nothing changed."""
     staging_parent = Path(tempfile.mkdtemp(prefix=".groundwork.corpus.", dir=options.home))
     staged = staging_parent / "corpus"
-    materialize(config, embedded_corpus_path(options.source), staged)
+    try:
+        materialize(config, embedded_corpus_path(options.source), staged)
+    except BaseException:
+        shutil.rmtree(staging_parent, ignore_errors=True)
+        raise
     return staged
 
 
