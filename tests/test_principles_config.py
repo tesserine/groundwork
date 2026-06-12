@@ -1,0 +1,156 @@
+import tempfile
+import unittest
+from pathlib import Path
+
+from tooling.principles_config import (
+    EMBEDDED_CORPUS_PATH,
+    PrinciplesConfigError,
+    PrinciplesCorpusConfig,
+    default_config_path,
+    load_principles_config,
+    parse_principles_config,
+    resolved_corpus_path,
+)
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class ZeroConfigDefaultTests(unittest.TestCase):
+    """The zero-config path is first-class: every absent-configuration shape
+    selects the embedded default."""
+
+    def test_missing_config_file_selects_embedded_default(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config = load_principles_config(Path(directory) / "principles.toml")
+
+        self.assertEqual(config, PrinciplesCorpusConfig.embedded())
+
+    def test_empty_document_selects_embedded_default(self) -> None:
+        config = parse_principles_config({})
+
+        self.assertEqual(config, PrinciplesCorpusConfig.embedded())
+
+    def test_empty_config_file_selects_embedded_default(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_file = Path(directory) / "principles.toml"
+            config_file.write_text("", encoding="utf-8")
+
+            config = load_principles_config(config_file)
+
+        self.assertEqual(config, PrinciplesCorpusConfig.embedded())
+
+    def test_explicit_embedded_source_selects_embedded_default(self) -> None:
+        config = parse_principles_config({"corpus": {"source": "embedded"}})
+
+        self.assertEqual(config, PrinciplesCorpusConfig.embedded())
+
+
+class ConfiguredSourceTests(unittest.TestCase):
+    def test_local_path_source_parses_to_absolute_path(self) -> None:
+        config = parse_principles_config({"corpus": {"source": "path", "path": "/srv/corpus"}})
+
+        self.assertEqual(config.source, "path")
+        self.assertEqual(config.path, Path("/srv/corpus"))
+
+    def test_git_source_parses_url_and_optional_ref(self) -> None:
+        config = parse_principles_config(
+            {"corpus": {"source": "git", "url": "https://example.org/owner/corpus", "ref": "v1.0.0"}}
+        )
+
+        self.assertEqual(config.source, "git")
+        self.assertEqual(config.url, "https://example.org/owner/corpus")
+        self.assertEqual(config.ref, "v1.0.0")
+
+    def test_git_source_ref_defaults_to_none(self) -> None:
+        config = parse_principles_config(
+            {"corpus": {"source": "git", "url": "https://example.org/owner/corpus"}}
+        )
+
+        self.assertIsNone(config.ref)
+
+    def test_sample_external_corpus_config_file_validates(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_file = Path(directory) / "principles.toml"
+            config_file.write_text(
+                '[corpus]\nsource = "git"\nurl = "https://example.org/owner/corpus"\n',
+                encoding="utf-8",
+            )
+
+            config = load_principles_config(config_file)
+
+        self.assertEqual(config.source, "git")
+
+
+class InvalidConfigTests(unittest.TestCase):
+    """A present configuration never silently degrades to the default."""
+
+    def test_unknown_source_is_rejected(self) -> None:
+        with self.assertRaises(PrinciplesConfigError):
+            parse_principles_config({"corpus": {"source": "carrier-pigeon"}})
+
+    def test_git_source_without_url_is_rejected(self) -> None:
+        with self.assertRaises(PrinciplesConfigError):
+            parse_principles_config({"corpus": {"source": "git"}})
+
+    def test_path_source_without_path_is_rejected(self) -> None:
+        with self.assertRaises(PrinciplesConfigError):
+            parse_principles_config({"corpus": {"source": "path"}})
+
+    def test_relative_corpus_path_is_rejected_with_named_error(self) -> None:
+        with self.assertRaises(PrinciplesConfigError) as caught:
+            parse_principles_config({"corpus": {"source": "path", "path": "relative/corpus"}})
+
+        self.assertIn("corpus/path", caught.exception.paths)
+
+    def test_unknown_top_level_key_is_rejected(self) -> None:
+        with self.assertRaises(PrinciplesConfigError):
+            parse_principles_config({"corpse": {"source": "embedded"}})
+
+    def test_extraneous_key_on_embedded_source_is_rejected(self) -> None:
+        with self.assertRaises(PrinciplesConfigError):
+            parse_principles_config(
+                {"corpus": {"source": "embedded", "url": "https://example.org/owner/corpus"}}
+            )
+
+    def test_invalid_toml_is_rejected_with_named_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config_file = Path(directory) / "principles.toml"
+            config_file.write_text("[corpus\n", encoding="utf-8")
+
+            with self.assertRaises(PrinciplesConfigError) as caught:
+                load_principles_config(config_file)
+
+        self.assertIn("<toml>", caught.exception.paths)
+
+
+class NamedConceptTests(unittest.TestCase):
+    """The configured source and the resolved local corpus are distinct,
+    named concepts."""
+
+    def test_default_config_path_honors_xdg_config_home(self) -> None:
+        path = default_config_path({"XDG_CONFIG_HOME": "/etc/xdg-test"})
+
+        self.assertEqual(path, Path("/etc/xdg-test/groundwork/principles.toml"))
+
+    def test_default_config_path_falls_back_to_home_dot_config(self) -> None:
+        path = default_config_path({"HOME": "/home/someone"})
+
+        self.assertEqual(path, Path("/home/someone/.config/groundwork/principles.toml"))
+
+    def test_default_config_path_without_home_raises_named_error(self) -> None:
+        with self.assertRaises(PrinciplesConfigError):
+            default_config_path({})
+
+    def test_resolved_corpus_path_is_stable_under_runtime_root(self) -> None:
+        self.assertEqual(
+            resolved_corpus_path("/home/someone/.groundwork"),
+            Path("/home/someone/.groundwork/principles"),
+        )
+
+    def test_embedded_corpus_path_is_in_tree(self) -> None:
+        self.assertEqual(EMBEDDED_CORPUS_PATH, ROOT / "principles")
+
+
+if __name__ == "__main__":
+    unittest.main()

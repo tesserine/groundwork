@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/principles-config.schema.json",
+  "title": "Principles corpus configuration",
+  "description": "Deployment-owned selection of the principles corpus that reckon consults during Orient. The file lives outside the methodology tree (default: ${XDG_CONFIG_HOME:-~/.config}/groundwork/principles.toml) and declares the configured SOURCE of the corpus; the resolution layer materializes that source into the resolved local corpus that reckon actually reads. An absent file, an empty document, or an absent corpus table all select the embedded default corpus.",
+  "type": "object",
+  "properties": {
+    "corpus": {
+      "description": "Where the principles corpus comes from. Discriminated by `source`.",
+      "type": "object",
+      "oneOf": [
+        {
+          "description": "The minimal default corpus shipped in the groundwork tree. Zero-config, offline-capable; this is the first-class ordinary path, not an error path.",
+          "properties": {
+            "source": { "const": "embedded" }
+          },
+          "required": ["source"],
+          "additionalProperties": false
+        },
+        {
+          "description": "A corpus already on the local filesystem: an absolute path to a directory of principle documents.",
+          "properties": {
+            "source": { "const": "path" },
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Absolute path to the corpus directory."
+            }
+          },
+          "required": ["source", "path"],
+          "additionalProperties": false
+        },
+        {
+          "description": "A remote git repository holding the corpus, fetched once at setup into the resolved local corpus location — never live-fetched during reasoning. Example value: https://github.com/pentaxis93/principles (the canonical corpus for Tesserine's own deployments).",
+          "properties": {
+            "source": { "const": "git" },
+            "url": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Clone URL of the corpus repository."
+            },
+            "ref": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Optional git ref (branch, tag, or commit) to materialize; the repository's default branch when absent."
+            }
+          },
+          "required": ["source", "url"],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}
