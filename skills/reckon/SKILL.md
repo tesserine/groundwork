@@ -11,8 +11,8 @@ description: >-
   earning its chain (momentum). Dead reckoning: advance from an established
   fix using trusted constants.
 metadata:
-  version: "5.1.0"
-  updated: "2026-06-11"
+  version: "5.2.0"
+  updated: "2026-06-12"
 ---
 
 # Reckon
@@ -96,26 +96,20 @@ to optimize — they are constants that govern how verified constraints
 compose into solutions. Select the relevant ones during Orient; they fire
 during Reconstruct.
 
-The principles are defined in the canonical corpus at
-[pentaxis93/principles](https://github.com/pentaxis93/principles), not here
-— they are consulted, never duplicated, which is itself one of them
-([Single Home](https://github.com/pentaxis93/principles/blob/main/principles/single-home.md)).
-Consult the [corpus index](https://github.com/pentaxis93/principles#readme)
-during Orient and select what governs reasoning in this domain. What stays
-in this skill is the cognition methodology — the move, the chain
-discipline, the recognition-and-corrective machinery — not the principle
-definitions.
+The principles are defined in the resolved principles corpus, not here —
+they are consulted, never duplicated. Which corpus that is resolves
+through methodology configuration, and it is materialized locally at
+setup: in an installed deployment the resolved corpus lives at
+`~/.groundwork/principles/`; in a bare groundwork checkout it is the
+embedded default at `principles/`. (Selection and lifecycle:
+`docs/principles-corpus.md` in the groundwork repository.)
 
-Reckon's two faces resolve to three universals that govern most reasoning
-here:
-
-- **Position** grounds in [Grounding](https://github.com/pentaxis93/principles/blob/main/principles/grounding.md): reason from what is needed, not from what exists — an adjacent problem's solution is evidence, not a template.
-- **Momentum** answers to [Traceability](https://github.com/pentaxis93/principles/blob/main/principles/traceability.md): every inference earns its chain back to ground or principle.
-- **Shape** answers to [Parsimony](https://github.com/pentaxis93/principles/blob/main/principles/parsimony.md): everything earns its place — among rival designs meeting the same constraints, fewer moving parts win until a constraint demands more.
-
-The in-file register these three replace is classified item by item in the
-corpus [SOURCES.md](https://github.com/pentaxis93/principles/blob/main/SOURCES.md),
-Register 5.
+During Orient, read the corpus index (`PRINCIPLES.md` or `README.md` at
+the corpus root) and select what governs reasoning in this domain. The
+corpus speaks for itself: no principle is privileged in advance of
+Orient, and selection is per-domain, per-inquiry. What stays in this
+skill is the cognition methodology — the move, the chain discipline, the
+recognition-and-corrective machinery — not the principle definitions.
 
 ## Recognition Index
 
@@ -191,6 +185,6 @@ right, but a chain that cannot be shown cannot be trusted).
 *The default is to float — in inherited frames, borrowed categories,
 accepted costs, unquestioned structures, precedent as constraint,
 descriptions of what is, and analogical reasoning from correct ground.
-Orient returns you to what is needed. Grounding returns you to what is
-true. Principles give you direction. The chain keeps you honest. Reckon
-from there.*
+Orient returns you to what is needed. Verify returns you to what is
+true. The selected principles give you direction. The chain keeps you
+honest. Reckon from there.*

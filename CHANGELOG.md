@@ -61,6 +61,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Reckon's Orient now points at the configured corpus** (reckon 5.2.0).
+  §Navigational Principles is a clean pointer to the resolved local corpus
+  (installed: `~/.groundwork/principles/`; bare checkout: in-tree
+  `principles/`): the inline `pentaxis93/principles` URLs, the privileged
+  three-principle pre-selection, and the corpus-register mapping note are
+  deleted — not relocated. Orient alone selects the governing principles,
+  per domain, from the corpus index; the corpus speaks for itself
+  (closes #402).
 - Stale principle-authority references healed: ADR-0002 and ADR-0003 now
   trace Sovereignty, Parsimony, and Scale-Honest Design to the canonical
   corpus at [pentaxis93/principles](https://github.com/pentaxis93/principles)
