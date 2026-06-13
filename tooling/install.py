@@ -278,6 +278,10 @@ def converge_runtime_bundle(options: Options, sha: str) -> None:
         if runtime_root.is_dir() and tree_payload(staging, include_marker=True) == bundle_payload(
             runtime_root
         ):
+            # Byte-identical contents do not imply correct modes: restore the
+            # resolver's executable bit if it drifted, since that is not
+            # captured by the payload comparison.
+            ensure_resolver_executable(runtime_root / "bin" / "groundwork-mechanic")
             return
         runtime_root.mkdir(parents=True, exist_ok=True)
         for child in RUNTIME_BUNDLE_CHILDREN:
@@ -289,6 +293,16 @@ def converge_runtime_bundle(options: Options, sha: str) -> None:
             (staging / child).replace(current)
     finally:
         shutil.rmtree(staging, ignore_errors=True)
+
+
+def ensure_resolver_executable(resolver: Path) -> None:
+    """Add the execute bits to the resolver if missing; idempotent, so it
+    leaves an already-executable resolver (and its mtime) untouched."""
+    if not resolver.is_file():
+        return
+    mode = resolver.stat().st_mode
+    if mode & 0o111 != 0o111:
+        resolver.chmod(mode | 0o111)
 
 
 def bundle_payload(runtime_root: Path) -> dict[str, bytes]:
@@ -323,6 +337,18 @@ def marker_matches(target: Path, source: Path, sha: str, kind: str, name: str) -
     if not marker.is_file():
         return False
     return marker.read_text(encoding="utf-8") == marker_content(source, sha, kind, name)
+
+
+def marker_is_ours(target: Path) -> bool:
+    """Ownership authority, independent of which commit the marker records.
+
+    A managed entry stays ours across version changes and across a run that
+    updated the marker but failed before recording state — so ownership is
+    the `managed-by` line alone, never the recorded source-sha."""
+    marker = target / MARKER_NAME
+    if not marker.is_file():
+        return False
+    return f"managed-by={MANAGED_BY}\n" in marker.read_text(encoding="utf-8")
 
 
 def tree_payload(directory: Path, *, include_marker: bool = False) -> dict[str, bytes]:
@@ -383,16 +409,14 @@ def write_state(options: Options, sha: str, skills: list[str]) -> None:
 
 
 def state_owns_target(
-    options: Options,
     state_rows: list[tuple[str, str, str, str, str]],
     target: Path,
 ) -> bool:
-    """A state row is only evidence; the marker is the ownership authority."""
-    return any(
-        row_target == str(target)
-        and marker_matches(target, options.source, sha, kind, name)
-        for row_target, name, kind, sha, _root in state_rows
-    )
+    """Owned iff state records this target path and it still carries our
+    marker. The marker's recorded sha is deliberately not consulted — a
+    partially-failed update can leave the marker ahead of the state row,
+    and the entry is still ours."""
+    return any(row[0] == str(target) for row in state_rows) and marker_is_ours(target)
 
 
 def install_skill(source: Path, sha: str, name: str, target: Path) -> None:
@@ -432,7 +456,7 @@ def preflight_conflicts(options: Options, skills: list[str]) -> None:
     for root in target_roots(options.home):
         for name in skills:
             target = root / name
-            if target.exists() and not state_owns_target(options, state_rows, target):
+            if target.exists() and not state_owns_target(state_rows, target):
                 conflicts.append(target)
     runtime_root = options.home / ".groundwork"
     if runtime_root.exists() and not (runtime_root / MARKER_NAME).is_file():
@@ -484,7 +508,7 @@ def converge_skills(options: Options, sha: str, skills: list[str]) -> None:
             if skill_is_current(options, state_rows, sha, name, root, desired):
                 continue
             if (
-                state_owns_target(options, state_rows, target)
+                state_owns_target(state_rows, target)
                 and target.is_dir()
                 and tree_payload(target) == desired
             ):

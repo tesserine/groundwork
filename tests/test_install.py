@@ -6,6 +6,7 @@ runtime bundle, and principles-corpus recording + materialization. It never
 delivers protocol content — that is the runtime's channel.
 """
 
+import os
 import shutil
 import subprocess
 import tempfile
@@ -667,6 +668,45 @@ class SelfInstallTests(unittest.TestCase):
             {path.name for path in install.home.iterdir()},
             {".claude", ".agents", ".groundwork"},
         )
+
+    def test_marker_owned_entry_with_stale_state_sha_is_not_a_conflict(self) -> None:
+        fixture = self.add_fixture("partial-failure-recovery")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        # Simulate a later run that updated the skill marker to a new
+        # source-sha but failed before rewriting install.tsv: the marker and
+        # the state row now disagree on the sha, though both are this
+        # installer's own records.
+        marker = install.target(".claude", "orient") / ".groundwork-managed"
+        marker.write_text(
+            marker.read_text(encoding="utf-8").replace(
+                f"source-sha={fixture.head_sha()}", "source-sha=0" * 1
+            ),
+            encoding="utf-8",
+        )
+        stale = marker.read_text(encoding="utf-8")
+        self.assertIn("source-sha=0\n", stale)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        self.assertIn(
+            f"source-sha={fixture.head_sha()}",
+            (install.target(".claude", "orient") / ".groundwork-managed").read_text(encoding="utf-8"),
+        )
+
+    def test_rerun_restores_resolver_executable_bit(self) -> None:
+        fixture = self.add_fixture("resolver-mode-drift")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        resolver = install.runtime_root() / "bin" / "groundwork-mechanic"
+        resolver.chmod(0o644)
+        self.assertFalse(os.access(resolver, os.X_OK))
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        self.assertTrue(os.access(resolver, os.X_OK), "rerun must restore the resolver executable bit")
 
     def test_state_lives_under_self_install_namespace_distinct_from_legacy(self) -> None:
         fixture = self.add_fixture("state-namespace")
