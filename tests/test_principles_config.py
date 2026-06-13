@@ -1,5 +1,6 @@
 import json
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -12,7 +13,9 @@ from tooling.principles_config import (
     default_config_path,
     load_principles_config,
     parse_principles_config,
+    render_principles_config,
     resolved_corpus_path,
+    write_principles_config,
 )
 
 
@@ -153,6 +156,46 @@ class NamedConceptTests(unittest.TestCase):
 
     def test_embedded_corpus_path_is_in_tree(self) -> None:
         self.assertEqual(EMBEDDED_CORPUS_PATH, ROOT / "principles")
+
+
+class RenderConfigTests(unittest.TestCase):
+    """Rendering produces canonical TOML the parser reads back to an equal
+    config — the recording surface the self-installer writes operator corpus
+    inputs through."""
+
+    CONFIGS = [
+        PrinciplesCorpusConfig.embedded(),
+        PrinciplesCorpusConfig(source="path", path=Path("/srv/corpus")),
+        PrinciplesCorpusConfig(source="git", url="https://example.org/owner/corpus"),
+        PrinciplesCorpusConfig(source="git", url="https://example.org/owner/corpus", ref="v1.0.0"),
+    ]
+
+    def test_render_round_trips_every_source_kind(self) -> None:
+        for config in self.CONFIGS:
+            with self.subTest(config=config):
+                rendered = render_principles_config(config)
+
+                self.assertEqual(parse_principles_config(tomllib.loads(rendered)), config)
+
+    def test_render_escapes_quotes_and_backslashes_in_operator_values(self) -> None:
+        config = PrinciplesCorpusConfig(
+            source="git",
+            url='https://example.org/o"dd\\corpus',
+            ref='re"f\\1',
+        )
+
+        rendered = render_principles_config(config)
+
+        self.assertEqual(parse_principles_config(tomllib.loads(rendered)), config)
+
+    def test_write_creates_parent_directories_and_loads_back_equal(self) -> None:
+        config = PrinciplesCorpusConfig(source="git", url="https://example.org/owner/corpus")
+        with tempfile.TemporaryDirectory() as directory:
+            config_file = Path(directory) / "groundwork" / "principles.toml"
+
+            write_principles_config(config, config_file)
+
+            self.assertEqual(load_principles_config(config_file), config)
 
 
 class SchemaAgreementTests(unittest.TestCase):

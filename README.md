@@ -84,11 +84,53 @@ checkout reasons offline, out of the box. Deployments that want a richer
 corpus configure one (any git repository or local directory).
 → [`docs/principles-corpus.md`](docs/principles-corpus.md)
 
+## Install for Runtime-Driven Deployments
+
+In a runtime-driven deployment, a protocol runtime executes the methodology
+through the methodology interface contract and delivers protocol instruction
+content at execution time — so protocols are never installed for agent
+discovery. What that channel does not deliver, `scripts/install` installs from
+a clean checkout, idempotently and with no root or sudo requirement:
+
+```bash
+scripts/install install --corpus-git https://example.org/owner/corpus
+```
+
+- **Skills, verbatim** — every `skills/<name>/` carrying a `SKILL.md` lands
+  unmodified in `~/.claude/skills/<name>` and `~/.agents/skills/<name>`.
+  Skills are agent-invoked by judgment and are not runtime-delivered, so they
+  install natively; no projection or rewriting of any kind.
+- **The methodology runtime** — `~/.groundwork` with the manifest, the
+  mechanic library, the forge-operations module, and
+  `bin/groundwork-mechanic`.
+- **The principles corpus** — the `--corpus-git URL [--corpus-ref REF]`,
+  `--corpus-path PATH`, or `--corpus-embedded` operator input is recorded in
+  the deployment-owned `${XDG_CONFIG_HOME:-~/.config}/groundwork/principles.toml`
+  and materialized at `~/.groundwork/principles` through the resolution layer.
+  Without an input an existing configuration is honored; without either, the
+  embedded default resolves — zero-config stays the ordinary path.
+
+Re-running converges to the same state with exit 0; skills no longer shipped
+are removed; pre-existing content the installer does not own is reported as a
+named conflict, never overwritten or adopted (entries placed by the legacy
+`groundwork-install` are directed to its own uninstall). Content derives from
+the checkout's `HEAD` commit, recorded in each entry's ownership marker.
+`scripts/install uninstall` removes only marker-verified managed entries and
+leaves the deployment-owned config in place. State lives at
+`${XDG_STATE_HOME:-~/.local/state}/groundwork/install.tsv`. No shell startup
+file is created or modified by any run. Prerequisites: `git` and `python3`.
+
+The decision record is
+[ADR-0006](docs/architecture/decisions/0006-runtime-driven-self-install-surface.md).
+
 ## Interactive Installation
 
 Runa-served agents consume Groundwork through the methodology mount. Interactive
 Claude Code and Codex sessions can install the same skills and protocols into
-their local discovery directories from a pinned Groundwork checkout:
+their local discovery directories from a pinned Groundwork checkout. This
+protocols-as-skills projection serves deployments with no protocol runtime; it
+is deprecated in favor of the runtime-driven path above, and its retirement is
+tracked in [#415](https://github.com/tesserine/groundwork/issues/415):
 
 ```bash
 git checkout --detach v0.2.0

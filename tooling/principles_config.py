@@ -118,6 +118,39 @@ def load_principles_config(
     return parse_principles_config(document)
 
 
+def render_principles_config(config: PrinciplesCorpusConfig) -> str:
+    """Render a configured source as canonical TOML.
+
+    The recording surface for operator corpus inputs: the self-installer
+    writes what the operator supplied through here, and what this renders
+    always parses back to an equal config (round-trip invariant held by
+    tests/test_principles_config.py).
+    """
+    lines = ["[corpus]", f"source = {_toml_string(config.source)}"]
+    if config.path is not None:
+        lines.append(f"path = {_toml_string(str(config.path))}")
+    if config.url is not None:
+        lines.append(f"url = {_toml_string(config.url)}")
+    if config.ref is not None:
+        lines.append(f"ref = {_toml_string(config.ref)}")
+    return "\n".join(lines) + "\n"
+
+
+def write_principles_config(config: PrinciplesCorpusConfig, path: Path | str) -> None:
+    """Atomically record a configured source at ``path``, creating parents."""
+    config_path = Path(path)
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = config_path.with_name(config_path.name + ".tmp")
+    temporary.write_text(render_principles_config(config), encoding="utf-8")
+    temporary.replace(config_path)
+
+
+def _toml_string(value: str) -> str:
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    escaped = "".join(f"\\u{ord(ch):04x}" if ord(ch) < 0x20 or ch == "\x7f" else ch for ch in escaped)
+    return f'"{escaped}"'
+
+
 def parse_principles_config(document: dict[str, Any]) -> PrinciplesCorpusConfig:
     errors = _schema_errors(document)
     if errors:
