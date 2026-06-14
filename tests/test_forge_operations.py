@@ -616,6 +616,95 @@ cat "{response}"
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual(["https://todo.weforge.build/query", "4"], result.stdout.strip().splitlines())
 
+    def test_cli_resolves_sourcehut_repo_only_values_without_tracker_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_sourcehut_repository_probe_methodology(root)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "run",
+                    "probe",
+                ],
+                env=forge_cli_environment(
+                    RUNA_TARGET_PROJECT=target_project_payload(
+                        "sourcehut",
+                        repositories=[
+                            {
+                                "selector": "weforge",
+                                "owner": "operator",
+                                "name": "weforge",
+                                "host": "weforge.build",
+                            }
+                        ],
+                        trackers=[],
+                    ),
+                ),
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(
+            [
+                "operator/weforge",
+                "https://git.weforge.build/query",
+                "git@git.weforge.build:~operator/weforge",
+            ],
+            result.stdout.strip().splitlines(),
+        )
+
+    def test_cli_resolves_sourcehut_repo_only_values_with_ambiguous_trackers(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_sourcehut_repository_probe_methodology(root)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "run",
+                    "probe",
+                ],
+                env=forge_cli_environment(
+                    RUNA_TARGET_PROJECT=target_project_payload(
+                        "sourcehut",
+                        repositories=[
+                            {
+                                "selector": "weforge",
+                                "owner": "operator",
+                                "name": "weforge",
+                                "host": "weforge.build",
+                            }
+                        ],
+                        trackers=[
+                            {"selector": "todo", "host": "todo.sr.ht", "tracker_id": "4"},
+                            {"selector": "bugs", "host": "todo.sr.ht", "tracker_id": "5"},
+                        ],
+                    ),
+                ),
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(
+            [
+                "operator/weforge",
+                "https://git.weforge.build/query",
+                "git@git.weforge.build:~operator/weforge",
+            ],
+            result.stdout.strip().splitlines(),
+        )
+
     def test_cli_names_missing_sourcehut_tracker_payload(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -1002,6 +1091,55 @@ cat "{response}"
                 purpose = "Tracker ID."
                 required = true
                 deployment_value = "tracker_id"
+
+                [outcome]
+                description = "Printed."
+                """
+            ).lstrip(),
+            encoding="utf-8",
+        )
+
+    def write_sourcehut_repository_probe_methodology(self, root: Path) -> None:
+        (root / "manifest.toml").write_text(
+            textwrap.dedent(
+                """
+                [[forge_tags]]
+                name = "sourcehut"
+
+                [[mechanics]]
+                name = "probe"
+                forge_tags = ["sourcehut"]
+                """
+            ).lstrip(),
+            encoding="utf-8",
+        )
+        (root / "mechanics" / "sourcehut").mkdir(parents=True, exist_ok=True)
+        (root / "mechanics" / "sourcehut" / "probe.toml").write_text(
+            textwrap.dedent(
+                """
+                name = "probe"
+                purpose = "Probe repository-only SourceHut deployment-value resolution."
+                forge_tag = "sourcehut"
+                default_invocation = 'printf "%s\\n%s\\n%s\\n" "$repository" "$git_url" "$remote"'
+                examples = ['printf "%s\\n" "$remote"']
+
+                [[parameters]]
+                name = "repository"
+                purpose = "Repository owner/name."
+                required = true
+                deployment_value = "repository"
+
+                [[parameters]]
+                name = "git_url"
+                purpose = "Git query URL."
+                required = true
+                deployment_value = "git_query_url"
+
+                [[parameters]]
+                name = "remote"
+                purpose = "Git SSH remote."
+                required = true
+                deployment_value = "ssh_remote"
 
                 [outcome]
                 description = "Printed."

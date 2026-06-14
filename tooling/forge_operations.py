@@ -6,7 +6,7 @@ import os
 import subprocess
 import tomllib
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -263,27 +263,48 @@ def _resolve_deployment_value(
             f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`"
         )
     if forge_type == "sourcehut":
-        tracker = _selected_tracker(target_project, selectors.get("tracker_selector"))
-        repository = _selected_sourcehut_repository(target_project, tracker, selectors.get("repository_selector"))
+        tracker: Mapping[str, Any] | None = None
+        repository: Mapping[str, Any] | None = None
+
+        def selected_tracker() -> Mapping[str, Any]:
+            nonlocal tracker
+            if tracker is None:
+                tracker = _selected_tracker(target_project, selectors.get("tracker_selector"))
+            return tracker
+
+        def selected_repository() -> Mapping[str, Any]:
+            nonlocal repository
+            if repository is None:
+                repository = _selected_sourcehut_repository(
+                    target_project,
+                    selectors.get("repository_selector"),
+                    selectors.get("tracker_selector"),
+                )
+            return repository
+
         if deployment_value == "owner":
-            return _required_string_field(tracker, "owner", "tracker")
+            return _required_string_field(selected_tracker(), "owner", "tracker")
         if deployment_value == "name":
-            return _required_string_field(tracker, "name", "tracker")
+            return _required_string_field(selected_tracker(), "name", "tracker")
         if deployment_value == "repository":
+            repository = selected_repository()
             owner = _required_string_field(repository, "owner", "repository")
             name = _required_string_field(repository, "name", "repository")
             return f"{owner}/{name}"
         if deployment_value == "todo_query_url":
-            return f"https://todo.{_required_host(tracker, repository, 'tracker')}/query"
+            endpoint = _required_sourcehut_host(selected_tracker(), selected_repository, "tracker")
+            return f"https://todo.{endpoint}/query"
         if deployment_value == "git_query_url":
-            return f"https://git.{_required_host(repository, tracker, 'repository')}/query"
+            endpoint = _required_sourcehut_host(selected_repository(), selected_tracker, "repository")
+            return f"https://git.{endpoint}/query"
         if deployment_value == "ssh_remote":
-            endpoint = _required_host(repository, tracker, "repository")
+            repository = selected_repository()
+            endpoint = _required_sourcehut_host(repository, selected_tracker, "repository")
             owner = _required_string_field(repository, "owner", "repository")
             name = _required_string_field(repository, "name", "repository")
             return f"git@git.{endpoint}:~{owner}/{name}"
         if deployment_value == "tracker_id":
-            return _required_string_field(tracker, "tracker_id", "tracker")
+            return _required_string_field(selected_tracker(), "tracker_id", "tracker")
         if deployment_value == "repo_id":
             return _required_environment(environment, "GROUNDWORK_FORGE_REPO_ID")
         raise ForgeOperationError(
@@ -366,15 +387,24 @@ def _selected_tracker(target_project: Mapping[str, Any], selector: str | None) -
 
 def _selected_sourcehut_repository(
     target_project: Mapping[str, Any],
-    tracker: Mapping[str, Any],
     selector: str | None,
+    tracker_selector: str | None,
 ) -> Mapping[str, Any]:
     if selector:
         return _selected_repository(target_project, selector)
+    repositories = _target_project_items(target_project, "repositories", "repository")
+    if len(repositories) == 1:
+        return repositories[0]
+    if not repositories:
+        raise ForgeOperationError(f"{RUNA_TARGET_PROJECT} does not declare a repository")
+    tracker = _selected_tracker(target_project, tracker_selector)
     tracker_repository = tracker.get("repository")
     if isinstance(tracker_repository, str) and tracker_repository:
         return _selected_repository(target_project, tracker_repository)
-    return _selected_repository(target_project, None)
+    raise ForgeOperationError(
+        "repository_selector is required when the configured project declares multiple repositories: "
+        + ", ".join(_selectors(repositories))
+    )
 
 
 def _target_project_items(target_project: Mapping[str, Any], key: str, item_name: str) -> list[Mapping[str, Any]]:
@@ -400,11 +430,16 @@ def _required_string_field(item: Mapping[str, Any], key: str, item_name: str) ->
     return value
 
 
-def _required_host(primary: Mapping[str, Any], fallback: Mapping[str, Any], item_name: str) -> str:
+def _required_sourcehut_host(
+    primary: Mapping[str, Any],
+    fallback: Callable[[], Mapping[str, Any]],
+    item_name: str,
+) -> str:
     value = primary.get("host")
     if isinstance(value, str) and value:
         return value
-    fallback_value = fallback.get("host")
+    fallback_item = fallback()
+    fallback_value = fallback_item.get("host")
     if isinstance(fallback_value, str) and fallback_value:
         return fallback_value
     raise ForgeOperationError(f"configured {item_name} is missing required field `host`")
