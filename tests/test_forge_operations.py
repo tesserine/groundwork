@@ -36,14 +36,14 @@ def target_project_payload(
     trackers: list[dict[str, str]] | None = None,
 ) -> str:
     if repositories is None:
-        repositories = [
-            {
-                "selector": "default",
-                "owner": "tesserine",
-                "name": "groundwork",
-                "host": "github.com" if forge_type == "github" else "weforge.build",
-            }
-        ]
+        repository = {
+            "selector": "default",
+            "owner": "tesserine",
+            "name": "groundwork",
+        }
+        if forge_type == "sourcehut":
+            repository["host"] = "weforge.build"
+        repositories = [repository]
     return json.dumps(
         {
             "version": 1,
@@ -616,6 +616,50 @@ cat "{response}"
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual(["https://todo.weforge.build/query", "4"], result.stdout.strip().splitlines())
 
+    def test_cli_rejects_sourcehut_host_deployment_value_without_configured_host(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_sourcehut_tracker_probe_methodology(root)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "run",
+                    "probe",
+                ],
+                env=forge_cli_environment(
+                    RUNA_TARGET_PROJECT=target_project_payload(
+                        "sourcehut",
+                        repositories=[
+                            {
+                                "selector": "weforge",
+                                "owner": "operator",
+                                "name": "weforge",
+                            }
+                        ],
+                        trackers=[
+                            {
+                                "selector": "weforge",
+                                "repository": "weforge",
+                                "owner": "operator",
+                                "name": "weforge",
+                                "tracker_id": "4",
+                            }
+                        ],
+                    ),
+                ),
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("configured tracker is missing required field `host`", result.stderr)
+        self.assertNotIn("github.com", result.stderr)
+
     def test_cli_resolves_sourcehut_repo_only_values_without_tracker_payload(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -775,13 +819,11 @@ cat "{response}"
                         "selector": "runa",
                         "owner": "tesserine",
                         "name": "runa",
-                        "host": "github.com",
                     },
                     {
                         "selector": "groundwork",
                         "owner": "tesserine",
                         "name": "groundwork",
-                        "host": "github.com",
                     },
                 ]
             )
@@ -815,13 +857,11 @@ cat "{response}"
                         "selector": "runa",
                         "owner": "tesserine",
                         "name": "runa",
-                        "host": "github.com",
                     },
                     {
                         "selector": "groundwork",
                         "owner": "tesserine",
                         "name": "groundwork",
-                        "host": "github.com",
                     },
                 ]
             )
