@@ -30,6 +30,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Forge operation resolution now consumes runa's structured
+  `RUNA_TARGET_PROJECT` payload. `groundwork-mechanic` resolves
+  deployment-owned values from a selected configured repository or tracker,
+  accepts only selector inputs such as `repository_selector` and
+  `tracker_selector` from agents, and rejects the retired `RUNA_FORGE_*`
+  identity atoms.
 - README hero rewritten for the ecosystem README pass: groundwork positioned
   as software delivery expressed as an enforceable methodology — evidence-
   gated completion, CI-gated documentation coherence, forge-agnostic

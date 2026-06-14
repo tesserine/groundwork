@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import shlex
@@ -49,6 +50,39 @@ def assert_failure_contains(
 ) -> None:
     test.assertNotEqual(result.returncode, 0, "command unexpectedly succeeded")
     test.assertIn(expected, result.stderr)
+
+
+def sourcehut_project_environment(**values: str) -> dict[str, str]:
+    environment = {
+        **os.environ,
+        "PATH": "/usr/bin:/bin",
+        "RUNA_TARGET_PROJECT": json.dumps(
+            {
+                "version": 1,
+                "forge_type": "sourcehut",
+                "repositories": [
+                    {
+                        "selector": "weforge",
+                        "owner": "operator",
+                        "name": "weforge",
+                        "host": "weforge.build",
+                    }
+                ],
+                "trackers": [
+                    {
+                        "selector": "weforge",
+                        "repository": "weforge",
+                        "owner": "operator",
+                        "name": "weforge",
+                        "host": "weforge.build",
+                        "tracker_id": "4",
+                    }
+                ],
+            }
+        ),
+    }
+    environment.update(values)
+    return environment
 
 
 class MethodologyFixture:
@@ -247,7 +281,7 @@ class GroundworkInstallTests(unittest.TestCase):
         resolved = run(
             [str(resolver), "resolve", "close-out"],
             install.runtime_root(),
-            env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut"},
+            env=sourcehut_project_environment(),
         )
         assert_success(self, resolved)
         self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
@@ -294,7 +328,7 @@ class GroundworkInstallTests(unittest.TestCase):
             resolved = run(
                 argv,
                 install.runtime_root(),
-                env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut", "PATH": "/usr/bin:/bin"},
+                env=sourcehut_project_environment(),
             )
             assert_success(self, resolved)
             self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
@@ -331,7 +365,7 @@ class GroundworkInstallTests(unittest.TestCase):
         resolved = run(
             argv,
             install.runtime_root(),
-            env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut", "PATH": "/usr/bin:/bin"},
+            env=sourcehut_project_environment(),
         )
         assert_success(self, resolved)
         self.assertEqual("close-out[sourcehut]\n", resolved.stdout)

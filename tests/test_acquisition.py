@@ -55,6 +55,62 @@ def write_fake_command(path: Path, body: str) -> None:
     path.chmod(0o755)
 
 
+def target_project_payload(
+    forge_type: str = "github",
+    *,
+    owner: str = "tesserine",
+    name: str = "runa",
+) -> str:
+    repositories = [
+        {
+            "selector": name,
+            "owner": owner,
+            "name": name,
+            "host": "github.com" if forge_type == "github" else "weforge.build",
+        }
+    ]
+    trackers = []
+    if forge_type == "sourcehut":
+        trackers = [
+            {
+                "selector": name,
+                "repository": name,
+                "owner": owner,
+                "name": name,
+                "host": "weforge.build",
+                "tracker_id": "4",
+            }
+        ]
+    return json.dumps(
+        {
+            "version": 1,
+            "forge_type": forge_type,
+            "repositories": repositories,
+            "trackers": trackers,
+        }
+    )
+
+
+def append_github_target_project(project: Path, *, owner: str, name: str) -> None:
+    project_file = project / ".runa" / "project.toml"
+    content = project_file.read_text(encoding="utf-8")
+    project_file.write_text(
+        content
+        + f"""
+
+[target_project]
+forge_type = "github"
+
+[[target_project.repositories]]
+selector = "{name}"
+owner = "{owner}"
+name = "{name}"
+host = "github.com"
+""",
+        encoding="utf-8",
+    )
+
+
 class MaterializeTicketTests(unittest.TestCase):
     def test_github_ticket_materializes_to_schema_valid_adopted_work_unit(self) -> None:
         mechanic = resolve_operation(ROOT, "read-ticket", forge_type="github")
@@ -79,8 +135,7 @@ class MaterializeTicketTests(unittest.TestCase):
                 os.environ,
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    "RUNA_FORGE_OWNER": "tesserine",
-                    "RUNA_FORGE_NAME": "runa",
+                    "RUNA_TARGET_PROJECT": target_project_payload(owner="tesserine", name="runa"),
                 },
             ):
                 read = run_invocation(mechanic, {"ticket_number": "188"}, cwd=root)
@@ -149,10 +204,7 @@ class MaterializeTicketTests(unittest.TestCase):
                 os.environ,
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
-                    "RUNA_FORGE_OWNER": "operator",
-                    "RUNA_FORGE_NAME": "weforge",
-                    "RUNA_FORGE_TRACKER_ID": "4",
+                    "RUNA_TARGET_PROJECT": target_project_payload("sourcehut", owner="operator", name="weforge"),
                 },
             ):
                 read = run_invocation(
@@ -255,19 +307,17 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
                 cwd=project, capture_output=True, text=True,
             )
             self.assertEqual(init.returncode, 0, f"{init.stdout}\n{init.stderr}")
+            append_github_target_project(project, owner="tesserine", name="runa")
 
             forge_env = {
                 **os.environ,
                 "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                "RUNA_FORGE_OWNER": "tesserine",
-                "RUNA_FORGE_NAME": "runa",
             }
             with mock.patch.dict(
                 os.environ,
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    "RUNA_FORGE_OWNER": "tesserine",
-                    "RUNA_FORGE_NAME": "runa",
+                    "RUNA_TARGET_PROJECT": target_project_payload(owner="tesserine", name="runa"),
                 },
             ):
                 read = run_invocation(mechanic, {"ticket_number": "188"}, cwd=root)

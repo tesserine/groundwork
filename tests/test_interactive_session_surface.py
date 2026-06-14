@@ -52,19 +52,31 @@ def write_executable(path: Path, body: str) -> None:
     path.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
-def append_agent_command_config(project_dir: Path, command: list[Path]) -> None:
-    config_path = project_dir / ".runa" / "config.toml"
-    config = config_path.read_text(encoding="utf-8")
+def write_project_surface(project_dir: Path, command: list[Path]) -> None:
+    config_path = project_dir / ".runa" / "project.toml"
     quoted = ", ".join(json.dumps(str(part)) for part in command)
-    config_path.write_text(f"{config}\n[agent]\ncommand = [{quoted}]\n", encoding="utf-8")
+    config_path.write_text(
+        f"""
+[launch]
+command = [{quoted}]
+
+[target_project]
+forge_type = "github"
+
+[[target_project.repositories]]
+selector = "groundwork"
+owner = "tesserine"
+name = "groundwork"
+host = "github.com"
+""".lstrip(),
+        encoding="utf-8",
+    )
 
 
 def groundwork_env() -> dict[str, str]:
     env = os.environ.copy()
-    env.pop("RUNA_FORGE_TYPE", None)
-    env.pop("RUNA_FORGE_TRACKER_ID", None)
-    env["RUNA_FORGE_OWNER"] = "tesserine"
-    env["RUNA_FORGE_NAME"] = "groundwork"
+    for atom in ["RUNA_FORGE_TYPE", "RUNA_FORGE_TRACKER_ID", "RUNA_FORGE_OWNER", "RUNA_FORGE_NAME"]:
+        env.pop(atom, None)
     return env
 
 
@@ -131,7 +143,7 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                 fi
                 """,
             )
-            append_agent_command_config(
+            write_project_surface(
                 project_dir,
                 [agent_path, prompt_path, config_capture_path, runa_mcp, mcp_log_path],
             )

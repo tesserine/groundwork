@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
 import tomllib
@@ -9,10 +10,15 @@ from typing import Any, Mapping
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RUNA_FORGE_TYPE = "RUNA_FORGE_TYPE"
-RUNA_FORGE_OWNER = "RUNA_FORGE_OWNER"
-RUNA_FORGE_NAME = "RUNA_FORGE_NAME"
-RUNA_FORGE_TRACKER_ID = "RUNA_FORGE_TRACKER_ID"
+RUNA_TARGET_PROJECT = "RUNA_TARGET_PROJECT"
+RETIRED_RUNA_FORGE_ENVIRONMENT_ATOMS = (
+    "RUNA_FORGE_TYPE",
+    "RUNA_FORGE_OWNER",
+    "RUNA_FORGE_NAME",
+    "RUNA_FORGE_TRACKER_ID",
+)
+RESERVED_SELECTOR_PARAMETERS = {"repository_selector", "tracker_selector"}
+SUPPORTED_FORGE_TYPES = {"github", "sourcehut"}
 
 
 class ForgeOperationError(ValueError):
@@ -20,9 +26,10 @@ class ForgeOperationError(ValueError):
 
 
 def active_forge_type(environment: Mapping[str, str], override: str | None) -> str:
+    _reject_retired_runa_forge_environment_atoms(environment)
     if override:
         return override
-    return environment.get(RUNA_FORGE_TYPE) or "github"
+    return _target_project_forge_type(_target_project(environment))
 
 
 def resolve_operation(root: Path | str, operation: str, *, forge_type: str | None = None) -> dict[str, Any]:
@@ -51,7 +58,7 @@ def resolve_operation(root: Path | str, operation: str, *, forge_type: str | Non
 
 
 def inspect_invocation(mechanic: Mapping[str, Any], values: Mapping[str, str]) -> str:
-    unknown = sorted(set(values) - set(_parameters(mechanic)))
+    unknown = sorted(set(values) - set(_parameters(mechanic)) - RESERVED_SELECTOR_PARAMETERS)
     if unknown:
         raise ForgeOperationError(f"unknown parameter(s): {', '.join(unknown)}")
     return _invocation_body(mechanic)
@@ -59,14 +66,15 @@ def inspect_invocation(mechanic: Mapping[str, Any], values: Mapping[str, str]) -
 
 def render_shell_invocation(mechanic: Mapping[str, Any], values: Mapping[str, str]) -> tuple[str, dict[str, str]]:
     parameters = _parameters(mechanic)
+    call_values, selector_values = _split_selector_values(values)
     deployment_parameters = _deployment_parameters(mechanic)
-    provided_deployment_values = sorted(set(values) & set(deployment_parameters))
+    provided_deployment_values = sorted(set(call_values) & set(deployment_parameters))
     if provided_deployment_values:
         raise ForgeOperationError(
-            f"deployment-resolved parameter(s) must come from the configured forge environment: {', '.join(provided_deployment_values)}"
+            f"deployment-resolved parameter(s) must come from the configured project: {', '.join(provided_deployment_values)}"
         )
-    deployment_values = _deployment_parameter_values(mechanic, os.environ)
-    resolved_values = {**values, **deployment_values}
+    deployment_values = _deployment_parameter_values(mechanic, os.environ, selector_values)
+    resolved_values = {**call_values, **deployment_values}
     missing = [name for name, parameter in parameters.items() if parameter.get("required") and name not in resolved_values]
     if missing:
         raise ForgeOperationError(f"missing required parameter(s): {', '.join(sorted(missing))}")
@@ -100,7 +108,6 @@ def run_invocation(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Resolve and invoke Groundwork forge operations.")
     parser.add_argument("--root", default=str(ROOT), help="Groundwork methodology root. Defaults to this checkout.")
-    parser.add_argument("--forge-type", help="Active forge type override. Defaults to RUNA_FORGE_TYPE, then github.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     resolve_parser = subparsers.add_parser("resolve", help="Print the resolved mechanic path-equivalent name.")
@@ -122,7 +129,7 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
     try:
-        mechanic = resolve_operation(args.root, args.operation, forge_type=args.forge_type)
+        mechanic = resolve_operation(args.root, args.operation)
         if args.command == "resolve":
             print(f"{mechanic['name']}[{mechanic['forge_tag']}]")
             return 0
@@ -201,6 +208,7 @@ def _deployment_parameters(mechanic: Mapping[str, Any]) -> dict[str, str]:
 def _deployment_parameter_values(
     mechanic: Mapping[str, Any],
     environment: Mapping[str, str],
+    selectors: Mapping[str, str],
 ) -> dict[str, str]:
     deployments = _deployment_parameters(mechanic)
     if not deployments:
@@ -208,7 +216,7 @@ def _deployment_parameter_values(
     forge_type = mechanic.get("forge_tag")
     if not isinstance(forge_type, str):
         raise ForgeOperationError("deployment-resolved parameters require mechanic forge_tag")
-    resolved = _resolved_deployment_values(forge_type, set(deployments.values()), environment)
+    resolved = _resolved_deployment_values(forge_type, set(deployments.values()), environment, selectors)
     values: dict[str, str] = {}
     for name, deployment_value in deployments.items():
         values[name] = resolved[deployment_value]
@@ -219,9 +227,17 @@ def _resolved_deployment_values(
     forge_type: str,
     deployment_values: set[str],
     environment: Mapping[str, str],
+    selectors: Mapping[str, str],
 ) -> dict[str, str]:
+    _reject_retired_runa_forge_environment_atoms(environment)
+    target_project = _target_project(environment)
+    project_forge_type = _target_project_forge_type(target_project)
+    if project_forge_type != forge_type:
+        raise ForgeOperationError(
+            f"mechanic forge type `{forge_type}` does not match configured project forge type `{project_forge_type}`"
+        )
     return {
-        deployment_value: _resolve_deployment_value(forge_type, deployment_value, environment)
+        deployment_value: _resolve_deployment_value(forge_type, deployment_value, environment, target_project, selectors)
         for deployment_value in deployment_values
     }
 
@@ -230,41 +246,44 @@ def _resolve_deployment_value(
     forge_type: str,
     deployment_value: str,
     environment: Mapping[str, str],
+    target_project: Mapping[str, Any],
+    selectors: Mapping[str, str],
 ) -> str:
     if forge_type == "github":
+        repository = _selected_repository(target_project, selectors.get("repository_selector"))
         if deployment_value == "owner":
-            return _required_environment(environment, RUNA_FORGE_OWNER)
+            return _required_string_field(repository, "owner", "repository")
         if deployment_value == "name":
-            return _required_environment(environment, RUNA_FORGE_NAME)
+            return _required_string_field(repository, "name", "repository")
         if deployment_value == "repository":
-            owner = _required_environment(environment, RUNA_FORGE_OWNER)
-            name = _required_environment(environment, RUNA_FORGE_NAME)
+            owner = _required_string_field(repository, "owner", "repository")
+            name = _required_string_field(repository, "name", "repository")
             return f"{owner}/{name}"
         raise ForgeOperationError(
             f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`"
         )
     if forge_type == "sourcehut":
+        tracker = _selected_tracker(target_project, selectors.get("tracker_selector"))
+        repository = _selected_sourcehut_repository(target_project, tracker, selectors.get("repository_selector"))
         if deployment_value == "owner":
-            return _required_environment(environment, RUNA_FORGE_OWNER)
+            return _required_string_field(tracker, "owner", "tracker")
         if deployment_value == "name":
-            return _required_environment(environment, RUNA_FORGE_NAME)
+            return _required_string_field(tracker, "name", "tracker")
         if deployment_value == "repository":
-            owner = _required_environment(environment, RUNA_FORGE_OWNER)
-            name = _required_environment(environment, RUNA_FORGE_NAME)
+            owner = _required_string_field(repository, "owner", "repository")
+            name = _required_string_field(repository, "name", "repository")
             return f"{owner}/{name}"
         if deployment_value == "todo_query_url":
-            endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
-            return f"https://todo.{endpoint}/query"
+            return f"https://todo.{_required_host(tracker, repository, 'tracker')}/query"
         if deployment_value == "git_query_url":
-            endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
-            return f"https://git.{endpoint}/query"
+            return f"https://git.{_required_host(repository, tracker, 'repository')}/query"
         if deployment_value == "ssh_remote":
-            endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
-            owner = _required_environment(environment, RUNA_FORGE_OWNER)
-            name = _required_environment(environment, RUNA_FORGE_NAME)
+            endpoint = _required_host(repository, tracker, "repository")
+            owner = _required_string_field(repository, "owner", "repository")
+            name = _required_string_field(repository, "name", "repository")
             return f"git@git.{endpoint}:~{owner}/{name}"
         if deployment_value == "tracker_id":
-            return _required_environment(environment, RUNA_FORGE_TRACKER_ID)
+            return _required_string_field(tracker, "tracker_id", "tracker")
         if deployment_value == "repo_id":
             return _required_environment(environment, "GROUNDWORK_FORGE_REPO_ID")
         raise ForgeOperationError(
@@ -273,10 +292,128 @@ def _resolve_deployment_value(
     raise ForgeOperationError(f"forge type `{forge_type}` does not support deployment identity")
 
 
+def _split_selector_values(values: Mapping[str, str]) -> tuple[dict[str, str], dict[str, str]]:
+    call_values: dict[str, str] = {}
+    selector_values: dict[str, str] = {}
+    for name, value in values.items():
+        if name in RESERVED_SELECTOR_PARAMETERS:
+            selector_values[name] = str(value)
+        else:
+            call_values[name] = str(value)
+    return call_values, selector_values
+
+
+def _reject_retired_runa_forge_environment_atoms(environment: Mapping[str, str]) -> None:
+    present = sorted(atom for atom in RETIRED_RUNA_FORGE_ENVIRONMENT_ATOMS if environment.get(atom))
+    if present:
+        raise ForgeOperationError(
+            "retired runa forge environment atom(s) are not supported; use "
+            f"{RUNA_TARGET_PROJECT}: {', '.join(present)}"
+        )
+
+
+def _target_project(environment: Mapping[str, str]) -> Mapping[str, Any]:
+    raw_payload = _required_environment(environment, RUNA_TARGET_PROJECT)
+    try:
+        payload = json.loads(raw_payload)
+    except json.JSONDecodeError as error:
+        raise ForgeOperationError(f"{RUNA_TARGET_PROJECT} must contain a JSON project payload: {error}") from error
+    if not isinstance(payload, dict):
+        raise ForgeOperationError(f"{RUNA_TARGET_PROJECT} must contain a JSON object")
+    return payload
+
+
+def _target_project_forge_type(target_project: Mapping[str, Any]) -> str:
+    forge_type = target_project.get("forge_type")
+    if not isinstance(forge_type, str) or forge_type not in SUPPORTED_FORGE_TYPES:
+        raise ForgeOperationError(f"{RUNA_TARGET_PROJECT} must name a supported forge_type")
+    return forge_type
+
+
+def _selected_repository(target_project: Mapping[str, Any], selector: str | None) -> Mapping[str, Any]:
+    repositories = _target_project_items(target_project, "repositories", "repository")
+    if selector:
+        for repository in repositories:
+            if repository.get("selector") == selector:
+                return repository
+        raise ForgeOperationError(f"repository selector `{selector}` does not resolve in {RUNA_TARGET_PROJECT}")
+    if len(repositories) == 1:
+        return repositories[0]
+    if not repositories:
+        raise ForgeOperationError(f"{RUNA_TARGET_PROJECT} does not declare a repository")
+    raise ForgeOperationError(
+        "repository_selector is required when the configured project declares multiple repositories: "
+        + ", ".join(_selectors(repositories))
+    )
+
+
+def _selected_tracker(target_project: Mapping[str, Any], selector: str | None) -> Mapping[str, Any]:
+    trackers = _target_project_items(target_project, "trackers", "tracker")
+    if selector:
+        for tracker in trackers:
+            if tracker.get("selector") == selector:
+                return tracker
+        raise ForgeOperationError(f"tracker selector `{selector}` does not resolve in {RUNA_TARGET_PROJECT}")
+    if len(trackers) == 1:
+        return trackers[0]
+    if not trackers:
+        raise ForgeOperationError(f"{RUNA_TARGET_PROJECT} does not declare a tracker")
+    raise ForgeOperationError(
+        "tracker_selector is required when the configured project declares multiple trackers: "
+        + ", ".join(_selectors(trackers))
+    )
+
+
+def _selected_sourcehut_repository(
+    target_project: Mapping[str, Any],
+    tracker: Mapping[str, Any],
+    selector: str | None,
+) -> Mapping[str, Any]:
+    if selector:
+        return _selected_repository(target_project, selector)
+    tracker_repository = tracker.get("repository")
+    if isinstance(tracker_repository, str) and tracker_repository:
+        return _selected_repository(target_project, tracker_repository)
+    return _selected_repository(target_project, None)
+
+
+def _target_project_items(target_project: Mapping[str, Any], key: str, item_name: str) -> list[Mapping[str, Any]]:
+    raw_items = target_project.get(key, [])
+    if not isinstance(raw_items, list):
+        raise ForgeOperationError(f"{RUNA_TARGET_PROJECT}.{key} must be a list")
+    items: list[Mapping[str, Any]] = []
+    for index, item in enumerate(raw_items):
+        if not isinstance(item, dict):
+            raise ForgeOperationError(f"{RUNA_TARGET_PROJECT}.{key}[{index}] must be a {item_name} object")
+        items.append(item)
+    return items
+
+
+def _selectors(items: list[Mapping[str, Any]]) -> list[str]:
+    return [str(item.get("selector")) for item in items if isinstance(item.get("selector"), str)]
+
+
+def _required_string_field(item: Mapping[str, Any], key: str, item_name: str) -> str:
+    value = item.get(key)
+    if not isinstance(value, str) or not value:
+        raise ForgeOperationError(f"configured {item_name} is missing required field `{key}`")
+    return value
+
+
+def _required_host(primary: Mapping[str, Any], fallback: Mapping[str, Any], item_name: str) -> str:
+    value = primary.get("host")
+    if isinstance(value, str) and value:
+        return value
+    fallback_value = fallback.get("host")
+    if isinstance(fallback_value, str) and fallback_value:
+        return fallback_value
+    raise ForgeOperationError(f"configured {item_name} is missing required field `host`")
+
+
 def _required_environment(environment: Mapping[str, str], name: str) -> str:
     value = environment.get(name)
     if value is None or value == "":
-        raise ForgeOperationError(f"missing required deployment identity atom `{name}`")
+        raise ForgeOperationError(f"missing required environment variable `{name}`")
     return value
 
 

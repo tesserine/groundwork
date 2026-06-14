@@ -46,7 +46,9 @@ session that entrypoint opens.
    ```
 
    Deployment identity (owner, name, tracker, repository) comes from the
-   runtime-owned `RUNA_FORGE_*` atoms — do not pass it. The mechanic emits
+   runtime-owned `RUNA_TARGET_PROJECT` payload. Pass only configured selectors
+   such as `repository_selector` or `tracker_selector` when the project has
+   more than one matching configured entry; do not pass coordinates. The mechanic emits
    `{handle, title, body, state}` for either forge.
 
 2. **Materialize the artifact body.** Pipe the read-ticket output through
