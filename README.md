@@ -159,8 +159,8 @@ When `manifest.toml`, `mechanics/`, and the forge-operation resolver are
 present, the installer also projects a managed runtime bundle under
 `~/.groundwork/`. The bundle contains the manifest, mechanic library, resolver
 module, and `bin/groundwork-mechanic`, so installed protocol sessions can
-resolve forge-invariant operations through the active `RUNA_FORGE_TYPE`
-configuration without reaching back into the source checkout. Installed
+resolve forge-invariant operations through runa's configured forge-address
+payload without reaching back into the source checkout. Installed
 protocol copies reference the managed resolver path directly, so users do not
 need to add `~/.groundwork/bin` to `PATH`.
 
@@ -181,29 +181,29 @@ than from `NAME=VALUE` argv bindings. For example, pass
 from the current process environment without placing the secret value in the
 resolver command line.
 
-Forge deployment identity is also supplied by environment contract, not by
-mechanic call-site bindings. Mechanics mark deployment-resolved parameters with
-`deployment_value`, and `groundwork-mechanic` derives those values from these
-atoms:
+Forge coordinates are supplied by runa's `RUNA_PROJECT_FORGE_ADDRESSES`
+payload, not by mechanic call-site bindings. The payload contains the
+configured forge instances, each instance's type and service hosts, and the
+project's repository and tracker resources. Mechanics continue to mark
+deployment-resolved parameters with `deployment_value`; `groundwork-mechanic`
+hydrates those values only after selecting a configured resource from the
+payload.
 
-| Variable | Holds | Example | Forge-assigned? |
-|---|---|---|---|
-| `RUNA_FORGE_TYPE` | active forge selector, defaulting to `github` | `sourcehut` | no |
-| `RUNA_FORGE_OWNER` | tracker/repo owner handle | `operator` | no |
-| `RUNA_FORGE_NAME` | tracker/repo name | `weforge` | no |
-| `RUNA_FORGE_TRACKER_ID` | tracker integer ID | `4` | yes |
-| `GROUNDWORK_FORGE_ENDPOINT` | deployment host used to derive service hosts | `weforge.build` | no |
-| `GROUNDWORK_FORGE_REPO_ID` | git repo integer ID | `42` | yes |
+Repository-resolved operations accept `--repository <selector>`.
+Tracker-resolved operations accept `--tracker <selector>`. The selector may be
+the configured resource id or a full address selector such as
+`<instance>:<owner>/<name>` for a repository or
+`<instance>:<owner>/<name>/<tracker-id>` for a SourceHut tracker. A selector
+that does not name a configured resource is rejected, and omitting a selector is
+accepted only when exactly one configured resource of the required kind exists.
 
-For SourceHut, the resolver derives `todo_query_url` as
-`https://todo.<endpoint>/query`, `git_query_url` as
-`https://git.<endpoint>/query`, and `ssh_remote` as
-`git@git.<endpoint>:~<owner>/<name>`, while `tracker_id` and `repo_id` come
-directly from their atoms. For GitHub, it derives `repository` as
-`<owner>/<name>`. Runa owns the four scoped identity atoms it injects into
-agent and MCP environments; Groundwork still owns endpoint and repo-id atoms
-that are not part of runtime scoped identity. The atoms are the only deployment
-facts; composed endpoints and remotes are not separate configuration values.
+For GitHub, the resolver derives `repository` as `<owner>/<name>` and reads
+the instance host from the selected resource's instance. For SourceHut, tracker
+operations derive tracker endpoints from the instance's tracker host, and
+repository operations derive git endpoints and `ssh_remote` from the instance's
+git host. A mechanic caller may supply only operation data and secrets; owner,
+name, host, endpoint URL, `repository`, `tracker_id`, and `ssh_remote` remain
+deployment-resolved values and are rejected when passed as bindings.
 
 The cross-repo seam for this ticket identity is documented in
 [`docs/architecture/connecting-structure.md`](docs/architecture/connecting-structure.md#phase-2-forge-tagging-seam).

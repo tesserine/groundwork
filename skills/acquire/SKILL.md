@@ -42,12 +42,13 @@ session that entrypoint opens.
    returns:
 
    ```
-   groundwork-mechanic run read-ticket ticket_number=<N> [--secret-env token=<ENV>]
+   groundwork-mechanic run read-ticket --tracker <selector> ticket_number=<N> [--secret-env token=<ENV>]
    ```
 
-   Deployment identity (owner, name, tracker, repository) comes from the
-   runtime-owned `RUNA_FORGE_*` atoms — do not pass it. The mechanic emits
-   `{handle, title, body, state}` for either forge.
+   Tracker coordinates come from runa's `RUNA_PROJECT_FORGE_ADDRESSES`
+   payload and the selected configured tracker — do not pass owner, name,
+   host, repository, endpoint URL, or tracker identity as bindings. The
+   mechanic emits `{handle, title, body, state}` for either forge.
 
 2. **Materialize the artifact body.** Pipe the read-ticket output through
    the materializer:

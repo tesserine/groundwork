@@ -30,6 +30,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Forge mechanics now consume runa's `RUNA_PROJECT_FORGE_ADDRESSES` payload and
+  resolve configured resources through selector inputs. `groundwork-mechanic`
+  accepts `--repository` and `--tracker` selectors for repository- and
+  tracker-resolved operations. The retired coordinate-sourcing environment
+  surfaces `GROUNDWORK_FORGE_ENDPOINT` and `GROUNDWORK_FORGE_REPO_ID` are no
+  longer part of the mechanic contract.
 - README hero rewritten for the ecosystem README pass: groundwork positioned
   as software delivery expressed as an enforceable methodology — evidence-
   gated completion, CI-gated documentation coherence, forge-agnostic

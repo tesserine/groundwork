@@ -41,6 +41,44 @@ SOURCEHUT_TICKET_BODY = (
 )
 
 
+def forge_payload(
+    *,
+    github_repository: bool = False,
+    sourcehut_tracker: bool = False,
+) -> str:
+    instances = {}
+    repositories = []
+    trackers = []
+    if github_repository:
+        instances["github"] = {"type": "github", "host": "github.com"}
+        repositories.append(
+            {"id": "github-repo", "instance": "github", "owner": "tesserine", "name": "runa"}
+        )
+    if sourcehut_tracker:
+        instances["weforge"] = {
+            "type": "sourcehut",
+            "git_host": "git.weforge.build",
+            "tracker_host": "todo.weforge.build",
+        }
+        trackers.append(
+            {
+                "id": "sourcehut-tracker",
+                "instance": "weforge",
+                "owner": "operator",
+                "name": "weforge",
+                "tracker_id": "4",
+            }
+        )
+    return json.dumps(
+        {
+            "version": 1,
+            "instances": instances,
+            "repositories": repositories,
+            "trackers": trackers,
+        }
+    )
+
+
 def materialize(read_ticket_stdout: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, str(MATERIALIZE)],
@@ -79,8 +117,7 @@ class MaterializeTicketTests(unittest.TestCase):
                 os.environ,
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    "RUNA_FORGE_OWNER": "tesserine",
-                    "RUNA_FORGE_NAME": "runa",
+                    "RUNA_PROJECT_FORGE_ADDRESSES": forge_payload(github_repository=True),
                 },
             ):
                 read = run_invocation(mechanic, {"ticket_number": "188"}, cwd=root)
@@ -149,10 +186,7 @@ class MaterializeTicketTests(unittest.TestCase):
                 os.environ,
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
-                    "RUNA_FORGE_OWNER": "operator",
-                    "RUNA_FORGE_NAME": "weforge",
-                    "RUNA_FORGE_TRACKER_ID": "4",
+                    "RUNA_PROJECT_FORGE_ADDRESSES": forge_payload(sourcehut_tracker=True),
                 },
             ):
                 read = run_invocation(
@@ -259,15 +293,13 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
             forge_env = {
                 **os.environ,
                 "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                "RUNA_FORGE_OWNER": "tesserine",
-                "RUNA_FORGE_NAME": "runa",
+                "RUNA_PROJECT_FORGE_ADDRESSES": forge_payload(github_repository=True),
             }
             with mock.patch.dict(
                 os.environ,
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    "RUNA_FORGE_OWNER": "tesserine",
-                    "RUNA_FORGE_NAME": "runa",
+                    "RUNA_PROJECT_FORGE_ADDRESSES": forge_payload(github_repository=True),
                 },
             ):
                 read = run_invocation(mechanic, {"ticket_number": "188"}, cwd=root)
