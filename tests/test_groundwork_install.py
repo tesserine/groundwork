@@ -8,6 +8,9 @@ import textwrap
 import unittest
 from pathlib import Path
 
+from tooling.forge_operations import RUNA_FORGE_ADDRESSES
+from tests.test_forge_operations import forge_payload
+
 
 ROOT = Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "scripts" / "groundwork-install"
@@ -245,9 +248,9 @@ class GroundworkInstallTests(unittest.TestCase):
         resolver = install.runtime_root() / "bin" / "groundwork-mechanic"
         self.assertTrue(resolver.is_file())
         resolved = run(
-            [str(resolver), "resolve", "close-out"],
+            [str(resolver), "--tracker", "sourcehut", "resolve", "close-out"],
             install.runtime_root(),
-            env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut"},
+            env={**os.environ, RUNA_FORGE_ADDRESSES: forge_payload()},
         )
         assert_success(self, resolved)
         self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
@@ -263,7 +266,7 @@ class GroundworkInstallTests(unittest.TestCase):
             ---
             # Submit
 
-            Run `groundwork-mechanic resolve close-out` before delivery.
+            Run `groundwork-mechanic --tracker sourcehut resolve close-out` before delivery.
             """,
         )
         fixture.write(
@@ -274,7 +277,7 @@ class GroundworkInstallTests(unittest.TestCase):
             ---
             # Land
 
-            Run `groundwork-mechanic resolve close-out` before closeout.
+            Run `groundwork-mechanic --tracker sourcehut resolve close-out` before closeout.
             """,
         )
         fixture.commit_new_ref("v2")
@@ -294,7 +297,7 @@ class GroundworkInstallTests(unittest.TestCase):
             resolved = run(
                 argv,
                 install.runtime_root(),
-                env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut", "PATH": "/usr/bin:/bin"},
+                env={**os.environ, RUNA_FORGE_ADDRESSES: forge_payload(), "PATH": "/usr/bin:/bin"},
             )
             assert_success(self, resolved)
             self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
@@ -310,7 +313,7 @@ class GroundworkInstallTests(unittest.TestCase):
             ---
             # Submit
 
-            Run `groundwork-mechanic resolve close-out` before delivery.
+            Run `groundwork-mechanic --tracker sourcehut resolve close-out` before delivery.
             """,
         )
         fixture.commit_new_ref("v2")
@@ -331,7 +334,7 @@ class GroundworkInstallTests(unittest.TestCase):
         resolved = run(
             argv,
             install.runtime_root(),
-            env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut", "PATH": "/usr/bin:/bin"},
+            env={**os.environ, RUNA_FORGE_ADDRESSES: forge_payload(), "PATH": "/usr/bin:/bin"},
         )
         assert_success(self, resolved)
         self.assertEqual("close-out[sourcehut]\n", resolved.stdout)

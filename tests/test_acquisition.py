@@ -23,7 +23,8 @@ from pathlib import Path
 from unittest import mock
 
 from tooling.artifact_schemas import registry_from_manifest, validate_artifact
-from tooling.forge_operations import resolve_operation, run_invocation
+from tooling.forge_operations import RUNA_FORGE_ADDRESSES, resolve_operation, run_invocation
+from tests.test_forge_operations import forge_payload
 
 ROOT = Path(__file__).resolve().parents[1]
 MATERIALIZE = ROOT / "skills" / "acquire" / "scripts" / "materialize.py"
@@ -57,7 +58,12 @@ def write_fake_command(path: Path, body: str) -> None:
 
 class MaterializeTicketTests(unittest.TestCase):
     def test_github_ticket_materializes_to_schema_valid_adopted_work_unit(self) -> None:
-        mechanic = resolve_operation(ROOT, "read-ticket", forge_type="github")
+        mechanic = resolve_operation(
+            ROOT,
+            "read-ticket",
+            tracker="github",
+            environment={RUNA_FORGE_ADDRESSES: forge_payload()},
+        )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             bin_dir = root / "bin"
@@ -79,8 +85,7 @@ class MaterializeTicketTests(unittest.TestCase):
                 os.environ,
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    "RUNA_FORGE_OWNER": "tesserine",
-                    "RUNA_FORGE_NAME": "runa",
+                    RUNA_FORGE_ADDRESSES: forge_payload(),
                 },
             ):
                 read = run_invocation(mechanic, {"ticket_number": "188"}, cwd=root)
@@ -94,7 +99,13 @@ class MaterializeTicketTests(unittest.TestCase):
                 "work-unit", payload["artifact"], registry=registry_from_manifest()
             )
             self.assertEqual(
-                {"forge_tag": "github", "url": issue["html_url"], "number": 188},
+                {
+                    "forge_tag": "github",
+                    "url": issue["html_url"],
+                    "number": 188,
+                    "tracker_identity": "github@github.com/tracker/tesserine/groundwork",
+                    "work_unit_identity": "github@github.com/tracker/tesserine/groundwork#188",
+                },
                 payload["artifact"]["handle"],
             )
             self.assertEqual(
@@ -112,12 +123,17 @@ class MaterializeTicketTests(unittest.TestCase):
             # The forge was only read — no create/edit/mutation: ticket count
             # on the forge is unchanged.
             gh_calls = call_log.read_text(encoding="utf-8")
-            self.assertIn("api repos/tesserine/runa/issues/188", gh_calls)
+            self.assertIn("api repos/tesserine/groundwork/issues/188", gh_calls)
             for mutating in ("issue create", "--method POST", "--method PATCH", "-X POST"):
                 self.assertNotIn(mutating, gh_calls)
 
     def test_sourcehut_ticket_materializes_to_schema_valid_adopted_work_unit(self) -> None:
-        mechanic = resolve_operation(ROOT, "read-ticket", forge_type="sourcehut")
+        mechanic = resolve_operation(
+            ROOT,
+            "read-ticket",
+            tracker="sourcehut",
+            environment={RUNA_FORGE_ADDRESSES: forge_payload()},
+        )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             bin_dir = root / "bin"
@@ -149,10 +165,7 @@ class MaterializeTicketTests(unittest.TestCase):
                 os.environ,
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
-                    "RUNA_FORGE_OWNER": "operator",
-                    "RUNA_FORGE_NAME": "weforge",
-                    "RUNA_FORGE_TRACKER_ID": "4",
+                    RUNA_FORGE_ADDRESSES: forge_payload(),
                 },
             ):
                 read = run_invocation(
@@ -168,7 +181,13 @@ class MaterializeTicketTests(unittest.TestCase):
                 "work-unit", payload["artifact"], registry=registry_from_manifest()
             )
             self.assertEqual(
-                {"forge_tag": "sourcehut", "tracker_id": 4, "number": 188},
+                {
+                    "forge_tag": "sourcehut",
+                    "tracker_id": 4,
+                    "number": 188,
+                    "tracker_identity": "sourcehut@git=git.weforge.build,tracker=todo.weforge.build/tracker/operator/weforge/4",
+                    "work_unit_identity": "sourcehut@git=git.weforge.build,tracker=todo.weforge.build/tracker/operator/weforge/4#188",
+                },
                 payload["artifact"]["handle"],
             )
             self.assertTrue(payload["instance_id"].startswith("work-unit-188-"))
@@ -183,7 +202,13 @@ class MaterializeTicketTests(unittest.TestCase):
             self.assertNotIn("mutation", graphql["query"])
 
     def test_materializer_routes_quality_gaps_to_refinement(self) -> None:
-        base_handle = {"forge_tag": "github", "url": "https://github.com/o/r/issues/3", "number": 3}
+        base_handle = {
+            "forge_tag": "github",
+            "url": "https://github.com/o/r/issues/3",
+            "number": 3,
+            "tracker_identity": "github@github.com/tracker/o/r",
+            "work_unit_identity": "github@github.com/tracker/o/r#3",
+        }
 
         no_criteria = json.dumps(
             {"handle": base_handle, "title": "T", "body": "A description, no list.", "state": "open"}
@@ -240,7 +265,12 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
             "body": GITHUB_TICKET_BODY,
             "state": "open",
         }
-        mechanic = resolve_operation(ROOT, "read-ticket", forge_type="github")
+        mechanic = resolve_operation(
+            ROOT,
+            "read-ticket",
+            tracker="github",
+            environment={RUNA_FORGE_ADDRESSES: forge_payload()},
+        )
 
         with tempfile.TemporaryDirectory(prefix="groundwork-acquire-") as tmp:
             root = Path(tmp)
@@ -255,19 +285,18 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
                 cwd=project, capture_output=True, text=True,
             )
             self.assertEqual(init.returncode, 0, f"{init.stdout}\n{init.stderr}")
+            (project / ".runa" / "project.toml").write_text("schema_version = 1\n", encoding="utf-8")
 
             forge_env = {
                 **os.environ,
                 "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                "RUNA_FORGE_OWNER": "tesserine",
-                "RUNA_FORGE_NAME": "runa",
+                RUNA_FORGE_ADDRESSES: forge_payload(),
             }
             with mock.patch.dict(
                 os.environ,
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    "RUNA_FORGE_OWNER": "tesserine",
-                    "RUNA_FORGE_NAME": "runa",
+                    RUNA_FORGE_ADDRESSES: forge_payload(),
                 },
             ):
                 read = run_invocation(mechanic, {"ticket_number": "188"}, cwd=root)
@@ -299,7 +328,10 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
                              f"stdout:\n{delivery.stdout}\nstderr:\n{delivery.stderr}")
 
             recorded = project / ".runa" / "workspace" / "work-unit" / f"{instance_id}.json"
-            self.assertTrue(recorded.is_file(), f"artifact not persisted:\n{delivery.stdout}")
+            self.assertTrue(
+                recorded.is_file(),
+                f"artifact not persisted:\nstdout:\n{delivery.stdout}\nstderr:\n{delivery.stderr}",
+            )
             body = json.loads(recorded.read_text(encoding="utf-8"))
             self.assertEqual(188, body["handle"]["number"])
             self.assertEqual("github", body["handle"]["forge_tag"])

@@ -7,6 +7,8 @@ import textwrap
 import unittest
 from pathlib import Path
 
+from tooling.forge_operations import RUNA_FORGE_ADDRESSES
+from tests.test_forge_operations import forge_payload
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK_UNIT_ID = "work-unit-382-task-dual-mode-groundwork-conforms-to"
@@ -53,18 +55,15 @@ def write_executable(path: Path, body: str) -> None:
 
 
 def append_agent_command_config(project_dir: Path, command: list[Path]) -> None:
-    config_path = project_dir / ".runa" / "config.toml"
+    config_path = project_dir / ".runa" / "project.toml"
     config = config_path.read_text(encoding="utf-8")
     quoted = ", ".join(json.dumps(str(part)) for part in command)
-    config_path.write_text(f"{config}\n[agent]\ncommand = [{quoted}]\n", encoding="utf-8")
+    config_path.write_text(f"{config}\n[launch]\ncommand = [{quoted}]\n", encoding="utf-8")
 
 
 def groundwork_env() -> dict[str, str]:
     env = os.environ.copy()
-    env.pop("RUNA_FORGE_TYPE", None)
-    env.pop("RUNA_FORGE_TRACKER_ID", None)
-    env["RUNA_FORGE_OWNER"] = "tesserine"
-    env["RUNA_FORGE_NAME"] = "groundwork"
+    env[RUNA_FORGE_ADDRESSES] = forge_payload()
     return env
 
 
@@ -84,6 +83,7 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
 
             init = run([str(runa), "init", "--methodology", str(ROOT / "manifest.toml")], project_dir)
             self.assertEqual(init.returncode, 0, f"stdout:\n{init.stdout}\nstderr:\n{init.stderr}")
+            (project_dir / ".runa" / "project.toml").write_text("schema_version = 1\n", encoding="utf-8")
 
             workspace = project_dir / ".runa" / "workspace"
             (workspace / "work-unit").mkdir(parents=True)
@@ -99,6 +99,8 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                             "forge_tag": "github",
                             "url": "https://github.com/tesserine/groundwork/issues/382",
                             "number": 382,
+                            "tracker_identity": "github@github.com/tracker/tesserine/groundwork",
+                            "work_unit_identity": "github@github.com/tracker/tesserine/groundwork#382",
                         },
                     },
                     indent=2,

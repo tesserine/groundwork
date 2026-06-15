@@ -81,7 +81,7 @@
             "git_query_url",
             "ssh_remote",
             "tracker_id",
-            "repo_id"
+            "tracker_identity"
           ]
         },
         "schema_ref": {

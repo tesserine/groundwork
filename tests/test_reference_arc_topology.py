@@ -338,7 +338,6 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertNotIn("m" + "box_file", parameters)
         self.assertNotIn("artifact_tag", parameters)
         self.assertNotIn("m" + "box_filename", parameters)
-        self.assertNotIn("repo_id", parameters)
         self.assertNotIn("git_query_url", parameters)
         self.assertNotIn("token", parameters)
         self.assertIn('git check-ref-format "$proposal_ref"', invocation)

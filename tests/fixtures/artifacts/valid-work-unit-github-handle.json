@@ -7,6 +7,8 @@
   "handle": {
     "forge_tag": "github",
     "url": "https://github.com/tesserine/groundwork/issues/368",
-    "number": 368
+    "number": 368,
+    "tracker_identity": "github@github.com/tracker/tesserine/groundwork",
+    "work_unit_identity": "github@github.com/tracker/tesserine/groundwork#368"
   }
 }

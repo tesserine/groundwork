@@ -192,7 +192,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `groundwork-mechanic` now reads runtime-owned scoped forge identity from
   `RUNA_FORGE_TYPE`, `RUNA_FORGE_OWNER`, `RUNA_FORGE_NAME`, and
   `RUNA_FORGE_TRACKER_ID`, while leaving methodology-owned
-  `GROUNDWORK_FORGE_ENDPOINT` and `GROUNDWORK_FORGE_REPO_ID` handling unchanged.
+  `GROUNDWORK_FORGE_ENDPOINT` handling unchanged.
 
 ## [0.3.0-rc.1] — 2026-06-08
 

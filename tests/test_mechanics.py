@@ -53,14 +53,14 @@ class MechanicTests(unittest.TestCase):
         mechanic = {
             "name": "sourcehut-upload",
             "purpose": "Upload to a configured forge repository.",
-            "default_invocation": 'printf "%s\\n" "$repo_number"',
-            "examples": ['printf "%s\\n" "$repo_number"'],
+            "default_invocation": 'printf "%s\\n" "$remote"',
+            "examples": ['printf "%s\\n" "$remote"'],
             "parameters": [
                 {
-                    "name": "repo_number",
-                    "purpose": "Configured forge repository ID.",
+                    "name": "remote",
+                    "purpose": "Configured forge repository SSH remote.",
                     "required": True,
-                    "deployment_value": "repo_id",
+                    "deployment_value": "ssh_remote",
                 }
             ],
             "outcome": {"description": "Printed."},
@@ -72,15 +72,15 @@ class MechanicTests(unittest.TestCase):
         mechanic = {
             "name": "sourcehut-upload",
             "purpose": "Upload to a configured forge repository.",
-            "default_invocation": 'printf "%s\\n" "$repo_number"',
-            "examples": ['printf "%s\\n" "$repo_number"'],
+            "default_invocation": 'printf "%s\\n" "$remote"',
+            "examples": ['printf "%s\\n" "$remote"'],
             "parameters": [
                 {
-                    "name": "repo_number",
-                    "purpose": "Configured forge repository ID.",
+                    "name": "remote",
+                    "purpose": "Configured forge repository SSH remote.",
                     "required": True,
                     "secret": True,
-                    "deployment_value": "repo_id",
+                    "deployment_value": "ssh_remote",
                 }
             ],
             "outcome": {"description": "Printed."},

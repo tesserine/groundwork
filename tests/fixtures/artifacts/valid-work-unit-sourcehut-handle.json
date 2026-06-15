@@ -7,6 +7,8 @@
   "handle": {
     "forge_tag": "sourcehut",
     "tracker_id": 4,
-    "number": 368
+    "number": 368,
+    "tracker_identity": "sourcehut@git=git.weforge.build,tracker=todo.weforge.build/tracker/operator/weforge/4",
+    "work_unit_identity": "sourcehut@git=git.weforge.build,tracker=todo.weforge.build/tracker/operator/weforge/4#368"
   }
 }

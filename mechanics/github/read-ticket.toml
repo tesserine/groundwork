@@ -1,7 +1,7 @@
 name = "read-ticket"
 purpose = "Read a GitHub issue from the active repository and emit its ticket state with a work-unit handle."
 forge_tag = "github"
-default_invocation = '''response=$(mktemp) && trap 'rm -f "$response"' EXIT && gh api "repos/${repository}/issues/${ticket_number}" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); url=payload.get("html_url"); number=payload.get("number"); title=payload.get("title"); body=payload.get("body"); state=payload.get("state"); sys.exit("GitHub read-ticket API response contained errors or omitted issue fields") if "errors" in payload or not isinstance(url, str) or not url or not isinstance(number, int) or not isinstance(title, str) or not isinstance(state, str) or body is not None and not isinstance(body, str) else print(json.dumps({"handle":{"forge_tag":"github","url":url,"number":number},"title":title,"body":body,"state":state}, separators=(",", ":")))' "$response"'''
+default_invocation = '''response=$(mktemp) && trap 'rm -f "$response"' EXIT && gh api "repos/${repository}/issues/${ticket_number}" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); tracker_identity=sys.argv[2]; url=payload.get("html_url"); number=payload.get("number"); title=payload.get("title"); body=payload.get("body"); state=payload.get("state"); sys.exit("GitHub read-ticket API response contained errors or omitted issue fields") if "errors" in payload or not isinstance(url, str) or not url or not isinstance(number, int) or not isinstance(title, str) or not isinstance(state, str) or body is not None and not isinstance(body, str) else print(json.dumps({"handle":{"forge_tag":"github","url":url,"number":number,"tracker_identity":tracker_identity,"work_unit_identity":f"{tracker_identity}#{number}"},"title":title,"body":body,"state":state}, separators=(",", ":")))' "$response" "$tracker_identity"'''
 examples = [
   'gh api repos/tesserine/groundwork/issues/369',
 ]
@@ -11,6 +11,12 @@ name = "repository"
 purpose = "GitHub repository in OWNER/REPO form."
 required = true
 deployment_value = "repository"
+
+[[parameters]]
+name = "tracker_identity"
+purpose = "Canonical forge-address tracker identity."
+required = true
+deployment_value = "tracker_identity"
 
 [[parameters]]
 name = "ticket_number"

@@ -15,6 +15,8 @@ import unittest
 from pathlib import Path
 
 from tooling.principles_config import PrinciplesCorpusConfig, load_principles_config
+from tooling.forge_operations import RUNA_FORGE_ADDRESSES
+from tests.test_forge_operations import forge_payload
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -254,9 +256,9 @@ class SelfInstallTests(unittest.TestCase):
         resolver = install.runtime_root() / "bin" / "groundwork-mechanic"
         self.assertTrue(resolver.is_file())
         resolved = run(
-            [str(resolver), "resolve", "close-out"],
+            [str(resolver), "--tracker", "sourcehut", "resolve", "close-out"],
             install.runtime_root(),
-            env={"PATH": "/usr/bin:/bin", "RUNA_FORGE_TYPE": "sourcehut"},
+            env={"PATH": "/usr/bin:/bin", RUNA_FORGE_ADDRESSES: forge_payload()},
         )
         assert_success(self, resolved)
         self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
