@@ -38,6 +38,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- GitHub `read-ticket`, `create-ticket`, and `claim-work-unit` mechanics now
+  resolve through `--repository <id>` even though they also consume the
+  repository-derived `tracker_identity` deployment value. SourceHut SSH remote
+  derivation also accepts canonical `~owner` payloads without producing a
+  double-tilde remote.
 - **Dependency-graph notation conflict resolved.** `templates.md` mandated
   ASCII art while the decompose protocol and `work-unit-model.md` mandated
   Mermaid `graph TD` plus a layered text summary. The Mermaid + layered

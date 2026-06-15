@@ -276,7 +276,7 @@ def _resolve_deployment_value(context: Mapping[str, Any], deployment_value: str)
         if deployment_value == "repository":
             return f"{resource['owner']}/{resource['name']}"
         if deployment_value == "tracker_identity":
-            return str(resource["identity"])
+            return f"github@{instance['services']['tracker']}/tracker/{resource['owner']}/{resource['name']}"
         raise ForgeOperationError(
             f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`"
         )
@@ -292,7 +292,7 @@ def _resolve_deployment_value(context: Mapping[str, Any], deployment_value: str)
         if deployment_value == "git_query_url":
             return f"https://{instance['services']['git']}/query"
         if deployment_value == "ssh_remote":
-            return f"git@{instance['services']['git']}:~{resource['owner']}/{resource['name']}"
+            return f"git@{instance['services']['git']}:{_sourcehut_remote_owner(str(resource['owner']))}/{resource['name']}"
         if deployment_value == "tracker_id":
             tracker_id = resource.get("tracker_id")
             if not tracker_id:
@@ -319,7 +319,10 @@ def _deployment_context_for_mechanic(
         if not isinstance(forge_type, str):
             raise ForgeOperationError("mechanic without deployment values requires forge_tag")
         return {"kind": "none", "resource": {}, "instance": {"type": forge_type, "services": {}}}
-    resource_kind = _resource_kind_for_deployments(deployments)
+    forge_type = mechanic.get("forge_tag")
+    if not isinstance(forge_type, str):
+        raise ForgeOperationError("mechanic with deployment values requires forge_tag")
+    resource_kind = _resource_kind_for_deployments(deployments, forge_type)
     if resource_kind == "tracker":
         resource = _select_resource(address_book, "trackers", tracker_selector)
     else:
@@ -328,12 +331,18 @@ def _deployment_context_for_mechanic(
     return {"kind": resource_kind, "resource": resource, "instance": instance}
 
 
-def _resource_kind_for_deployments(deployment_values: set[str]) -> str:
+def _resource_kind_for_deployments(deployment_values: set[str], forge_type: str) -> str:
+    if forge_type == "github":
+        return "repository"
     if deployment_values & TRACKER_DEPLOYMENT_VALUES:
         if deployment_values & {"git_query_url", "ssh_remote"}:
             raise ForgeOperationError("mechanic mixes tracker and repository deployment values")
         return "tracker"
     return "repository"
+
+
+def _sourcehut_remote_owner(owner: str) -> str:
+    return f"~{owner.lstrip('~')}"
 
 
 def _select_resource(address_book: Mapping[str, Any], key: str, selector: str | None) -> Mapping[str, Any]:

@@ -38,16 +38,22 @@ session that entrypoint opens.
 ## Steps
 
 1. **Read the ticket.** Resolve the invariant `read-ticket` operation
-   through `groundwork-mechanic` and run the active-forge mechanic it
-   returns:
+   through `groundwork-mechanic` with the selector for the configured
+   resource named by the ticket reference, and run the active-forge mechanic
+   it returns. GitHub ticket operations resolve through the repository
+   selector; SourceHut ticket operations resolve through the tracker
+   selector. The selector may be omitted only when the
+   `RUNA_FORGE_ADDRESSES` payload has exactly one relevant resource:
 
    ```
-   groundwork-mechanic run read-ticket ticket_number=<N> [--secret-env token=<ENV>]
+   groundwork-mechanic --repository <repository-id> run read-ticket ticket_number=<N>
+   groundwork-mechanic --tracker <tracker-id> run read-ticket ticket_number=<N> [--secret-env token=<ENV>]
    ```
 
    Deployment identity (owner, name, tracker, repository) comes from the
-   runtime-owned `RUNA_FORGE_*` atoms — do not pass it. The mechanic emits
-   `{handle, title, body, state}` for either forge.
+   runtime-owned `RUNA_FORGE_ADDRESSES` payload — do not pass deployment
+   values as mechanic bindings. The mechanic emits `{handle, title, body,
+   state}` for either forge.
 
 2. **Materialize the artifact body.** Pipe the read-ticket output through
    the materializer:

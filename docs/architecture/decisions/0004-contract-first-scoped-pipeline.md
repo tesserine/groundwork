@@ -248,9 +248,9 @@ context to fire passively — with full expositions in references.
   further methodology change.
 - **Forge identity namespace.** The protocols reference only invariant
   operations resolved through `groundwork-mechanic`; the resolver reads the
-  runtime-owned `RUNA_FORGE_*` identity atoms (the #389/#390 repair, on
-  which this redesign now sits), with endpoint and repo-id remaining
-  methodology-owned atoms.
+  runtime-owned `RUNA_FORGE_ADDRESSES` payload and the caller supplies only
+  non-secret resource selectors. Deployment identity values are not mechanic
+  call-site bindings.
 - **Best-of-field call — verify may repair its own gate failures.** When
   fresh verification fails, verify's instructions route through `debug` and
   permit the minimal fix within the increment (then a fresh full gate)

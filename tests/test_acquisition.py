@@ -61,7 +61,7 @@ class MaterializeTicketTests(unittest.TestCase):
         mechanic = resolve_operation(
             ROOT,
             "read-ticket",
-            tracker="github",
+            repository="github",
             environment={RUNA_FORGE_ADDRESSES: forge_payload()},
         )
         with tempfile.TemporaryDirectory() as directory:
@@ -268,7 +268,7 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
         mechanic = resolve_operation(
             ROOT,
             "read-ticket",
-            tracker="github",
+            repository="github",
             environment={RUNA_FORGE_ADDRESSES: forge_payload()},
         )
 

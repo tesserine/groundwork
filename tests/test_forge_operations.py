@@ -229,8 +229,6 @@ class ForgeOperationTests(unittest.TestCase):
                 with self.subTest(operation=operation, forge_type=forge_type):
                     selectors = (
                         {"repository": "github"}
-                        if forge_type == "github" and operation == "record-progress"
-                        else {"tracker": "github"}
                         if forge_type == "github"
                         else {"tracker": "sourcehut"}
                     )
@@ -247,7 +245,7 @@ class ForgeOperationTests(unittest.TestCase):
         mechanic = resolve_operation(
             ROOT,
             "create-ticket",
-            tracker="github",
+            repository="github",
             environment=forge_cli_environment(),
         )
 
@@ -453,7 +451,7 @@ cat "{response}"
 
     def test_early_arc_mechanics_reject_caller_supplied_deployment_identity(self) -> None:
         cases = [
-            ("github", "create-ticket", {"repository": "attacker/repo"}, {"tracker": "github"}),
+            ("github", "create-ticket", {"repository": "attacker/repo"}, {"repository": "github"}),
             ("sourcehut", "create-ticket", {"tracker_id": "99"}, {"tracker": "sourcehut"}),
             (
                 "sourcehut",
@@ -645,6 +643,74 @@ cat "{response}"
                 stderr=subprocess.PIPE,
             )
 
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(
+            [
+                "https://git.weforge.build/query",
+                "git@git.weforge.build:~operator/weforge",
+            ],
+            result.stdout.strip().splitlines(),
+        )
+
+    def test_real_runa_payload_resolves_github_ticket_and_sourcehut_remote_selectors(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_sourcehut_deployment_probe_methodology(root)
+            payload = json.loads(forge_payload())
+            for repository in payload["repositories"]:
+                if repository["id"] == "sourcehut":
+                    repository["owner"] = "~operator"
+                    repository["identity"] = (
+                        "sourcehut@git=git.weforge.build,tracker=todo.weforge.build/repo/~operator/weforge"
+                    )
+            for tracker in payload["trackers"]:
+                if tracker["id"] == "sourcehut":
+                    tracker["owner"] = "~operator"
+                    tracker["identity"] = (
+                        "sourcehut@git=git.weforge.build,tracker=todo.weforge.build/tracker/~operator/weforge/4"
+                    )
+            environment = forge_cli_environment(
+                RUNA_FORGE_ADDRESSES=json.dumps(payload, separators=(",", ":"))
+            )
+
+            github = resolve_operation(
+                ROOT,
+                "read-ticket",
+                repository="github",
+                environment=environment,
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "--repository",
+                    "sourcehut",
+                    "run",
+                    "probe",
+                ],
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertEqual("github", github["forge_tag"])
+        self.assertEqual(
+            {
+                "github@github.com/repo/tesserine/groundwork",
+                "github@github.com/tracker/tesserine/groundwork",
+                "sourcehut@git=git.weforge.build,tracker=todo.weforge.build/repo/~operator/weforge",
+                "sourcehut@git=git.weforge.build,tracker=todo.weforge.build/tracker/~operator/weforge/4",
+            },
+            {
+                resource["identity"]
+                for resources in (payload["repositories"], payload["trackers"])
+                for resource in resources
+            },
+        )
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual(
             [
