@@ -10,7 +10,7 @@ examples = [
 name = "tracker_owner"
 purpose = "SourceHut tracker owner handle."
 required = true
-deployment_value = "owner"
+deployment_value = "owner_username"
 
 [[parameters]]
 name = "tracker_name"

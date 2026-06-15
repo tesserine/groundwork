@@ -366,11 +366,21 @@ class ForgeOperationTests(unittest.TestCase):
         self.assertIn("SourceHut submitTicket GraphQL response", result.stderr)
 
     def test_sourcehut_read_ticket_reaches_tracker_by_owner_and_name_and_keeps_numeric_handle(self) -> None:
+        payload = json.loads(forge_payload())
+        for tracker in payload["trackers"]:
+            if tracker["id"] == "sourcehut":
+                tracker["owner"] = "~operator"
+                tracker["identity"] = (
+                    "sourcehut@git=git.weforge.build,tracker=todo.weforge.build/tracker/~operator/weforge/4"
+                )
+        environment = forge_cli_environment(
+            RUNA_FORGE_ADDRESSES=json.dumps(payload, separators=(",", ":"))
+        )
         mechanic = resolve_operation(
             ROOT,
             "read-ticket",
             tracker="sourcehut",
-            environment=forge_cli_environment(),
+            environment=environment,
         )
 
         with tempfile.TemporaryDirectory() as directory:
@@ -399,7 +409,7 @@ cat "{response}"
                 os.environ,
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    RUNA_FORGE_ADDRESSES: forge_payload(),
+                    RUNA_FORGE_ADDRESSES: environment[RUNA_FORGE_ADDRESSES],
                 },
             ):
                 result = run_invocation(
@@ -414,7 +424,7 @@ cat "{response}"
                 os.environ,
                 {
                     "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    RUNA_FORGE_ADDRESSES: forge_payload(),
+                    RUNA_FORGE_ADDRESSES: environment[RUNA_FORGE_ADDRESSES],
                 },
             ):
                 error_result = run_invocation(
@@ -430,8 +440,8 @@ cat "{response}"
                     "forge_tag": "sourcehut",
                     "tracker_id": 4,
                     "number": 369,
-                    "tracker_identity": "sourcehut@git=git.weforge.build,tracker=todo.weforge.build/tracker/operator/weforge/4",
-                    "work_unit_identity": "sourcehut@git=git.weforge.build,tracker=todo.weforge.build/tracker/operator/weforge/4#369",
+                    "tracker_identity": "sourcehut@git=git.weforge.build,tracker=todo.weforge.build/tracker/~operator/weforge/4",
+                    "work_unit_identity": "sourcehut@git=git.weforge.build,tracker=todo.weforge.build/tracker/~operator/weforge/4#369",
                 },
                 "title": "Fix read",
                 "body": "Ticket body",

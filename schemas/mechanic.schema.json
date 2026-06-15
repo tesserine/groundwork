@@ -76,6 +76,7 @@
           "enum": [
             "repository",
             "owner",
+            "owner_username",
             "name",
             "todo_query_url",
             "git_query_url",

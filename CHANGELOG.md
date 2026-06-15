@@ -38,6 +38,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- SourceHut `read-ticket` now renders the canonical `~owner` payload as a bare
+  GraphQL username while keeping SourceHut SSH/path identities in exactly-one-
+  tilde form.
 - GitHub `read-ticket`, `create-ticket`, and `claim-work-unit` mechanics now
   resolve through `--repository <id>` even though they also consume the
   repository-derived `tracker_identity` deployment value. SourceHut SSH remote

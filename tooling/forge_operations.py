@@ -12,7 +12,7 @@ from typing import Any, Mapping
 ROOT = Path(__file__).resolve().parents[1]
 RUNA_FORGE_ADDRESSES = "RUNA_FORGE_ADDRESSES"
 REPOSITORY_DEPLOYMENT_VALUES = {"repository", "owner", "name", "git_query_url", "ssh_remote"}
-TRACKER_DEPLOYMENT_VALUES = {"tracker_id", "todo_query_url", "tracker_identity"}
+TRACKER_DEPLOYMENT_VALUES = {"owner_username", "tracker_id", "todo_query_url", "tracker_identity"}
 
 
 class ForgeOperationError(ValueError):
@@ -282,11 +282,13 @@ def _resolve_deployment_value(context: Mapping[str, Any], deployment_value: str)
         )
     if forge_type == "sourcehut":
         if deployment_value == "owner":
-            return str(resource["owner"])
+            return _sourcehut_remote_owner(str(resource["owner"]))
+        if deployment_value == "owner_username":
+            return _sourcehut_username_owner(str(resource["owner"]))
         if deployment_value == "name":
             return str(resource["name"])
         if deployment_value == "repository":
-            return f"{resource['owner']}/{resource['name']}"
+            return f"{_sourcehut_remote_owner(str(resource['owner']))}/{resource['name']}"
         if deployment_value == "todo_query_url":
             return f"https://{instance['services']['tracker']}/query"
         if deployment_value == "git_query_url":
@@ -343,6 +345,10 @@ def _resource_kind_for_deployments(deployment_values: set[str], forge_type: str)
 
 def _sourcehut_remote_owner(owner: str) -> str:
     return f"~{owner.lstrip('~')}"
+
+
+def _sourcehut_username_owner(owner: str) -> str:
+    return owner.lstrip("~")
 
 
 def _select_resource(address_book: Mapping[str, Any], key: str, selector: str | None) -> Mapping[str, Any]:
