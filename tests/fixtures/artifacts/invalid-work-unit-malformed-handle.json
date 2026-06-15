@@ -1,12 +1,12 @@
 {
   "title": "Reject malformed work-unit handle",
-  "description": "Work-unit handles must use the declared forge tag variants",
+  "description": "Work-unit handles must match the runa forge-address contract",
   "acceptance_criteria": [
     "Malformed handles are rejected"
   ],
   "handle": {
-    "forge_tag": "GitHub",
-    "url": "https://github.com/tesserine/groundwork/issues/368",
+    "tracker": "groundwork",
+    "tracker_identity": "github:github.com/tesserine/groundwork",
     "number": 368
   }
 }

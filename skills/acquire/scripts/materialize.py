@@ -72,10 +72,16 @@ def extract_acceptance_criteria(body: str) -> list[str]:
 
 def materialize(ticket: dict) -> dict:
     handle = ticket.get("handle")
-    if not isinstance(handle, dict) or "forge_tag" not in handle or "number" not in handle:
+    if (
+        not isinstance(handle, dict)
+        or "tracker" not in handle
+        or "tracker_identity" not in handle
+        or "work_unit_identity" not in handle
+        or "number" not in handle
+    ):
         raise MaterializeError(
             "ticket payload is missing a forge handle; read-ticket must emit "
-            "handle.forge_tag and handle.number"
+            "handle.tracker, handle.tracker_identity, handle.work_unit_identity, and handle.number"
         )
     number = handle["number"]
 

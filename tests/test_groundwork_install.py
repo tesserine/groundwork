@@ -215,6 +215,15 @@ class GroundworkInstallTests(unittest.TestCase):
                 """,
             )
         fixture.write("tooling/forge_operations.py", (ROOT / "tooling" / "forge_operations.py").read_text(encoding="utf-8"))
+        fixture.write("tooling/forge_address.py", (ROOT / "tooling" / "forge_address.py").read_text(encoding="utf-8"))
+        fixture.write(
+            "schemas/mechanic.schema.json",
+            (ROOT / "schemas" / "mechanic.schema.json").read_text(encoding="utf-8"),
+        )
+        fixture.write(
+            "schemas/forge-address.schema.json",
+            (ROOT / "schemas" / "forge-address.schema.json").read_text(encoding="utf-8"),
+        )
 
     def assert_handoff_projected_once(self, body: str) -> None:
         self.assertEqual(body.count(HANDOFF_BEGIN), 1)
@@ -250,7 +259,7 @@ class GroundworkInstallTests(unittest.TestCase):
             env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut"},
         )
         assert_success(self, resolved)
-        self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
+        self.assertEqual("close-out[github]\n", resolved.stdout)
 
     def test_installed_protocol_resolver_invocation_uses_runnable_managed_command(self) -> None:
         fixture = self.add_fixture("installed-runtime-command")
@@ -297,7 +306,7 @@ class GroundworkInstallTests(unittest.TestCase):
                 env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut", "PATH": "/usr/bin:/bin"},
             )
             assert_success(self, resolved)
-            self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
+            self.assertEqual("close-out[github]\n", resolved.stdout)
 
     def test_installed_protocol_resolver_invocation_runs_when_home_contains_whitespace(self) -> None:
         fixture = self.add_fixture("installed-runtime-command-spaced-home")
@@ -334,7 +343,7 @@ class GroundworkInstallTests(unittest.TestCase):
             env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut", "PATH": "/usr/bin:/bin"},
         )
         assert_success(self, resolved)
-        self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
+        self.assertEqual("close-out[github]\n", resolved.stdout)
 
     def test_install_projects_session_surface_handoff_into_every_protocol_entry(self) -> None:
         fixture = self.add_fixture("handoff-all-protocols")
@@ -661,6 +670,18 @@ class GroundworkInstallTests(unittest.TestCase):
         fixture.write(
             "tooling/forge_operations.py",
             (ROOT / "tooling" / "forge_operations.py").read_text(encoding="utf-8"),
+        )
+        fixture.write(
+            "tooling/forge_address.py",
+            (ROOT / "tooling" / "forge_address.py").read_text(encoding="utf-8"),
+        )
+        fixture.write(
+            "schemas/mechanic.schema.json",
+            (ROOT / "schemas" / "mechanic.schema.json").read_text(encoding="utf-8"),
+        )
+        fixture.write(
+            "schemas/forge-address.schema.json",
+            (ROOT / "schemas" / "forge-address.schema.json").read_text(encoding="utf-8"),
         )
         fixture.commit_new_ref("v2")
 

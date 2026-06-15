@@ -132,6 +132,18 @@ class MethodologyFixture:
             "tooling/forge_operations.py",
             (ROOT / "tooling" / "forge_operations.py").read_text(encoding="utf-8"),
         )
+        self.write(
+            "tooling/forge_address.py",
+            (ROOT / "tooling" / "forge_address.py").read_text(encoding="utf-8"),
+        )
+        self.write(
+            "schemas/mechanic.schema.json",
+            (ROOT / "schemas" / "mechanic.schema.json").read_text(encoding="utf-8"),
+        )
+        self.write(
+            "schemas/forge-address.schema.json",
+            (ROOT / "schemas" / "forge-address.schema.json").read_text(encoding="utf-8"),
+        )
 
     def init_git(self) -> None:
         run(["git", "init", "-q"], self.root, check=True)
@@ -259,7 +271,7 @@ class SelfInstallTests(unittest.TestCase):
             env={"PATH": "/usr/bin:/bin", "RUNA_FORGE_TYPE": "sourcehut"},
         )
         assert_success(self, resolved)
-        self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
+        self.assertEqual("close-out[github]\n", resolved.stdout)
 
 
     def test_absent_input_and_config_resolves_embedded_default(self) -> None:

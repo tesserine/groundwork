@@ -26,15 +26,8 @@
       }
     },
     "handle": {
-      "description": "Optional forge-specific reference to the tracker ticket backing this work unit.",
-      "oneOf": [
-        {
-          "$ref": "#/$defs/github-handle"
-        },
-        {
-          "$ref": "#/$defs/sourcehut-handle"
-        }
-      ]
+      "$ref": "forge-address.schema.json#/$defs/work_unit_handle",
+      "description": "Optional runa forge-address work-unit handle for the tracker ticket backing this work unit."
     },
     "scope": {
       "type": "array",
@@ -60,48 +53,6 @@
       "items": {
         "type": "string",
         "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
-      }
-    }
-  },
-  "$defs": {
-    "github-handle": {
-      "type": "object",
-      "required": ["forge_tag", "url", "number"],
-      "additionalProperties": false,
-      "properties": {
-        "forge_tag": {
-          "const": "github"
-        },
-        "url": {
-          "type": "string",
-          "description": "GitHub issue URL.",
-          "pattern": "^https://github\\.com/[^/]+/[^/]+/issues/[0-9]+$"
-        },
-        "number": {
-          "type": "integer",
-          "description": "GitHub issue number.",
-          "minimum": 1
-        }
-      }
-    },
-    "sourcehut-handle": {
-      "type": "object",
-      "required": ["forge_tag", "tracker_id", "number"],
-      "additionalProperties": false,
-      "properties": {
-        "forge_tag": {
-          "const": "sourcehut"
-        },
-        "tracker_id": {
-          "type": "integer",
-          "description": "SourceHut tracker ID assigned by the deployment.",
-          "minimum": 1
-        },
-        "number": {
-          "type": "integer",
-          "description": "SourceHut ticket number.",
-          "minimum": 1
-        }
       }
     }
   }

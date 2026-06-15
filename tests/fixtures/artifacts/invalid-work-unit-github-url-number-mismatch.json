@@ -1,12 +1,13 @@
 {
-  "title": "Reject mismatched GitHub work-unit handle",
-  "description": "GitHub work-unit handle URL and number must agree",
+  "title": "Reject mismatched work-unit handle identity",
+  "description": "Work-unit handle identity must be derived from tracker identity and number",
   "acceptance_criteria": [
-    "GitHub URL and number mismatches are rejected"
+    "Derived work-unit identity mismatches are rejected"
   ],
   "handle": {
-    "forge_tag": "github",
-    "url": "https://github.com/tesserine/groundwork/issues/367",
+    "tracker": "groundwork",
+    "tracker_identity": "github:github.com/tesserine/groundwork",
+    "work_unit_identity": "github:github.com/tesserine/groundwork#367",
     "number": 368
   }
 }

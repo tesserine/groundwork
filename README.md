@@ -159,8 +159,8 @@ When `manifest.toml`, `mechanics/`, and the forge-operation resolver are
 present, the installer also projects a managed runtime bundle under
 `~/.groundwork/`. The bundle contains the manifest, mechanic library, resolver
 module, and `bin/groundwork-mechanic`, so installed protocol sessions can
-resolve forge-invariant operations through the active `RUNA_FORGE_TYPE`
-configuration without reaching back into the source checkout. Installed
+resolve forge-invariant operations through runa's `RUNA_FORGE_ADDRESSES`
+payload without reaching back into the source checkout. Installed
 protocol copies reference the managed resolver path directly, so users do not
 need to add `~/.groundwork/bin` to `PATH`.
 
@@ -168,12 +168,11 @@ The early-arc tracker operations are forge-invariant at the call site and
 forge-tagged in the mechanic library: `create-ticket`, `read-ticket`,
 `claim-work-unit`, and `record-progress` resolve to either GitHub issue
 mechanics or SourceHut ticket mechanics. Ticket creation emits the
-forge-assigned identity needed for a `work-unit.handle`: GitHub emits
-`forge_tag`, issue `url`, and issue `number`; SourceHut emits `forge_tag`,
-`tracker_id`, and ticket `number`. The mechanics validate the expected API or
-GraphQL result field before accepting a response, so an HTTP- or CLI-successful
-response that contains application errors or omits the expected operation
-result is rejected.
+forge-address work-unit handle needed for `work-unit.handle`: `tracker`,
+`tracker_identity`, `work_unit_identity`, and `number`. The mechanics validate
+the expected API or GraphQL result field before accepting a response, so an
+HTTP- or CLI-successful response that contains application errors or omits the
+expected operation result is rejected.
 
 Secret mechanic parameters must be bound from an environment variable rather
 than from `NAME=VALUE` argv bindings. For example, pass
@@ -183,36 +182,31 @@ resolver command line.
 
 Forge deployment identity is also supplied by environment contract, not by
 mechanic call-site bindings. Mechanics mark deployment-resolved parameters with
-`deployment_value`, and `groundwork-mechanic` derives those values from these
-atoms:
+`deployment_value`, and `groundwork-mechanic` derives those values from the
+validated `RUNA_FORGE_ADDRESSES` payload:
 
-| Variable | Holds | Example | Forge-assigned? |
+| Payload field | Holds | Example | Forge-assigned? |
 |---|---|---|---|
-| `RUNA_FORGE_TYPE` | active forge selector, defaulting to `github` | `sourcehut` | no |
-| `RUNA_FORGE_OWNER` | tracker/repo owner handle | `operator` | no |
-| `RUNA_FORGE_NAME` | tracker/repo name | `weforge` | no |
-| `RUNA_FORGE_TRACKER_ID` | tracker integer ID | `4` | yes |
-| `GROUNDWORK_FORGE_ENDPOINT` | deployment host used to derive service hosts | `weforge.build` | no |
-| `GROUNDWORK_FORGE_REPO_ID` | git repo integer ID | `42` | yes |
+| `repositories[].identity` | repository identity | `github:github.com/tesserine/groundwork` | no |
+| `trackers[].identity` | tracker identity | `sourcehut:todo.weforge.build/~operator/weforge:4` | partly |
+| `trackers[].tracker_id` | SourceHut tracker integer ID | `4` | yes |
 
-For SourceHut, the resolver derives `todo_query_url` as
-`https://todo.<endpoint>/query`, `git_query_url` as
-`https://git.<endpoint>/query`, and `ssh_remote` as
-`git@git.<endpoint>:~<owner>/<name>`, while `tracker_id` and `repo_id` come
-directly from their atoms. For GitHub, it derives `repository` as
-`<owner>/<name>`. Runa owns the four scoped identity atoms it injects into
-agent and MCP environments; Groundwork still owns endpoint and repo-id atoms
-that are not part of runtime scoped identity. The atoms are the only deployment
-facts; composed endpoints and remotes are not separate configuration values.
+For SourceHut, the resolver derives `todo_query_url` from the tracker host,
+`git_query_url` and `ssh_remote` from the git host, owner, and repository, and
+uses the tracker id from the payload. For GitHub, it derives `repository` as
+`<owner>/<repository>`. Runa owns the scoped identity payload it injects into
+agent and MCP environments. The payload is the only deployment facts source;
+composed endpoints and remotes are not separate configuration values.
 
 The cross-repo seam for this ticket identity is documented in
 [`docs/architecture/connecting-structure.md`](docs/architecture/connecting-structure.md#phase-2-forge-tagging-seam).
-Groundwork owns the schema-as-contract shape of `work-unit.handle`, the
-mechanics that produce handles from active deployment identity, and the
-decompose delivery rules. runa owns scoped runtime enforcement: exact recorded
-`--work-unit` ids, tracker-handle consistency, duplicate-root rejection, and
-active deployment agreement. Cross-deployment work is composed from separate
-sessions; a handle never overrides the active deployment.
+runa owns the `work-unit.handle` format in the forge-address contract.
+Groundwork owns the mechanics that produce handles from runa's validated
+deployment payload, the derived schema copy, and the decompose delivery rules.
+runa owns scoped runtime enforcement: exact recorded `--work-unit` ids,
+tracker-handle consistency, duplicate-root rejection, and active deployment
+agreement. Cross-deployment work is composed from separate sessions; a handle
+never overrides the active deployment.
 
 The source checkout must be clean and pinned at a tag or full commit SHA. The
 command refuses branch checkouts because a branch is a moving source. To update

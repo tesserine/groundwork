@@ -10,6 +10,8 @@ from urllib.parse import urlparse
 
 from jsonschema import Draft202012Validator, FormatChecker
 
+from tooling.forge_address import load_schema as load_forge_address_schema
+from tooling.forge_address import validate_work_unit_handle
 from tooling.mechanics import MechanicRegistry
 
 
@@ -18,9 +20,6 @@ SCHEMAS = ROOT / "schemas"
 MANIFEST = ROOT / "manifest.toml"
 DATE_TIME_PATTERN = re.compile(
     r"^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[Zz]|[+-]\d{2}:\d{2})$"
-)
-GITHUB_WORK_UNIT_ISSUE_URL_PATTERN = re.compile(
-    r"^https://github[.]com/[^/]+/[^/]+/issues/([0-9]+)$"
 )
 
 
@@ -90,7 +89,11 @@ def _schema_errors(artifact_type: str, artifact: dict[str, Any]) -> list[tuple[s
     except FileNotFoundError as error:
         raise ArtifactSchemaError([(str(schema_path.relative_to(ROOT)), "artifact schema does not exist")]) from error
 
-    validator = Draft202012Validator(schema, format_checker=_format_checker())
+    validator = Draft202012Validator(
+        schema,
+        format_checker=_format_checker(),
+        registry=_schema_registry(),
+    )
     errors: list[tuple[str, str]] = []
     for error in sorted(validator.iter_errors(artifact), key=lambda item: list(item.path)):
         path = "/".join(str(part) for part in error.path)
@@ -99,6 +102,18 @@ def _schema_errors(artifact_type: str, artifact: dict[str, Any]) -> list[tuple[s
             path = f"{path}/{missing}" if path else missing
         errors.append((path or "<root>", error.message))
     return errors
+
+
+def _schema_registry():
+    from referencing import Registry, Resource
+
+    resource = Resource.from_contents(load_forge_address_schema())
+    return Registry().with_resources(
+        [
+            ("forge-address.schema.json", resource),
+            ("https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/forge-address.schema.json", resource),
+        ]
+    )
 
 
 def _format_checker() -> FormatChecker:
@@ -145,8 +160,6 @@ def _registry_errors(
 ) -> list[tuple[str, str]]:
     if artifact_type == "change-proposal":
         forge_tag = artifact["handle"]["forge_tag"]
-    elif artifact_type == "work-unit" and "handle" in artifact:
-        forge_tag = artifact["handle"]["forge_tag"]
     else:
         return []
 
@@ -156,11 +169,11 @@ def _registry_errors(
 
 
 def _artifact_contract_errors(artifact_type: str, artifact: dict[str, Any]) -> list[tuple[str, str]]:
-    if artifact_type != "work-unit" or artifact.get("handle", {}).get("forge_tag") != "github":
+    if artifact_type != "work-unit" or "handle" not in artifact:
         return []
 
-    handle = artifact["handle"]
-    match = GITHUB_WORK_UNIT_ISSUE_URL_PATTERN.fullmatch(handle["url"])
-    if match is not None and int(match.group(1)) != handle["number"]:
-        return [("handle/url", "GitHub issue URL number does not agree with handle number")]
+    try:
+        validate_work_unit_handle(artifact["handle"])
+    except ValueError as error:
+        return [("handle", str(error))]
     return []

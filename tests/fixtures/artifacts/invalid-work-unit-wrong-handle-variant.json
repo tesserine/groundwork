@@ -1,12 +1,13 @@
 {
   "title": "Reject wrong work-unit handle variant",
-  "description": "GitHub work-unit handles must not carry SourceHut fields",
+  "description": "Work-unit handles must not carry legacy forge-specific fields",
   "acceptance_criteria": [
     "Wrong forge handle variants are rejected"
   ],
   "handle": {
     "forge_tag": "github",
-    "tracker_id": 4,
+    "tracker_identity": "github:github.com/tesserine/groundwork",
+    "work_unit_identity": "github:github.com/tesserine/groundwork#368",
     "number": 368
   }
 }

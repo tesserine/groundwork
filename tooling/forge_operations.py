@@ -1,18 +1,42 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
+import sys
 import tomllib
 from pathlib import Path
 from typing import Any, Mapping
 
+def _runtime_root() -> Path:
+    candidate = Path(__file__).resolve().parents[1]
+    if (candidate / "manifest.toml").exists() or (candidate / "schemas").exists():
+        return candidate
+    installed = candidate.parent
+    if (installed / "manifest.toml").exists() or (installed / "schemas").exists():
+        return installed
+    return candidate
 
-ROOT = Path(__file__).resolve().parents[1]
-RUNA_FORGE_TYPE = "RUNA_FORGE_TYPE"
-RUNA_FORGE_OWNER = "RUNA_FORGE_OWNER"
-RUNA_FORGE_NAME = "RUNA_FORGE_NAME"
-RUNA_FORGE_TRACKER_ID = "RUNA_FORGE_TRACKER_ID"
+
+ROOT = _runtime_root()
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+if str(ROOT / "lib") not in sys.path:
+    sys.path.insert(0, str(ROOT / "lib"))
+
+from tooling.forge_address import ForgeAddressContractError, validate_contract_value
+
+MECHANIC_SCHEMA = ROOT / "schemas" / "mechanic.schema.json"
+RUNA_FORGE_ADDRESSES = "RUNA_FORGE_ADDRESSES"
+TRACKER_OPERATIONS = {
+    "claim-work-unit",
+    "close-out",
+    "create-ticket",
+    "read-ticket",
+    "record-progress",
+    "reflect-disposition",
+}
 
 
 class ForgeOperationError(ValueError):
@@ -22,13 +46,21 @@ class ForgeOperationError(ValueError):
 def active_forge_type(environment: Mapping[str, str], override: str | None) -> str:
     if override:
         return override
-    return environment.get(RUNA_FORGE_TYPE) or "github"
+    return "github"
 
 
-def resolve_operation(root: Path | str, operation: str, *, forge_type: str | None = None) -> dict[str, Any]:
+def resolve_operation(
+    root: Path | str,
+    operation: str,
+    *,
+    forge_type: str | None = None,
+    repository: str | None = None,
+    tracker: str | None = None,
+) -> dict[str, Any]:
     root_path = Path(root)
     manifest = _load_toml(root_path / "manifest.toml")
-    selected_forge_type = active_forge_type(os.environ, forge_type)
+    resource = _selected_resource(operation, repository=repository, tracker=tracker, environment=os.environ)
+    selected_forge_type = resource["forge_type"] if resource is not None else active_forge_type(os.environ, forge_type)
     forge_tags = _manifest_names(manifest, "forge_tags")
     if selected_forge_type not in forge_tags:
         raise ForgeOperationError(f"forge type `{selected_forge_type}` does not resolve in forge_tags")
@@ -47,7 +79,10 @@ def resolve_operation(root: Path | str, operation: str, *, forge_type: str | Non
         raise ForgeOperationError(
             f"operation `{operation}` for forge type `{selected_forge_type}` resolves to {len(matches)} mechanics; expected exactly 1"
         )
-    return matches[0]
+    mechanic = dict(matches[0])
+    if resource is not None:
+        mechanic["_groundwork_resource"] = resource
+    return mechanic
 
 
 def inspect_invocation(mechanic: Mapping[str, Any], values: Mapping[str, str]) -> str:
@@ -100,7 +135,9 @@ def run_invocation(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Resolve and invoke Groundwork forge operations.")
     parser.add_argument("--root", default=str(ROOT), help="Groundwork methodology root. Defaults to this checkout.")
-    parser.add_argument("--forge-type", help="Active forge type override. Defaults to RUNA_FORGE_TYPE, then github.")
+    parser.add_argument("--forge-type", help=argparse.SUPPRESS)
+    parser.add_argument("--repository", help="Repository selector from RUNA_FORGE_ADDRESSES.")
+    parser.add_argument("--tracker", help="Tracker selector from RUNA_FORGE_ADDRESSES.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     resolve_parser = subparsers.add_parser("resolve", help="Print the resolved mechanic path-equivalent name.")
@@ -122,7 +159,13 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
     try:
-        mechanic = resolve_operation(args.root, args.operation, forge_type=args.forge_type)
+        mechanic = resolve_operation(
+            args.root,
+            args.operation,
+            forge_type=args.forge_type,
+            repository=args.repository,
+            tracker=args.tracker,
+        )
         if args.command == "resolve":
             print(f"{mechanic['name']}[{mechanic['forge_tag']}]")
             return 0
@@ -208,7 +251,13 @@ def _deployment_parameter_values(
     forge_type = mechanic.get("forge_tag")
     if not isinstance(forge_type, str):
         raise ForgeOperationError("deployment-resolved parameters require mechanic forge_tag")
-    resolved = _resolved_deployment_values(forge_type, set(deployments.values()), environment)
+    resource = mechanic.get("_groundwork_resource")
+    resolved = _resolved_deployment_values(
+        forge_type,
+        set(deployments.values()),
+        environment,
+        resource if isinstance(resource, dict) else None,
+    )
     values: dict[str, str] = {}
     for name, deployment_value in deployments.items():
         values[name] = resolved[deployment_value]
@@ -219,9 +268,10 @@ def _resolved_deployment_values(
     forge_type: str,
     deployment_values: set[str],
     environment: Mapping[str, str],
+    resource: Mapping[str, Any] | None = None,
 ) -> dict[str, str]:
     return {
-        deployment_value: _resolve_deployment_value(forge_type, deployment_value, environment)
+        deployment_value: _resolve_deployment_value(forge_type, deployment_value, environment, resource)
         for deployment_value in deployment_values
     }
 
@@ -230,54 +280,166 @@ def _resolve_deployment_value(
     forge_type: str,
     deployment_value: str,
     environment: Mapping[str, str],
+    resource: Mapping[str, Any] | None = None,
 ) -> str:
+    if deployment_value not in deployment_value_vocabulary():
+        raise ForgeOperationError(f"deployment value `{deployment_value}` is not declared by mechanic.schema.json")
+    if resource is not None:
+        return _resolve_resource_deployment_value(forge_type, deployment_value, resource)
+    raise ForgeOperationError(
+        f"deployment value `{deployment_value}` requires --repository or --tracker with {RUNA_FORGE_ADDRESSES}"
+    )
+
+
+def deployment_value_vocabulary() -> set[str]:
+    schema = json.loads(MECHANIC_SCHEMA.read_text(encoding="utf-8"))
+    values = schema["$defs"]["parameter"]["properties"]["deployment_value"]["enum"]
+    return {str(value) for value in values}
+
+
+def _selected_resource(
+    operation: str,
+    *,
+    repository: str | None,
+    tracker: str | None,
+    environment: Mapping[str, str],
+) -> dict[str, Any] | None:
+    if repository and tracker:
+        raise ForgeOperationError("--repository and --tracker are mutually exclusive")
+    if not repository and not tracker:
+        return None
+
+    payload = _address_payload(environment)
+    if repository:
+        resource = _named_resource(payload, "repositories", repository)
+        instance = _instance(payload, resource["instance"])
+        forge_type = instance["type"]
+        tracker_resource = _tracker_for_repository(payload, resource) if forge_type == "github" else None
+        if operation in TRACKER_OPERATIONS and forge_type != "github":
+            raise ForgeOperationError(f"operation `{operation}` requires --tracker for sourcehut resources")
+        return {
+            "kind": "repository",
+            "forge_type": forge_type,
+            "resource": resource,
+            "instance": instance,
+            "tracker": tracker_resource,
+        }
+
+    assert tracker is not None
+    resource = _named_resource(payload, "trackers", tracker)
+    forge_type = resource["type"]
     if forge_type == "github":
-        if deployment_value == "owner":
-            return _required_environment(environment, RUNA_FORGE_OWNER)
-        if deployment_value == "name":
-            return _required_environment(environment, RUNA_FORGE_NAME)
-        if deployment_value == "repository":
-            owner = _required_environment(environment, RUNA_FORGE_OWNER)
-            name = _required_environment(environment, RUNA_FORGE_NAME)
-            return f"{owner}/{name}"
-        raise ForgeOperationError(
-            f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`"
-        )
-    if forge_type == "sourcehut":
-        if deployment_value == "owner":
-            return _required_environment(environment, RUNA_FORGE_OWNER)
-        if deployment_value == "name":
-            return _required_environment(environment, RUNA_FORGE_NAME)
-        if deployment_value == "repository":
-            owner = _required_environment(environment, RUNA_FORGE_OWNER)
-            name = _required_environment(environment, RUNA_FORGE_NAME)
-            return f"{owner}/{name}"
-        if deployment_value == "todo_query_url":
-            endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
-            return f"https://todo.{endpoint}/query"
-        if deployment_value == "git_query_url":
-            endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
-            return f"https://git.{endpoint}/query"
-        if deployment_value == "ssh_remote":
-            endpoint = _required_environment(environment, "GROUNDWORK_FORGE_ENDPOINT")
-            owner = _required_environment(environment, RUNA_FORGE_OWNER)
-            name = _required_environment(environment, RUNA_FORGE_NAME)
-            return f"git@git.{endpoint}:~{owner}/{name}"
-        if deployment_value == "tracker_id":
-            return _required_environment(environment, RUNA_FORGE_TRACKER_ID)
-        if deployment_value == "repo_id":
-            return _required_environment(environment, "GROUNDWORK_FORGE_REPO_ID")
-        raise ForgeOperationError(
-            f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`"
-        )
-    raise ForgeOperationError(f"forge type `{forge_type}` does not support deployment identity")
+        raise ForgeOperationError(f"github operation `{operation}` must use --repository")
+    return {
+        "kind": "tracker",
+        "forge_type": forge_type,
+        "resource": resource,
+        "instance": _instance(payload, resource["instance"]),
+        "tracker": resource,
+    }
 
 
-def _required_environment(environment: Mapping[str, str], name: str) -> str:
-    value = environment.get(name)
-    if value is None or value == "":
-        raise ForgeOperationError(f"missing required deployment identity atom `{name}`")
-    return value
+def _address_payload(environment: Mapping[str, str]) -> Mapping[str, Any]:
+    raw = environment.get(RUNA_FORGE_ADDRESSES)
+    if not raw:
+        raise ForgeOperationError(f"missing required {RUNA_FORGE_ADDRESSES} payload")
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as error:
+        raise ForgeOperationError(f"{RUNA_FORGE_ADDRESSES} is invalid JSON: {error}") from error
+    if not isinstance(payload, dict):
+        raise ForgeOperationError(f"{RUNA_FORGE_ADDRESSES} must be a JSON object")
+    try:
+        validate_contract_value(payload)
+    except ForgeAddressContractError as error:
+        raise ForgeOperationError(f"{RUNA_FORGE_ADDRESSES} does not match forge-address schema: {error}") from error
+    return payload
+
+
+def _named_resource(payload: Mapping[str, Any], collection: str, name: str) -> Mapping[str, Any]:
+    matches = [
+        resource
+        for resource in payload.get(collection, [])
+        if isinstance(resource, dict) and resource.get("name") == name
+    ]
+    if len(matches) != 1:
+        raise ForgeOperationError(f"{collection[:-1]} selector `{name}` resolved to {len(matches)} resources; expected exactly 1")
+    return matches[0]
+
+
+def _instance(payload: Mapping[str, Any], name: str) -> Mapping[str, Any]:
+    return _named_resource(payload, "instances", name)
+
+
+def _tracker_for_repository(payload: Mapping[str, Any], repository: Mapping[str, Any]) -> Mapping[str, Any]:
+    matches = [
+        tracker
+        for tracker in payload.get("trackers", [])
+        if (
+            isinstance(tracker, dict)
+            and tracker.get("type") == "github"
+            and tracker.get("repository") == repository.get("name")
+        )
+    ]
+    if len(matches) != 1:
+        raise ForgeOperationError(
+            f"github repository selector `{repository.get('name')}` resolved to {len(matches)} trackers; expected exactly 1"
+        )
+    return matches[0]
+
+
+def _resolve_resource_deployment_value(
+    forge_type: str,
+    deployment_value: str,
+    selected: Mapping[str, Any],
+) -> str:
+    resource = selected["resource"]
+    instance = selected["instance"]
+    if deployment_value == "owner":
+        return _bare_owner(str(resource["owner"]))
+    if deployment_value == "name":
+        return str(resource.get("repository") or resource.get("tracker"))
+    if deployment_value == "tracker":
+        tracker = selected.get("tracker")
+        if not isinstance(tracker, dict):
+            raise ForgeOperationError("deployment value `tracker` requires a tracker-backed selector")
+        return str(tracker["name"])
+    if deployment_value == "tracker_identity":
+        tracker = selected.get("tracker")
+        if not isinstance(tracker, dict):
+            raise ForgeOperationError("deployment value `tracker_identity` requires a tracker-backed selector")
+        return str(tracker["identity"])
+    if deployment_value == "repository":
+        if selected["kind"] != "repository":
+            raise ForgeOperationError("deployment value `repository` requires a repository selector")
+        return f"{_bare_owner(str(resource['owner']))}/{resource['repository']}"
+    if deployment_value == "todo_query_url":
+        if forge_type != "sourcehut":
+            raise ForgeOperationError("deployment value `todo_query_url` requires a sourcehut resource")
+        return f"https://{instance['tracker_host']}/query"
+    if deployment_value == "git_query_url":
+        if forge_type != "sourcehut":
+            raise ForgeOperationError("deployment value `git_query_url` requires a sourcehut resource")
+        return f"https://{instance['git_host']}/query"
+    if deployment_value == "ssh_remote":
+        if selected["kind"] != "repository" or forge_type != "sourcehut":
+            raise ForgeOperationError("deployment value `ssh_remote` requires a sourcehut repository selector")
+        return f"git@{instance['git_host']}:{_canonical_sourcehut_owner(str(resource['owner']))}/{resource['repository']}"
+    if deployment_value == "tracker_id":
+        if selected["kind"] != "tracker":
+            raise ForgeOperationError("deployment value `tracker_id` requires a tracker selector")
+        return str(resource["tracker_id"])
+    if deployment_value == "repo_id":
+        raise ForgeOperationError("deployment value `repo_id` is declared but not provided by the forge-address contract")
+    raise ForgeOperationError(f"deployment value `{deployment_value}` is not supported for forge type `{forge_type}`")
+
+
+def _bare_owner(owner: str) -> str:
+    return owner.removeprefix("~")
+
+
+def _canonical_sourcehut_owner(owner: str) -> str:
+    return "~" + _bare_owner(owner)
 
 
 def _invocation_body(mechanic: Mapping[str, Any]) -> str:

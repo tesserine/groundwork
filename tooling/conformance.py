@@ -12,6 +12,7 @@ from jsonschema import Draft202012Validator
 from jsonschema.exceptions import SchemaError
 
 from tooling.artifact_schemas import ArtifactSchemaError, load_artifact, registry_from_manifest
+from tooling.forge_address import ForgeAddressContractError, assert_derived_schema_matches_authority
 from tooling.mechanics import MechanicError, load_mechanic
 from tooling.workflow_contracts import WorkflowContractError, load_workflow_contract, workflow_registry_from_manifest
 
@@ -220,10 +221,14 @@ def _check_schema_definition(path: Path) -> ConformanceResult:
     try:
         schema = json.loads(path.read_text(encoding="utf-8"))
         Draft202012Validator.check_schema(schema)
+        if path.name == "forge-address.schema.json":
+            assert_derived_schema_matches_authority(path)
     except json.JSONDecodeError as error:
         return ConformanceResult(path=path, category=CATEGORY_SCHEMA, passed=False, errors=[f"<json>: {error}"])
     except SchemaError as error:
         return ConformanceResult(path=path, category=CATEGORY_SCHEMA, passed=False, errors=[error.message])
+    except ForgeAddressContractError as error:
+        return ConformanceResult(path=path, category=CATEGORY_SCHEMA, passed=False, errors=[str(error)])
     return ConformanceResult(path=path, category=CATEGORY_SCHEMA, passed=True, errors=[])
 
 

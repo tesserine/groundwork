@@ -31,16 +31,16 @@ mechanics use `git check-ref-format` as the authoritative ref-name boundary.
 
 `work-unit.schema.json` is the planning-to-execution bridge. It remains
 forge-neutral and unpartitioned: tracker-backed units may carry an optional
-forge-tagged ticket `handle`, while non-tracker units omit `handle`, and
+forge-address ticket `handle`, while non-tracker units omit `handle`, and
 planning-phase work-unit bodies do not carry a top-level `work_unit` field.
-Supported ticket handles are GitHub issue handles
-`{ forge_tag, url, number }` and SourceHut ticket handles
-`{ forge_tag, tracker_id, number }`; Groundwork artifact validation enforces
-registry membership and GitHub URL/number agreement.
+The handle schema is not authored here; it is a `$ref` to
+`forge-address.schema.json#/$defs/work_unit_handle`, a derived copy pinned to
+runa's authoritative forge-address contract. Groundwork artifact validation
+also checks that `work_unit_identity` is derived from `tracker_identity` and
+`number`.
 
-Change-proposal and work-unit handle forge tags, plus mechanic-authored
-`forge_tag` values, resolve against the declarative `[[forge_tags]]` registry
-in `manifest.toml`.
+Change-proposal handle forge tags plus mechanic-authored `forge_tag` values
+resolve against the declarative `[[forge_tags]]` registry in `manifest.toml`.
 Manifest `[[mechanics]]` entries may declare `forge_tags = [...]` to bind an
 operation handle to forge-specific C-3 mechanics; conformance requires exactly
 one matching `mechanics/**/*.toml` file for each declared operation/tag pair.

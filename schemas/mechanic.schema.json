@@ -80,6 +80,8 @@
             "todo_query_url",
             "git_query_url",
             "ssh_remote",
+            "tracker",
+            "tracker_identity",
             "tracker_id",
             "repo_id"
           ]

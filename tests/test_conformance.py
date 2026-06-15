@@ -103,7 +103,7 @@ name = "successor"
         self.assertTrue(results[0].passed)
         self.assertTrue(results[1].passed)
         self.assertFalse(results[2].passed)
-        self.assertIn("handle/url", " ".join(results[2].errors))
+        self.assertIn("work_unit_identity", " ".join(results[2].errors))
 
     def test_invalid_units_return_failures_without_raising(self) -> None:
         results = run_conformance(

@@ -85,7 +85,12 @@ session that entrypoint opens.
      title: "<from the ticket>",
      description: "<from the ticket>",
      acceptance_criteria: ["<from the ticket>"],
-     handle: { forge_tag: "<github|sourcehut>", "...": "<ticket identity>" }
+     handle: {
+       tracker: "<tracker name>",
+       tracker_identity: "<tracker identity>",
+       work_unit_identity: "<tracker identity>#<N>",
+       number: <N>
+     }
    })
    ```
 

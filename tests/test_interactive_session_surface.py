@@ -56,7 +56,7 @@ def append_agent_command_config(project_dir: Path, command: list[Path]) -> None:
     config_path = project_dir / ".runa" / "config.toml"
     config = config_path.read_text(encoding="utf-8")
     quoted = ", ".join(json.dumps(str(part)) for part in command)
-    config_path.write_text(f"{config}\n[agent]\ncommand = [{quoted}]\n", encoding="utf-8")
+    config_path.write_text(f"{config}\n[runtime]\ncommand = [{quoted}]\n", encoding="utf-8")
 
 
 def groundwork_env() -> dict[str, str]:
@@ -96,8 +96,9 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                             "Interactive sessions reach take through the runa session surface"
                         ],
                         "handle": {
-                            "forge_tag": "github",
-                            "url": "https://github.com/tesserine/groundwork/issues/382",
+                            "tracker": "groundwork",
+                            "tracker_identity": "github:github.com/tesserine/groundwork",
+                            "work_unit_identity": "github:github.com/tesserine/groundwork#382",
                             "number": 382,
                         },
                     },

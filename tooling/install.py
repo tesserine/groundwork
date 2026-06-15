@@ -253,10 +253,20 @@ def project_runtime_bundle(source: Path, sha: str, target: Path) -> None:
     """Build the methodology runtime bundle into ``target``."""
     (target / "bin").mkdir(parents=True, exist_ok=True)
     (target / "lib" / "tooling").mkdir(parents=True, exist_ok=True)
+    (target / "schemas").mkdir(parents=True, exist_ok=True)
     (target / "manifest.toml").write_bytes(show_file(source, sha, "manifest.toml"))
     extract_tree(source, sha, "mechanics", target / "mechanics")
     (target / "lib" / "tooling" / "forge_operations.py").write_bytes(
         show_file(source, sha, "tooling/forge_operations.py")
+    )
+    (target / "lib" / "tooling" / "forge_address.py").write_bytes(
+        show_file(source, sha, "tooling/forge_address.py")
+    )
+    (target / "schemas" / "mechanic.schema.json").write_bytes(
+        show_file(source, sha, "schemas/mechanic.schema.json")
+    )
+    (target / "schemas" / "forge-address.schema.json").write_bytes(
+        show_file(source, sha, "schemas/forge-address.schema.json")
     )
     resolver = target / "bin" / "groundwork-mechanic"
     resolver.write_text(RESOLVER_WRAPPER, encoding="utf-8")
@@ -266,7 +276,7 @@ def project_runtime_bundle(source: Path, sha: str, target: Path) -> None:
 # The runtime-bundle children this installer manages under `~/.groundwork`.
 # The resolved corpus (`principles/`) lives beside them and is converged
 # separately — bundle convergence never rebuilds the whole root.
-RUNTIME_BUNDLE_CHILDREN = ("manifest.toml", "mechanics", "lib", "bin", MARKER_NAME)
+RUNTIME_BUNDLE_CHILDREN = ("manifest.toml", "mechanics", "schemas", "lib", "bin", MARKER_NAME)
 
 
 def converge_runtime_bundle(options: Options, sha: str) -> None:

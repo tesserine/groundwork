@@ -1,7 +1,7 @@
 name = "create-ticket"
-purpose = "Create a GitHub issue in the active repository and emit the forge-tagged work-unit handle identity."
+purpose = "Create a GitHub issue in the active repository and emit the forge-address work-unit handle identity."
 forge_tag = "github"
-default_invocation = '''response=$(mktemp) && trap 'rm -f "$response"' EXIT && gh api "repos/${repository}/issues" --method POST -f "title=${title}" -F "body=@${body_file}" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); url=payload.get("html_url"); number=payload.get("number"); sys.exit("GitHub create-ticket API response contained errors or omitted html_url/number") if "errors" in payload or not isinstance(url, str) or not url or not isinstance(number, int) else print(json.dumps({"forge_tag":"github","url":url,"number":number}, separators=(",", ":")))' "$response"'''
+default_invocation = '''response=$(mktemp) && trap 'rm -f "$response"' EXIT && gh api "repos/${repository}/issues" --method POST -f "title=${title}" -F "body=@${body_file}" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); tracker=sys.argv[2]; tracker_identity=sys.argv[3]; number=payload.get("number"); sys.exit("GitHub create-ticket API response contained errors or omitted issue number") if "errors" in payload or not isinstance(number, int) else print(json.dumps({"tracker":tracker,"tracker_identity":tracker_identity,"work_unit_identity":f"{tracker_identity}#{number}","number":number}, separators=(",", ":")))' "$response" "$tracker" "$tracker_identity"'''
 examples = [
   '''gh api repos/tesserine/groundwork/issues --method POST -f title='Add work unit' -F body=@/tmp/work-unit.md''',
 ]
@@ -11,6 +11,18 @@ name = "repository"
 purpose = "GitHub repository in OWNER/REPO form."
 required = true
 deployment_value = "repository"
+
+[[parameters]]
+name = "tracker"
+purpose = "Authoritative tracker selector name backing the GitHub repository."
+required = true
+deployment_value = "tracker"
+
+[[parameters]]
+name = "tracker_identity"
+purpose = "Authoritative runa tracker identity backing the GitHub repository."
+required = true
+deployment_value = "tracker_identity"
 
 [[parameters]]
 name = "title"
@@ -23,4 +35,4 @@ purpose = "Path to a file containing the issue body."
 required = true
 
 [outcome]
-description = "A GitHub issue exists in the active repository and stdout contains a work-unit handle with forge_tag, url, and number."
+description = "A GitHub issue exists in the active repository and stdout contains a forge-address work-unit handle."
