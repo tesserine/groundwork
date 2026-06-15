@@ -1,9 +1,9 @@
 name = "close-out"
 purpose = "Record work-unit completion context on a GitHub issue and close it as completed."
 forge_tag = "github"
-default_invocation = 'gh issue comment "$issue_number" --repo "$repository" --body-file "$body_file" && gh issue close "$issue_number" --repo "$repository" --reason completed'
+default_invocation = 'gh issue comment "$issue_number" --repo "$github_host/$repository" --body-file "$body_file" && gh issue close "$issue_number" --repo "$github_host/$repository" --reason completed'
 examples = [
-  'gh issue comment "$issue_number" --repo "$repository" --body-file "$body_file" && gh issue close "$issue_number" --repo "$repository" --reason completed',
+  'gh issue comment "$issue_number" --repo "$github_host/$repository" --body-file "$body_file" && gh issue close "$issue_number" --repo "$github_host/$repository" --reason completed',
 ]
 
 [[parameters]]
@@ -11,6 +11,12 @@ name = "repository"
 purpose = "GitHub repository in OWNER/REPO form."
 required = true
 deployment_value = "repository"
+
+[[parameters]]
+name = "github_host"
+purpose = "GitHub instance host."
+required = true
+deployment_value = "github_host"
 
 [[parameters]]
 name = "issue_number"

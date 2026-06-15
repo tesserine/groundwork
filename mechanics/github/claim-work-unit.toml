@@ -1,9 +1,9 @@
 name = "claim-work-unit"
 purpose = "Claim a GitHub work-unit issue by assigning it in the active repository."
 forge_tag = "github"
-default_invocation = '''response=$(mktemp) && trap 'rm -f "$response"' EXIT && gh api "repos/${repository}/issues/${ticket_number}" --method PATCH -F "assignees[]=${assignee}" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); tracker_identity=sys.argv[2]; url=payload.get("html_url"); number=payload.get("number"); sys.exit("GitHub claim-work-unit API response contained errors or omitted html_url/number") if "errors" in payload or not isinstance(url, str) or not url or not isinstance(number, int) else print(json.dumps({"handle":{"forge_tag":"github","url":url,"number":number,"tracker_identity":tracker_identity,"work_unit_identity":f"{tracker_identity}#{number}"}}, separators=(",", ":")))' "$response" "$tracker_identity"'''
+default_invocation = '''response=$(mktemp) && trap 'rm -f "$response"' EXIT && gh api --hostname "$github_host" "repos/${repository}/issues/${ticket_number}" --method PATCH -F "assignees[]=${assignee}" > "$response" && python3 -c 'import json, sys; payload=json.load(open(sys.argv[1], encoding="utf-8")); tracker_identity=sys.argv[2]; url=payload.get("html_url"); number=payload.get("number"); sys.exit("GitHub claim-work-unit API response contained errors or omitted html_url/number") if "errors" in payload or not isinstance(url, str) or not url or not isinstance(number, int) else print(json.dumps({"handle":{"forge_tag":"github","url":url,"number":number,"tracker_identity":tracker_identity,"work_unit_identity":f"{tracker_identity}#{number}"}}, separators=(",", ":")))' "$response" "$tracker_identity"'''
 examples = [
-  'gh api repos/tesserine/groundwork/issues/369 --method PATCH -F assignees[]=operator',
+  'gh api --hostname github.com repos/tesserine/groundwork/issues/369 --method PATCH -F assignees[]=operator',
 ]
 
 [[parameters]]
@@ -11,6 +11,12 @@ name = "repository"
 purpose = "GitHub repository in OWNER/REPO form."
 required = true
 deployment_value = "repository"
+
+[[parameters]]
+name = "github_host"
+purpose = "GitHub instance host."
+required = true
+deployment_value = "github_host"
 
 [[parameters]]
 name = "tracker_identity"

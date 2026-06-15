@@ -75,7 +75,7 @@
         "url": {
           "type": "string",
           "description": "GitHub issue URL.",
-          "pattern": "^https://github\\.com/[^/]+/[^/]+/issues/[0-9]+$"
+          "pattern": "^https://[^/]+/[^/]+/[^/]+/issues/[0-9]+$"
         },
         "number": {
           "type": "integer",

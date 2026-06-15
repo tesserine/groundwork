@@ -20,14 +20,14 @@ from tooling.forge_operations import (
 
 ROOT = Path(__file__).resolve().parents[1]
 EARLY_ARC_OPERATIONS = ["create-ticket", "read-ticket", "claim-work-unit", "record-progress"]
-def forge_payload(*, single_repository: bool = False) -> str:
+def forge_payload(*, single_repository: bool = False, github_host: str = "github.com") -> str:
     repositories = [
         {
             "id": "github",
             "instance": "github-com",
             "owner": "tesserine",
             "name": "groundwork",
-            "identity": "github@github.com/repo/tesserine/groundwork",
+            "identity": f"github@{github_host}/repo/tesserine/groundwork",
         }
     ]
     if not single_repository:
@@ -47,7 +47,7 @@ def forge_payload(*, single_repository: bool = False) -> str:
                 {
                     "id": "github-com",
                     "type": "github",
-                    "services": {"git": "github.com", "tracker": "github.com"},
+                    "services": {"git": github_host, "tracker": github_host},
                 },
                 {
                     "id": "weforge",
@@ -63,7 +63,7 @@ def forge_payload(*, single_repository: bool = False) -> str:
                     "owner": "tesserine",
                     "name": "groundwork",
                     "repository": "github",
-                    "identity": "github@github.com/tracker/tesserine/groundwork",
+                    "identity": f"github@{github_host}/tracker/tesserine/groundwork",
                 },
                 {
                     "id": "sourcehut",
@@ -177,6 +177,38 @@ class ForgeOperationTests(unittest.TestCase):
 
         self.assertEqual("close-out", mechanic["name"])
         self.assertEqual("sourcehut", mechanic["forge_tag"])
+
+    def test_resolve_operation_rejects_selector_for_wrong_resource_kind(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_sourcehut_tracker_probe_methodology(root)
+
+            with self.assertRaises(ForgeOperationError) as context:
+                resolve_operation(
+                    root,
+                    "probe",
+                    repository="sourcehut",
+                    environment=forge_cli_environment(),
+                )
+
+        self.assertIn("repository selector `sourcehut`", str(context.exception))
+        self.assertIn("tracker-scoped operation", str(context.exception))
+
+    def test_resolve_operation_rejects_unmatched_selector(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_github_deployment_probe_methodology(root)
+
+            with self.assertRaises(ForgeOperationError) as context:
+                resolve_operation(
+                    root,
+                    "probe",
+                    repository="missing",
+                    environment=forge_cli_environment(),
+                )
+
+        self.assertIn("repository selector `missing`", str(context.exception))
+        self.assertIn("does not name a configured resource", str(context.exception))
 
     def test_cli_resolve_accepts_tracker_selector(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -302,6 +334,91 @@ class ForgeOperationTests(unittest.TestCase):
 
         self.assertNotEqual(0, result.returncode)
         self.assertIn("GitHub create-ticket API response", result.stderr)
+
+    def test_github_create_ticket_targets_instance_host(self) -> None:
+        host = "github.enterprise.example"
+        environment = forge_cli_environment(RUNA_FORGE_ADDRESSES=forge_payload(github_host=host))
+        mechanic = resolve_operation(
+            ROOT,
+            "create-ticket",
+            repository="github",
+            environment=environment,
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            response = root / "response.json"
+            args = root / "args.txt"
+            body = root / "body.md"
+            body.write_text("Ticket body\n", encoding="utf-8")
+            self.write_fake_command(bin_dir / "gh", f'printf "%s\\n" "$*" > "{args}"; cat "{response}"')
+            response.write_text(
+                '{"html_url":"https://github.enterprise.example/tesserine/groundwork/issues/381","number":381}\n',
+                encoding="utf-8",
+            )
+
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+                    RUNA_FORGE_ADDRESSES: environment[RUNA_FORGE_ADDRESSES],
+                },
+            ):
+                result = run_invocation(
+                    mechanic,
+                    {"title": "Add ticket", "body_file": str(body)},
+                    cwd=root,
+                )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual(
+                {
+                    "forge_tag": "github",
+                    "url": "https://github.enterprise.example/tesserine/groundwork/issues/381",
+                    "number": 381,
+                    "tracker_identity": "github@github.enterprise.example/tracker/tesserine/groundwork",
+                    "work_unit_identity": "github@github.enterprise.example/tracker/tesserine/groundwork#381",
+                },
+                json.loads(result.stdout),
+            )
+            self.assertIn("--hostname github.enterprise.example repos/tesserine/groundwork/issues", args.read_text(encoding="utf-8"))
+
+    def test_github_close_out_targets_instance_host_with_repo_locator(self) -> None:
+        host = "github.enterprise.example"
+        environment = forge_cli_environment(RUNA_FORGE_ADDRESSES=forge_payload(github_host=host))
+        mechanic = resolve_operation(
+            ROOT,
+            "close-out",
+            repository="github",
+            environment=environment,
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            args = root / "args.txt"
+            body = root / "body.md"
+            body.write_text("Done\n", encoding="utf-8")
+            self.write_fake_command(bin_dir / "gh", f'printf "%s\\n" "$*" >> "{args}"')
+
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+                    RUNA_FORGE_ADDRESSES: environment[RUNA_FORGE_ADDRESSES],
+                },
+            ):
+                result = run_invocation(
+                    mechanic,
+                    {"issue_number": "381", "body_file": str(body)},
+                    cwd=root,
+                )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn("--repo github.enterprise.example/tesserine/groundwork", args.read_text(encoding="utf-8"))
 
     def test_sourcehut_create_ticket_emits_work_unit_handle_and_rejects_graphql_errors(self) -> None:
         mechanic = resolve_operation(
@@ -802,7 +919,32 @@ cat "{response}"
             )
 
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual("tesserine/groundwork\n", result.stdout)
+        self.assertEqual(["tesserine/groundwork", "github.com"], result.stdout.strip().splitlines())
+
+    def test_cli_resolves_github_repository_host_from_instance(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_github_deployment_probe_methodology(root)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "--repository",
+                    "github",
+                    "run",
+                    "probe",
+                ],
+                env=forge_cli_environment(RUNA_FORGE_ADDRESSES=forge_payload(github_host="github.enterprise.example")),
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(["tesserine/groundwork", "github.enterprise.example"], result.stdout.strip().splitlines())
 
     def test_cli_resolves_single_repository_without_selector(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -825,7 +967,7 @@ cat "{response}"
             )
 
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual("tesserine/groundwork\n", result.stdout)
+        self.assertEqual(["tesserine/groundwork", "github.com"], result.stdout.strip().splitlines())
 
     def test_cli_rejects_caller_supplied_deployment_value(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -1063,7 +1205,7 @@ cat "{response}"
                 name = "probe"
                 purpose = "Probe GitHub deployment-value resolution."
                 forge_tag = "github"
-                default_invocation = 'printf "%s\\n" "$repository"'
+                default_invocation = 'printf "%s\\n%s\\n" "$repository" "$host"'
                 examples = ['printf "%s\\n" "$repository"']
 
                 [[parameters]]
@@ -1071,6 +1213,12 @@ cat "{response}"
                 purpose = "GitHub repository."
                 required = true
                 deployment_value = "repository"
+
+                [[parameters]]
+                name = "host"
+                purpose = "GitHub host."
+                required = true
+                deployment_value = "github_host"
 
                 [outcome]
                 description = "Printed."

@@ -123,7 +123,7 @@ class MaterializeTicketTests(unittest.TestCase):
             # The forge was only read — no create/edit/mutation: ticket count
             # on the forge is unchanged.
             gh_calls = call_log.read_text(encoding="utf-8")
-            self.assertIn("api repos/tesserine/groundwork/issues/188", gh_calls)
+            self.assertIn("api --hostname github.com repos/tesserine/groundwork/issues/188", gh_calls)
             for mutating in ("issue create", "--method POST", "--method PATCH", "-X POST"):
                 self.assertNotIn(mutating, gh_calls)
 

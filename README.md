@@ -192,7 +192,9 @@ payload has exactly one relevant resource the selector may be omitted.
 For SourceHut, the resolver derives `todo_query_url`, `git_query_url`, and
 `ssh_remote` from the selected resource's instance service hosts, and reads
 `tracker_id` from the selected tracker. For GitHub, it derives `repository` as
-`<owner>/<name>`. The legacy forge identity atoms are not read by the resolver.
+`<owner>/<name>` and `github_host` from the selected repository's instance, so
+API calls and `--repo` operations target the configured GitHub host. The legacy
+forge identity atoms are not read by the resolver.
 
 The cross-repo seam for this ticket identity is documented in
 [`docs/architecture/connecting-structure.md`](docs/architecture/connecting-structure.md#phase-2-forge-tagging-seam).

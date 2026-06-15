@@ -193,6 +193,26 @@ class ArtifactSchemaTests(unittest.TestCase):
                 if "handle" in artifact:
                     self.assertIn(artifact["handle"]["forge_tag"], {"github", "sourcehut"})
 
+    def test_work_unit_schema_accepts_github_handle_on_configured_host(self) -> None:
+        artifact = load_artifact("work-unit", self.fixture("valid-work-unit-github-handle.json"))
+        artifact["handle"]["url"] = "https://github.enterprise.example/tesserine/groundwork/issues/368"
+        artifact["handle"]["tracker_identity"] = "github@github.enterprise.example/tracker/tesserine/groundwork"
+        artifact["handle"]["work_unit_identity"] = "github@github.enterprise.example/tracker/tesserine/groundwork#368"
+
+        validate_artifact("work-unit", artifact, registry=registry_from_manifest())
+
+    def test_work_unit_schema_rejects_github_handle_number_mismatch_on_configured_host(self) -> None:
+        artifact = load_artifact("work-unit", self.fixture("valid-work-unit-github-handle.json"))
+        artifact["handle"]["url"] = "https://github.enterprise.example/tesserine/groundwork/issues/367"
+        artifact["handle"]["tracker_identity"] = "github@github.enterprise.example/tracker/tesserine/groundwork"
+        artifact["handle"]["work_unit_identity"] = "github@github.enterprise.example/tracker/tesserine/groundwork#368"
+
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("work-unit", artifact, registry=registry_from_manifest())
+
+        self.assertIn("handle/url", context.exception.paths)
+        self.assertIn("does not agree with handle number", str(context.exception))
+
     def test_work_unit_schema_rejects_top_level_work_unit_field(self) -> None:
         with self.assertRaises(ArtifactSchemaError) as context:
             load_artifact("work-unit", self.fixture("invalid-work-unit-top-level-work-unit.json"))

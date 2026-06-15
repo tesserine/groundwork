@@ -11,7 +11,7 @@ from typing import Any, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNA_FORGE_ADDRESSES = "RUNA_FORGE_ADDRESSES"
-REPOSITORY_DEPLOYMENT_VALUES = {"repository", "owner", "name", "git_query_url", "ssh_remote"}
+REPOSITORY_DEPLOYMENT_VALUES = {"repository", "owner", "name", "git_query_url", "ssh_remote", "github_host"}
 TRACKER_DEPLOYMENT_VALUES = {"owner_username", "tracker_id", "todo_query_url", "tracker_identity"}
 
 
@@ -63,6 +63,8 @@ def resolve_operation(
                 tracker_selector=tracker,
             )
         except ForgeOperationError:
+            if repository is not None or tracker is not None:
+                raise
             continue
         if context["instance"]["type"] == forge_type:
             resolved = dict(mechanic)
@@ -275,6 +277,8 @@ def _resolve_deployment_value(context: Mapping[str, Any], deployment_value: str)
             return str(resource["name"])
         if deployment_value == "repository":
             return f"{resource['owner']}/{resource['name']}"
+        if deployment_value == "github_host":
+            return str(instance["services"]["tracker"])
         if deployment_value == "tracker_identity":
             return f"github@{instance['services']['tracker']}/tracker/{resource['owner']}/{resource['name']}"
         raise ForgeOperationError(
@@ -326,8 +330,16 @@ def _deployment_context_for_mechanic(
         raise ForgeOperationError("mechanic with deployment values requires forge_tag")
     resource_kind = _resource_kind_for_deployments(deployments, forge_type)
     if resource_kind == "tracker":
+        if repository_selector is not None:
+            raise ForgeOperationError(
+                f"repository selector `{repository_selector}` cannot select a tracker-scoped operation"
+            )
         resource = _select_resource(address_book, "trackers", tracker_selector)
     else:
+        if tracker_selector is not None:
+            raise ForgeOperationError(
+                f"tracker selector `{tracker_selector}` cannot select a repository-scoped operation"
+            )
         resource = _select_resource(address_book, "repositories", repository_selector)
     instance = _instance_for_resource(address_book, resource)
     return {"kind": resource_kind, "resource": resource, "instance": instance}
@@ -359,12 +371,20 @@ def _select_resource(address_book: Mapping[str, Any], key: str, selector: str | 
         for resource in resources:
             if isinstance(resource, dict) and resource.get("id") == selector:
                 return resource
-        raise ForgeOperationError(f"{key[:-1]} selector `{selector}` does not name a configured resource")
+        raise ForgeOperationError(f"{_resource_label(key)} selector `{selector}` does not name a configured resource")
     if len(resources) == 1 and isinstance(resources[0], dict):
         return resources[0]
     if not resources:
         raise ForgeOperationError(f"no configured {key} can satisfy this forge operation")
     raise ForgeOperationError(f"multiple configured {key} require an explicit selector")
+
+
+def _resource_label(key: str) -> str:
+    if key == "repositories":
+        return "repository"
+    if key == "trackers":
+        return "tracker"
+    return key.removesuffix("s")
 
 
 def _instance_for_resource(address_book: Mapping[str, Any], resource: Mapping[str, Any]) -> Mapping[str, Any]:
