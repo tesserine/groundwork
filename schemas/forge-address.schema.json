@@ -5,8 +5,8 @@
   "$comment": "Groundwork vendors this runtime copy from runa's authoritative forge-address schema; do not edit the format here.",
   "x-tesserine-canonical": {
     "source": "tesserine/runa",
-    "commit": "4334e53aed9826ed250eabeec8c1a423dcebdf8a",
-    "schema_url": "https://raw.githubusercontent.com/tesserine/runa/4334e53aed9826ed250eabeec8c1a423dcebdf8a/contracts/forge-address/forge-address.schema.json"
+    "commit": "89627d9a315b4e7dabc4fb7ee2183c982d0d2dca",
+    "schema_url": "https://raw.githubusercontent.com/tesserine/runa/89627d9a315b4e7dabc4fb7ee2183c982d0d2dca/contracts/forge-address/forge-address.schema.json"
   },
   "type": "object",
   "oneOf": [

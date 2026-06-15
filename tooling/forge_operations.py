@@ -314,7 +314,6 @@ def _selected_resource(
         resource = _named_resource(payload, "repositories", repository)
         instance = _instance(payload, resource["instance"])
         forge_type = instance["type"]
-        tracker_resource = _tracker_for_repository(payload, resource) if forge_type == "github" else None
         if operation in TRACKER_OPERATIONS and forge_type != "github":
             raise ForgeOperationError(f"operation `{operation}` requires --tracker for sourcehut resources")
         return {
@@ -322,7 +321,7 @@ def _selected_resource(
             "forge_type": forge_type,
             "resource": resource,
             "instance": instance,
-            "tracker": tracker_resource,
+            "payload": payload,
         }
 
     assert tracker is not None
@@ -401,11 +400,15 @@ def _resolve_resource_deployment_value(
         return str(resource.get("repository") or resource.get("tracker"))
     if deployment_value == "tracker":
         tracker = selected.get("tracker")
+        if not isinstance(tracker, dict) and forge_type == "github" and selected["kind"] == "repository":
+            tracker = _tracker_for_repository(selected["payload"], resource)
         if not isinstance(tracker, dict):
             raise ForgeOperationError("deployment value `tracker` requires a tracker-backed selector")
         return str(tracker["name"])
     if deployment_value == "tracker_identity":
         tracker = selected.get("tracker")
+        if not isinstance(tracker, dict) and forge_type == "github" and selected["kind"] == "repository":
+            tracker = _tracker_for_repository(selected["payload"], resource)
         if not isinstance(tracker, dict):
             raise ForgeOperationError("deployment value `tracker_identity` requires a tracker-backed selector")
         return str(tracker["identity"])

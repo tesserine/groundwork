@@ -667,6 +667,40 @@ cat "{response}"
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual("tesserine/groundwork\n", result.stdout)
 
+    def test_cli_resolves_github_repository_only_operation_without_tracker(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_github_deployment_probe_methodology(root)
+            payload = dict(FORGE_ADDRESS_PAYLOAD)
+            payload["trackers"] = [
+                tracker
+                for tracker in FORGE_ADDRESS_PAYLOAD["trackers"]
+                if tracker.get("type") != "github"
+            ]
+            environment = forge_cli_environment(
+                RUNA_FORGE_ADDRESSES=json.dumps(payload, separators=(",", ":"))
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "tooling" / "forge_operations.py"),
+                    "--root",
+                    str(root),
+                    "--repository",
+                    "groundwork",
+                    "run",
+                    "probe",
+                ],
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("tesserine/groundwork\n", result.stdout)
+
     def test_cli_rejects_caller_supplied_deployment_value(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
