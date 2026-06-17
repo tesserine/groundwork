@@ -2,13 +2,14 @@
 name: take
 description: >-
   Contract-first entry of the scoped pipeline: receive an already-selected
-  work-unit, prepare the workspace, and establish the behavior contract that
-  defines done. The contract produced here is the spine every downstream
-  protocol carries through to land. Trigger on: 'take', 'take work',
-  'start work-unit'.
+  work-unit, prepare the workspace, establish the behavior contract that
+  defines done, and carry that contract through the pipeline to a submitted
+  change. The contract produced here is the spine every downstream protocol
+  carries to land; until the runtime sequences the stations autonomously,
+  take carries it. Trigger on: 'take', 'take work', 'start work-unit'.
 metadata:
-  version: "3.0.0"
-  updated: "2026-06-11"
+  version: "3.1.0"
+  updated: "2026-06-17"
 ---
 
 # Take — Contract-First Entry
@@ -78,8 +79,25 @@ proves it, or records it.
 
    Runa validates the remaining artifact body fields against the
    behavior-contract schema, persists the artifact, and records it in the
-   artifact store. The runtime carries the work to the next station; take
-   ends when the contract is delivered.
+   artifact store. Where no runtime is present to accept the MCP tool — a
+   checkout that is not an initialized runa project — author the same
+   contract as a committed workspace artifact (the behavior-contract JSON,
+   or the work-unit issue if there is no workspace store) so the spine
+   exists and binds the test-first cycle either way.
+
+6. **Carry the contract through to a submitted change.** Take does not end
+   at contract delivery. When the runtime sequences the pipeline
+   autonomously, it advances the work station to station; until then, take
+   carries it — that bridging is take's job at the door. With the behavior
+   contract as the spine, proceed through the stations in order, invoking
+   each: `plan` (a decision-complete design against the contract),
+   `implement` (build it test-first — every scenario is a failing test
+   before its code; `contract-after-code` is forbidden), `verify` (every
+   scenario green, the change sound), `submit` (deliver the change for
+   review). Advance through the boundaries; do not stop at one waiting to
+   be carried. Review and land — the independent-judgment gate and the
+   governance close — follow once every scenario is green and verify
+   passes.
 
 ## Scale
 
@@ -117,6 +135,10 @@ begins — the dose is proportional.
   loses workspace isolation and makes `submit` harder.
 - `state-lag`: the tracker not reflecting that this work-unit is in
   progress. Inaccurate state is planning debt for every other session.
+- `abandon-at-contract`: delivering the behavior contract and stopping —
+  handing the work to a runtime that is not sequencing it. The contract
+  becomes a definition of done that nothing executes, and the stations are
+  silently skipped. Until the runtime carries the work, take does.
 
 ## Cross-References
 
