@@ -8,7 +8,7 @@ description: >-
   carries to land; until the runtime sequences the stations autonomously,
   take carries it. Trigger on: 'take', 'take work', 'start work-unit'.
 metadata:
-  version: "3.2.1"
+  version: "3.3.0"
   updated: "2026-06-17"
 ---
 
@@ -46,7 +46,12 @@ proves it, or records it.
    work whose `dependencies` are still open; a blocked work-unit is a
    substrate signal, not an invitation.
 
-4. **Author the behavior contract.** Refine each acceptance criterion into
+4. **Author the behavior contract.** First reckon it: authoring the
+   contract is a generative act — open the resolved principles corpus at
+   `~/.groundwork/principles/`, select the principles that govern what
+   "done" means here, read them, and reason the contract from them rather
+   than the work-unit's surface wording alone (the reckon skill is the
+   move). Then refine each acceptance criterion into
    one or more sentence-named Given/When/Then scenarios — the executable
    definition of done. The `contract` skill is the authoring discipline:
    behavior before mechanics, one behavior per scenario, names that read as
