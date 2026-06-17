@@ -8,7 +8,7 @@ description: >-
   carries to land; until the runtime sequences the stations autonomously,
   take carries it. Trigger on: 'take', 'take work', 'start work-unit'.
 metadata:
-  version: "3.1.0"
+  version: "3.1.1"
   updated: "2026-06-17"
 ---
 
@@ -88,8 +88,15 @@ proves it, or records it.
 6. **Carry the contract through to a submitted change.** Take does not end
    at contract delivery. When the runtime sequences the pipeline
    autonomously, it advances the work station to station; until then, take
-   carries it — that bridging is take's job at the door. With the behavior
-   contract as the spine, proceed through the stations in order, invoking
+   carries it — that bridging is take's job at the door. You are already
+   the agent: carry the work by driving the session yourself — open
+   `runa-mcp` in session mode for this work-unit and, at each station, read
+   its context, do the work, produce its artifact through the station's
+   output tool, and advance. Do not delegate the carry-through to `runa go
+   --work-unit` — that spawns a separate agent that is not yet wired and
+   the work stalls; until it is, you drive the session directly. With the
+   behavior contract as the spine, proceed through the stations in order,
+   invoking
    each: `plan` (a decision-complete design against the contract),
    `implement` (build it test-first — every scenario is a failing test
    before its code; `contract-after-code` is forbidden), `verify` (every
@@ -139,6 +146,11 @@ begins — the dose is proportional.
   handing the work to a runtime that is not sequencing it. The contract
   becomes a definition of done that nothing executes, and the stations are
   silently skipped. Until the runtime carries the work, take does.
+- `delegate-to-unwired-runtime`: handing the carry-through to `runa go
+  --work-unit` (the autonomous agent-spawn) while it is not yet wired,
+  instead of driving the session yourself. The work stalls at a spawned
+  agent that never advances — a quieter `abandon-at-contract`. Until that
+  path is wired, you are the driver.
 
 ## Cross-References
 
