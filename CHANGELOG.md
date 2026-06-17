@@ -30,6 +30,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **reckon established as the standing cognitive mode** (#436). reckon was
+  declared as general first-principles cognition but operated as a discipline
+  invoked at generative checkpoints, leaving the agent's ambient reasoning —
+  planning, diagnosis, approach-framing — ungrounded (it never opened reckon
+  unless a protocol named it). orient's Operating Stance now establishes reckon
+  as the standing cognitive mode (always on, dose-proportional, distinct from
+  the trigger-gated cross-cutting disciplines, reaching planning and
+  diagnosis), and reckon's `When NOT to Reckon` carve-out no longer frames
+  execution as reckon-free. orient 4.0.0→4.1.0, reckon 5.2.1→5.3.0.
 - **reckon corpus resolution made deterministic** (#434). The Navigational
   Principles passage presented the installed corpus (`~/.groundwork/principles/`)
   and the embedded default (`principles/`) as parallel options and named

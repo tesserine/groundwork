@@ -11,7 +11,7 @@ description: >-
   earning its chain (momentum). Dead reckoning: advance from an established
   fix using trusted constants.
 metadata:
-  version: "5.2.1"
+  version: "5.3.0"
   updated: "2026-06-17"
 ---
 
@@ -150,15 +150,18 @@ drilling and recursive why: [references/excavation.md](references/excavation.md)
 ## When to Reckon
 
 You are about to accept a frame, a cost, a constraint, a structure, or a
-"how things work" — or to create something — or to reason forward from
-established ground. Ask: "Have I established what is actually true and
+"how things work" — or to create, plan, design, diagnose, or decide anything — or to reason
+forward from established ground. Ask: "Have I established what is actually true and
 needed, and am I reasoning from ground and principle rather than pattern
 and analogy?"
 
 ## When NOT to Reckon
 
-- **Mid-execution.** Finish the current step, then reassess. Reckoning
-  fires at decision points.
+- **Mid-step thrashing.** Finish the current step; don't re-run the full
+  move continuously or re-litigate a decision just grounded. This pauses the
+  *procedure* between decision points — it does not switch off the *mode*.
+  Execution is not a reckon-free zone: planning, diagnosis, and navigating
+  friction are dense with decision points, and each fires reckon.
 - **Verified external constraints.** Users at scale, contracts, and
   regulations are ground truth — they survive decomposition.
 - **Diminishing returns.** If reckoning produces the same design as the

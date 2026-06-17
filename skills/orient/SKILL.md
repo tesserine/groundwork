@@ -6,8 +6,8 @@ description: >-
   documentation-writing guidance. Activates the full skill system as one
   connected methodology and carries the always-on documentation discipline.
 metadata:
-  version: "4.0.0"
-  updated: "2026-06-11"
+  version: "4.1.0"
+  updated: "2026-06-17"
 ---
 
 # Orient
@@ -22,6 +22,15 @@ Skills are the default operating mode, not optional extras. When a skill's
 trigger matches the current work, invoke it — the default is activation,
 not restraint. The corruption to watch for is under-use, not over-use; the
 triggers themselves provide the scope.
+
+One discipline is not situational. `reckon` — first-principles reasoning —
+is the standing cognitive mode, not a skill awaiting a trigger. Whenever
+you reason toward producing, deciding, or diagnosing — framing an approach,
+planning, navigating friction, designing, authoring — reason from ground
+and principle, not pattern and convention. That posture is always on; its
+depth is dose-proportional: a quick grounding check for a small move, the
+full move for a load-bearing one. The cross-cutting disciplines below
+engage when their trigger fires; reckon underlies all of them.
 
 ## Entry Point
 
@@ -80,8 +89,10 @@ completeness.
 
 These are not stations; they engage when their trigger fires, at any stage.
 
-- **`reckon`** — first-principles reasoning, on every generative act. Not
-  step-one-once: the trigger is creation, not sequence position.
+- **`reckon`** — the standing cognitive mode (see Operating Stance), not a
+  trigger-gated discipline like the others here: first-principles reasoning on
+  every generative act — planning and diagnosis included — the trigger is
+  creation, not sequence position.
 - **`contract`** — the BDD discipline: authoring the behavior contract at
   `take`, carrying traceability through every station after.
 - **`work-unit-craft`** — the discipline for authoring a work-unit's tracker
