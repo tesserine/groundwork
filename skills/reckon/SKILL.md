@@ -11,8 +11,8 @@ description: >-
   earning its chain (momentum). Dead reckoning: advance from an established
   fix using trusted constants.
 metadata:
-  version: "5.2.0"
-  updated: "2026-06-12"
+  version: "5.2.1"
+  updated: "2026-06-17"
 ---
 
 # Reckon
@@ -99,13 +99,19 @@ during Reconstruct.
 The principles are defined in the resolved principles corpus, not here —
 they are consulted, never duplicated. Which corpus that is resolves
 through methodology configuration, and it is materialized locally at
-setup: in an installed deployment the resolved corpus lives at
-`~/.groundwork/principles/`; in a bare groundwork checkout it is the
-embedded default at `principles/`. (Selection and lifecycle:
+setup. Resolve its location in order: when `~/.groundwork/principles/`
+exists, that is the corpus — read it; the embedded default at
+`principles/` applies only in a bare groundwork checkout with no
+installed corpus. A groundwork *source* checkout's `principles/`
+directory is that embedded default, not the resolved corpus: an agent
+working in or beside a groundwork source tree still reads the installed
+corpus at `~/.groundwork/principles/`, never a source tree's
+`principles/`. (Selection and lifecycle:
 `docs/principles-corpus.md` in the groundwork repository.)
 
-During Orient, read the corpus index (`PRINCIPLES.md` or `README.md` at
-the corpus root) and select what governs reasoning in this domain. The
+During Orient, having resolved the location above, read the index at
+the resolved corpus root (its `README.md`, or `PRINCIPLES.md` for the
+embedded default) and select what governs reasoning in this domain. The
 corpus speaks for itself: no principle is privileged in advance of
 Orient, and selection is per-domain, per-inquiry. What stays in this
 skill is the cognition methodology — the move, the chain discipline, the

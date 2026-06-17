@@ -30,6 +30,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **reckon corpus resolution made deterministic** (#434). The Navigational
+  Principles passage presented the installed corpus (`~/.groundwork/principles/`)
+  and the embedded default (`principles/`) as parallel options and named
+  `PRINCIPLES.md` as a valid index — letting an agent in a source tree read the
+  adjacent groundwork *source* checkout's embedded `principles/PRINCIPLES.md`
+  instead of the installed canonical corpus. Resolution now states a location
+  order (installed corpus first; embedded only in a bare checkout) and names a
+  source tree's `principles/` as the embedded default, not the corpus. reckon
+  5.2.0→5.2.1.
 - **reckon trigger reconciled in the generative protocols** (`take`, `plan`).
   Their cross-references gated reckon behind "only when the problem space is
   unclear/contested," contradicting reckon's own trigger — every generative
