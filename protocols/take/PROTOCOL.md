@@ -8,7 +8,7 @@ description: >-
   carries to land; until the runtime sequences the stations autonomously,
   take carries it. Trigger on: 'take', 'take work', 'start work-unit'.
 metadata:
-  version: "3.1.0"
+  version: "3.2.0"
   updated: "2026-06-17"
 ---
 
@@ -88,16 +88,35 @@ proves it, or records it.
 6. **Carry the contract through to a submitted change.** Take does not end
    at contract delivery. When the runtime sequences the pipeline
    autonomously, it advances the work station to station; until then, take
-   carries it — that bridging is take's job at the door. With the behavior
-   contract as the spine, proceed through the stations in order, invoking
-   each: `plan` (a decision-complete design against the contract),
-   `implement` (build it test-first — every scenario is a failing test
-   before its code; `contract-after-code` is forbidden), `verify` (every
-   scenario green, the change sound), `submit` (deliver the change for
-   review). Advance through the boundaries; do not stop at one waiting to
-   be carried. Review and land — the independent-judgment gate and the
-   governance close — follow once every scenario is green and verify
-   passes.
+   carries it — that bridging is take's job at the door.
+
+   The carry begins at `plan`, and the plan is where the work converges.
+   The plan that serves this work is the `plan` protocol's contract-centered
+   design: the goal stated from the contract's scenarios, each scenario
+   mapped to the steps that make it true, the test strategy that turns each
+   into a failing test before its code. Where the harness plans before it
+   executes, *that design is the plan you surface for approval* — not a
+   narration of pipeline mechanics, which station comes next or which
+   command advances it. Lead with the contract: its scenario coverage (the
+   design), the absence of any gap through which a delivery the contract
+   accepts as done could still fail (the robustness), and how each scenario
+   is driven red-then-green (the validation). Surface that, and accepting
+   the plan is accepting the contracted work — full convergence at the
+   planning surface.
+
+   On acceptance, carry it forward yourself. You are already the agent:
+   deliver the `implementation-plan` artifact through its output tool to
+   advance `plan`, then drive the remaining stations directly — `implement`
+   (build it test-first; every scenario a failing test before its code,
+   `contract-after-code` forbidden), `verify` (every scenario green, the
+   change sound), `submit` (deliver the change for review) — opening
+   `runa-mcp` in session mode for the work-unit and, at each station,
+   reading its context, doing the work, producing its artifact, advancing.
+   Do not hand the carry-through to `runa go --work-unit`: that spawns a
+   separate agent that is not yet wired, and the work stalls; until it is
+   wired, you drive the session directly. Do not stop at a boundary waiting
+   to be carried. Review and land — the independent-judgment gate and the
+   governance close — follow once every scenario is green and verify passes.
 
 ## Scale
 
@@ -139,6 +158,16 @@ begins — the dose is proportional.
   handing the work to a runtime that is not sequencing it. The contract
   becomes a definition of done that nothing executes, and the stations are
   silently skipped. Until the runtime carries the work, take does.
+- `mechanics-as-plan`: surfacing a narration of pipeline mechanics — which
+  station is next, which command advances it — as the plan, instead of
+  running `plan` to produce the contract-centered design. Nothing
+  contract-shaped is put up to accept, only a procedure to run; the
+  convergence is lost.
+- `delegate-to-unwired-runtime`: handing the carry-through to `runa go
+  --work-unit` (the autonomous agent-spawn) while it is not yet wired,
+  instead of driving the session yourself. The work stalls at a spawned
+  agent that never advances — a quieter `abandon-at-contract`. Until that
+  path is wired, you are the driver.
 
 ## Cross-References
 
