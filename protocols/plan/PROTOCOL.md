@@ -6,8 +6,8 @@ description: >-
   before implement. If you are about to start coding with unresolved design
   choices, plan first.
 metadata:
-  version: "2.0.0"
-  updated: "2026-06-11"
+  version: "2.1.0"
+  updated: "2026-06-17"
   origin: "Adapted from OpenAI Codex CLI (Apache-2.0). See LICENSE-UPSTREAM."
 ---
 
@@ -105,8 +105,12 @@ long. Multi-subsystem or interface-changing work earns the full convergence.
 
 ## Cross-References
 
-- `reckon` (skill): first-principles constraint framing — runs before plan
-  when the problem space itself is unclear.
+- `reckon` (skill): first-principles constraint framing. A decision-complete
+  design is a generative act, so reckon fires before the plan converges —
+  grounding the design in the navigational principles, not pattern-matching
+  the existing system or an adjacent example. Per reckon's own trigger
+  (every generative act, not a sequence position); dose proportional to the
+  change, the discipline constant.
 - `take` (protocol): produced the behavior contract this plan serves.
 - `implement` (protocol): executes this plan through RED-GREEN-REFACTOR.
 - `research` (skill): external evidence when design decisions depend on
