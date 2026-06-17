@@ -30,6 +30,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **reckon invoked directly in the generative protocols** (#438). orient's
+  standing-mode stance (4.1.0) was necessary but not sufficient — a stochastic
+  agent acts on invoked procedure, not on disposition prose, and was observed
+  authoring a plan without ever opening reckon or the corpus. take, plan, and
+  implement now invoke reckon as a concrete executed step that names the corpus
+  read (open `~/.groundwork/principles/`, select the governing principles, read
+  them, reason the output from them) — at the contract-authoring, design-
+  convergence, and implementation-design points. The mechanical protocols
+  (submit, verify, land) are unchanged. take 3.2.1→3.3.0, plan 2.1.0→2.2.0,
+  implement 2.0.0→2.1.0.
 - **reckon established as the standing cognitive mode** (#436). reckon was
   declared as general first-principles cognition but operated as a discipline
   invoked at generative checkpoints, leaving the agent's ambient reasoning —
