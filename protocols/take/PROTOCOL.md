@@ -8,7 +8,7 @@ description: >-
   carries to land; until the runtime sequences the stations autonomously,
   take carries it. Trigger on: 'take', 'take work', 'start work-unit'.
 metadata:
-  version: "3.2.0"
+  version: "3.2.1"
   updated: "2026-06-17"
 ---
 
@@ -173,8 +173,11 @@ begins — the dose is proportional.
 
 - `contract` (skill): the BDD discipline — authoring the contract here,
   carrying it through every later stage.
-- `reckon` (skill): when framing reveals the work-unit's premise is unclear
-  or contested, reckon before contracting.
+- `reckon` (skill): authoring the behavior contract is a generative act, so
+  reckon fires before the contract is set — grounding what "done" means in
+  the navigational principles, not pattern-matching an adjacent work-unit.
+  Per reckon's own trigger (every generative act, not a sequence position);
+  dose proportional to the change, the discipline constant.
 - `decompose` (protocol): owns work-unit boundaries and acceptance-criteria
   quality. A work-unit that cannot be framed or contracted routes back there.
 - `acquire` (skill): the other entry source — materializes the work-unit
