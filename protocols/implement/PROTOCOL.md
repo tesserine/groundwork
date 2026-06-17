@@ -6,8 +6,8 @@ description: >-
   production code is about to be written — implementing contracted
   behaviors, fixing bugs, or refactoring.
 metadata:
-  version: "2.0.0"
-  updated: "2026-06-11"
+  version: "2.1.0"
+  updated: "2026-06-17"
   origin: "Adapted from obra/superpowers (MIT). See LICENSE-UPSTREAM."
 ---
 
@@ -49,7 +49,12 @@ Take the next behavior scenario from the contract (the plan's
 3. **GREEN — write minimal code to pass.** The simplest code that satisfies
    the test. No extra parameters, no configuration, no error handling that
    no test requires. Over-engineering in GREEN is scope creep wearing a
-   productivity mask.
+   productivity mask. Where the minimal code involves a real design choice
+   — a structure, an abstraction, a boundary — reckon it: open the resolved
+   principles corpus at `~/.groundwork/principles/`, select the principles
+   that govern the choice, and reason it from them rather than the nearest
+   pattern (the reckon skill is the move). Dose-proportional — a trivial
+   pass needs no reckon; a real structural choice does.
 
 4. **Verify GREEN — watch it pass.** Run the test: it passes. Run the
    suite: everything else still passes, output pristine. A failing test
