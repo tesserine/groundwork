@@ -30,6 +30,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **reckon trigger reconciled in the generative protocols** (`take`, `plan`).
+  Their cross-references gated reckon behind "only when the problem space is
+  unclear/contested," contradicting reckon's own trigger — every generative
+  act, the trigger is creation not sequence position — and `orient`'s
+  statement of it, while `survey`/`decompose` reckon unconditionally.
+  Authoring the behavior contract (`take`) and producing a decision-complete
+  design (`plan`) are generative acts; both now defer to reckon's
+  authoritative trigger and fire it before convergence, grounding the
+  contract and the design in the navigational principles rather than
+  pattern-matching the existing system. take 3.2.0→3.2.1, plan 2.0.0→2.1.0.
 - README hero rewritten for the ecosystem README pass: groundwork positioned
   as software delivery expressed as an enforceable methodology — evidence-
   gated completion, CI-gated documentation coherence, forge-agnostic
