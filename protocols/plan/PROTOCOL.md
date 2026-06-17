@@ -6,7 +6,7 @@ description: >-
   before implement. If you are about to start coding with unresolved design
   choices, plan first.
 metadata:
-  version: "2.1.0"
+  version: "2.2.0"
   updated: "2026-06-17"
   origin: "Adapted from OpenAI Codex CLI (Apache-2.0). See LICENSE-UPSTREAM."
 ---
@@ -47,7 +47,12 @@ something other than the contracted work.
    explored further; a genuine preference or tradeoff is decided on codebase
    evidence and recorded as an explicit assumption.
 
-3. **Converge the design.** Choose the approach (compare tradeoffs against
+3. **Converge the design.** First reckon the design: converging a
+   decision-complete design is a generative act — open the resolved
+   principles corpus at `~/.groundwork/principles/`, select the principles
+   that govern this design, read them, and reason the approach from them
+   rather than the nearest pattern or an adjacent example (the reckon skill
+   is the move). Then choose the approach (compare tradeoffs against
    the constraints when several are valid). Specify interfaces, signatures,
    and data flow. Decide handling for each edge case and failure mode.
    Define the test strategy: which scenarios become which tests, what must
