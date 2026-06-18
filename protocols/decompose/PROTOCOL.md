@@ -214,17 +214,19 @@ identity outside `handle`. Do not write the workspace JSON file directly.
 Use a fresh `instance_id` when creating a new work-unit. Reuse the existing
 `instance_id` when refining an already-delivered work-unit artifact so artifact
 identity and inbound dependency references remain stable. A new tracker-backed
-work-unit first calls the active forge's `create-ticket` mechanic. First MCP
-delivery then uses `work-unit-<N>-<short-slug>`, where `<N>` is the
-forge-assigned ticket number, and must populate `handle` exactly once from the
-identity returned by `create-ticket`. Non-tracker work-units omit `handle` and
-first delivery uses `<short-slug>` directly. Subsequent updates reuse the
-`instance_id` established at first delivery. If the artifact is tracker-backed,
-subsequent updates also carry the existing `handle` through unchanged from the
-previously delivered artifact body. Do not call `create-ticket`, re-derive
-`handle`, or omit `handle` during refinement; MCP delivery persists the
-submitted body. In this section, "refining an existing work-unit" means
-refining an existing artifact, not merely refining a tracker item.
+work-unit first invokes the active forge capability connector's
+`create-ticket` operation. First MCP delivery then uses
+`work-unit-<N>-<short-slug>`, where `<N>` is the numeric ticket suffix from the
+connector-issued `handle.display` or `handle.id`, and must populate `handle`
+exactly once from the identity returned by `create-ticket`. Non-tracker
+work-units omit `handle` and first delivery uses `<short-slug>` directly.
+Subsequent updates reuse the `instance_id` established at first delivery. If
+the artifact is tracker-backed, subsequent updates also carry the existing
+`handle` through unchanged from the previously delivered artifact body. Do not
+call `create-ticket`, re-derive `handle`, or omit `handle` during refinement;
+MCP delivery persists the submitted body. In this section, "refining an
+existing work-unit" means refining an existing artifact, not merely refining a
+tracker item.
 
 For new tracker-backed work-units produced by `create-work-unit` or
 `decompose-epic`:
@@ -239,9 +241,8 @@ work-unit({
   out_of_scope: ["submit protocol", "land protocol"],
   dependencies: ["work-unit-122-artifact-store-cleanup"],
   handle: {
-    forge_tag: "github",
-    url: "<issue URL returned by create-ticket>",
-    number: 123
+    id: "<connector-issued ticket id>",
+    display: "<human-readable ticket>"
   }
 })
 ```
@@ -273,9 +274,8 @@ work-unit({
   out_of_scope: ["submit protocol", "land protocol"],
   dependencies: ["work-unit-122-artifact-store-cleanup"],
   handle: {
-    forge_tag: "github",
-    url: "<existing issue URL from the delivered artifact handle>",
-    number: 123
+    id: "<existing connector-issued ticket id>",
+    display: "<existing human-readable ticket>"
   }
 })
 ```

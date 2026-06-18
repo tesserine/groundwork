@@ -13,15 +13,15 @@ are illustrative; the outcomes are the contract.
 2. **Current base.** The local base branch matches the remote:
    `git checkout main && git fetch origin --prune && git merge --ff-only origin/main`.
 3. **Feature branch.** All work happens on a branch named for the work-unit:
-   - Tracker-linked work-unit: `issue-<N>/<slug>` where `<N>` is the
-     work-unit's tracker number from its `handle`.
+   - Tracker-linked work-unit: `issue-<N>/<slug>` where `<N>` is the numeric
+     ticket suffix from the connector-issued `handle.display` or `handle.id`.
    - No tracker linkage: `feat/<slug>`, `fix/<slug>`, or `chore/<slug>`.
    - `<slug>` is the work-unit title — lowercase, hyphenated, truncated to
      40 characters.
 4. **Tracker claimed.** For tracker-backed work-units, the tracker reflects
-   that this work-unit is in progress. Resolve the invariant
-   `claim-work-unit` operation through `groundwork-mechanic` and run the
-   active-forge mechanic it returns. Skip for work-units without a `handle`.
+   that this work-unit is in progress. Invoke the invariant `claim-work-unit`
+   forge capability connector operation. Skip for work-units without a
+   `handle`.
 
 ## Failure Policy
 

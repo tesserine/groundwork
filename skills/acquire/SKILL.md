@@ -37,17 +37,12 @@ session that entrypoint opens.
 
 ## Steps
 
-1. **Read the ticket.** Resolve the invariant `read-ticket` operation
-   through `groundwork-mechanic` and run the active-forge mechanic it
-   returns:
-
-   ```
-   groundwork-mechanic run read-ticket ticket_number=<N> [--secret-env token=<ENV>]
-   ```
-
-   Deployment identity (owner, name, tracker, repository) comes from the
-   runtime-owned `RUNA_FORGE_*` atoms — do not pass it. The mechanic emits
-   `{handle, title, body, state}` for either forge.
+1. **Read the ticket.** Invoke the runtime's forge capability `read-ticket`
+   connector MCP tool for the selected ticket reference. Provider identity,
+   credentials, and endpoint composition stay behind the connector seam; do
+   not pass or reconstruct them here. The connector emits
+   `{handle, title, body, state}` where `handle` is the opaque
+   `{id, display}` capability handle.
 
 2. **Materialize the artifact body.** Pipe the read-ticket output through
    the materializer:
@@ -85,7 +80,7 @@ session that entrypoint opens.
      title: "<from the ticket>",
      description: "<from the ticket>",
      acceptance_criteria: ["<from the ticket>"],
-     handle: { forge_tag: "<github|sourcehut>", "...": "<ticket identity>" }
+     handle: { id: "<connector-issued id>", display: "<human-readable ticket>" }
    })
    ```
 
@@ -118,5 +113,5 @@ session that entrypoint opens.
   of `refine-work-unit` — where a ticket-quality gap surfaced here is fixed.
 - `take` (protocol): proceeds on the acquired artifact through its existing
   contract; owns tracker claiming.
-- `read-ticket` (mechanic): the forge read acquisition resolves through
-  `groundwork-mechanic`; emits `{handle, title, body, state}` for both forges.
+- `read-ticket` (forge capability operation): the connector read used by
+  acquisition; emits `{handle, title, body, state}`.

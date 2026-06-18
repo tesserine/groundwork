@@ -2,11 +2,10 @@
   "title": "Add work-unit handle contract",
   "description": "Add a schema contract for tracker-backed work-unit handles",
   "acceptance_criteria": [
-    "GitHub tracker-backed work-units carry a forge-tagged issue handle"
+    "GitHub tracker-backed work-units carry an opaque connector issue handle"
   ],
   "handle": {
-    "forge_tag": "github",
-    "url": "https://github.com/tesserine/groundwork/issues/368",
-    "number": 368
+    "id": "github:tesserine/groundwork:issue/368",
+    "display": "tesserine/groundwork#368"
   }
 }

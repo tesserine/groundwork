@@ -54,15 +54,15 @@ name = "change-approved"
 [[outcome_types]]
 name = "change-needs-revision"
 
-# --- Forge Tags ---
+# --- Capabilities ---
 #
-# Canonical forge tags used by forge-tagged artifact handles and mechanics.
+# Connector-provided operation surfaces required by this methodology.
 
-[[forge_tags]]
-name = "github"
-
-[[forge_tags]]
-name = "sourcehut"
+[[capabilities]]
+name = "forge"
+version = "1.1.0"
+schema = "schemas/forge-capability-v1.schema.json"
+provenance = "schemas/forge-capability-v1.provenance.json"
 
 # --- Mechanics ---
 #
@@ -76,42 +76,10 @@ name = "read-artifact"
 name = "inspect-change-proposals"
 
 [[mechanics]]
-name = "deliver-change-proposal"
-forge_tags = ["github", "sourcehut"]
-
-[[mechanics]]
 name = "revise"
 
 [[mechanics]]
 name = "review"
-
-[[mechanics]]
-name = "apply-approved-change"
-forge_tags = ["github", "sourcehut"]
-
-[[mechanics]]
-name = "reflect-disposition"
-forge_tags = ["github", "sourcehut"]
-
-[[mechanics]]
-name = "close-out"
-forge_tags = ["github", "sourcehut"]
-
-[[mechanics]]
-name = "create-ticket"
-forge_tags = ["github", "sourcehut"]
-
-[[mechanics]]
-name = "read-ticket"
-forge_tags = ["github", "sourcehut"]
-
-[[mechanics]]
-name = "claim-work-unit"
-forge_tags = ["github", "sourcehut"]
-
-[[mechanics]]
-name = "record-progress"
-forge_tags = ["github", "sourcehut"]
 
 [[mechanics]]
 name = "inspect-worktree"

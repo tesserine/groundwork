@@ -1,6 +1,4 @@
 import os
-import re
-import shlex
 import shutil
 import subprocess
 import tempfile
@@ -184,37 +182,21 @@ class GroundworkInstallTests(unittest.TestCase):
         fixture.write(
             "manifest.toml",
             """
-            [[forge_tags]]
-            name = "github"
-
-            [[forge_tags]]
-            name = "sourcehut"
-
-            [[mechanics]]
-            name = "close-out"
-            forge_tags = ["github", "sourcehut"]
+            [[capabilities]]
+            name = "forge"
+            version = "1.1.0"
+            schema = "schemas/forge-capability-v1.schema.json"
+            provenance = "schemas/forge-capability-v1.provenance.json"
             """,
         )
-        for forge in ["github", "sourcehut"]:
-            fixture.write(
-                f"mechanics/{forge}/close-out.toml",
-                f"""
-                name = "close-out"
-                purpose = "Close out on {forge}."
-                forge_tag = "{forge}"
-                default_invocation = 'printf "%s\\n" "$message"'
-                examples = ['printf "%s\\n" "$message"']
-
-                [[parameters]]
-                name = "message"
-                purpose = "Completion message."
-                required = true
-
-                [outcome]
-                description = "Closed."
-                """,
-            )
-        fixture.write("tooling/forge_operations.py", (ROOT / "tooling" / "forge_operations.py").read_text(encoding="utf-8"))
+        fixture.write(
+            "schemas/forge-capability-v1.schema.json",
+            (ROOT / "schemas" / "forge-capability-v1.schema.json").read_text(encoding="utf-8"),
+        )
+        fixture.write(
+            "schemas/forge-capability-v1.provenance.json",
+            (ROOT / "schemas" / "forge-capability-v1.provenance.json").read_text(encoding="utf-8"),
+        )
 
     def assert_handoff_projected_once(self, body: str) -> None:
         self.assertEqual(body.count(HANDOFF_BEGIN), 1)
@@ -233,7 +215,7 @@ class GroundworkInstallTests(unittest.TestCase):
         self.assertTrue((install.target(".agents", "take") / "references" / "example.md").is_file())
         self.assertTrue((install.target(".agents", "reckon") / "references" / "example.md").is_file())
 
-    def test_install_projects_runtime_bundle_for_installed_mechanic_resolution(self) -> None:
+    def test_install_projects_runtime_bundle_with_capability_contract(self) -> None:
         fixture = self.add_fixture("runtime-bundle")
         self.write_runtime_surface(fixture)
         fixture.commit_new_ref("v2")
@@ -242,99 +224,11 @@ class GroundworkInstallTests(unittest.TestCase):
         result = install.run_installer("install")
 
         assert_success(self, result)
-        resolver = install.runtime_root() / "bin" / "groundwork-mechanic"
-        self.assertTrue(resolver.is_file())
-        resolved = run(
-            [str(resolver), "resolve", "close-out"],
-            install.runtime_root(),
-            env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut"},
+        self.assertEqual(
+            (install.runtime_root() / "schemas" / "forge-capability-v1.schema.json").read_bytes(),
+            (fixture.root / "schemas" / "forge-capability-v1.schema.json").read_bytes(),
         )
-        assert_success(self, resolved)
-        self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
-
-    def test_installed_protocol_resolver_invocation_uses_runnable_managed_command(self) -> None:
-        fixture = self.add_fixture("installed-runtime-command")
-        self.write_runtime_surface(fixture)
-        fixture.write(
-            "protocols/submit/PROTOCOL.md",
-            """
-            ---
-            name: submit
-            ---
-            # Submit
-
-            Run `groundwork-mechanic resolve close-out` before delivery.
-            """,
-        )
-        fixture.write(
-            "protocols/land/PROTOCOL.md",
-            """
-            ---
-            name: land
-            ---
-            # Land
-
-            Run `groundwork-mechanic resolve close-out` before closeout.
-            """,
-        )
-        fixture.commit_new_ref("v2")
-        install = InstallRun(self, fixture.root)
-
-        result = install.run_installer("install")
-
-        assert_success(self, result)
-        resolver = install.runtime_root() / "bin" / "groundwork-mechanic"
-        for protocol in ["submit", "land"]:
-            body = (install.target(".agents", protocol) / "SKILL.md").read_text(encoding="utf-8")
-            command = re.search(r"`([^`]* resolve close-out)`", body)
-            self.assertIsNotNone(command, body)
-            invocation = command.group(1)
-            argv = shlex.split(invocation)
-            self.assertEqual(str(resolver), argv[0])
-            resolved = run(
-                argv,
-                install.runtime_root(),
-                env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut", "PATH": "/usr/bin:/bin"},
-            )
-            assert_success(self, resolved)
-            self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
-
-    def test_installed_protocol_resolver_invocation_runs_when_home_contains_whitespace(self) -> None:
-        fixture = self.add_fixture("installed-runtime-command-spaced-home")
-        self.write_runtime_surface(fixture)
-        fixture.write(
-            "protocols/submit/PROTOCOL.md",
-            """
-            ---
-            name: submit
-            ---
-            # Submit
-
-            Run `groundwork-mechanic resolve close-out` before delivery.
-            """,
-        )
-        fixture.commit_new_ref("v2")
-        install = InstallRun(self, fixture.root)
-        shutil.rmtree(install.home)
-        install.home = Path(tempfile.mkdtemp(prefix="groundwork install home "))
-        self.addCleanup(lambda: shutil.rmtree(install.home, ignore_errors=True))
-
-        result = install.run_installer("install")
-
-        assert_success(self, result)
-        body = (install.target(".agents", "submit") / "SKILL.md").read_text(encoding="utf-8")
-        command = re.search(r"`([^`]* resolve close-out)`", body)
-        self.assertIsNotNone(command, body)
-        invocation = command.group(1)
-        argv = shlex.split(invocation)
-        self.assertEqual(str(install.runtime_root() / "bin" / "groundwork-mechanic"), argv[0])
-        resolved = run(
-            argv,
-            install.runtime_root(),
-            env={**os.environ, "RUNA_FORGE_TYPE": "sourcehut", "PATH": "/usr/bin:/bin"},
-        )
-        assert_success(self, resolved)
-        self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
+        self.assertFalse((install.runtime_root() / "bin" / "groundwork-mechanic").exists())
 
     def test_install_projects_session_surface_handoff_into_every_protocol_entry(self) -> None:
         fixture = self.add_fixture("handoff-all-protocols")
@@ -643,36 +537,8 @@ class GroundworkInstallTests(unittest.TestCase):
 
         assert_failure_contains(self, result, "unmanaged conflict")
         self.assertEqual(local_file.read_text(encoding="utf-8"), "keep me\n")
-        self.assertFalse((runtime / "bin" / "groundwork-mechanic").exists())
+        self.assertFalse((runtime / "schemas" / "forge-capability-v1.schema.json").exists())
         self.assertFalse(install.state_file().exists())
-
-    def test_sync_fails_before_changing_entries_or_state_when_runtime_projection_fails(self) -> None:
-        fixture = self.add_fixture("runtime-projection-failure")
-        install = InstallRun(self, fixture.root)
-        assert_success(self, install.run_installer("install"))
-        before_state = install.state_file().read_text(encoding="utf-8")
-        before_orient = {
-            root: (install.target(root, "orient") / "SKILL.md").read_text(encoding="utf-8")
-            for root in [".claude", ".agents"]
-        }
-        fixture.write("skills/orient/SKILL.md", "---\nname: orient\n---\n# Orient v2\n")
-        fixture.write("manifest.toml", "[[forge_tags]]\nname = \"github\"\n")
-        fixture.write("mechanics", "not a mechanics tree\n")
-        fixture.write(
-            "tooling/forge_operations.py",
-            (ROOT / "tooling" / "forge_operations.py").read_text(encoding="utf-8"),
-        )
-        fixture.commit_new_ref("v2")
-
-        result = install.run_installer("sync")
-
-        self.assertNotEqual(result.returncode, 0, "command unexpectedly succeeded")
-        for root in [".claude", ".agents"]:
-            self.assertEqual(
-                (install.target(root, "orient") / "SKILL.md").read_text(encoding="utf-8"),
-                before_orient[root],
-            )
-        self.assertEqual(install.state_file().read_text(encoding="utf-8"), before_state)
 
     def test_install_fails_without_writing_entries_when_any_target_root_is_not_preparable(self) -> None:
         fixture = self.add_fixture("target-root-file")

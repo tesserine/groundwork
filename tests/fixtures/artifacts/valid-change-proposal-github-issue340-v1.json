@@ -6,8 +6,7 @@
   "summary": "Migrate submit to produce the first disposition-gated change proposal.",
   "version": 1,
   "handle": {
-    "forge_tag": "github",
-    "url": "https://github.com/tesserine/groundwork/pull/340",
-    "number": 340
+    "id": "github:tesserine/groundwork:pull/340",
+    "display": "tesserine/groundwork#340"
   }
 }

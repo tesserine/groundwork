@@ -11,8 +11,8 @@ readable index halts setup with a nonzero exit. A failed resolution never
 replaces an existing resolved corpus (staging + atomic swap), and never
 silently degrades to the default.
 
-Deliberately stdlib-only, like ``tooling/forge_operations.py``: the
-install path runs in deployments that carry no third-party packages.
+Deliberately stdlib-only: the install path runs in deployments that carry no
+third-party packages.
 """
 
 from __future__ import annotations

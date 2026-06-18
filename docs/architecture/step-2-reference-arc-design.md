@@ -19,6 +19,11 @@ review-cycle and classification-home decisions below still hold, but the
 cross-protocol routing signal is the produced outcome type rather than a
 `disposition` field.
 
+Issue #440 supersedes the forge-resolution substrate described in this note:
+forge operations now come from the declared forge connector capability contract,
+not from per-provider C-3 mechanics selected by `forge_tag`. The review-cycle
+and typed-disposition decisions remain the reason this historical note is kept.
+
 ## Grounding
 
 ADR-0002's 2026-05-28 revision fixes the arc vocabulary at six

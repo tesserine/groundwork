@@ -73,6 +73,7 @@ def workflow_registry_from_manifest(
         for entry in manifest.get("mechanics", [])
         if isinstance(entry, dict) and isinstance(entry.get("name"), str)
     }
+    mechanic_names.update(_capability_operation_names(manifest, root_path))
     mechanic_names.update(_mechanic_names_from_directory(root_path / "mechanics"))
 
     return WorkflowRegistry(
@@ -128,6 +129,24 @@ def _mechanic_names_from_directory(directory: Path) -> set[str]:
         name = mechanic.get("name")
         if isinstance(name, str):
             names.add(name)
+    return names
+
+
+def _capability_operation_names(manifest: dict[str, Any], root: Path) -> set[str]:
+    names: set[str] = set()
+    for capability in manifest.get("capabilities", []):
+        if not isinstance(capability, dict) or capability.get("name") != "forge":
+            continue
+        schema_path = capability.get("schema")
+        if not isinstance(schema_path, str):
+            continue
+        try:
+            schema = json.loads((root / schema_path).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        operation_names = schema.get("$defs", {}).get("operation-name", {}).get("enum")
+        if isinstance(operation_names, list):
+            names.update(name for name in operation_names if isinstance(name, str))
     return names
 
 

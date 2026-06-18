@@ -29,7 +29,6 @@ class MechanicError(ValueError):
 class MechanicRegistry:
     artifact_schemas: set[str] = field(default_factory=set)
     artifact_types: set[str] = field(default_factory=set)
-    forge_tags: set[str] = field(default_factory=set)
 
 
 def load_mechanic(path: Path | str, registry: MechanicRegistry | None = None) -> dict[str, Any]:
@@ -73,16 +72,7 @@ def _schema_errors(mechanic: dict[str, Any]) -> list[tuple[str, str]]:
 
 
 def _parameter_category_errors(mechanic: dict[str, Any]) -> list[tuple[str, str]]:
-    errors: list[tuple[str, str]] = []
-    for parameter_index, parameter in enumerate(mechanic["parameters"]):
-        if parameter.get("secret") is True and "deployment_value" in parameter:
-            errors.append(
-                (
-                    f"parameters/{parameter_index}/deployment_value",
-                    "deployment-resolved parameter must not also be secret",
-                )
-            )
-    return errors
+    return []
 
 
 def _invocation_errors(mechanic: dict[str, Any]) -> list[tuple[str, str]]:
@@ -197,9 +187,5 @@ def _registry_errors(mechanic: dict[str, Any], registry: MechanicRegistry) -> li
                 f"artifact type `{artifact_type}` does not resolve in registry",
             )
         )
-
-    forge_tag = mechanic.get("forge_tag")
-    if forge_tag is not None and forge_tag not in registry.forge_tags:
-        errors.append(("forge_tag", f"forge tag `{forge_tag}` does not resolve in registry"))
 
     return errors

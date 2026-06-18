@@ -246,11 +246,11 @@ context to fire passively — with full expositions in references.
   [tesserine/runa#188](https://github.com/tesserine/runa/issues/188); the
   redesign is shaped so the entrypoint slots in front of `take` without
   further methodology change.
-- **Forge identity namespace.** The protocols reference only invariant
-  operations resolved through `groundwork-mechanic`; the resolver reads the
-  runtime-owned `RUNA_FORGE_*` identity atoms (the #389/#390 repair, on
-  which this redesign now sits), with endpoint and repo-id remaining
-  methodology-owned atoms.
+- **Forge identity namespace.** The protocols reference only invariant forge
+  capability operations. The runtime selects the connector implementation and
+  keeps provider coordinates, credentials, and deployment identity behind that
+  connector seam; Groundwork artifacts carry only opaque `{id, display}`
+  handles.
 - **Best-of-field call — verify may repair its own gate failures.** When
   fresh verification fails, verify's instructions route through `debug` and
   permit the minimal fix within the increment (then a fresh full gate)

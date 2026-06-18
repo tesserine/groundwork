@@ -6,7 +6,6 @@ runtime bundle, and principles-corpus recording + materialization. It never
 delivers protocol content — that is the runtime's channel.
 """
 
-import os
 import shutil
 import subprocess
 import tempfile
@@ -98,39 +97,20 @@ class MethodologyFixture:
         self.write(
             "manifest.toml",
             """
-            [[forge_tags]]
-            name = "github"
-
-            [[forge_tags]]
-            name = "sourcehut"
-
-            [[mechanics]]
-            name = "close-out"
-            forge_tags = ["github", "sourcehut"]
+            [[capabilities]]
+            name = "forge"
+            version = "1.1.0"
+            schema = "schemas/forge-capability-v1.schema.json"
+            provenance = "schemas/forge-capability-v1.provenance.json"
             """,
         )
-        for forge in ["github", "sourcehut"]:
-            self.write(
-                f"mechanics/{forge}/close-out.toml",
-                f"""
-                name = "close-out"
-                purpose = "Close out on {forge}."
-                forge_tag = "{forge}"
-                default_invocation = 'printf "%s\\n" "$message"'
-                examples = ['printf "%s\\n" "$message"']
-
-                [[parameters]]
-                name = "message"
-                purpose = "Completion message."
-                required = true
-
-                [outcome]
-                description = "Closed."
-                """,
-            )
         self.write(
-            "tooling/forge_operations.py",
-            (ROOT / "tooling" / "forge_operations.py").read_text(encoding="utf-8"),
+            "schemas/forge-capability-v1.schema.json",
+            (ROOT / "schemas" / "forge-capability-v1.schema.json").read_text(encoding="utf-8"),
+        )
+        self.write(
+            "schemas/forge-capability-v1.provenance.json",
+            (ROOT / "schemas" / "forge-capability-v1.provenance.json").read_text(encoding="utf-8"),
         )
 
     def init_git(self) -> None:
@@ -236,7 +216,7 @@ class SelfInstallTests(unittest.TestCase):
                 )
 
 
-    def test_install_projects_runtime_bundle_and_resolver_executes(self) -> None:
+    def test_install_projects_runtime_bundle_with_forge_capability_contract(self) -> None:
         fixture = self.add_fixture("runtime-bundle")
         install = InstallRun(self, fixture.root)
 
@@ -248,18 +228,10 @@ class SelfInstallTests(unittest.TestCase):
             (fixture.root / "manifest.toml").read_bytes(),
         )
         self.assertEqual(
-            tree_payload(install.runtime_root() / "mechanics"),
-            tree_payload(fixture.root / "mechanics"),
+            tree_payload(install.runtime_root() / "schemas"),
+            tree_payload(fixture.root / "schemas"),
         )
-        resolver = install.runtime_root() / "bin" / "groundwork-mechanic"
-        self.assertTrue(resolver.is_file())
-        resolved = run(
-            [str(resolver), "resolve", "close-out"],
-            install.runtime_root(),
-            env={"PATH": "/usr/bin:/bin", "RUNA_FORGE_TYPE": "sourcehut"},
-        )
-        assert_success(self, resolved)
-        self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
+        self.assertFalse((install.runtime_root() / "bin" / "groundwork-mechanic").exists())
 
 
     def test_absent_input_and_config_resolves_embedded_default(self) -> None:
@@ -580,9 +552,9 @@ class SelfInstallTests(unittest.TestCase):
         for body in installed_bodies:
             self.assertNotIn("session-surface-handoff", body)
 
-    def test_installed_skill_referencing_mechanic_is_not_rewritten(self) -> None:
+    def test_installed_skill_referencing_connector_tool_is_not_rewritten(self) -> None:
         fixture = self.add_fixture("no-rewriting")
-        body = "---\nname: orient\n---\n# Orient\n\nRun `groundwork-mechanic resolve close-out`.\n"
+        body = "---\nname: orient\n---\n# Orient\n\nCall the connector `close-out` tool.\n"
         fixture.write("skills/orient/SKILL.md", body)
         fixture.commit("mechanic reference")
         install = InstallRun(self, fixture.root)
@@ -695,18 +667,18 @@ class SelfInstallTests(unittest.TestCase):
             (install.target(".claude", "orient") / ".groundwork-managed").read_text(encoding="utf-8"),
         )
 
-    def test_rerun_restores_resolver_executable_bit(self) -> None:
-        fixture = self.add_fixture("resolver-mode-drift")
+    def test_rerun_removes_obsolete_resolver_bundle_children(self) -> None:
+        fixture = self.add_fixture("resolver-retired")
         install = InstallRun(self, fixture.root)
         assert_success(self, install.run_installer("install"))
-        resolver = install.runtime_root() / "bin" / "groundwork-mechanic"
-        resolver.chmod(0o644)
-        self.assertFalse(os.access(resolver, os.X_OK))
+        obsolete = install.runtime_root() / "bin" / "groundwork-mechanic"
+        obsolete.parent.mkdir()
+        obsolete.write_text("#!/bin/sh\n", encoding="utf-8")
 
         result = install.run_installer("install")
 
         assert_success(self, result)
-        self.assertTrue(os.access(resolver, os.X_OK), "rerun must restore the resolver executable bit")
+        self.assertFalse(obsolete.exists(), "rerun must remove the retired resolver")
 
     def test_state_lives_under_self_install_namespace_distinct_from_legacy(self) -> None:
         fixture = self.add_fixture("state-namespace")

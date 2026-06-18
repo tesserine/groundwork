@@ -7,7 +7,6 @@ from tooling.artifact_schemas import (
     registry_from_manifest,
     validate_artifact,
 )
-from tooling.mechanics import MechanicRegistry
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -37,23 +36,27 @@ class ArtifactSchemaTests(unittest.TestCase):
     def fixture(self, name: str) -> Path:
         return FIXTURES / name
 
-    def test_change_proposal_schema_accepts_github_and_sourcehut_handles(self) -> None:
-        for name in [
-            "valid-change-proposal-github-v1.json",
-            "valid-change-proposal-sourcehut-v2.json",
-        ]:
-            with self.subTest(fixture=name):
-                artifact = load_artifact("change-proposal", self.fixture(name))
+    def test_change_proposal_schema_accepts_capability_handle(self) -> None:
+        artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
+        artifact["handle"] = {
+            "id": "github:tesserine/groundwork:pull/440",
+            "display": "tesserine/groundwork#440",
+        }
 
-                self.assertIn(artifact["handle"]["forge_tag"], {"github", "sourcehut"})
+        validate_artifact("change-proposal", artifact, registry=registry_from_manifest())
 
-    def test_change_proposal_schema_accepts_sourcehut_proposal_ref_handle(self) -> None:
-        artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-sourcehut-v2.json"))
+    def test_change_proposal_schema_rejects_provider_shaped_handle(self) -> None:
+        artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
+        artifact["handle"] = {
+            "forge_tag": "github",
+            "url": "https://github.com/tesserine/groundwork/pull/440",
+            "number": 440,
+        }
 
-        self.assertEqual("sourcehut", artifact["handle"]["forge_tag"])
-        self.assertIn("proposal_ref", artifact["handle"])
-        self.assertTrue(artifact["handle"]["proposal_ref"].startswith("refs/proposals/"))
-        self.assertNotIn("m" + "box", artifact["handle"])
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("change-proposal", artifact, registry=registry_from_manifest())
+
+        self.assertIn("handle", context.exception.paths)
 
     def test_change_proposal_schema_accepts_multi_version_sequence(self) -> None:
         first = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
@@ -66,78 +69,6 @@ class ArtifactSchemaTests(unittest.TestCase):
             load_artifact("change-proposal", self.fixture("invalid-change-proposal-missing-version.json"))
 
         self.assertIn("version", context.exception.paths)
-
-    def test_change_proposal_schema_rejects_malformed_forge_tag(self) -> None:
-        with self.assertRaises(ArtifactSchemaError) as context:
-            load_artifact("change-proposal", self.fixture("invalid-change-proposal-malformed-forge-tag.json"))
-
-        self.assertIn("handle", context.exception.paths)
-
-    def test_change_proposal_schema_rejects_wrong_handle_variant_for_tag(self) -> None:
-        with self.assertRaises(ArtifactSchemaError) as context:
-            load_artifact("change-proposal", self.fixture("invalid-change-proposal-wrong-handle-variant.json"))
-
-        self.assertIn("handle", context.exception.paths)
-
-    def test_change_proposal_schema_rejects_sourcehut_legacy_mail_carrier_handle(self) -> None:
-        artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
-        legacy_carrier = "m" + "box"
-        artifact["handle"] = {
-            "forge_tag": "sourcehut",
-            legacy_carrier: "artifact://change-proposals/issue-316/v2",
-        }
-
-        with self.assertRaises(ArtifactSchemaError) as context:
-            validate_artifact("change-proposal", artifact)
-
-        self.assertIn("handle", context.exception.paths)
-
-    def test_change_proposal_schema_rejects_sourcehut_handle_missing_proposal_ref(self) -> None:
-        artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
-        artifact["handle"] = {"forge_tag": "sourcehut"}
-
-        with self.assertRaises(ArtifactSchemaError) as context:
-            validate_artifact("change-proposal", artifact)
-
-        self.assertIn("handle", context.exception.paths)
-
-    def test_change_proposal_schema_rejects_sourcehut_proposal_ref_outside_namespace(self) -> None:
-        artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
-        artifact["handle"] = {
-            "forge_tag": "sourcehut",
-            "proposal_ref": "refs/heads/issue-316/2",
-        }
-
-        with self.assertRaises(ArtifactSchemaError) as context:
-            validate_artifact("change-proposal", artifact)
-
-        self.assertIn("handle", context.exception.paths)
-
-    def test_change_proposal_schema_rejects_sourcehut_proposal_ref_refspec_injection(self) -> None:
-        artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
-        artifact["handle"] = {
-            "forge_tag": "sourcehut",
-            "proposal_ref": "refs/proposals/x:refs/heads/main",
-        }
-
-        with self.assertRaises(ArtifactSchemaError) as context:
-            validate_artifact("change-proposal", artifact)
-
-        self.assertIn("handle", context.exception.paths)
-
-    def test_change_proposal_schema_rejects_sourcehut_proposal_ref_whitespace_and_control(self) -> None:
-        for proposal_ref in ["refs/proposals/issue 316/2", "refs/proposals/issue-316/\n2"]:
-            with self.subTest(proposal_ref=proposal_ref):
-                artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-github-v1.json"))
-                artifact["handle"] = {
-                    "forge_tag": "sourcehut",
-                    "proposal_ref": proposal_ref,
-                }
-
-                with self.assertRaises(ArtifactSchemaError) as context:
-                    validate_artifact("change-proposal", artifact)
-
-                self.assertIn("handle", context.exception.paths)
 
     def test_change_proposal_schema_rejects_branch_and_base_refspec_injection_shapes(self) -> None:
         cases = [
@@ -163,35 +94,25 @@ class ArtifactSchemaTests(unittest.TestCase):
 
                 self.assertIn(field, context.exception.paths)
 
-    def test_change_proposal_forge_tag_resolves_against_manifest_registry(self) -> None:
+    def test_change_proposal_handle_resolves_against_manifest_registry(self) -> None:
         artifact = load_artifact(
             "change-proposal",
             self.fixture("valid-change-proposal-github-v1.json"),
             registry=registry_from_manifest(),
         )
 
-        self.assertEqual("github", artifact["handle"]["forge_tag"])
+        self.assertEqual({"id", "display"}, set(artifact["handle"]))
 
-    def test_change_proposal_forge_tag_rejects_unknown_registry_value(self) -> None:
-        registry = MechanicRegistry(forge_tags={"github"})
-
-        with self.assertRaises(ArtifactSchemaError) as context:
-            load_artifact("change-proposal", self.fixture("valid-change-proposal-sourcehut-v2.json"), registry=registry)
-
-        self.assertIn("handle/forge_tag", context.exception.paths)
-        self.assertIn("forge tag `sourcehut` does not resolve in registry", str(context.exception))
-
-    def test_work_unit_schema_accepts_optional_forge_ticket_handles(self) -> None:
+    def test_work_unit_schema_accepts_optional_capability_handles(self) -> None:
         for name in [
             "valid-work-unit.json",
             "valid-work-unit-github-handle.json",
-            "valid-work-unit-sourcehut-handle.json",
         ]:
             with self.subTest(fixture=name):
                 artifact = load_artifact("work-unit", self.fixture(name), registry=registry_from_manifest())
 
                 if "handle" in artifact:
-                    self.assertIn(artifact["handle"]["forge_tag"], {"github", "sourcehut"})
+                    self.assertEqual({"id", "display"}, set(artifact["handle"]))
 
     def test_work_unit_schema_rejects_top_level_work_unit_field(self) -> None:
         with self.assertRaises(ArtifactSchemaError) as context:
@@ -199,33 +120,11 @@ class ArtifactSchemaTests(unittest.TestCase):
 
         self.assertIn("<root>", context.exception.paths)
 
-    def test_work_unit_schema_rejects_wrong_handle_variant_for_tag(self) -> None:
-        with self.assertRaises(ArtifactSchemaError) as context:
-            load_artifact("work-unit", self.fixture("invalid-work-unit-wrong-handle-variant.json"))
-
-        self.assertIn("handle", context.exception.paths)
-
-    def test_work_unit_schema_rejects_malformed_handle(self) -> None:
+    def test_work_unit_schema_rejects_provider_shaped_handle(self) -> None:
         with self.assertRaises(ArtifactSchemaError) as context:
             load_artifact("work-unit", self.fixture("invalid-work-unit-malformed-handle.json"))
 
         self.assertIn("handle", context.exception.paths)
-
-    def test_work_unit_schema_rejects_github_url_number_mismatch(self) -> None:
-        with self.assertRaises(ArtifactSchemaError) as context:
-            load_artifact("work-unit", self.fixture("invalid-work-unit-github-url-number-mismatch.json"))
-
-        self.assertIn("handle/url", context.exception.paths)
-        self.assertIn("does not agree with handle number", str(context.exception))
-
-    def test_work_unit_forge_tag_rejects_unknown_registry_value(self) -> None:
-        registry = MechanicRegistry(forge_tags={"github"})
-
-        with self.assertRaises(ArtifactSchemaError) as context:
-            load_artifact("work-unit", self.fixture("valid-work-unit-sourcehut-handle.json"), registry=registry)
-
-        self.assertIn("handle/forge_tag", context.exception.paths)
-        self.assertIn("forge tag `sourcehut` does not resolve in registry", str(context.exception))
 
     def test_change_needs_revision_schema_accepts_structured_findings(self) -> None:
         artifact = load_artifact("change-needs-revision", self.fixture("valid-change-needs-revision.json"))

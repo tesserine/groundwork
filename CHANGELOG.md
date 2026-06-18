@@ -48,6 +48,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Forge operations now consume the connector capability contract** (#440).
+  Groundwork declares the forge capability v1.1.0 in `manifest.toml`, vendors
+  the immutable commons schema plus provenance under `schemas/`, and reads the
+  operation surface from that contract. Work-unit and change-proposal handles
+  now use the opaque connector shape `{id, display}`. Provider-specific forge
+  mechanics, the local `groundwork-mechanic` resolver, forge-tag manifest
+  bindings, and resolver runtime bundle files are retired; the installers now
+  ship only the manifest and vendored capability contracts for runtime use.
 - **reckon invoked directly in the generative protocols** (#438). orient's
   standing-mode stance (4.1.0) was necessary but not sufficient — a stochastic
   agent acts on invoked procedure, not on disposition prose, and was observed

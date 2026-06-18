@@ -1,0 +1,5 @@
+{
+  "capability": "forge",
+  "version": "1.1.0",
+  "source": "https://raw.githubusercontent.com/tesserine/commons/6924159fc4ff58745f0e2c68ed16849ffd9b4086/schemas/forge-capability/v1/forge-capability.schema.json"
+}

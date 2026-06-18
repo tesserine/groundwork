@@ -1,5 +1,0 @@
-#!/usr/bin/env sh
-set -eu
-
-root="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)"
-PYTHONPATH="$root${PYTHONPATH:+:$PYTHONPATH}" exec python3 "$root/tooling/forge_operations.py" --root "$root" "$@"

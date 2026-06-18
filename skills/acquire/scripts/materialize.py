@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Derive a work-unit artifact body from an existing forge ticket.
 
-Input (stdin or path): the JSON a `read-ticket` mechanic emits —
+Input (stdin or path): the JSON a `read-ticket` connector tool emits —
 ``{"handle": {...}, "title": str, "body": str|null, "state": str}``.
 
 Output (stdout, on success): ``{"instance_id": str, "artifact": {...}}`` where
@@ -25,10 +25,10 @@ import re
 import sys
 from pathlib import Path
 
-# Ticket states that mean the ticket is not open for work. GitHub reports
-# "open"/"closed"; SourceHut reports a status string whose closed terminal is
-# "resolved". Compared case-insensitively so either forge's casing matches.
+# Ticket states that mean the ticket is not open for work. Compared
+# case-insensitively because connector displays may preserve provider casing.
 CLOSED_STATES = {"closed", "resolved"}
+TICKET_NUMBER = re.compile(r"(?:#|/)([0-9]+)$")
 
 ACCEPTANCE_HEADING = re.compile(
     r"^\s{0,3}#{1,6}\s+acceptance\s+criteria\s*:?\s*$",
@@ -72,12 +72,12 @@ def extract_acceptance_criteria(body: str) -> list[str]:
 
 def materialize(ticket: dict) -> dict:
     handle = ticket.get("handle")
-    if not isinstance(handle, dict) or "forge_tag" not in handle or "number" not in handle:
+    if not isinstance(handle, dict) or not isinstance(handle.get("id"), str) or not isinstance(handle.get("display"), str):
         raise MaterializeError(
-            "ticket payload is missing a forge handle; read-ticket must emit "
-            "handle.forge_tag and handle.number"
+            "ticket payload is missing a forge capability handle; read-ticket "
+            "must emit handle.id and handle.display"
         )
-    number = handle["number"]
+    number = ticket_number(handle)
 
     title = ticket.get("title")
     if not isinstance(title, str) or not title.strip():
@@ -120,6 +120,17 @@ def materialize(ticket: dict) -> dict:
         "handle": handle,
     }
     return {"instance_id": f"work-unit-{number}-{slug}", "artifact": artifact}
+
+
+def ticket_number(handle: dict) -> str:
+    for value in (handle["display"], handle["id"]):
+        match = TICKET_NUMBER.search(value)
+        if match is not None:
+            return match.group(1)
+    raise MaterializeError(
+        "ticket handle does not expose a numeric ticket suffix in display or id; "
+        "cannot derive the tracker-backed work-unit instance id"
+    )
 
 
 def load_ticket(path: str | None) -> dict:

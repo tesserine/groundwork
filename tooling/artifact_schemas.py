@@ -9,6 +9,8 @@ from typing import Any
 from urllib.parse import urlparse
 
 from jsonschema import Draft202012Validator, FormatChecker
+from referencing import Registry, Resource
+from referencing.jsonschema import DRAFT202012
 
 from tooling.mechanics import MechanicRegistry
 
@@ -18,9 +20,6 @@ SCHEMAS = ROOT / "schemas"
 MANIFEST = ROOT / "manifest.toml"
 DATE_TIME_PATTERN = re.compile(
     r"^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[Zz]|[+-]\d{2}:\d{2})$"
-)
-GITHUB_WORK_UNIT_ISSUE_URL_PATTERN = re.compile(
-    r"^https://github[.]com/[^/]+/[^/]+/issues/([0-9]+)$"
 )
 
 
@@ -44,11 +43,6 @@ def registry_from_manifest(path: Path | str = MANIFEST) -> MechanicRegistry:
     return MechanicRegistry(
         artifact_schemas=set(artifact_types),
         artifact_types=artifact_types,
-        forge_tags={
-            entry["name"]
-            for entry in manifest.get("forge_tags", [])
-            if isinstance(entry, dict) and isinstance(entry.get("name"), str)
-        }
     )
 
 
@@ -90,7 +84,7 @@ def _schema_errors(artifact_type: str, artifact: dict[str, Any]) -> list[tuple[s
     except FileNotFoundError as error:
         raise ArtifactSchemaError([(str(schema_path.relative_to(ROOT)), "artifact schema does not exist")]) from error
 
-    validator = Draft202012Validator(schema, format_checker=_format_checker())
+    validator = Draft202012Validator(schema, format_checker=_format_checker(), registry=_schema_registry())
     errors: list[tuple[str, str]] = []
     for error in sorted(validator.iter_errors(artifact), key=lambda item: list(item.path)):
         path = "/".join(str(part) for part in error.path)
@@ -143,24 +137,27 @@ def _registry_errors(
     artifact: dict[str, Any],
     registry: MechanicRegistry,
 ) -> list[tuple[str, str]]:
-    if artifact_type == "change-proposal":
-        forge_tag = artifact["handle"]["forge_tag"]
-    elif artifact_type == "work-unit" and "handle" in artifact:
-        forge_tag = artifact["handle"]["forge_tag"]
-    else:
-        return []
-
-    if forge_tag not in registry.forge_tags:
-        return [("handle/forge_tag", f"forge tag `{forge_tag}` does not resolve in registry")]
     return []
 
 
 def _artifact_contract_errors(artifact_type: str, artifact: dict[str, Any]) -> list[tuple[str, str]]:
-    if artifact_type != "work-unit" or artifact.get("handle", {}).get("forge_tag") != "github":
-        return []
-
-    handle = artifact["handle"]
-    match = GITHUB_WORK_UNIT_ISSUE_URL_PATTERN.fullmatch(handle["url"])
-    if match is not None and int(match.group(1)) != handle["number"]:
-        return [("handle/url", "GitHub issue URL number does not agree with handle number")]
     return []
+
+
+def _schema_registry() -> Registry:
+    registry = Registry()
+    for path in SCHEMAS.glob("*.schema.json"):
+        try:
+            schema = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        resource = Resource.from_contents(schema, default_specification=DRAFT202012)
+        registry = registry.with_resource(path.name, resource)
+        schema_id = schema.get("$id")
+        if isinstance(schema_id, str):
+            registry = registry.with_resource(schema_id, resource)
+        registry = registry.with_resource(
+            f"https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/{path.name}",
+            resource,
+        )
+    return registry

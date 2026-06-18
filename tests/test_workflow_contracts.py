@@ -208,16 +208,16 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("declares 2 manifest required_output_choices groups", str(context.exception))
 
     def test_parser_registries_resolve_mechanic_names_across_parsers(self) -> None:
-        mechanic = load_mechanic(MECHANIC_FIXTURES / "valid-github.toml")
+        mechanic = load_mechanic(MECHANIC_FIXTURES / "valid-git.toml")
         registry = WorkflowRegistry(
             disciplines={"orient"},
             mechanics={mechanic["name"]},
             artifact_schemas={"change-proposal"},
         )
 
-        contract = load_workflow_contract(self.fixture("valid-mechanic-smoke.toml"), registry=registry)
+        contract = load_workflow_contract(self.fixture("valid-git-mechanic-smoke.toml"), registry=registry)
 
-        self.assertEqual("submit-smoke", contract["name"])
+        self.assertEqual("git-smoke", contract["name"])
 
         renamed_registry = WorkflowRegistry(
             disciplines={"orient"},
@@ -225,10 +225,10 @@ class WorkflowContractTests(unittest.TestCase):
             artifact_schemas={"change-proposal"},
         )
         with self.assertRaises(WorkflowContractError) as context:
-            load_workflow_contract(self.fixture("valid-mechanic-smoke.toml"), registry=renamed_registry)
+            load_workflow_contract(self.fixture("valid-git-mechanic-smoke.toml"), registry=renamed_registry)
 
         self.assertIn("nodes/0/mechanics/0", context.exception.paths)
-        self.assertIn("mechanic `deliver-change-proposal` does not resolve in registry", str(context.exception))
+        self.assertIn("mechanic `git-push` does not resolve in registry", str(context.exception))
 
     def test_registry_from_manifest_resolves_nested_mechanic_directory_names(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

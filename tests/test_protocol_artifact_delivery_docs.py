@@ -116,7 +116,7 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
             "refinement never calls it",
             "decompose does not adopt a pre-existing tracker ticket into a new artifact",
             "must not create a second ticket",
-            "`work-unit-<N>-<short-slug>`, where `<N>` is the forge-assigned ticket number",
+            "`work-unit-<N>-<short-slug>`, where `<N>` is the numeric ticket suffix from the connector-issued `handle.display` or `handle.id`",
             "populate `handle` exactly once from the identity returned by `create-ticket`",
             "carry the existing `handle` through unchanged",
             "Do not call `create-ticket`, re-derive `handle`, or omit `handle` during refinement",
@@ -143,9 +143,8 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
         for expected in [
             'instance_id: "<existing-instance-id>"',
             "handle: {",
-            'forge_tag: "github"',
-            'url: "<existing issue URL from the delivered artifact handle>"',
-            "number: 123",
+            'id: "<existing connector-issued ticket id>"',
+            'display: "<existing human-readable ticket>"',
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, example)

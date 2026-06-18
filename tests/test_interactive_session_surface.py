@@ -96,9 +96,8 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                             "Interactive sessions reach take through the runa session surface"
                         ],
                         "handle": {
-                            "forge_tag": "github",
-                            "url": "https://github.com/tesserine/groundwork/issues/382",
-                            "number": 382,
+                            "id": "github:tesserine/groundwork:issue/382",
+                            "display": "tesserine/groundwork#382",
                         },
                     },
                     indent=2,

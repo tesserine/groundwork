@@ -103,7 +103,7 @@ name = "successor"
         self.assertTrue(results[0].passed)
         self.assertTrue(results[1].passed)
         self.assertFalse(results[2].passed)
-        self.assertIn("handle/url", " ".join(results[2].errors))
+        self.assertIn("handle/id", " ".join(results[2].errors))
 
     def test_invalid_units_return_failures_without_raising(self) -> None:
         results = run_conformance(
@@ -425,7 +425,7 @@ name = "change-proposal"
         self.assertFalse(mechanic_result.passed)
         self.assertIn("artifact schema `completion-evidence` does not resolve in registry", " ".join(mechanic_result.errors))
 
-    def test_manifest_forge_tagged_mechanic_binding_requires_matching_c3_mechanic(self) -> None:
+    def test_manifest_rejects_retired_forge_tags_table(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             manifest = root / "manifest.toml"
@@ -446,88 +446,84 @@ forge_tags = ["github"]
         self.assertEqual(1, len(results))
         self.assertEqual("C-5 manifest", results[0].category)
         self.assertFalse(results[0].passed)
-        self.assertIn(
-            "mechanic binding `deliver-change-proposal` for forge tag `github` resolves to 0 C-3 mechanics",
-            " ".join(results[0].errors),
+        self.assertIn("forge tag matrix entry 0 is retired", " ".join(results[0].errors))
+
+    def test_manifest_rejects_retired_mechanic_forge_tags_binding(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "manifest.toml"
+            manifest.write_text(
+                """
+[[mechanics]]
+name = "deliver-change-proposal"
+forge_tags = ["github"]
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([manifest])
+
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-5 manifest", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("mechanic forge_tags bindings are retired", " ".join(results[0].errors))
+
+    def test_manifest_declares_forge_capability_instead_of_provider_forge_matrix(self) -> None:
+        results = run_conformance([ROOT / "manifest.toml"])
+        manifest_result = results[0]
+
+        self.assertEqual("C-5 manifest", manifest_result.category)
+        self.assertTrue(manifest_result.passed, manifest_result.errors)
+
+        manifest = (ROOT / "manifest.toml").read_text(encoding="utf-8")
+        self.assertIn("[[capabilities]]", manifest)
+        self.assertIn('name = "forge"', manifest)
+        self.assertNotIn("[[forge_tags]]", manifest)
+        self.assertNotIn("forge_tags =", manifest)
+
+    def test_forge_capability_conformance_retires_provider_mechanic_units(self) -> None:
+        results = run_conformance([ROOT])
+
+        self.assertTrue(all(result.passed for result in results), [result.errors for result in results if result.errors])
+        self.assertFalse((ROOT / "mechanics" / "github").exists())
+        self.assertFalse((ROOT / "mechanics" / "sourcehut").exists())
+
+    def test_forge_capability_provenance_is_immutable_and_versioned(self) -> None:
+        provenance_path = ROOT / "schemas" / "forge-capability-v1.provenance.json"
+        provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+
+        self.assertEqual("1.1.0", provenance["version"])
+        self.assertEqual(
+            "https://raw.githubusercontent.com/tesserine/commons/6924159fc4ff58745f0e2c68ed16849ffd9b4086/schemas/forge-capability/v1/forge-capability.schema.json",
+            provenance["source"],
         )
 
-    def test_manifest_forge_tagged_mechanic_binding_rejects_unknown_forge_tag(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            manifest = root / "manifest.toml"
-            manifest.write_text(
-                """
-[[mechanics]]
-name = "deliver-change-proposal"
-forge_tags = ["github"]
-""".lstrip(),
-                encoding="utf-8",
-            )
+    def test_forge_operation_surface_is_read_from_vendored_capability_schema(self) -> None:
+        schema = json.loads((ROOT / "schemas" / "forge-capability-v1.schema.json").read_text(encoding="utf-8"))
+        operation_names = schema["$defs"]["operation-name"]["enum"]
 
-            results = run_conformance([manifest])
-
-        self.assertEqual(1, len(results))
-        self.assertEqual("C-5 manifest", results[0].category)
-        self.assertFalse(results[0].passed)
-        self.assertIn("forge tag `github` does not resolve in forge_tags", " ".join(results[0].errors))
-
-    def test_manifest_forge_tagged_mechanic_binding_rejects_duplicate_c3_mechanics(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            manifest = root / "manifest.toml"
-            manifest.write_text(
-                """
-[[forge_tags]]
-name = "github"
-
-[[artifact_types]]
-name = "change-proposal"
-
-[[mechanics]]
-name = "deliver-change-proposal"
-forge_tags = ["github"]
-""".lstrip(),
-                encoding="utf-8",
-            )
-            mechanics = root / "mechanics"
-            mechanics.mkdir()
-            mechanic_source = (MECHANIC_FIXTURES / "valid-github.toml").read_text(encoding="utf-8")
-            (mechanics / "one.toml").write_text(mechanic_source, encoding="utf-8")
-            (mechanics / "two.toml").write_text(mechanic_source, encoding="utf-8")
-
-            results = run_conformance([manifest])
-
-        self.assertEqual(1, len(results))
-        self.assertEqual("C-5 manifest", results[0].category)
-        self.assertFalse(results[0].passed)
-        self.assertIn(
-            "mechanic binding `deliver-change-proposal` for forge tag `github` resolves to 2 C-3 mechanics",
-            " ".join(results[0].errors),
+        self.assertEqual(
+            [
+                "read-ticket",
+                "create-ticket",
+                "claim-work-unit",
+                "record-progress",
+                "reflect-disposition",
+                "close-out",
+                "deliver-change-proposal",
+                "apply-approved-change",
+            ],
+            operation_names,
         )
 
-    def test_manifest_requires_forge_touching_operations_for_every_registered_forge(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            manifest = root / "manifest.toml"
-            manifest.write_text(
-                """
-[[forge_tags]]
-name = "github"
+    def test_artifact_handle_projection_matches_vendored_capability_handle(self) -> None:
+        capability = json.loads((ROOT / "schemas" / "forge-capability-v1.schema.json").read_text(encoding="utf-8"))
+        handle = capability["$defs"]["handle"]
 
-[[forge_tags]]
-name = "sourcehut"
-
-[[mechanics]]
-name = "close-out"
-""".lstrip(),
-                encoding="utf-8",
-            )
-
-            results = run_conformance([manifest])
-
-        self.assertEqual("C-5 manifest", results[0].category)
-        self.assertFalse(results[0].passed)
-        self.assertIn("forge-touching operation `close-out` must declare forge_tags for every registered forge", " ".join(results[0].errors))
+        for name in ["work-unit", "change-proposal"]:
+            with self.subTest(schema=name):
+                schema = json.loads((ROOT / "schemas" / f"{name}.schema.json").read_text(encoding="utf-8"))
+                self.assertEqual(handle, schema["$defs"]["capability-handle"])
 
     def test_manifest_forge_leakage_scan_covers_registered_protocol_without_workflow_contract(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

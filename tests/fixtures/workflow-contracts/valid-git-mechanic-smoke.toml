@@ -1,24 +1,24 @@
-name = "submit-smoke"
+name = "git-smoke"
 purpose = "Exercise workflow mechanic registry resolution with a mechanic parser output."
 session_role = "integration smoke"
 preconditions = ["a mechanic parser registry exists"]
-start_node = "deliver-change-proposal"
+start_node = "git-push"
 failure_modes = ["mechanic reference drifts"]
 corruption_modes = ["cross-parser drift"]
 
 [[nodes]]
-name = "deliver-change-proposal"
-intent = "Deliver the change proposal through the forge capability connector."
+name = "git-push"
+intent = "Push a local branch through a registered git mechanic."
 disciplines = ["orient"]
-mechanics = ["deliver-change-proposal"]
-outcomes = ["change proposal delivered"]
+mechanics = ["git-push"]
+outcomes = ["branch pushed"]
 
 [[edges]]
-from = "deliver-change-proposal"
-to = "delivered"
+from = "git-push"
+to = "pushed"
 condition = { type = "always" }
 
 [[terminals]]
-name = "delivered"
-outcome = "The change proposal exists."
+name = "pushed"
+outcome = "The branch exists on the remote."
 artifact_produced = "change-proposal"

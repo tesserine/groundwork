@@ -6,7 +6,7 @@
   "summary": "Revise artifact schemas after review findings.",
   "version": 2,
   "handle": {
-    "forge_tag": "sourcehut",
-    "proposal_ref": "refs/proposals/issue-316/2"
+    "id": "sourcehut:refs/proposals/issue-316/2",
+    "display": "refs/proposals/issue-316/2"
   }
 }

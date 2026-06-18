@@ -909,19 +909,19 @@ scope boundaries (plan, review) and closure context (land).
 | title | string | yes | What this work-unit is |
 | description | string | yes | What needs doing |
 | acceptance_criteria | array of strings | yes | Discrete, verifiable conditions for "done" |
-| handle | forge-tagged ticket handle | no | Forge-assigned tracker identity for tracker-backed work-units |
+| handle | forge capability handle | no | Connector-issued tracker identity for tracker-backed work-units |
 | scope | array of strings | no | In-scope boundaries for the session frame |
 | out_of_scope | array of strings | no | Explicit nearby exclusions |
 | dependencies | array of work-unit refs | no | Work-units that must be complete before this starts, referenced by `instance_id` |
 
 Tracker-backed work-units create the forge ticket before first delivery and
 use `instance_id` convention `work-unit-<N>-<short-slug>`, where `<N>` is the
-forge-assigned ticket number. Work-units without tracker linkage use
-`<short-slug>`. Dependency references use those exact `instance_id` values,
-not tracker shorthand.
+numeric ticket suffix from the connector-issued handle. Work-units without
+tracker linkage use `<short-slug>`. Dependency references use those exact
+`instance_id` values, not tracker shorthand.
 
 Tracker-backed work-units populate `handle` exactly once from the
-forge-assigned ticket identity returned by `create-ticket`; non-tracker
+connector-issued ticket identity returned by `create-ticket`; non-tracker
 work-units omit it. The body remains unpartitioned and does not carry a
 top-level `work_unit` field or forge-specific identity outside `handle`.
 GitHub handles name an issue URL and number; SourceHut handles name a tracker

@@ -5,8 +5,7 @@
   "base": "main",
   "summary": "Missing version should fail.",
   "handle": {
-    "forge_tag": "github",
-    "url": "https://github.com/tesserine/groundwork/pull/323",
-    "number": 323
+    "id": "github:tesserine/groundwork:pull/323",
+    "display": "tesserine/groundwork#323"
   }
 }
