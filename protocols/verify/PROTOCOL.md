@@ -53,11 +53,16 @@ truth.
    then the gate re-runs fresh from step 2. Record honestly whatever the
    evidence shows — covered, partial, or uncovered.
 
-4. **Review documentation impact.** Map the change to the documents that
-   claim to describe it; classify each as accurate, drifted, missing, or
-   obsolete; update what the change touched in the same branch; file
-   follow-up work-units for anything deeper. Method:
+4. **Review the declared contracts.** Audit the change against each
+   non-behavioral dimension the contract declared. For **documentation**:
+   confirm each declared pillar's outcome is met, and keep existing docs
+   honest against drift — classify each mapped document as accurate,
+   drifted, missing, or obsolete; update what the change touched in the same
+   branch; file follow-ups for anything deeper. Method:
    [references/documentation-review.md](references/documentation-review.md).
+   For **code quality**: audit the diff against each declared universal,
+   recording the locus where it holds or the finding where it fails. Method:
+   [references/code-quality-review.md](references/code-quality-review.md).
 
 5. **Deliver `completion-evidence`.** Invoke the `completion-evidence` MCP
    tool. The object below is MCP tool input, not artifact body.

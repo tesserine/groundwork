@@ -9,6 +9,7 @@ result after a change; this discipline governs the writing as it happens.
 | Artifact | Audience | When Produced |
 |----------|----------|---------------|
 | README.md | New users, contributors, agents on first encounter | Project init; major capability changes |
+| README lead / project synopsis | People who do not yet know the project (discovery) | Project init; positioning changes |
 | ARCHITECTURE.md | Contributors, agents understanding system structure | After grounding; significant structural changes |
 | ADR | Future decision-makers (human and AI) | When a significant decision is made (MADR 4.0 format) |
 | CHANGELOG.md | Users, operators, downstream consumers | Before landing user-visible changes (Keep a Changelog format) |
@@ -34,7 +35,8 @@ result after a change; this discipline governs the writing as it happens.
 
 Before writing any documentation:
 
-1. Name the audience: end user, contributor, API consumer, or AI agent.
+1. Name the audience: end user, contributor, API consumer, AI agent, or
+   discovery reader.
 2. State what they already know.
 3. State what they need to accomplish after reading.
 4. Apply the audience test throughout: "Would this reader know what to do
@@ -51,6 +53,10 @@ Audience profiles:
 - **AI agent**: needs explicit file paths, concrete examples, and
   constraint-first organization. Assumes no persistent memory across
   sessions.
+- **Discovery reader**: does not yet know the project exists. Needs, from
+  the entry surface in a few sentences, what it is, who it is for, and why
+  to choose it over the status quo. Assumes no prior awareness, and leaves
+  if the first lines do not land.
 
 ## Procedure: write-artifact
 
