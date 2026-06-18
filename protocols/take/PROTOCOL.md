@@ -60,6 +60,17 @@ proves it, or records it.
    against the work-unit's intent, and record the interpretation in the
    scenario's `criterion` reference rather than silently guessing.
 
+   The behavior contract is the contract's first dimension, not its whole.
+   As you author it, also declare the change's **documentation** and
+   **code-quality** dimensions per the `contract` skill: which documentation
+   pillars the change owes — user, developer, discovery — and the outcome
+   each must reach, and which principles-corpus universals this change most
+   stresses. A subset is legitimate; silence where the change clearly serves
+   a recipient or stresses a universal is under-declaration. These
+   declarations travel with the work-unit and are audited at `verify`;
+   behavior is the dimension delivered as the `behavior-contract` artifact
+   below.
+
 5. **Deliver the `behavior-contract`.** Invoke the `behavior-contract` MCP
    tool. The object below is MCP tool input, not artifact body. `instance_id`
    is a tool parameter that names the artifact instance; it is extracted

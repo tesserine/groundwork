@@ -1,7 +1,9 @@
 # Documentation Review
 
-Reference for verify step 4: the method for auditing documentation impact
-before the change is packaged for review.
+Reference for verify step 4: auditing the change against the declared
+**documentation contract** (the contract skill's documentation dimension),
+and keeping existing documentation honest against drift, before the change
+is packaged for review.
 
 ## Constraints
 
@@ -16,6 +18,11 @@ before the change is packaged for review.
   consumers understand what changed without reading code.
 
 ## Method
+
+Begin from the declared contract. From the documentation contract authored
+at `take`, list the pillars it declared (user / developer / discovery) and
+the outcome each must reach; those outcomes are what this audit confirms.
+The steps below keep the surrounding documentation honest against drift.
 
 1. **Identify changed files.** Diff the working tree or branch against the
    base.
@@ -38,6 +45,12 @@ before the change is packaged for review.
    references, or verify any remaining dynamic numbers.
 6. **Apply the audience test.** For each updated or created doc: would the
    intended reader know what to do after reading this?
+7. **Confirm each declared outcome.** For every pillar the contract
+   declared, confirm a recipient of that pillar can now reach the declared
+   outcome — the audience test applied to the contract, not only to touched
+   files. An outcome a doc-less delivery would still fail is unmet; the
+   change is incomplete until it is met or the gap is tracked as a follow-up
+   work-unit.
 
 The outcome feeds the `documentation` section of `completion-evidence`.
 

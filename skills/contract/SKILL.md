@@ -1,31 +1,91 @@
 ---
 name: contract
 description: >-
-  The behavior-driven development discipline: authoring the behavior contract
-  at entry, validating it is robust before it binds, and carrying it unbroken through implementation, verification, and
-  closure. Use when refining acceptance criteria into Given/When/Then
-  scenarios, when deciding what behavior to implement next, and whenever code
-  changes, tests, or completion claims need to stay traceable to specified
-  behaviors instead of drifting toward implementation convenience.
+  The contract discipline: a contract is the executable definition of done
+  across every dimension a change must satisfy — behavior, documentation,
+  and code quality — each declared at entry, verified before it binds, and
+  carried unbroken through implementation, verification, and closure. Use
+  when authoring or reviewing a contract, refining acceptance criteria into
+  Given/When/Then scenarios, declaring a change's documentation or
+  code-quality obligations, and whenever code, tests, docs, or completion
+  claims must stay traceable to a declared contract instead of drifting
+  toward implementation convenience.
 metadata:
-  version: "2.1.0"
-  updated: "2026-06-11"
+  version: "2.2.0"
+  updated: "2026-06-18"
 ---
 
 # Contract
 
-The behavior contract is the executable definition of done. This skill is
-the BDD home: it authors the contract where work begins (`take`) and carries
-it as the source of truth through every later stage. Behavior is specified
-once, then everything traces to it — plans link decisions to scenarios,
-tests prove named scenarios, verification reports scenario-level coverage,
-landing records what coverage shipped.
+A contract is the executable definition of done. It is **Contract-First**
+given concrete form — declare the seam, build to it, verify against it,
+keep the declaration the single home of the seam's truth — applied not to
+one aspect of a change but to every aspect that must hold when the work
+lands. A contract has dimensions; each declares what done means for one
+aspect, in the form that gives that aspect teeth.
+
+This skill is the home of the contract across its dimensions. It authors
+the contract where work begins (`take`) and carries it as the source of
+truth through every later stage: plans link decisions to it, the build is
+shaped to it, verification is decided against it, and landing records what
+shipped.
+
+## The teeth principle
+
+A contract dimension is real only when **a hollow delivery fails at least
+one of its criteria.** This is **Verifiable Completion** (the principles
+corpus universal) at the level of the contract: completion is an observable
+state, evidence decides the claim, and a criterion a no-op satisfies
+decides nothing. Of every criterion, in every dimension, ask: *could a
+stub — a canned return, an absent doc, a rename that changes nothing — pass
+this?* If yes, it is hollow; sharpen it until a hollow delivery fails.
+
+The teeth principle is universal; the **form** of the check fits the
+dimension. Behavior earns teeth through executable scenarios a stub fails.
+Documentation earns them through a checklist of audience outcomes a
+doc-less delivery fails. Code quality earns them through corpus principles
+projected onto the change, each a locus a careless change fails. Forcing
+one form — a test — onto every dimension is the mistake; the constant is
+the failing-hollow-delivery test, not the apparatus that runs it.
+
+## The dimensions
+
+A contract declares the dimensions the work demands — behavior is always
+present; documentation and code quality are declared as the change
+warrants, and a subset is legitimate the way a behavior contract need not
+exercise every code path. Each dimension is **declared** at `take`,
+**carried** through `implement`, **verified** at `verify`, and **recorded**
+at `land`.
+
+- **[Behavioral dimension](#the-behavioral-dimension)** — what the system
+  does. The most developed dimension and the worked exemplar below; its
+  form is BDD.
+- **[Documentation dimension](references/documentation-contract.md)** —
+  what each recipient can do once the work lands. Three sub-modules — user,
+  developer, discovery — each a checklist of audience outcomes.
+- **[Code-quality dimension](references/code-quality-contract.md)** — what
+  must hold of the change's internal form: the relevant principles-corpus
+  universals projected onto the diff.
+
+New dimensions join here as they earn their place; satisfying the teeth
+principle and the declare–carry–verify–record threading is what makes a
+dimension one.
+
+## The behavioral dimension
+
+What the system does, specified once and traced everywhere. This is the
+contract's most developed dimension and the worked example of a dimension
+with teeth — the stub test below is the behavioral instance of the teeth
+principle above. Behavior is specified once, then everything traces to it:
+plans link decisions to scenarios, tests prove named scenarios,
+verification reports scenario-level coverage, landing records what coverage
+shipped.
 
 Reference: [Dan North, Introducing BDD](https://dannorth.net/introducing-bdd/).
 Language-specific patterns:
 [references/language-patterns.md](references/language-patterns.md).
 
-## Authoring the Contract
+### Authoring the Contract
 
 1. **Start from the criteria.** Each work-unit acceptance criterion is
    refined into one or more scenarios. Every scenario names the criterion it
@@ -45,7 +105,7 @@ Language-specific patterns:
 6. **Rank by behavior gap.** Happy path first, core before edge, foundation
    before dependents, user-visible before internal.
 
-### Example
+#### Example
 
 ```python
 def test_rejects_expired_tokens_with_401():
@@ -66,7 +126,7 @@ The name is the specification line; the assertions check observable
 outcomes. A test asserting `validator._cache` or `result.internal_state`
 breaks on refactor and specifies nothing.
 
-## Robustness — the stub test
+### Robustness — the stub test
 
 A well-formed scenario can still specify nothing. "Observable, not internal"
 guards one direction — assertions that reach into internals break on refactor
@@ -101,7 +161,7 @@ Three shapes of hollow scenario, with the repair:
   ships green. Every operation or capability surface carries its own
   stub-failing scenario — not one exemplar standing in for the set.
 
-### The completeness check
+#### The completeness check
 
 Before the contract is delivered, and again by whoever reviews it before
 acceptance, validate it against itself. Of each scenario ask: *could a stub — a
@@ -120,7 +180,7 @@ runs, Then the transport received the create request with the mapped fields and
 the ticket named by the returned handle reads back. The fabricating stub fails
 the first Then; the no-request stub fails the second.
 
-## Carrying the Contract
+### Carrying the Contract
 
 - **Implementation maps to behavior.** Every implementation increment names
   the scenario it advances. Each RED test corresponds to a named scenario.
@@ -132,7 +192,7 @@ the first Then; the no-request stub fails the second.
   it names which scenarios those tests prove and which criteria those
   scenarios cover. Report coverage, not command output.
 
-### When an existing test fails after a change
+#### When an existing test fails after a change
 
 Classify before touching it:
 
@@ -144,6 +204,60 @@ Classify before touching it:
 
 **Delete freely.** Scenarios and tests for behaviors nobody needs are noise,
 not safety.
+
+## The documentation dimension
+
+Documentation earns its place in the contract because **Transmission** is a
+principle: work completes when the recipient can act on it, not when the
+maker finishes. So the documentation contract declares, per recipient, the
+outcome that recipient must reach — and is satisfied only when they can
+reach it.
+
+Its teeth are a checklist, not a test, and the teeth principle decides the
+checklist's shape: an item has teeth only if a doc-less or hollow-doc
+delivery fails it. The tell is phrasing each item as an **audience
+outcome** — what the reader can now do — not artifact existence. "A new
+user completes the primary task from the README alone" fails a doc-less
+delivery; "a README exists" passes anything.
+
+Three sub-modules, one per recipient: **user**, **developer**, and
+**discovery & marketing** — the last being the reader who does not yet know
+the project exists. The full discipline, with each pillar's checklist and
+hollow-item test, is
+[references/documentation-contract.md](references/documentation-contract.md).
+
+The dimension keeps a single home at each layer: the audience taxonomy and
+writing stance live in the `orient` skill's documentation discipline; this
+contract declares the outcomes; the `verify` protocol's documentation
+review audits the change against the declared contract and records the
+result in `completion-evidence`. The contract declares, orient styles,
+verify checks — no layer restates another.
+
+## The code-quality dimension
+
+Behavior says what the system does; documentation says what the recipient
+can do; the code-quality dimension declares what must hold of the change's
+internal form. Its teeth come not from an invented style rulebook but from
+the **principles corpus**: the universals that bear on this change,
+projected onto the diff as reviewer-checkable items. The corpus is the one
+home of quality invariants; the dimension consults it rather than
+re-deriving a second, divergent rulebook that would drift from it (consult,
+don't model).
+
+The projection is what makes the contract synergistic and recursive.
+Because the same universals that govern the whole system decide each change,
+landing a unit does double work: it improves the object and tightens the
+corpus's grip on the codebase. That is **Recursive Improvement** operating
+on the corpus itself — the system getting better at getting better. Sharpen
+a principle and every future contract's code-quality dimension sharpens with
+it.
+
+Its teeth: each item is phrased so a careless change fails it, checkable
+against the diff — not "the code is clean" (which anything passes) but a
+projected universal a reviewer can point at, finding either the locus where
+it holds or the place it fails. How the projection is generated from the
+resolved corpus, and grows with it, is
+[references/code-quality-contract.md](references/code-quality-contract.md).
 
 ## Corruption Modes
 
@@ -173,6 +287,19 @@ implementation are indistinguishable under it.
 behaviors. *Recognition:* runners configured, assertion libraries compared,
 no behavior specified yet.
 
+The modes above name the behavioral dimension's failures; two corruptions
+threaten any dimension:
+
+**Hollow dimension.** A dimension whose criteria a hollow delivery passes —
+a checklist of artifact-existence items, a code-quality line that says
+"clean," a scenario a stub satisfies. *Recognition:* you cannot name the
+hollow delivery that would fail it.
+
+**Modeled, not consulted.** A dimension that re-derives its authority
+instead of consulting it — a code-quality rulebook paraphrasing the corpus,
+a documentation checklist re-listing the audience taxonomy `orient` already
+owns. *Recognition:* two homes for one truth, kept in agreement by hand.
+
 ## Principles
 
 - **Words shape thinking.** "Given," "when," "then," "should" force thought
@@ -180,11 +307,31 @@ no behavior specified yet.
   the method.
 - **Specification, not verification.** The contract's primary value is
   stating what the system does; catching regressions is the byproduct.
+- **Teeth before form.** The constant across dimensions is that a hollow
+  delivery fails a criterion; the form of the check is chosen to fit the
+  aspect, never the aspect bent to fit one form.
+- **Each dimension consults its single home.** Behavior traces to
+  scenarios, documentation to `orient`'s audience taxonomy, code quality to
+  the principles corpus. A dimension that keeps its own editable copy of its
+  authority has stopped being a contract and become a second source of
+  truth.
 
 ## Cross-References
 
-- `take` (protocol): authors the contract at entry using this discipline.
+- `take` (protocol): authors the contract across its declared dimensions at
+  entry, using this discipline.
 - `plan` (protocol): maps scenarios to a decision-complete design.
 - `implement` (protocol): executes RED-GREEN-REFACTOR per named scenario.
-- `verify` (protocol): gates completion on scenario and criterion coverage.
-- `land` (protocol): records shipped behavior coverage and explicit gaps.
+- `verify` (protocol): decides completion against each declared dimension —
+  scenario and criterion coverage for behavior, and the documentation and
+  code-quality contracts via its review references.
+- `land` (protocol): records shipped coverage and explicit gaps per
+  dimension.
+- `orient` (skill): owns the documentation audience taxonomy and writing
+  stance the documentation dimension consults.
+- principles corpus (`~/.groundwork/principles/`): the single home of the
+  universals the code-quality dimension projects.
+- [references/documentation-contract.md](references/documentation-contract.md):
+  the documentation dimension's three sub-modules and checklists.
+- [references/code-quality-contract.md](references/code-quality-contract.md):
+  the code-quality projection and how it grows with the corpus.

@@ -8,6 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Multi-dimensional contract.** The `contract` skill is now Contract-First
+  given concrete form across dimensions, not behavior alone. A contract
+  declares the dimensions a change demands — behavior (BDD, unchanged),
+  **documentation**, and **code quality** — under one teeth principle: a
+  dimension is real only when a hollow delivery fails one of its criteria
+  (Verifiable Completion), in the verification form that fits the dimension.
+  Documentation is a checklist of audience outcomes across three
+  sub-modules — user, developer, discovery & marketing
+  (`skills/contract/references/documentation-contract.md`); the discovery
+  reader joins `orient`'s audience taxonomy. Code quality is the principles
+  corpus projected onto the diff as reviewer-checkable items
+  (`skills/contract/references/code-quality-contract.md`), consulting the
+  corpus rather than a separate rulebook. `verify` audits both declared
+  contracts (`protocols/verify/references/documentation-review.md`,
+  `code-quality-review.md`) and `take` declares them alongside the behavior
+  contract. No new artifact schema — the dimensions are a declared
+  discipline; schema formalization is deferred.
+
 - **Methodology self-install for runtime-driven deployments** (#416).
   `scripts/install` (logic in `tooling/install.py`, stdlib-only) installs
   exactly what the methodology interface contract channel does not deliver:
