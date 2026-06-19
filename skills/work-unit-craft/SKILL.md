@@ -9,8 +9,8 @@ description: >-
   and the corruption modes that make records mis-steer the agents who
   read them.
 metadata:
-  version: "1.0.0"
-  updated: "2026-06-11"
+  version: "1.1.0"
+  updated: "2026-06-19"
   origin: >-
     Adapted from pentaxis93/with-claude
     _shared/methodology/issue-craft.md (internal), renamed and
@@ -37,6 +37,13 @@ end state. The implementer's job is to find the path.
 
 This is not a stylistic preference. It is the structural defense against the
 most common failure mode in work-unit-driven development.
+
+## Ground the Record With Reckon
+
+Before shaping the record, use `reckon` as the cognitive process that
+establishes the verified constraints the record will state. `reckon` owns how
+those constraints are grounded; this craft owns the record shape that carries
+them across the delegation boundary.
 
 ## The Sovereignty Test
 
