@@ -5,10 +5,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK_UNIT_CRAFT = ROOT / "skills" / "work-unit-craft" / "SKILL.md"
+DECOMPOSE_PROTOCOL = ROOT / "protocols" / "decompose" / "PROTOCOL.md"
 
 
 def read_work_unit_craft() -> str:
     return WORK_UNIT_CRAFT.read_text(encoding="utf-8")
+
+
+def read_decompose_protocol() -> str:
+    return DECOMPOSE_PROTOCOL.read_text(encoding="utf-8")
 
 
 def section_between(body: str, start: str, end: str) -> str:
@@ -90,6 +95,99 @@ class WorkUnitCraftSkillTests(unittest.TestCase):
         for heading, expected_text in expected_sections.items():
             with self.subTest(heading=heading):
                 self.assertIn(expected_text, normalized(section(body, heading)))
+
+    def test_primary_workflow_authors_contract_inputs_for_every_dimension(self) -> None:
+        body = read_work_unit_craft()
+        primary_workflow = normalized(
+            section_between(
+                body,
+                "The Central Discipline",
+                "The Sovereignty Test",
+            )
+        )
+
+        expected_inputs = [
+            "contract inputs",
+            "`contract`",
+            "behavior",
+            "acceptance criteria",
+            "documentation",
+            "`orient`",
+            "recipient outcomes",
+            "code quality",
+            "principles corpus",
+            "stressed universals",
+        ]
+        for expected in expected_inputs:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, primary_workflow)
+
+    def test_pointer_as_default_is_a_considered_dimension_not_a_body_requirement(self) -> None:
+        body = read_work_unit_craft()
+        primary_workflow = normalized(
+            section_between(
+                body,
+                "The Central Discipline",
+                "The Sovereignty Test",
+            )
+        )
+
+        self.assertIn("consider every dimension", primary_workflow)
+        self.assertIn("not a mandatory per-dimension body section", primary_workflow)
+        self.assertIn("general contract pointer", primary_workflow)
+        self.assertIn("silence is valid only after the dimension was considered", primary_workflow)
+
+    def test_declared_contract_work_consults_the_contract_instead_of_modeling_it(self) -> None:
+        body = read_work_unit_craft()
+        belongs = normalized(section(body, "What Belongs in a Record"))
+        corruption_modes = normalized(section(body, "Corruption Modes"))
+
+        positive_craft = [
+            "Declared contract conformance",
+            "consult the declared contract",
+            "derive criteria from its declarations",
+            "verify positively against the declaration",
+        ]
+        for expected in positive_craft:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, belongs)
+
+        corruption_checks = [
+            "contract-modeling",
+            "hand-maintained model",
+            "operation names or shapes",
+            "consult the contract",
+        ]
+        for expected in corruption_checks:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, corruption_modes)
+
+    def test_decompose_procedures_apply_the_contract_input_pass(self) -> None:
+        body = read_decompose_protocol()
+        create_work_unit = normalized(
+            section_between(
+                body,
+                "Procedures",
+                "Triggers",
+            )
+        )
+
+        expected = [
+            "contract inputs",
+            "behavior",
+            "documentation",
+            "code quality",
+            "`work-unit-craft`",
+            "`contract`",
+            "`orient`",
+            "principles corpus",
+            "create-work-unit",
+            "decompose-epic",
+            "refine-work-unit",
+        ]
+        for item in expected:
+            with self.subTest(item=item):
+                self.assertIn(item, create_work_unit)
 
 
 if __name__ == "__main__":
