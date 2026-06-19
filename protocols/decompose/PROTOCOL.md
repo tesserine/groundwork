@@ -60,6 +60,21 @@ say what kind (unit, integration, behavior). If it affects user-facing behavior,
 include documentation updates as criteria. Making these explicit prevents the
 implementer from treating them as optional.
 
+### Contract inputs
+
+Every work-unit authoring pass records contract inputs across the dimensions
+the `work-unit-craft` skill names: behavior, documentation, and code quality.
+Behavior inputs are the positive acceptance criteria. Documentation inputs are
+recipient outcomes, using `orient` for the audience taxonomy. Code quality
+inputs point to the principles corpus and name stressed universals when the
+work puts any under special pressure. The `contract` skill owns the lifecycle
+these inputs enter; decompose consults it and does not restate it.
+
+Considering a dimension does not require a dedicated body section. A dimension
+with no special input remains covered by the general contract pointer. The
+record is incomplete only when the author skipped the consideration pass or
+hid special inputs the implementer needs.
+
 ### Dependencies
 
 **Explicit and hard only.** Dependencies name other work-units that represent
@@ -115,9 +130,13 @@ the earlier discussion" to understand, it is incomplete.
 4. Define scope with concrete files or modules.
 5. Write acceptance criteria as observable outcomes — functional behavior,
    testing expectations, documentation updates where applicable.
-6. Identify dependencies by searching existing work-units in the tracker.
+6. Record contract inputs by applying `work-unit-craft`: behavior through
+   criteria, documentation through recipient outcomes from `orient`, and code
+   quality through the principles corpus plus any stressed universals. Consult
+   `contract` for how these inputs are used downstream.
+7. Identify dependencies by searching existing work-units in the tracker.
    Record each as a work-unit reference.
-7. Assemble using template from `references/templates.md`. Title format:
+8. Assemble using template from `references/templates.md`. Title format:
    `<type>(<scope>): <what>`.
 
 A structural linter is available at `protocols/decompose/scripts/issue_lint.py`
@@ -142,9 +161,12 @@ agents; consult it when authoring or re-scoping a record.
 5. Group by module boundary where it clarifies ownership.
 6. Build dependency graph (Mermaid `graph TD` + layered text summary —
    see [`work-unit-model.md`](../../docs/architecture/work-unit-model.md) § Dependency Graph Format).
-7. Size-check each candidate: split if oversized, merge if trivial.
-8. Create task work-units in topological order (lowest execution layer first).
-9. Create or update parent epic with task checklist and dependency graph.
+7. For each task, record contract inputs by applying `work-unit-craft`:
+   behavior, documentation, and code quality are considered before the task is
+   filed.
+8. Size-check each candidate: split if oversized, merge if trivial.
+9. Create task work-units in topological order (lowest execution layer first).
+10. Create or update parent epic with task checklist and dependency graph.
 
 ### define-task-boundary
 
@@ -165,7 +187,10 @@ A well-bounded task has:
 2. Diagnose: vague summary, missing scope, untestable criteria, implicit
    dependencies, oversized scope, or prescription leaking into criteria.
 3. Apply targeted fixes only where weak. Keep already-strong sections unchanged.
-4. Re-verify the central discipline — does any criterion or scope statement
+4. Re-apply the contract input pass from `work-unit-craft`, preserving any
+   behavior, documentation, and code quality inputs that remain true and adding
+   any missing special inputs.
+5. Re-verify the central discipline — does any criterion or scope statement
    prescribe an implementation approach?
 
 ### triage-work-units

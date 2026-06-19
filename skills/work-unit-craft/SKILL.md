@@ -45,6 +45,34 @@ establishes the verified constraints the record will state. `reckon` owns how
 those constraints are grounded; this craft owns the record shape that carries
 them across the delegation boundary.
 
+## Author Contract Inputs
+
+After reckoning the work, author the record's **contract inputs**. The
+`contract` skill owns the lifecycle these inputs enter; this craft owns making
+the inputs visible in the work-unit record without turning them into
+implementation prescription.
+
+The authoring pass must **consider every dimension**:
+
+- **Behavior:** write acceptance criteria as positive, observable outcomes.
+  These are the behavior input the later contract sharpens into executable
+  checks.
+- **Documentation:** consult `orient`'s audience taxonomy and record any
+  recipient outcomes the work must make true. If no recipient needs a special
+  outcome beyond the general documentation contract, say nothing more.
+- **Code quality:** point to the principles corpus and name any stressed
+  universals the work puts under unusual pressure. If the general code-quality
+  contract is enough, the corpus pointer is sufficient.
+
+This is a consideration prompt, **not a mandatory per-dimension body
+section**. The **general contract pointer** carries any dimension with no
+special input. Density is unequal; consideration is equal. A terse bug may
+carry only behavior criteria after the documentation and code quality
+dimensions were considered. A documentation-deliverable unit may carry dense
+recipient outcomes and only the general corpus pointer. In every case,
+silence is valid only after the dimension was considered and the general
+contract is enough.
+
 ## The Sovereignty Test
 
 Before writing any record content, ask:
@@ -263,6 +291,26 @@ rather than adding a negative.
 be satisfied by an implementation that has the unwanted behavior? If no, the
 negative was redundant. If yes, strengthen the positive criteria.
 
+### contract-modeling
+
+The record creates a hand-maintained model of a declared contract — operation names or
+shapes, lifecycle steps, schema members, or supported cases — instead of
+requiring the implementer to consult the contract itself. The model looks like
+verification, but it can drift from the authority and makes the record a second
+home for the contract.
+
+*Recognition:* A criterion says "cover operations A, B, C" or reproduces a
+field table that already lives in a schema, capability contract, or protocol
+surface. If the authority changes, the record would have to be edited by hand
+to stay true.
+
+*The test:* Could the declared contract add, rename, or remove a shape while
+the record still appears complete? If yes, the record modeled the contract.
+
+*The fix:* State the positive conformance outcome and require the work to
+consult the contract. Criteria derive from the declaration and verify against
+the declaration, not against a copied list in the record.
+
 ### activity-criteria
 
 Criteria describe activities ("refactor", "clean up", "investigate") rather
@@ -348,6 +396,9 @@ to start?" If the answer references unfinished work, that is a dependency.
   boundary conditions exist.
 - **Acceptance criteria:** Observable outcomes — functional behavior,
   testing expectations, documentation updates. Binary pass/fail.
+- **Declared contract conformance:** when work conforms to an existing
+  contract, consult the declared contract, derive criteria from its
+  declarations, and verify positively against the declaration.
 - **Dependencies:** Work-unit references that represent true blockers.
 
 ## What Does Not Belong in a Record
@@ -381,6 +432,13 @@ to start?" If the answer references unfinished work, that is a dependency.
   schemas.
 - `reckon`: establishes the verified constraints a record states; fire it
   before framing the work-unit.
+- `contract`: owns the multidimensional lifecycle that receives the contract
+  inputs a record carries; this craft points to that home and does not restate
+  it.
+- `orient`: owns the documentation audience taxonomy used when authoring
+  documentation recipient outcomes.
+- principles corpus (`~/.groundwork/principles/`): owns the code-quality
+  universals a record points to when a change stresses them.
 - [`docs/architecture/work-unit-model.md`](../../docs/architecture/work-unit-model.md):
   the work-unit state model and dependency graph format the record
   participates in.
