@@ -48,6 +48,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **verify reports documentation-deliverable behavior as gate coverage**
+  (#456). The `verify` protocol now performs behavior coverage in the form
+  the `contract` skill names for the deliverable: scenario coverage for
+  runtime-behavior work-units, and structural/coherence/conformance gate
+  coverage for documentation-deliverable work-units. Runtime delivery of
+  gate-keyed `completion-evidence` remains deferred to #454.
 - **work-unit-craft invokes reckon in its primary workflow** (#447). The
   `work-unit-craft` skill now points authors to `reckon` as the cognitive
   process for establishing a record's verified constraints before shaping the

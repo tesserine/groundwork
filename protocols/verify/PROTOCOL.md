@@ -30,31 +30,44 @@ claim-by-claim requirements, and the rationalization table:
 
 This protocol owns the aggregate gate — the moment before "done." Per-test
 cycle evidence (each test watched failing, then passing) belongs to
-`implement`. Completion here means: the contract's scenarios pass, the
-work-unit's criteria are covered, and the documentation still tells the
-truth.
+`implement`. Completion here means: the contract's behavior coverage is
+performed in the form the deliverable requires, the work-unit's criteria
+are covered, and the documentation still tells the truth. For a
+runtime-behavior work-unit, coverage is scenario coverage; for a
+documentation-deliverable work-unit, coverage is gate coverage.
 
 ## Steps
 
 1. **Identify the gate.** From the behavior contract and the work-unit's
    acceptance criteria, name what proves completion: the full verification
-   command (test suite, build, linter as applicable) and the
-   criterion-coverage that must hold.
+   command (test suite, build, linter as applicable) and the behavior
+   coverage that must hold. Consult the `contract` skill's behavior
+   lifecycle in `skills/contract/SKILL.md` to select the form:
+   scenario coverage for a runtime-behavior work-unit, gate coverage for a
+   documentation-deliverable work-unit. The gate form is consulted from the
+   contract; this protocol does not re-model the lifecycle.
 
 2. **Run fresh.** Execute the full command. Read the entire output; check
    the exit code; count the failures. Output from any earlier run is stale
    the moment code changed.
 
-3. **Assess coverage.** Join criteria × scenarios × results: for every
-   acceptance criterion, which scenarios cover it and do their tests pass?
-   If verification surfaces a failure, stop and invoke `debug` — root cause
-   before fixes. A fix to this work-unit's own increment applies
-   `implement`'s cycle discipline (failing test first, minimal change),
-   then the gate re-runs fresh from step 2. Record honestly whatever the
-   evidence shows — covered, partial, or uncovered.
+3. **Assess coverage.** Report behavior coverage in the form selected in
+   step 1. For a runtime-behavior work-unit, join criteria × scenarios ×
+   results: for every acceptance criterion, which scenarios cover it and do
+   their tests pass? For a documentation-deliverable work-unit, join
+   acceptance criteria × documentation-deliverable gates × results:
+   structural, coherence, and conformance gates each report pass or failure
+   and name which acceptance criteria they cover. This is gate coverage,
+   not fabricated scenario coverage. If verification surfaces a failure,
+   stop and invoke `debug` — root cause before fixes. A fix to this
+   work-unit's own increment applies `implement`'s cycle discipline
+   (failing test first, minimal change), then the gate re-runs fresh from
+   step 2. Record honestly whatever the evidence shows — covered, partial,
+   or uncovered.
 
 4. **Review the declared contracts.** Audit the change against each
-   non-behavioral dimension the contract declared. For **documentation**:
+   dimension the contract declared beyond the behavior coverage assessment.
+   For **documentation**:
    confirm each declared pillar's outcome is met, and keep existing docs
    honest against drift — classify each mapped document as accurate,
    drifted, missing, or obsolete; update what the change touched in the same
@@ -64,8 +77,11 @@ truth.
    recording the locus where it holds or the finding where it fails. Method:
    [references/code-quality-review.md](references/code-quality-review.md).
 
-5. **Deliver `completion-evidence`.** Invoke the `completion-evidence` MCP
-   tool. The object below is MCP tool input, not artifact body.
+5. **Deliver `completion-evidence`.**
+   A runtime-behavior work-unit invokes the scenario-keyed
+   `completion-evidence` MCP tool. The
+   `completion-evidence` MCP tool is the runtime delivery path for scenario
+   coverage today. The object below is MCP tool input, not artifact body.
    `instance_id` is a tool parameter that names the artifact instance; it is
    extracted before validating artifact content, becomes the workspace
    filename, and must not appear in the artifact body. Runa injects
@@ -93,6 +109,14 @@ truth.
    completion-evidence schema, persists the artifact, and records it in the
    artifact store.
 
+   For a documentation-deliverable work-unit, report gate coverage as
+   committed evidence. The structural, coherence, and conformance gate
+   results name the covered criteria and any failures. Runa-backed runtime
+   sequencing of gate-keyed completion evidence is deferred to #454; name
+   that boundary honestly rather than routing this path through the
+   scenario-keyed tool or implying the documentation-only runtime path
+   advances end to end today.
+
 The evidence is honest, not aspirational: gaps and failures are recorded as
 gaps and failures. Review consumes this evidence and blocks on it — an
 uncovered criterion shipped to review is a blocking finding, not a secret.
@@ -110,13 +134,22 @@ uncovered criterion shipped to review is a blocking finding, not a secret.
   confirm it. Evidence determines the claim, never the reverse.
 - `drift-tolerance`: documentation known stale but recorded as accurate, or
   deferred without a tracking work-unit.
+- `gate-as-scenario`: encoding a documentation-deliverable gate as a
+  scenario so the scenario-keyed evidence tool accepts it. Gate coverage is
+  the behavior form for that deliverable, not a scenario disguise.
+- `lifecycle-modeling`: re-encoding the behavior lifecycle in `verify`
+  instead of consulting the `contract` skill as the single home.
+- `false-runtime-advance`: implying a documentation-deliverable unit can
+  deliver gate-keyed runtime `completion-evidence` before #454 supplies that
+  path.
 
 ## Cross-References
 
 - `implement` (protocol): owns per-cycle evidence; this protocol owns the
   aggregate gate.
-- `contract` (skill): coverage is reported behavior-first — scenarios and
-  criteria, not just command exit codes.
+- `contract` (skill): owns the behavior lifecycle this protocol consults —
+  `verify` reports scenario or gate coverage according to that lifecycle,
+  not just command exit codes.
 - `debug` (skill): fires on any failure surfaced here, before any fix.
 - `submit` (protocol): consumes this evidence — work is packaged for review
   only after the gate has run.
