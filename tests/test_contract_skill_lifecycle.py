@@ -19,10 +19,12 @@ INSTRUCTION_FILES = [
 NON_CONTRACT_INSTRUCTION_FILES = [
     path for path in INSTRUCTION_FILES if not path.is_relative_to(ROOT / "skills" / "contract")
 ]
+MIGRATED_LIFECYCLE_CONSUMERS = {
+    ROOT / "protocols" / "take" / "PROTOCOL.md",
+    ROOT / "protocols" / "verify" / "PROTOCOL.md",
+}
 UNMIGRATED_LIFECYCLE_CONSUMERS = [
-    path
-    for path in NON_CONTRACT_INSTRUCTION_FILES
-    if path != ROOT / "protocols" / "take" / "PROTOCOL.md"
+    path for path in NON_CONTRACT_INSTRUCTION_FILES if path not in MIGRATED_LIFECYCLE_CONSUMERS
 ]
 
 
