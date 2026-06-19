@@ -22,8 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`skills/contract/references/code-quality-contract.md`), consulting the
   corpus rather than a separate rulebook. `verify` audits both declared
   contracts (`protocols/verify/references/documentation-review.md`,
-  `code-quality-review.md`) and `take` declares them alongside the behavior
-  contract. No new artifact schema — the dimensions are a declared
+  `code-quality-review.md`) and `take` defines their validation alongside the
+  behavior contract. No new artifact schema — the dimensions are a declared
   discipline; schema formalization is deferred.
 
 - **Methodology self-install for runtime-driven deployments** (#416).
@@ -48,6 +48,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **take defines validation across every contract dimension** (#451). The
+  `take` protocol now consumes multidimensional contract inputs from
+  work-unit-craft/decompose and produces validation defined for behavior,
+  documentation, and code quality. Behavior uses runtime Given/When/Then
+  scenarios or documentation-deliverable gates; documentation uses
+  audience-outcome checklists; code quality uses projected corpus universals.
+  The protocol consults the `contract` skill and its dimension references
+  without re-encoding their lifecycle. take 3.3.0→3.4.0.
 - **work-unit-craft invokes reckon in its primary workflow** (#447). The
   `work-unit-craft` skill now points authors to `reckon` as the cognitive
   process for establishing a record's verified constraints before shaping the

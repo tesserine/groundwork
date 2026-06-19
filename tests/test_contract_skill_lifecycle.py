@@ -108,12 +108,25 @@ class ContractSkillLifecycleTests(unittest.TestCase):
             with self.subTest(handoff=handoff):
                 self.assertIn(handoff, handoffs)
 
-        duplicated_lifecycle_terms = re.compile(
-            r"inputs to validation|validation defined|validation performed|documentation-deliverable gates"
+        reencoded_lifecycle_table = re.compile(
+            r"\|\s*(?:Dimension|Dimension\s+)\s*\|\s*(?:Lifecycle|Lifecycle\s+)\s*\|"
+            r"|"
+            r"\| \*\*Behavior\*\* \|.+?\| \*\*Documentation\*\* \|.+?"
+            r"\| \*\*Code quality\*\* \|",
+            flags=re.DOTALL,
+        )
+        reencoded_stage_handoffs = re.compile(
+            r"^### Stage Handoffs\b|"
+            r"`work-unit-craft`/`decompose` produces inputs to validation.+?"
+            r"`take` consumes inputs to validation and produces validation defined.+?"
+            r"`verify` consumes validation defined and produces validation performed",
+            flags=re.MULTILINE | re.DOTALL,
         )
         for path in NON_CONTRACT_INSTRUCTION_FILES:
             with self.subTest(path=path.relative_to(ROOT)):
-                self.assertIsNone(duplicated_lifecycle_terms.search(read(path)))
+                body = read(path)
+                self.assertIsNone(reencoded_lifecycle_table.search(body))
+                self.assertIsNone(reencoded_stage_handoffs.search(body))
 
     def test_contract_surface_uses_public_work_unit_authoring_stage_names(self) -> None:
         deprecated_stage_name = re.compile(r"\bissue-craft\b", flags=re.IGNORECASE)

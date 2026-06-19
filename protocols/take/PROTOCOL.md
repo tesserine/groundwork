@@ -8,8 +8,8 @@ description: >-
   carries to land; until the runtime sequences the stations autonomously,
   take carries it. Trigger on: 'take', 'take work', 'start work-unit'.
 metadata:
-  version: "3.3.0"
-  updated: "2026-06-17"
+  version: "3.4.0"
+  updated: "2026-06-19"
 ---
 
 # Take — Contract-First Entry
@@ -46,30 +46,49 @@ proves it, or records it.
    work whose `dependencies` are still open; a blocked work-unit is a
    substrate signal, not an invitation.
 
-4. **Author the behavior contract.** First reckon it: authoring the
+4. **Define validation across the contract.** First reckon it: authoring the
    contract is a generative act — open the resolved principles corpus at
    `~/.groundwork/principles/`, select the principles that govern what
    "done" means here, read them, and reason the contract from them rather
    than the work-unit's surface wording alone (the reckon skill is the
-   move). Then refine each acceptance criterion into
-   one or more sentence-named Given/When/Then scenarios — the executable
-   definition of done. The `contract` skill is the authoring discipline:
-   behavior before mechanics, one behavior per scenario, names that read as
-   specification. Invoke it. Where a criterion cannot be expressed as an
-   observable behavior, that is a defect in the work-unit — resolve it
-   against the work-unit's intent, and record the interpretation in the
-   scenario's `criterion` reference rather than silently guessing.
+   move). Then invoke the `contract` skill and consume the work-unit's
+   inputs to validation: behavior from acceptance criteria, documentation
+   from recipient outcomes, and code quality from corpus pointers and
+   stressed universals. `take` produces validation defined for every
+   dimension; it consults the `contract` skill for the lifecycle,
+   `documentation-contract.md` for the documentation form,
+   `code-quality-contract.md` for the code-quality form, `orient` for the
+   audience taxonomy, and `~/.groundwork/principles/` for the universals.
 
-   The behavior contract is the contract's first dimension, not its whole.
-   As you author it, also declare the change's **documentation** and
-   **code-quality** dimensions per the `contract` skill: which documentation
-   pillars the change owes — user, developer, discovery — and the outcome
-   each must reach, and which principles-corpus universals this change most
-   stresses. A subset is legitimate; silence where the change clearly serves
-   a recipient or stresses a universal is under-declaration. These
-   declarations travel with the work-unit and are audited at `verify`;
-   behavior is the dimension delivered as the `behavior-contract` artifact
+   For **behavior**, choose the form that matches the deliverable. A
+   runtime-behavior work-unit is defined as sentence-named Given/When/Then
+   scenarios — behavior before mechanics, one behavior per scenario, names
+   that read as specification. A documentation-deliverable work-unit is
+   defined as documentation-deliverable gates: structural, coherence, and
+   conformance checks that prove the documented discipline works as a
+   usable surface. Where a criterion cannot be expressed as observable
+   behavior or as a documentation-deliverable gate, resolve the mismatch
+   against the work-unit's intent and record the interpretation in the
+   scenario's or gate's criterion reference rather than silently guessing.
+   Behavior is the dimension delivered as the `behavior-contract` artifact
    below.
+
+   For **documentation**, define the pillars the change touches — user,
+   developer, discovery — as an audience-outcome checklist. Each item names
+   the outcome the recipient must reach, not an artifact that must exist; a
+   delivery with hollow docs must fail it.
+
+   For **code quality**, define the projected corpus universals this change
+   puts under real pressure. Each universal becomes a reviewer-checkable
+   item: the universal as a question of the diff, the failing tell a
+   careless change would leave, and the locus where the change holds.
+
+   Agents must consider every dimension. A dimension with no special input
+   uses the general contract pointer; density is unequal, but consideration
+   is equal. Silence is valid only after the dimension was considered and the
+   general contract is enough. These defined validations travel with the
+   work-unit and are performed at `verify`; `take` consults the single homes
+   above and does not keep a second lifecycle statement.
 
 5. **Deliver the `behavior-contract`.** Invoke the `behavior-contract` MCP
    tool. The object below is MCP tool input, not artifact body. `instance_id`
