@@ -22,9 +22,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`skills/contract/references/code-quality-contract.md`), consulting the
   corpus rather than a separate rulebook. `verify` audits both declared
   contracts (`protocols/verify/references/documentation-review.md`,
-  `code-quality-review.md`) and `take` declares them alongside the behavior
-  contract. No new artifact schema — the dimensions are a declared
-  discipline; schema formalization is deferred.
+  `code-quality-review.md`), and `take` now defines validation across all
+  three dimensions from the work-unit's contract inputs. Runtime behavior
+  still delivers the scenario-shaped `behavior-contract`; documentation
+  deliverables carry structural, coherence, and conformance gate coverage.
+  No new artifact schema — the dimensions are a declared discipline; schema
+  formalization is deferred.
 
 - **Methodology self-install for runtime-driven deployments** (#416).
   `scripts/install` (logic in `tooling/install.py`, stdlib-only) installs

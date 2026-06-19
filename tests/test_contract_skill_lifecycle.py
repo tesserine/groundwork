@@ -19,6 +19,10 @@ INSTRUCTION_FILES = [
 NON_CONTRACT_INSTRUCTION_FILES = [
     path for path in INSTRUCTION_FILES if not path.is_relative_to(ROOT / "skills" / "contract")
 ]
+TAKE_PROTOCOL = ROOT / "protocols" / "take" / "PROTOCOL.md"
+NON_CONTRACT_NON_TAKE_INSTRUCTION_FILES = [
+    path for path in NON_CONTRACT_INSTRUCTION_FILES if path != TAKE_PROTOCOL
+]
 
 
 def read(path: Path) -> str:
@@ -111,9 +115,15 @@ class ContractSkillLifecycleTests(unittest.TestCase):
         duplicated_lifecycle_terms = re.compile(
             r"inputs to validation|validation defined|validation performed|documentation-deliverable gates"
         )
-        for path in NON_CONTRACT_INSTRUCTION_FILES:
+        for path in NON_CONTRACT_NON_TAKE_INSTRUCTION_FILES:
             with self.subTest(path=path.relative_to(ROOT)):
                 self.assertIsNone(duplicated_lifecycle_terms.search(read(path)))
+
+        take_body = read(TAKE_PROTOCOL)
+        self.assertRegex(take_body, duplicated_lifecycle_terms)
+        self.assertNotRegex(take_body, r"\| \*\*Behavior\*\* \|")
+        self.assertNotRegex(take_body, r"\| \*\*Documentation\*\* \|")
+        self.assertNotRegex(take_body, r"\| \*\*Code quality\*\* \|")
 
     def test_contract_surface_uses_public_work_unit_authoring_stage_names(self) -> None:
         deprecated_stage_name = re.compile(r"\bissue-craft\b", flags=re.IGNORECASE)
