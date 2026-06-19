@@ -42,8 +42,8 @@ Signal**).
 
 ## Projecting the corpus
 
-The projection is generated, not hardcoded. When issue-craft supplies
-inputs or `take` defines validation, consult the resolved corpus
+The projection is generated, not hardcoded. When `work-unit-craft`/`decompose`
+supplies inputs or `take` defines validation, consult the resolved corpus
 (`~/.groundwork/principles/`), select the universals this change most
 stresses, and write each as a checklist item in one shape:
 
@@ -77,7 +77,7 @@ demand.
 
 ## Lifecycle
 
-Issue-craft supplies corpus pointers and stressed universals as inputs to
+`work-unit-craft`/`decompose` supplies corpus pointers and stressed universals as inputs to
 validation. `take` turns those inputs into validation defined: the subset of
 universals the change puts under real pressure, named from the resolved
 corpus, not a ritual recital. `verify` performs validation by auditing the

@@ -30,7 +30,7 @@ as the recipient's outcome.
 
 ## Lifecycle
 
-Issue-craft supplies recipient outcomes as inputs to validation. `take`
+`work-unit-craft`/`decompose` supplies recipient outcomes as inputs to validation. `take`
 turns those inputs into validation defined: the pillars the change touches
 and the outcome each recipient must reach. `verify` performs validation by
 auditing whether those recipients can reach the outcomes. A subset is

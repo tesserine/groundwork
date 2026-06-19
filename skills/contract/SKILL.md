@@ -25,12 +25,13 @@ lands. A contract has dimensions; each declares what done means for one
 aspect, in the form that gives that aspect teeth.
 
 This skill is the home of the contract across its dimensions. It declares
-the lifecycle that turns issue-shaped inputs into defined validation,
-performed evidence, and a landing record. Per-stage protocols consult this
-home for their role instead of keeping their own lifecycle statement. The
-contract remains the source of truth through every later stage: plans link
-decisions to it, the build is shaped to it, verification is decided against
-it, and landing records what shipped.
+the lifecycle as the single home for the contract surface: work-unit
+authoring inputs become defined validation, performed evidence, and a
+landing record. Consuming protocol migration proceeds unit by unit across
+epic #443; until a protocol's migration unit lands, its current framing
+remains local to that protocol. The contract remains the source of truth
+through every later stage: plans link decisions to it, the build is shaped
+to it, verification is decided against it, and landing records what shipped.
 
 ## The teeth principle
 
@@ -62,14 +63,14 @@ validation defined -> validation performed, with validation carried through
 | Dimension | Lifecycle |
 |---|---|
 | **Behavior** | Work-unit acceptance criteria are inputs to validation; `take` produces validation defined as executable scenarios or documentation-deliverable gates; validation is carried through `implement`; `verify` produces validation performed as scenario or gate coverage; the result is recorded at `land`. |
-| **Documentation** | Issue-craft recipient outcomes are inputs to validation; `take` produces validation defined as documentation outcomes; validation is carried through `implement`; `verify` produces validation performed as an audience-outcome review; the result is recorded at `land`. |
-| **Code quality** | Issue-craft corpus pointers and stressed universals are inputs to validation; `take` produces validation defined as reviewer-checkable projections; validation is carried through `implement`; `verify` produces validation performed as diff loci or findings; the result is recorded at `land`. |
+| **Documentation** | `work-unit-craft`/`decompose` recipient outcomes are inputs to validation; `take` produces validation defined as documentation outcomes; validation is carried through `implement`; `verify` produces validation performed as an audience-outcome review; the result is recorded at `land`. |
+| **Code quality** | `work-unit-craft`/`decompose` corpus pointers and stressed universals are inputs to validation; `take` produces validation defined as reviewer-checkable projections; validation is carried through `implement`; `verify` produces validation performed as diff loci or findings; the result is recorded at `land`. |
 
 ### Stage Handoffs
 
 The stage boundary is part of the contract lifecycle:
 
-- issue-craft produces inputs to validation: the work-unit criteria,
+- `work-unit-craft`/`decompose` produces inputs to validation: the work-unit criteria,
   recipient outcomes, and corpus pointers each dimension must consider.
 - `take` consumes inputs to validation and produces validation defined: the
   behavior contract plus the documentation and code-quality outcomes the
@@ -84,7 +85,7 @@ The stage boundary is part of the contract lifecycle:
 
 ### Pointer-as-default
 
-Issue-craft must consider every dimension, but consideration is not a
+`work-unit-craft`/`decompose` must consider every dimension, but consideration is not a
 mandatory per-dimension declaration. A dimension carrying no special input
 is still validated: its general contract remains the validation pointer.
 The rule is: density across dimensions is unequal; consideration is equal. A

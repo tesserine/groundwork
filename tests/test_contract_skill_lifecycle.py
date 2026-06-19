@@ -97,7 +97,7 @@ class ContractSkillLifecycleTests(unittest.TestCase):
     def test_stage_handoffs_have_one_receive_produce_home(self) -> None:
         handoffs = normalized(section(read(CONTRACT_SKILL), "Stage Handoffs"))
         expected_handoffs = [
-            "issue-craft produces inputs to validation",
+            "`work-unit-craft`/`decompose` produces inputs to validation",
             "`take` consumes inputs to validation and produces validation defined",
             "`implement` consumes validation defined",
             "`verify` consumes validation defined and produces validation performed",
@@ -114,6 +114,34 @@ class ContractSkillLifecycleTests(unittest.TestCase):
         for path in NON_CONTRACT_INSTRUCTION_FILES:
             with self.subTest(path=path.relative_to(ROOT)):
                 self.assertIsNone(duplicated_lifecycle_terms.search(read(path)))
+
+    def test_contract_surface_uses_public_work_unit_authoring_stage_names(self) -> None:
+        deprecated_stage_name = re.compile(r"\bissue-craft\b", flags=re.IGNORECASE)
+
+        for path in CONTRACT_SURFACE:
+            with self.subTest(path=path.relative_to(ROOT)):
+                self.assertIsNone(deprecated_stage_name.search(read(path)))
+
+        handoffs = normalized(section(read(CONTRACT_SKILL), "Stage Handoffs"))
+        first_handoff = handoffs.split(".")[0]
+        self.assertIn("`work-unit-craft`/`decompose` produces inputs to validation", first_handoff)
+        self.assertNotRegex(first_handoff, r"\bissue-craft\b")
+
+    def test_lifecycle_single_home_claim_is_scoped_to_contract_surface(self) -> None:
+        body = read(CONTRACT_SKILL)
+        intro = normalized(body.split("## The teeth principle", maxsplit=1)[0])
+
+        self.assertIn("declares the lifecycle as the single home for the contract surface", intro)
+        self.assertIn("migration proceeds unit by unit across epic #443", intro)
+        present_tense_protocol_claim = re.compile(
+            r"(?:per-stage|consuming) protocols (?:now |already )?consult this home|"
+            r"protocols consult this home|instead of keeping their own lifecycle statement",
+            flags=re.IGNORECASE,
+        )
+        self.assertNotRegex(
+            intro,
+            present_tense_protocol_claim,
+        )
 
     def test_contract_surface_replaces_entry_only_framing_everywhere(self) -> None:
         forbidden = re.compile(
