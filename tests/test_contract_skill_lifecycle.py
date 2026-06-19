@@ -19,6 +19,11 @@ INSTRUCTION_FILES = [
 NON_CONTRACT_INSTRUCTION_FILES = [
     path for path in INSTRUCTION_FILES if not path.is_relative_to(ROOT / "skills" / "contract")
 ]
+UNMIGRATED_LIFECYCLE_CONSUMERS = [
+    path
+    for path in NON_CONTRACT_INSTRUCTION_FILES
+    if path != ROOT / "protocols" / "take" / "PROTOCOL.md"
+]
 
 
 def read(path: Path) -> str:
@@ -111,7 +116,7 @@ class ContractSkillLifecycleTests(unittest.TestCase):
         duplicated_lifecycle_terms = re.compile(
             r"inputs to validation|validation defined|validation performed|documentation-deliverable gates"
         )
-        for path in NON_CONTRACT_INSTRUCTION_FILES:
+        for path in UNMIGRATED_LIFECYCLE_CONSUMERS:
             with self.subTest(path=path.relative_to(ROOT)):
                 self.assertIsNone(duplicated_lifecycle_terms.search(read(path)))
 

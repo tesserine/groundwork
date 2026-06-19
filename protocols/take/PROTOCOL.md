@@ -46,37 +46,59 @@ proves it, or records it.
    work whose `dependencies` are still open; a blocked work-unit is a
    substrate signal, not an invitation.
 
-4. **Author the behavior contract.** First reckon it: authoring the
-   contract is a generative act — open the resolved principles corpus at
-   `~/.groundwork/principles/`, select the principles that govern what
-   "done" means here, read them, and reason the contract from them rather
-   than the work-unit's surface wording alone (the reckon skill is the
-   move). Then refine each acceptance criterion into
-   one or more sentence-named Given/When/Then scenarios — the executable
-   definition of done. The `contract` skill is the authoring discipline:
-   behavior before mechanics, one behavior per scenario, names that read as
-   specification. Invoke it. Where a criterion cannot be expressed as an
-   observable behavior, that is a defect in the work-unit — resolve it
-   against the work-unit's intent, and record the interpretation in the
-   scenario's `criterion` reference rather than silently guessing.
+4. **Author validation defined across the contract.** First reckon it:
+   authoring the contract is a generative act — open the resolved principles
+   corpus at `~/.groundwork/principles/`, select the principles that govern
+   what "done" means here, read them, and reason the contract from them
+   rather than the work-unit's surface wording alone (the reckon skill is
+   the move). Then consume the work-unit's per-dimension inputs to
+   validation: behavior's acceptance criteria, documentation's recipient
+   outcomes, and code quality's principles-corpus pointer plus stressed
+   universals.
 
-   The behavior contract is the contract's first dimension, not its whole.
-   As you author it, also declare the change's **documentation** and
-   **code-quality** dimensions per the `contract` skill: which documentation
-   pillars the change owes — user, developer, discovery — and the outcome
-   each must reach, and which principles-corpus universals this change most
-   stresses. A subset is legitimate; silence where the change clearly serves
-   a recipient or stresses a universal is under-declaration. These
-   declarations travel with the work-unit and are audited at `verify`;
-   behavior is the dimension delivered as the `behavior-contract` artifact
-   below.
+   Use the `contract` skill as the single home for the validation defined
+   discipline, consulting `skills/contract/references/documentation-contract.md`
+   for the documentation form and
+   `skills/contract/references/code-quality-contract.md` for the
+   code-quality form. Use `orient` for the documentation audience taxonomy,
+   and `~/.groundwork/principles/` for the universals themselves. Do not
+   restate the lifecycle here; this protocol applies its `take` role.
 
-5. **Deliver the `behavior-contract`.** Invoke the `behavior-contract` MCP
-   tool. The object below is MCP tool input, not artifact body. `instance_id`
-   is a tool parameter that names the artifact instance; it is extracted
-   before validating artifact content, becomes the workspace filename, and
-   must not appear in the artifact body. Runa injects `work_unit` from
-   session context; the agent does not supply `work_unit`. Do not write the
+   Define behavior validation in the form the deliverable requires. For a
+   runtime-behavior work-unit, refine each acceptance criterion into one or
+   more sentence-named executable scenarios in Given/When/Then form: one
+   behavior per scenario, names that read as specification, and observable
+   Then clauses a stub cannot satisfy. For a documentation-deliverable
+   work-unit, define documentation-deliverable gates instead: structural,
+   coherence, and conformance checks that prove the methodology document
+   works as a usable surface. The gates are realized as committed
+   structural, coherence, and conformance tests and later carried as gate
+   coverage, not encoded as fabricated scenarios.
+
+   Define documentation validation as documentation outcomes in an
+   audience-outcome checklist: the pillars the change touches — user,
+   developer, discovery — and the outcome each recipient must reach, in the
+   teeth-bearing form where hollow docs fail. Define code-quality validation
+   as reviewer-checkable projections of the stressed principles-corpus
+   universals, written as reviewer-checkable projected universals: each item
+   asks the universal as a question of the change, names the failing tell,
+   and names the locus where it holds.
+
+   Apply pointer-as-default after you consider every dimension; this is the
+   defined-validation pass for all three dimensions. A
+   dimension with no special input uses its general contract as the
+   validation pointer; it does not force a dense block. Density is unequal,
+   consideration is equal. Silence is valid only after you can say the
+   general contract is enough for that dimension.
+
+5. **Deliver the behavior spine.** For a runtime-behavior work-unit, invoke
+   the `behavior-contract` MCP tool to deliver the scenario artifact. The
+   runtime-behavior work-unit path is the only path that invokes this tool.
+   The object below is MCP tool input, not artifact body. `instance_id` is
+   a tool parameter that names the artifact instance; it is extracted before
+   validating artifact content, becomes the workspace filename, and must not
+   appear in the artifact body. Runa injects `work_unit` from session
+   context; the agent does not supply `work_unit`. Do not write the
    workspace JSON file directly:
 
    ```
@@ -101,6 +123,14 @@ proves it, or records it.
    or the work-unit issue if there is no workspace store) so the spine
    exists and binds the test-first cycle either way.
 
+   For a documentation-deliverable work-unit, the agent does not invoke the
+   scenario-only `behavior-contract` tool. Its behavior spine is delivered
+   as committed structural, coherence, and conformance tests that realize
+   the documentation-deliverable gates. Runa-backed runtime sequencing of
+   gate-form behavior is deferred to #454; name that boundary honestly
+   rather than implying the documentation-only runtime path advances end to
+   end today.
+
 6. **Carry the contract through to a submitted change.** Take does not end
    at contract delivery. When the runtime sequences the pipeline
    autonomously, it advances the work station to station; until then, take
@@ -108,24 +138,27 @@ proves it, or records it.
 
    The carry begins at `plan`, and the plan is where the work converges.
    The plan that serves this work is the `plan` protocol's contract-centered
-   design: the goal stated from the contract's scenarios, each scenario
-   mapped to the steps that make it true, the test strategy that turns each
-   into a failing test before its code. Where the harness plans before it
-   executes, *that design is the plan you surface for approval* — not a
-   narration of pipeline mechanics, which station comes next or which
-   command advances it. Lead with the contract: its scenario coverage (the
-   design), the absence of any gap through which a delivery the contract
-   accepts as done could still fail (the robustness), and how each scenario
-   is driven red-then-green (the validation). Surface that, and accepting
-   the plan is accepting the contracted work — full convergence at the
-   planning surface.
+   design: the goal stated from the contract's behavior form, each scenario
+   or gate mapped to the steps that make it true, and the test strategy that
+   turns each into failing evidence before the change satisfies it. Where
+   the harness plans before it executes, *that design is the plan you
+   surface for approval* — not a narration of pipeline mechanics, which
+   station comes next or which command advances it. Lead with the contract:
+   scenario coverage for runtime behavior, gate coverage for a
+   documentation-deliverable, the absence of any gap through which a
+   delivery the contract accepts as done could still fail, and how each
+   scenario or structural, coherence, and conformance gate is driven
+   red-then-green. Do not encode gates as scenarios. Surface that, and
+   accepting the plan is accepting the contracted work — full convergence at
+   the planning surface.
 
    On acceptance, carry it forward yourself. You are already the agent:
    deliver the `implementation-plan` artifact through its output tool to
    advance `plan`, then drive the remaining stations directly — `implement`
-   (build it test-first; every scenario a failing test before its code,
-   `contract-after-code` forbidden), `verify` (every scenario green, the
-   change sound), `submit` (deliver the change for review) — opening
+   (build it test-first; every scenario or gate has failing evidence before
+   its code or documentation change, `contract-after-code` forbidden),
+   `verify` (every scenario or gate green, the change sound), `submit`
+   (deliver the change for review) — opening
    `runa-mcp` in session mode for the work-unit and, at each station,
    reading its context, doing the work, producing its artifact, advancing.
    Do not hand the carry-through to `runa go --work-unit`: that spawns a
@@ -184,11 +217,22 @@ begins — the dose is proportional.
   instead of driving the session yourself. The work stalls at a spawned
   agent that never advances — a quieter `abandon-at-contract`. Until that
   path is wired, you are the driver.
+- `dimension-declaration-only`: naming documentation or code-quality
+  dimensions without defining the validation each must satisfy. The
+  contract has labels but no teeth.
+- `gate-as-scenario`: fabricating Given/When/Then scenarios for a
+  documentation-deliverable unit whose behavior is actually proved by
+  structural, coherence, and conformance gates.
+- `lifecycle-modeling`: re-encoding the contract lifecycle or dimension
+  authority in `take` instead of consulting the `contract` skill, `orient`,
+  and the principles corpus as their single homes.
 
 ## Cross-References
 
-- `contract` (skill): the BDD discipline — authoring the contract here,
-  carrying it through every later stage.
+- `contract` (skill): the multidimensional contract discipline — validation
+  defined here, carrying it through every later stage. Its documentation and
+  code-quality references own the audience-outcome checklist and projected
+  universals forms.
 - `reckon` (skill): authoring the behavior contract is a generative act, so
   reckon fires before the contract is set — grounding what "done" means in
   the navigational principles, not pattern-matching an adjacent work-unit.
