@@ -3,16 +3,16 @@ name: contract
 description: >-
   The contract discipline: a contract is the executable definition of done
   across every dimension a change must satisfy — behavior, documentation,
-  and code quality — each declared at entry, verified before it binds, and
-  carried unbroken through implementation, verification, and closure. Use
-  when authoring or reviewing a contract, refining acceptance criteria into
-  Given/When/Then scenarios, declaring a change's documentation or
-  code-quality obligations, and whenever code, tests, docs, or completion
-  claims must stay traceable to a declared contract instead of drifting
-  toward implementation convenience.
+  and code quality — considered as inputs, defined as validation, performed
+  as evidence, and carried unbroken through implementation, verification,
+  and closure. Use when authoring or reviewing a contract, refining
+  acceptance criteria into Given/When/Then scenarios, declaring a change's
+  documentation or code-quality obligations, and whenever code, tests, docs,
+  or completion claims must stay traceable to a defined contract instead of
+  drifting toward implementation convenience.
 metadata:
-  version: "2.2.0"
-  updated: "2026-06-18"
+  version: "2.3.0"
+  updated: "2026-06-19"
 ---
 
 # Contract
@@ -24,11 +24,13 @@ one aspect of a change but to every aspect that must hold when the work
 lands. A contract has dimensions; each declares what done means for one
 aspect, in the form that gives that aspect teeth.
 
-This skill is the home of the contract across its dimensions. It authors
-the contract where work begins (`take`) and carries it as the source of
-truth through every later stage: plans link decisions to it, the build is
-shaped to it, verification is decided against it, and landing records what
-shipped.
+This skill is the home of the contract across its dimensions. It declares
+the lifecycle that turns issue-shaped inputs into defined validation,
+performed evidence, and a landing record. Per-stage protocols consult this
+home for their role instead of keeping their own lifecycle statement. The
+contract remains the source of truth through every later stage: plans link
+decisions to it, the build is shaped to it, verification is decided against
+it, and landing records what shipped.
 
 ## The teeth principle
 
@@ -53,9 +55,43 @@ the failing-hollow-delivery test, not the apparatus that runs it.
 A contract declares the dimensions the work demands — behavior is always
 present; documentation and code quality are declared as the change
 warrants, and a subset is legitimate the way a behavior contract need not
-exercise every code path. Each dimension is **declared** at `take`,
-**carried** through `implement`, **verified** at `verify`, and **recorded**
-at `land`.
+exercise every code path. The lifecycle is inputs to validation ->
+validation defined -> validation performed, with validation carried through
+`implement` and recorded at `land`.
+
+| Dimension | Lifecycle |
+|---|---|
+| **Behavior** | Work-unit acceptance criteria are inputs to validation; `take` produces validation defined as executable scenarios or documentation-deliverable gates; validation is carried through `implement`; `verify` produces validation performed as scenario or gate coverage; the result is recorded at `land`. |
+| **Documentation** | Issue-craft recipient outcomes are inputs to validation; `take` produces validation defined as documentation outcomes; validation is carried through `implement`; `verify` produces validation performed as an audience-outcome review; the result is recorded at `land`. |
+| **Code quality** | Issue-craft corpus pointers and stressed universals are inputs to validation; `take` produces validation defined as reviewer-checkable projections; validation is carried through `implement`; `verify` produces validation performed as diff loci or findings; the result is recorded at `land`. |
+
+### Stage Handoffs
+
+The stage boundary is part of the contract lifecycle:
+
+- issue-craft produces inputs to validation: the work-unit criteria,
+  recipient outcomes, and corpus pointers each dimension must consider.
+- `take` consumes inputs to validation and produces validation defined: the
+  behavior contract plus the documentation and code-quality outcomes the
+  change puts under verification.
+- `implement` consumes validation defined and keeps the change traced to it:
+  tests, docs, and code-quality decisions name the scenario or dimension
+  they advance.
+- `verify` consumes validation defined and produces validation performed:
+  scenario results, documentation review, and code-quality findings.
+- `land` consumes validation performed and records what shipped, including
+  explicit gaps if any remain.
+
+### Pointer-as-default
+
+Issue-craft must consider every dimension, but consideration is not a
+mandatory per-dimension declaration. A dimension carrying no special input
+is still validated: its general contract remains the validation pointer.
+The rule is: density across dimensions is unequal; consideration is equal. A
+refactor may need detailed code-quality inputs and only the general
+documentation contract; a user-facing capability may need dense user
+documentation inputs and ordinary code-quality projection. Silence is valid
+only after the dimension was considered and the general contract is enough.
 
 - **[Behavioral dimension](#the-behavioral-dimension)** — what the system
   does. The most developed dimension and the worked exemplar below; its
@@ -68,7 +104,7 @@ at `land`.
   universals projected onto the diff.
 
 New dimensions join here as they earn their place; satisfying the teeth
-principle and the declare–carry–verify–record threading is what makes a
+principle and the inputs-defined-performed lifecycle is what makes a
 dimension one.
 
 ## The behavioral dimension
@@ -180,6 +216,25 @@ runs, Then the transport received the create request with the mapped fields and
 the ticket named by the returned handle reads back. The fabricating stub fails
 the first Then; the no-request stub fails the second.
 
+### Documentation-deliverable behavior gates
+
+Some work-units deliver methodology documentation rather than runtime
+behavior. Their behavior dimension still needs teeth: validation defined is
+the set of structural, conformance, and coherence gates that prove the
+documented discipline works as a surface a recipient can use.
+
+Structural gates include reference-link resolution and script-path
+resolution. Conformance gates include template-schema conformance where a
+document describes a shaped artifact or protocol output. Coherence gates
+include internal coherence: the document's lifecycle, names, and handoffs
+agree within the skill and with the protocol references it points to.
+
+These gates stand in for runtime scenarios only when the deliverable is
+documentation. A hollow documentation change fails at least one gate: broken
+links fail structural validation, a template that no longer matches its
+schema fails conformance, and a lifecycle that says different things in two
+sections fails internal coherence.
+
 ### Carrying the Contract
 
 - **Implementation maps to behavior.** Every implementation increment names
@@ -228,9 +283,9 @@ hollow-item test, is
 
 The dimension keeps a single home at each layer: the audience taxonomy and
 writing stance live in the `orient` skill's documentation discipline; this
-contract declares the outcomes; the `verify` protocol's documentation
-review audits the change against the declared contract and records the
-result in `completion-evidence`. The contract declares, orient styles,
+contract defines the outcomes; the `verify` protocol's documentation
+review audits the change against the defined contract and records the
+result in `completion-evidence`. The contract defines, orient styles,
 verify checks — no layer restates another.
 
 ## The code-quality dimension
@@ -318,14 +373,16 @@ owns. *Recognition:* two homes for one truth, kept in agreement by hand.
 
 ## Cross-References
 
-- `take` (protocol): authors the contract across its declared dimensions at
-  entry, using this discipline.
+- `work-unit-craft` and `decompose`: produce the inputs each dimension
+  considers before validation is defined.
+- `take` (protocol): consumes dimension inputs and defines validation using
+  this discipline.
 - `plan` (protocol): maps scenarios to a decision-complete design.
 - `implement` (protocol): executes RED-GREEN-REFACTOR per named scenario.
-- `verify` (protocol): decides completion against each declared dimension —
+- `verify` (protocol): performs validation against each defined dimension —
   scenario and criterion coverage for behavior, and the documentation and
   code-quality contracts via its review references.
-- `land` (protocol): records shipped coverage and explicit gaps per
+- `land` (protocol): records performed coverage and explicit gaps per
   dimension.
 - `orient` (skill): owns the documentation audience taxonomy and writing
   stance the documentation dimension consults.
