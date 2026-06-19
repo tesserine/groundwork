@@ -48,6 +48,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Contract lifecycle made explicit across dimensions** (#444). The
+  `contract` skill now states the inputs -> validation-defined ->
+  validation-performed lifecycle for behavior, documentation, and code
+  quality, including stage handoffs from issue-craft through `land`,
+  pointer-as-default for dimensions with no special input, and
+  documentation-deliverable behavior gates for structural, coherence, and
+  conformance validation. The documentation and code-quality reference
+  modules now use the same lifecycle vocabulary. contract 2.2.0→2.3.0.
 - **reckon invoked directly in the generative protocols** (#438). orient's
   standing-mode stance (4.1.0) was necessary but not sufficient — a stochastic
   agent acts on invoked procedure, not on disposition prose, and was observed
