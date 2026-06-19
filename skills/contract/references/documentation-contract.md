@@ -23,24 +23,27 @@ outcome** — what the reader can now do — never as artifact existence.
   diff," "the next maintainer finds the decision at the point they meet it."
   A hollow doc fails these.
 
-The check, run when the contract is authored and again when it is verified:
-*could a delivery that wrote nothing useful for this recipient still pass
-this item?* If yes, rewrite it as the recipient's outcome.
+The check, run when documentation inputs are shaped, when validation is
+defined, and again when it is performed: *could a delivery that wrote
+nothing useful for this recipient still pass this item?* If yes, rewrite it
+as the recipient's outcome.
 
-## Declaring the contract
+## Lifecycle
 
-At `take`, the contract declares the pillars the change touches and the
-outcome each must reach. A subset is legitimate — a refactor with no
-user-visible effect carries no user pillar; a first public release carries
-all three. What is illegitimate is silence where the change clearly serves a
-recipient: a new user-facing capability with no user pillar is an
-under-declared contract, not a small one.
+`work-unit-craft`/`decompose` supplies recipient outcomes as inputs to validation. `take`
+turns those inputs into validation defined: the pillars the change touches
+and the outcome each recipient must reach. `verify` performs validation by
+auditing whether those recipients can reach the outcomes. A subset is
+legitimate — a refactor with no user-visible effect carries no user pillar;
+a first public release carries all three. What is illegitimate is silence
+where the change clearly serves a recipient: a new user-facing capability
+with no user pillar is an under-declared contract, not a small one.
 
 The audience taxonomy, artifact types, and writing stance are **not**
 restated here — they live in the `orient` skill's documentation discipline
 (`skills/orient/references/documentation.md`), which this contract consults.
-This module declares outcomes; orient says who the readers are and how to
-write for them.
+This module defines the outcome form; orient says who the readers are and
+how to write for them.
 
 ## The three sub-modules
 
@@ -109,9 +112,9 @@ Checklist:
 
 ## Verifying the contract
 
-At `verify`, the documentation review audits the change against the declared
-contract: for each declared pillar, it confirms the recipient can now reach
-the declared outcome, and it keeps existing docs honest against drift. The
+At `verify`, the documentation review audits the change against the defined
+contract: for each selected pillar, it confirms the recipient can now reach
+the defined outcome, and it keeps existing docs honest against drift. The
 method is `protocols/verify/references/documentation-review.md`; the outcome
 is recorded in the `documentation` section of `completion-evidence`.
 Verification is evidence, not assertion: the audit finds, per item, the
@@ -123,10 +126,10 @@ Three layers, one home each, none restating another:
 
 - **Taxonomy and stance** — `orient`'s documentation discipline: who the
   readers are, what artifacts serve them, how to write at the right depth.
-- **Declaration** — this module: the per-recipient outcomes a given change
-  must reach.
+- **Inputs and definition** — this module: the per-recipient outcomes a
+  given change must reach.
 - **Audit** — `verify`'s documentation review: the change checked against
-  the declared outcomes, recorded in `completion-evidence`.
+  the defined outcomes, recorded in `completion-evidence`.
 
 ## Cross-references
 

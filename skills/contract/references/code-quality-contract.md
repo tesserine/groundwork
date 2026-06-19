@@ -42,10 +42,10 @@ Signal**).
 
 ## Projecting the corpus
 
-The projection is generated, not hardcoded. When the contract is authored,
-consult the resolved corpus (`~/.groundwork/principles/`), select the
-universals this change most stresses, and write each as a checklist item in
-one shape:
+The projection is generated, not hardcoded. When `work-unit-craft`/`decompose`
+supplies inputs or `take` defines validation, consult the resolved corpus
+(`~/.groundwork/principles/`), select the universals this change most
+stresses, and write each as a checklist item in one shape:
 
 - the universal as a **question** asked of the diff,
 - the **failing tell** a careless change leaves, and
@@ -75,19 +75,21 @@ demand.
   prestige, a fallback masking failure, silent acceptance of an unsupported
   condition. *Holds when:* wrong assumptions fail loudly where they arise.
 
-## Declaring the contract
+## Lifecycle
 
-At `take`, the contract declares the universals this change most stresses —
-the subset it puts under real pressure, named from the resolved corpus, not
-a ritual recital. A subset is legitimate; under-declaration is not. A change
-that touches a shared asset without declaring the universal that governs
-single homes, adds an abstraction without the one that governs earning a
-place, or moves a public surface without the one that governs honest
-surfaces, has declared around its own risk.
+`work-unit-craft`/`decompose` supplies corpus pointers and stressed universals as inputs to
+validation. `take` turns those inputs into validation defined: the subset of
+universals the change puts under real pressure, named from the resolved
+corpus, not a ritual recital. `verify` performs validation by auditing the
+diff against each projected item. A subset is legitimate; under-declaration
+is not. A change that touches a shared asset without naming the universal
+that governs single homes, adds an abstraction without the one that governs
+earning a place, or moves a public surface without the one that governs
+honest surfaces, has left its risk outside validation.
 
 ## Verifying the contract
 
-At `verify`, the reviewer audits the diff against each declared item and
+At `verify`, the reviewer audits the diff against each defined item and
 records, per item, the locus where it holds or the finding where it fails.
 The method is `protocols/verify/references/code-quality-review.md`. The
 review is the gate; a self-report of cleanliness is not the evidence.
