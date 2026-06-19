@@ -48,6 +48,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **work-unit-craft invokes reckon in its primary workflow** (#447). The
+  `work-unit-craft` skill now points authors to `reckon` as the cognitive
+  process for establishing a record's verified constraints before shaping the
+  record, while keeping reckon as the single home of that method.
+  work-unit-craft 1.0.0→1.1.0.
 - **Contract lifecycle made explicit across dimensions** (#444). The
   `contract` skill now states the inputs to validation -> validation defined
   -> validation performed lifecycle for behavior, documentation, and code
