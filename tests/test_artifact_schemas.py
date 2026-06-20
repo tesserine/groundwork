@@ -106,6 +106,67 @@ class ArtifactSchemaTests(unittest.TestCase):
         self.assertEqual("uncovered", artifact["criterion_coverage"][0]["status"])
         self.assertNotIn("gates", artifact["criterion_coverage"][0])
 
+    def test_scenario_form_completion_evidence_accepts_uncovered_criteria_without_scenarios(self) -> None:
+        artifact = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))
+        uncovered_entries = [
+            entry for entry in artifact["criterion_coverage"] if entry["status"] == "uncovered"
+        ]
+
+        self.assertGreaterEqual(len(uncovered_entries), 1)
+        self.assertNotIn("scenarios", uncovered_entries[0])
+
+    def test_completion_evidence_requires_status_evidence_for_covered_or_partial_criteria(self) -> None:
+        fixtures = [
+            "invalid-completion-evidence-gate-covered-without-gates.json",
+            "invalid-completion-evidence-gate-partial-without-gates.json",
+            "invalid-completion-evidence-scenario-covered-without-scenarios.json",
+            "invalid-completion-evidence-scenario-partial-without-scenarios.json",
+        ]
+
+        for fixture_name in fixtures:
+            with self.subTest(fixture=fixture_name):
+                with self.assertRaises(ArtifactSchemaError):
+                    load_artifact("completion-evidence", self.fixture(fixture_name))
+
+    def test_completion_evidence_rejects_status_evidence_contradictions(self) -> None:
+        fixtures = [
+            "invalid-completion-evidence-gate-covered-with-failed-gate.json",
+            "invalid-completion-evidence-gate-covered-with-failures.json",
+            "invalid-completion-evidence-scenario-covered-with-failures.json",
+            "invalid-completion-evidence-gate-partial-without-failure-signal.json",
+            "invalid-completion-evidence-scenario-partial-without-failures.json",
+            "invalid-completion-evidence-gate-uncovered-with-gates.json",
+            "invalid-completion-evidence-gate-uncovered-with-failures.json",
+            "invalid-completion-evidence-scenario-uncovered-with-scenarios.json",
+            "invalid-completion-evidence-scenario-uncovered-with-failures.json",
+        ]
+
+        for fixture_name in fixtures:
+            with self.subTest(fixture=fixture_name):
+                with self.assertRaises(ArtifactSchemaError):
+                    load_artifact("completion-evidence", self.fixture(fixture_name))
+
+    def test_completion_evidence_accepts_coherent_status_evidence(self) -> None:
+        fixtures = [
+            "valid-completion-evidence.json",
+            "valid-completion-evidence-gate.json",
+            "valid-completion-evidence-gate-uncovered.json",
+        ]
+
+        for fixture_name in fixtures:
+            with self.subTest(fixture=fixture_name):
+                artifact = load_artifact("completion-evidence", self.fixture(fixture_name))
+                partial_entries = [
+                    entry for entry in artifact["criterion_coverage"] if entry["status"] == "partial"
+                ]
+                for entry in partial_entries:
+                    if artifact["behavior_form"] == "scenario":
+                        self.assertGreaterEqual(len(entry.get("failures", [])), 1)
+                    else:
+                        has_failed_gate = any(gate["result"] == "fail" for gate in entry.get("gates", []))
+                        has_listed_failure = len(entry.get("failures", [])) >= 1
+                        self.assertTrue(has_failed_gate or has_listed_failure)
+
     def test_runtime_behavior_artifact_schemas_remain_mcp_advertisable(self) -> None:
         for schema_name in [
             "behavior-contract.schema.json",

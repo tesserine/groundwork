@@ -13,6 +13,31 @@
           "result": "pass"
         }
       ]
+    },
+    {
+      "criterion": "Gate-form partial coverage records a failed gate result as the failure signal.",
+      "status": "partial",
+      "gates": [
+        {
+          "name": "gate-form partial with failed gate",
+          "criterion": "Gate-form partial coverage records a failed gate result as the failure signal.",
+          "category": "coherence",
+          "result": "fail"
+        }
+      ]
+    },
+    {
+      "criterion": "Gate-form partial coverage records a listed failure as the failure signal.",
+      "status": "partial",
+      "gates": [
+        {
+          "name": "gate-form partial with listed failure",
+          "criterion": "Gate-form partial coverage records a listed failure as the failure signal.",
+          "category": "coherence",
+          "result": "pass"
+        }
+      ],
+      "failures": ["gate-form partial with listed failure"]
     }
   ],
   "documentation": {

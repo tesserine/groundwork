@@ -53,9 +53,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `completion-evidence` now require `behavior_form` and accept either
   scenario form or documentation-deliverable gate form. Gate form carries
   structural/coherence/conformance gates through the existing MCP artifact
-  tools without fabricating scenarios, while close artifacts keep their
-  existing schemas and carry gate-form context through summaries and close-out
-  evidence. take 3.3.0->3.4.0, plan 2.3.0->2.4.0,
+  tools without fabricating scenarios. `completion-evidence` enforces the
+  same status-to-evidence conditional for both forms: `covered` and `partial`
+  criteria require at least one scenario or gate result, while `uncovered`
+  criteria may omit evidence. Close artifacts keep their existing schemas and
+  carry gate-form context through summaries and close-out evidence.
+  take 3.3.0->3.4.0, plan 2.3.0->2.4.0,
   implement 2.2.0->2.3.0, verify 2.0.0->2.1.0,
   submit 3.1.0->3.2.0, review 2.1.0->2.2.0, land 3.1.0->3.2.0.
 - **plan and implement work against the multidimensional contract** (#458).

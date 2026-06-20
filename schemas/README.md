@@ -53,8 +53,13 @@ The behavior artifact spine uses one artifact type per station and a required
 behavior through `scenarios`, scenario-keyed mappings, scenario-keyed evidence,
 and scenario coverage. Gate form carries documentation-deliverable behavior
 through structural/coherence/conformance `gates`, gate mappings, gate evidence,
-and gate coverage. Root schemas remain ordinary top-level object schemas with
-no root `oneOf`, `anyOf`, `allOf`, or `$ref`, so runtime tool advertisement
+and gate coverage. In `completion-evidence`, both forms enforce the same
+status-to-evidence invariant: `covered` criteria carry passing evidence and no
+failures, `partial` criteria carry evidence plus at least one failure signal,
+and `uncovered` criteria carry no evidence or failures. Gate coverage treats a
+failed gate result and a non-empty `failures` list as the two valid partial
+failure channels. Root schemas remain ordinary top-level object schemas with no
+root `oneOf`, `anyOf`, `allOf`, or `$ref`, so runtime tool advertisement
 continues to expose them as MCP artifact tools.
 
 Downstream consumers that build against a Groundwork schema contract pin a

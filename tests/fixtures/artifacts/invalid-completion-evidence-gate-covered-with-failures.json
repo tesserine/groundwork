@@ -1,0 +1,24 @@
+{
+  "work_unit": "work-unit-463-completion-evidence-conditionals",
+  "behavior_form": "gate",
+  "criterion_coverage": [
+    {
+      "criterion": "Covered gate-form criteria reject listed failures.",
+      "status": "covered",
+      "gates": [
+        {
+          "name": "gate passed",
+          "criterion": "Covered gate-form criteria reject listed failures.",
+          "category": "coherence",
+          "result": "pass"
+        }
+      ],
+      "failures": ["gate failed"]
+    }
+  ],
+  "documentation": {
+    "updated": [],
+    "verified_accurate": ["schemas/completion-evidence.schema.json"],
+    "follow_up_work_units": []
+  }
+}

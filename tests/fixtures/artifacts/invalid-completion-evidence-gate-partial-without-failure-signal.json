@@ -1,0 +1,24 @@
+{
+  "work_unit": "work-unit-463-completion-evidence-conditionals",
+  "behavior_form": "gate",
+  "criterion_coverage": [
+    {
+      "criterion": "Partially covered gate-form criteria require a failure signal.",
+      "status": "partial",
+      "gates": [
+        {
+          "name": "gate passed",
+          "criterion": "Partially covered gate-form criteria require a failure signal.",
+          "category": "coherence",
+          "result": "pass"
+        }
+      ],
+      "failures": []
+    }
+  ],
+  "documentation": {
+    "updated": [],
+    "verified_accurate": ["schemas/completion-evidence.schema.json"],
+    "follow_up_work_units": []
+  }
+}

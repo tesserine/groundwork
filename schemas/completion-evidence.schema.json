@@ -58,6 +58,81 @@
       "description": "Coverage status for a single acceptance criterion.",
       "required": ["criterion", "status"],
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": ["covered", "partial"]
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "required": ["scenarios"],
+            "properties": {
+              "scenarios": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "covered"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "failures": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "partial"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "required": ["failures"],
+            "properties": {
+              "failures": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "uncovered"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "scenarios": {
+                "maxItems": 0
+              },
+              "failures": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ],
       "properties": {
         "criterion": {
           "type": "string",
@@ -90,6 +165,109 @@
       "description": "Gate coverage status for a single acceptance criterion.",
       "required": ["criterion", "status"],
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": ["covered", "partial"]
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "required": ["gates"],
+            "properties": {
+              "gates": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "covered"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "gates": {
+                "items": {
+                  "properties": {
+                    "result": {
+                      "const": "pass"
+                    }
+                  },
+                  "required": ["result"]
+                }
+              },
+              "failures": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "partial"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "properties": {
+                  "gates": {
+                    "contains": {
+                      "properties": {
+                        "result": {
+                          "const": "fail"
+                        }
+                      },
+                      "required": ["result"]
+                    }
+                  }
+                }
+              },
+              {
+                "required": ["failures"],
+                "properties": {
+                  "failures": {
+                    "minItems": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "uncovered"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "gates": {
+                "maxItems": 0
+              },
+              "failures": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ],
       "properties": {
         "criterion": {
           "type": "string",
@@ -104,7 +282,6 @@
         "gates": {
           "type": "array",
           "description": "Gates that cover this criterion.",
-          "minItems": 1,
           "items": {
             "$ref": "#/$defs/gate-result"
           }
