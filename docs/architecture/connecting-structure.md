@@ -61,7 +61,7 @@ documentation impact.
 | decompose | work-unit | Work-units decomposed from requirements |
 | take      | behavior-contract | Contract-first entry: the executable definition of done that threads every downstream artifact |
 | plan      | implementation-plan | Design decisions informing execution |
-| implement | test-evidence | Proof of correct implementation — passing tests mapped to scenarios |
+| implement | test-evidence | Proof of correct implementation — results mapped to scenarios or gates |
 | verify    | completion-evidence | Criterion coverage plus documentation impact |
 | submit    | change-proposal | Forge-neutral proposal ready for review |
 | review    | change-approved or change-needs-revision | Typed review disposition |
@@ -654,30 +654,31 @@ This means the agent's tool interface can be as simple as
 ### Structured queries replace context parsing
 
 Instead of the agent parsing injected context, the MCP server exposes
-query tools: what are my acceptance criteria, what scenarios exist, what
-tests passed. Structured queries against the artifact store, returned
+query tools: what are my acceptance criteria, what behavior entries exist,
+what checks passed. Structured queries against the artifact store, returned
 in natural language or structured data.
 
 ### Cross-reference validation at write time
 
-When the agent references an acceptance criterion in a scenario, the
-MCP server verifies it exists in the work-unit artifact. Not just schema
+When the agent references an acceptance criterion in a scenario or gate,
+the MCP server verifies it exists in the work-unit artifact. Not just schema
 validation — semantic validation. The traceability thread is enforced
 mechanically.
 
 ### Progressive authoring
 
 Instead of one atomic `deliver()` call, the MCP server can support
-incremental building: add a scenario, get immediate feedback, add
-another, finalize. The agent discovers errors as it works, not after
+incremental building: add a scenario or gate, get immediate feedback,
+add another, finalize. The agent discovers errors as it works, not after
 producing the full artifact.
 
 ### Pre-population and cognitive scaffolding
 
 The MCP server can present pre-assembled data to reduce the agent's
 mechanical work. Verify's agent receives a pre-filled coverage matrix
-(criteria × scenarios × test results) and does judgment work — confirm,
-amend, flag gaps — not data assembly.
+in the deliverable's behavior form — criteria × scenarios × test results,
+or criteria × gates × check results — and does judgment work: confirm,
+amend, flag gaps, not data assembly.
 
 ### Observability from the start
 
@@ -692,7 +693,7 @@ chokepoint between agent and system. This enables:
   criterion. Measured, not estimated.
 - **Anomaly detection** — the server sees patterns across many work
   units. An implement protocol completing in two minutes when the
-  median is forty is a signal. A behavior-contract with one scenario
+  median is forty is a signal. A behavior-contract with one behavior entry
   for eight acceptance criteria is a signal.
 - **Replay and audit** — the full sequence of tool calls for a work
   unit is a structured trace. Debugging agent behavior means reading
@@ -719,8 +720,9 @@ The topology has two specification artifacts at different scales:
   This is the project-level specification.
 
 - **behavior-contract** (produced by take, the scoped-pipeline entry) —
-  declares how a single work-unit should behave as Given/When/Then
-  scenarios. This is the implementation-level specification.
+  declares how a single work-unit should be validated: Given/When/Then
+  scenarios for executable behavior, or gates for documentation-deliverable
+  behavior. This is the implementation-level specification.
 
 Decompose bridges the two levels. It consumes requirements and produces
 work-unit artifacts — the work-units that take picks up.
@@ -774,19 +776,22 @@ flow produces artifacts that runa tracks and threads by work-unit identity.
 ### implement
 
 - **requires:** behavior-contract, implementation-plan. The behavior
-  scenarios ARE the tests (authored at take). The plan provides the
-  design approach. Implement does RED-GREEN-REFACTOR: write failing
-  tests from scenarios, write code to pass them, refactor.
+  entries define the checks (authored at take): scenarios for executable
+  behavior, gates for documentation-deliverable behavior. The plan provides
+  the design approach. Implement drives each scenario or gate through the
+  same RED-GREEN-REFACTOR discipline: establish the failing check, make the
+  smallest change that passes it, refactor.
 - **accepts:** nothing currently identified.
 - **trigger:** `on_artifact("implementation-plan")`
 
 ### verify
 
 - **requires:** behavior-contract, test-evidence, work-unit. Verify checks
-  behavior coverage against the contract using test results as evidence.
+  behavior coverage against the contract using test-evidence results.
   The work-unit is required because verify must detect acceptance criteria
-  that have no scenario coverage — gaps that only the original criteria
-  list reveals.
+  that have no scenario or gate coverage — gaps that only the original
+  criteria list reveals. Verify reports coverage in the deliverable's
+  behavior form.
 - **accepts:** implementation-plan. The affected-files list helps map the
   change to the documentation it touches.
 - **trigger:** `on_artifact("test-evidence")`
@@ -902,8 +907,8 @@ decomposition.
 **What take needs:** the work to frame and the acceptance criteria the
 contract refines — what to do, how to know it's done, and whether it's
 ready to start. **What verify needs:** the criteria list, to detect
-acceptance criteria with no scenario coverage. The accepting consumers read
-scope boundaries (plan, review) and closure context (land).
+acceptance criteria with no scenario or gate coverage. The accepting
+consumers read scope boundaries (plan, review) and closure context (land).
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
