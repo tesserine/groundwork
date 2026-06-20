@@ -11,8 +11,8 @@ description: >-
   earning its chain (momentum). Dead reckoning: advance from an established
   fix using trusted constants.
 metadata:
-  version: "5.3.0"
-  updated: "2026-06-17"
+  version: "5.4.0"
+  updated: "2026-06-20"
 ---
 
 # Reckon
@@ -72,10 +72,13 @@ defaulting to pattern-matching.
 constraints, establish what is true — for design, ground in *normative*
 truth (what's needed), never in descriptive truth (what exists). Momentum
 (dynamic): reason forward with every inference tracing back to ground or
-principle. Position without momentum never reaches a conclusion; momentum
-without position is fluent reasoning from an unverified start. Dead
-reckoning — advance from an established fix using trusted constants — is
-both faces as one act.
+principle, and hold structural choices to the upward purpose anchor set by
+Orient. Position without momentum never reaches a conclusion; momentum
+without position is fluent reasoning from an unverified start. A chain
+anchored only downward can stay factual while drifting from what it is for;
+Ascent returns to purpose before a load-bearing structure is committed.
+Dead reckoning — advance from an established fix using trusted constants —
+is both faces as one act.
 
 **The chain.** A conclusion is trustworthy only when its path back to
 ground or principle is explicit. The chain breaks by drift (links trace
@@ -142,10 +145,12 @@ static error — inherited assumptions accepted as constraints).
 | Audience assumption | Designing for the voice in the prompt. |
 | Abstraction gravity | The adjacent system's abstraction level, inherited. |
 | Local coherence | A locally-valid detail that defeats the Orient purpose. |
+| Purpose drift | A locally sound structure stops serving purpose, unlike a locally-valid detail caught by Local coherence. |
 | Preservation variants | Fabricated migration costs · compatibility layering · risk asymmetry · "it works" as sufficient. |
 
 To actively drill to bedrock rather than wait for a signal — Socratic
-drilling and recursive why: [references/excavation.md](references/excavation.md).
+drilling, recursive why, and Ascent to climb to the exigence:
+[references/excavation.md](references/excavation.md).
 
 ## When to Reckon
 
@@ -187,7 +192,13 @@ answered with "the plan excluded this" instead of fresh reckoning);
 **premature termination** (a valid chain closed before its consequence
 surface was traced); **principle as decoration** (remove the citation and
 the reasoning doesn't change); **untraceable chain** (the conclusion may be
-right, but a chain that cannot be shown cannot be trusted).
+right, but a chain that cannot be shown cannot be trusted); **purpose
+drift** (a structural choice is committed on downward-sound links, so the
+reckoning feels complete, but the structure has stopped serving Orient's
+purpose and nothing climbed back). Local coherence catches a detail that
+defeats the purpose and is correctable by restating Orient; purpose drift
+catches structure, and its corrective is to run Ascent at the structural
+choice before committing.
 
 ---
 
@@ -196,4 +207,5 @@ accepted costs, unquestioned structures, precedent as constraint,
 descriptions of what is, and analogical reasoning from correct ground.
 Orient returns you to what is needed. Verify returns you to what is
 true. The selected principles give you direction. The chain keeps you
-honest. Reckon from there.*
+honest. Ascent names purpose as an anchor you return to before structure
+sets. Reckon from there.*

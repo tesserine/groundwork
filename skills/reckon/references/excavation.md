@@ -1,8 +1,10 @@
 # Active Excavation
 
 The recognition patterns are passive — they catch drift. These techniques
-actively drill to bedrock. Apply them during Orient and Decompose to reach
-ground; apply navigational principles during Reconstruct to reason forward.
+actively move along both purpose-directions: down to bedrock-fact and up to
+bedrock-purpose. Apply Socratic drilling and Recursive Why during Orient and
+Decompose to reach ground; apply Ascent during Reconstruct when a structural
+choice must be checked against the purpose it serves.
 
 ## Socratic Drilling
 
@@ -24,9 +26,38 @@ verified user need.
 
 ***Recognition that you have overshot:*** You are questioning constraints that are independently verified (physics, contracts, measured data). Stop. That is ground.
 
+## Ascent (the Purpose Ladder)
+
+Climb back up the purpose chain when a structural choice can be locally sound
+in more than one way. The upward purpose anchor is the exigence the choice
+serves; Ascent asks whether the structure still serves that purpose before
+the structure is committed.
+
+The ladder:
+
+```
+issue -> epic -> application-as-is -> application-as-envisioned -> ecosystem -> the exigence
+```
+
+At each rung, ask: "does this choice still serve that?" The climb terminates
+at the exigence, the bedrock-purpose that gives the choice its direction.
+
+Ascent fires during Reconstruct, at the moment of a structural choice: when
+the local exigence admits multiple locally-valid solutions with different
+structural characteristics, and the decision introduces a dependency, creates
+an artifact, or commits to a mechanism. Not every decision gets this climb;
+a load-bearing structural commit does.
+
+Recursive Why and Ascent can both reach a verified user need, but they reach
+it along different axes. Recursive Why reaches the verified user need as a
+fact: the bedrock that makes an assumption real. Ascent reaches it as the
+teleology a choice must serve: the purpose that keeps a locally sound
+structure from drifting away from what it is for.
+
 ## Chains and Techniques
 
-Active excavation establishes ground. Navigational principles govern what
-you build from it. At every step of reconstruction, the chain of inference
-must be explicit — each conclusion traces through the techniques that
-established its ground and the principles that governed its derivation.
+Active excavation establishes ground and purpose. Navigational principles
+govern what you build from them. At every step of reconstruction, the chain
+of inference must be explicit — each conclusion traces through the techniques
+that established its ground, the purpose ladder that held structural choices
+to their exigence, and the principles that governed derivation.
