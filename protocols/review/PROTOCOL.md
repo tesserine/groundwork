@@ -1,25 +1,29 @@
 ---
 name: review
 description: >-
-  Review a submitted change proposal against the behavior contract and
-  evidence, and produce exactly one disposition outcome. Routes approval
+  Review a submitted change proposal against the multidimensional contract
+  and evidence, and produce exactly one disposition outcome. Routes approval
   through `change-approved` and blocking findings through
   `change-needs-revision`.
 metadata:
-  version: "2.0.0"
-  updated: "2026-06-11"
+  version: "2.1.0"
+  updated: "2026-06-20"
 ---
 
 # Review
 
 Review is the judgment gate between a submitted change proposal and
 landing. It is where the pipeline's one act of independent judgment about
-the change happens: the proposal is examined against the behavior contract,
-the work-unit, and the evidence — then the decision is recorded as exactly
-one typed outcome artifact.
+the change happens: the proposal is examined against the multidimensional
+contract, the work-unit, and the evidence — then the decision is recorded as
+exactly one typed outcome artifact.
 
 The protocol is not a forge operation. The `code-review` skill supplies the
 evaluation discipline; this protocol supplies the routing obligation.
+It consults the `contract` skill (`skills/contract/SKILL.md`) for the
+lifecycle, the behavior dimension's deliverable's behavior form, the
+documentation dimension's audience-outcome review, and the code-quality
+dimension's projected-universal findings.
 
 ## Steps
 
@@ -29,10 +33,19 @@ evaluation discipline; this protocol supplies the routing obligation.
 
 2. **Inspect against the contract.** Evaluate the proposed change with the
    `code-review` skill's discipline: scope honesty against the work-unit,
-   correctness, semantic-shift detection, evidence quality against the
-   behavior contract and completion evidence, documentation impact. The
-   contract is the measure — a change is judged by whether the contracted
-   behaviors are delivered and proven, not by whether commands passed.
+   correctness, semantic-shift detection, and evidence quality against the
+   multidimensional contract and completion evidence. The contract is the
+   measure — a change is judged by whether every declared dimension's
+   performed validation is delivered and proven, not by whether commands
+   passed. For the behavior dimension, review the performed validation in
+   the deliverable's behavior form: executable scenarios for a
+   runtime-behavior work-unit and documentation-deliverable gates for a
+   documentation-deliverable work-unit. In either case, review scenario or
+   gate coverage as the behavior dimension's performed validation. For the
+   documentation dimension, review the audience-outcome review. For the
+   code-quality dimension, review the code-quality findings and diff loci
+   from the projected-universals audit. Consult the `contract` skill for the
+   lifecycle and forms; this protocol judges them, it does not restate them.
 
 3. **Classify findings.** Each observation is `blocking` or `non-blocking`
    at the point of review. Blocking findings prevent approval. Non-blocking
@@ -49,6 +62,16 @@ evaluation discipline; this protocol supplies the routing obligation.
    triage step between review and land. Downstream protocols route on the
    produced artifact type; a review run that emits zero or two dispositions
    is invalid.
+
+   For a runtime-behavior work-unit, the disposition remains in the
+   scenario-keyed runtime close path. For a documentation-deliverable
+   work-unit, judge the gate-form packaging as committed evidence. The
+   structural, coherence, and conformance coverage is reviewable behavior
+   evidence, alongside documentation and code-quality validation-performed.
+   Runa-backed runtime sequencing of gate-form close artifacts — and any
+   review artifact schema change it would require — is deferred to #454;
+   name that boundary honestly rather than implying the gate-form runtime
+   path closes end to end today.
 
 ## The Independence of the Gate
 
@@ -71,7 +94,9 @@ reviewer is independent of the author is the invariant.
   asking later steps to infer approval from fields instead of routing by
   outcome type.
 - `rubber-stamp-review`: approving because commands passed without checking
-  whether the evidence proves the contracted behavior.
+  whether the evidence proves every declared dimension. A behavior-only
+  approval that ignores documentation or code-quality validation is a rubber
+  stamp even when the behavior evidence passes.
 - `semantic-shift-dismissal`: treating meaning changes as harmless cleanup
   without reviewing their effect on contracts, schemas, or routing.
 - `forge-mechanic-leakage`: embedding forge-specific commands or
@@ -82,6 +107,8 @@ reviewer is independent of the author is the invariant.
 - `workflow-contracts/review.toml` defines the C-2 review flow and its two
   disposition terminals.
 - `skills/code-review/SKILL.md` defines the evaluation discipline.
+- `contract` (skill): owns the lifecycle, dimensions, and behavior forms
+  this protocol consults while judging validation-performed.
 - `schemas/change-approved.schema.json` and
   `schemas/change-needs-revision.schema.json` define the typed disposition
   artifacts.

@@ -5,8 +5,8 @@ description: >-
   completion evidence exists, and re-fires from change-needs-revision;
   preserves immutable proposal version history.
 metadata:
-  version: "3.0.0"
-  updated: "2026-06-11"
+  version: "3.1.0"
+  updated: "2026-06-20"
 ---
 
 # Submit
@@ -15,6 +15,12 @@ Submit is the gate between verified work and review. It produces the
 forge-neutral `change-proposal` artifact that review consumes — whether this
 is the first proposal version or a revised version answering review
 findings.
+
+Submit packages the multidimensional contract for review. It consults the
+`contract` skill (`skills/contract/SKILL.md`) for the lifecycle and carries
+the performed validation from `verify`: the behavior dimension in the
+deliverable's behavior form, the documentation dimension's audience-outcome
+review, and the code-quality dimension's projected-universal findings.
 
 The protocol is not a forge operation. It names the methodology obligation:
 collect the verified change, deliver it through the configured mechanics,
@@ -33,14 +39,20 @@ carries the forge-tagged reference downstream.
 
 2. **Address findings (revision rounds only).** Resolve each blocking
    finding with the same discipline the original work used: behavior-level
-   findings get failing tests first (`implement`'s cycle), evidence gaps get
+   findings get failing tests first (`implement`'s cycle), documentation or
+   code-quality findings update the affected dimension and evidence gaps get
    the gate re-run (`verify`), contract gaps update the contract. Commit the
    revision to the proposal branch.
 
 3. **Prepare the proposal.** Fix the branch, commit, and base that carry the
-   change, and write a summary that names the contracted behaviors the
-   change ships. The summary is the proposal's public claim; it derives from
-   the behavior contract and the completion evidence, not from memory.
+   change, and write a summary that names the declared dimensions the change
+   ships. The summary is the proposal's public claim; it derives from the
+   completion evidence, not from memory: behavior coverage in scenario or
+   gate form, documentation outcomes from the audience-outcome review, and
+   code-quality findings from the projected-universals audit. The
+   `contract` skill supplies the lifecycle and the behavior form; this
+   protocol packages the validation-performed, it does not restate the
+   lifecycle.
 
 4. **Deliver through the forge mechanic.** Initial delivery resolves the
    invariant `deliver-change-proposal` operation; revision delivery resolves
@@ -49,7 +61,11 @@ carries the forge-tagged reference downstream.
    runs the active-forge mechanic it returns. The protocol encodes no
    forge-specific delivery language.
 
-5. **Deliver the `change-proposal`.** Invoke the `change-proposal` MCP tool.
+5. **Deliver the `change-proposal`.**
+   For a runtime-behavior work-unit, follow the scenario-keyed runtime close
+   path and invoke the `change-proposal` MCP tool. The proposal summary
+   carries the multidimensional claim: executable scenarios or scenario
+   coverage for behavior, documentation outcomes, and code-quality findings.
    The object below is MCP tool input, not artifact body. `instance_id` is a
    tool parameter that names the artifact instance; it is extracted before
    validating artifact content, becomes the workspace filename, and must not
@@ -76,6 +92,16 @@ carries the forge-tagged reference downstream.
    change-proposal schema, persists the artifact, and records it in the
    artifact store.
 
+   For a documentation-deliverable work-unit, report the gate-form
+   packaging as committed evidence. The structural, coherence, and
+   conformance coverage is the behavior dimension in the deliverable's
+   behavior form, and the proposal still carries documentation and
+   code-quality validation-performed for review. Runa-backed runtime
+   sequencing of gate-form close artifacts — and any `change-proposal`
+   schema change it would require — is deferred to #454; name that boundary
+   honestly rather than routing this path through a runtime shape it cannot
+   satisfy today.
+
 A revision round never mutates an earlier proposal artifact: it creates a
 new valid `change-proposal` whose `version` advances for this work unit.
 Review re-runs through its `on_change` trigger on the new version.
@@ -98,7 +124,9 @@ Review re-runs through its `on_change` trigger on the new version.
 - `forge-leakage`: embedding forge-specific delivery procedure in the
   protocol rather than in mechanics and handles.
 - `summary-drift`: a proposal summary that names work the evidence does not
-  support, or omits behaviors the contract requires.
+  support, or omits a declared dimension the contract requires. A
+  behavior-only summary that drops documentation or code-quality validation
+  is drift even when behavior coverage is green.
 
 ## Cross-References
 
@@ -107,4 +135,7 @@ Review re-runs through its `on_change` trigger on the new version.
 - `schemas/change-proposal.schema.json` defines the proposal artifact.
 - `protocols/review/PROTOCOL.md` consumes the proposal and produces exactly
   one typed review disposition.
-- `verify` (protocol): supplies the completion evidence this gate requires.
+- `contract` (skill): owns the lifecycle and behavior forms this protocol
+  consults while packaging validation-performed.
+- `verify` (protocol): supplies the completion evidence this gate requires
+  across behavior, documentation, and code quality.
