@@ -48,6 +48,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **plan and implement work against the multidimensional contract** (#458).
+  The build stations now consult the `contract` skill for the behavior
+  lifecycle and declared dimensions: `plan` maps behavior in the deliverable's
+  form (runtime scenarios or documentation-deliverable structural/coherence/
+  conformance gates) while designing against documentation and code-quality
+  validation, and `implement` drives each behavior item check-first in that
+  same form while carrying all three dimensions. Runtime delivery of
+  gate-form `implementation-plan` and `test-evidence` artifacts remains
+  deferred to #454. plan 2.2.0->2.3.0, implement 2.1.0->2.2.0.
 - **verify reports documentation-deliverable behavior as gate coverage**
   (#456). The `verify` protocol now performs behavior coverage in the form
   the `contract` skill names for the deliverable: scenario coverage for

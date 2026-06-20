@@ -1,13 +1,13 @@
 ---
 name: implement
 description: >-
-  Execute the behavior contract through test-driven development:
+  Execute the multidimensional contract through test-driven development:
   RED-GREEN-REFACTOR with delete-and-start-over discipline. Fires when
   production code is about to be written — implementing contracted
   behaviors, fixing bugs, or refactoring.
 metadata:
-  version: "2.1.0"
-  updated: "2026-06-17"
+  version: "2.2.0"
+  updated: "2026-06-20"
   origin: "Adapted from obra/superpowers (MIT). See LICENSE-UPSTREAM."
 ---
 
@@ -32,39 +32,52 @@ Every excuse for skipping this has been offered sincerely and every one
 leads to untrusted code:
 [references/anti-rationalization.md](references/anti-rationalization.md).
 
-## Steps — the cycle, per scenario
+## Steps
 
-Take the next behavior scenario from the contract (the plan's
-`behavior_mapping` orders them), then:
+Take the next behavior item from the contract in the deliverable's behavior
+form (the plan orders them). Consult the `contract` skill
+(`skills/contract/SKILL.md`) for the behavior lifecycle: a
+runtime-behavior work-unit is driven by a scenario test for each executable
+scenario, and a documentation-deliverable work-unit is driven by a
+structural, coherence, and conformance gate for each gate-form behavior
+item. Build toward all three declared dimensions — behavior,
+documentation, and code quality — not behavior alone.
 
-1. **RED — write one failing test.** The test name is the scenario's
-   behavior statement. One behavior, real code over mocks
+1. **RED — write one failing check.** The check name is the behavior
+   statement. One behavior, real code over mocks
    ([references/testing-anti-patterns.md](references/testing-anti-patterns.md)),
-   intent visible in the assertion.
+   intent visible in the assertion or gate. For a runtime-behavior work-unit
+   this is a scenario test; for a documentation-deliverable work-unit this
+   is the structural, coherence, or conformance gate the contract names.
 
-2. **Verify RED — watch it fail.** Run the test. It must *fail*, not error,
-   and fail because the behavior is missing — not a typo or import problem.
-   A test that passes immediately proves nothing: fix the test.
+2. **Verify RED — watch the check fail.** Run the check. It must *fail*,
+   not error, and fail because the behavior is missing — not a typo or
+   import problem. A check that passes immediately proves nothing: fix the
+   check.
 
-3. **GREEN — write minimal code to pass.** The simplest code that satisfies
-   the test. No extra parameters, no configuration, no error handling that
-   no test requires. Over-engineering in GREEN is scope creep wearing a
-   productivity mask. Where the minimal code involves a real design choice
-   — a structure, an abstraction, a boundary — reckon it: open the resolved
-   principles corpus at `~/.groundwork/principles/`, select the principles
-   that govern the choice, and reason it from them rather than the nearest
-   pattern (the reckon skill is the move). Dose-proportional — a trivial
-   pass needs no reckon; a real structural choice does.
+3. **GREEN — write minimal code or documentation to pass.** The simplest
+   change that satisfies the check and the relevant documentation or
+   code-quality dimension. No extra parameters, no configuration, no error
+   handling that no check requires. Over-engineering in GREEN is scope creep
+   wearing a productivity mask. Where the minimal change involves a real
+   design choice — a structure, an abstraction, a boundary — reckon it: open
+   the resolved principles corpus at `~/.groundwork/principles/`, select the
+   principles that govern the choice, and reason it from them rather than the
+   nearest pattern (the reckon skill is the move). Dose-proportional — a
+   trivial pass needs no reckon; a real structural choice does.
 
-4. **Verify GREEN — watch it pass.** Run the test: it passes. Run the
-   suite: everything else still passes, output pristine. A failing test
-   means fix the code, not the test.
+4. **Verify GREEN — watch it pass.** Run the check: it passes. Run the
+   suite: everything else still passes, output pristine. A failing check
+   means fix the change, not the check.
 
 5. **REFACTOR — clean up on green.** Remove duplication, improve names,
    extract helpers. Tests stay green throughout; no behavior is added.
+   Documentation outcomes and code-quality projections stay true while the
+   internal form improves.
 
-6. **Repeat** for the next scenario. When every scenario in scope has its
-   cycle evidence, deliver (below).
+6. **Repeat** for the next behavior item. When every behavior item in scope
+   has cycle evidence, and the documentation and code-quality dimensions have
+   been advanced where declared, deliver (below).
 
 Worked good/bad examples for each phase:
 [references/cycle-examples.md](references/cycle-examples.md).
@@ -74,7 +87,8 @@ Worked good/bad examples for each phase:
 1. Root cause unclear? Invoke `debug` first — investigation precedes fixes.
 2. Write the failing test that reproduces the bug, named for the corrected
    behavior. If the bug reveals a behavior the contract missed, add the
-   scenario — the contract stays the source of truth.
+   missing behavior item in the deliverable's behavior form — the contract
+   stays the source of truth.
 3. Run the cycle from step 2 above. The test remains as the regression
    guard.
 
@@ -87,13 +101,14 @@ should be built.
 
 ## Deliver `test-evidence`
 
-The capstone is delivery of the `test-evidence` artifact. Invoke the
-`test-evidence` MCP tool. The object below is MCP tool input, not artifact
-body. `instance_id` is a tool parameter that names the artifact instance; it
-is extracted before validating artifact content, becomes the workspace
-filename, and must not appear in the artifact body. Runa injects `work_unit`
-from session context; the agent does not supply `work_unit`. Do not write
-the workspace JSON file directly:
+For a runtime-behavior work-unit, the capstone is delivery of the
+scenario-keyed `test-evidence` artifact. Invoke the `test-evidence` MCP
+tool. The object below is MCP tool input, not artifact body. `instance_id`
+is a tool parameter that names the artifact instance; it is extracted before
+validating artifact content, becomes the workspace filename, and must not
+appear in the artifact body. Runa injects `work_unit` from session context;
+the agent does not supply `work_unit`. Do not write the workspace JSON file
+directly:
 
 ```
 test-evidence({
@@ -110,8 +125,14 @@ test-evidence({
 Runa validates the remaining artifact body fields against the test-evidence
 schema, persists the artifact, and records it in the artifact store.
 
-This protocol owns per-cycle evidence — each test watched failing, then
-passing. The aggregate completion gate belongs to `verify`.
+For a documentation-deliverable work-unit, report the gate-form cycle as
+committed evidence and state that the runa-backed runtime sequencing of
+gate-form build artifacts is deferred to #454. Do not route a gate-only unit
+through the scenario-keyed `test-evidence` tool or encode gates as
+scenarios.
+
+This protocol owns per-cycle evidence — each behavior item watched failing,
+then passing. The aggregate completion gate belongs to `verify`.
 
 ## When Stuck
 
@@ -132,17 +153,20 @@ Hard to test means hard to use. Listen to the test.
   whether the test catches what it claims.
 - `scope-creep-in-green`: the GREEN implementation does more than the test
   asks.
-- `contract-bypass`: writing tests from implementation convenience ("test
-  this function") instead of from named scenarios.
+- `contract-bypass`: writing checks from implementation convenience ("test
+  this function") instead of from the deliverable's behavior form.
 - `rationalization`: any entry from the
   [anti-rationalization table](references/anti-rationalization.md) accepted
   as valid "just this once."
 
 ## Cross-References
 
-- `contract` (skill): each RED test corresponds to a named scenario; the
-  carrying discipline lives there.
-- `plan` (protocol): supplies the decision-complete design and scenario
+- `contract` (skill): owns the behavior lifecycle, including executable
+  scenarios for runtime behavior and structural, coherence, and conformance
+  gate validation for documentation-deliverable behavior, plus the
+  documentation and code-quality dimensions this protocol carries through the
+  build.
+- `plan` (protocol): supplies the decision-complete design and behavior-item
   ordering this protocol executes.
 - `debug` (skill): owns root-cause investigation; hand off when a failure's
   cause is unclear, receive back a established root cause.
