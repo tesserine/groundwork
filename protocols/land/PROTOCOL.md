@@ -5,7 +5,7 @@ description: >-
   out the work unit, and deliver the completion-record. The closing bookend
   of the scoped pipeline.
 metadata:
-  version: "3.1.0"
+  version: "3.2.0"
   updated: "2026-06-20"
 ---
 
@@ -50,15 +50,16 @@ The protocol is not a forge operation. It must not activate from a raw
    and the merge reference.
 
 5. **Deliver the `completion-record`.**
-   For a runtime-behavior work-unit, follow the scenario-keyed runtime close
-   path and invoke the `completion-record` MCP tool. The behavior dimension
-   is recorded in `criterion_summary`; the documentation dimension is
-   recorded in `documentation_status`; the code-quality dimension is
-   recorded as committed evidence in the close-out context, using the diff
-   loci and findings from the projected-universals audit. A typed
-   code-quality `completion-record` field is the schema expansion deferred
-   to #454; do not assert a field the completion-record schema does not
-   define.
+   Invoke the `completion-record` MCP tool through the existing schema
+   fields. For a runtime-behavior work-unit, the scenario-keyed runtime
+   close path records the behavior dimension in `criterion_summary`. For a
+   documentation-deliverable work-unit, gate-form behavior coverage is
+   recorded in `criterion_summary` and close-out context as committed
+   evidence. The documentation dimension is recorded in
+   `documentation_status`; the code-quality dimension is recorded as
+   committed evidence in the close-out context, using the diff loci and
+   findings from the projected-universals audit. Do not assert a field the
+   completion-record schema does not define.
 
    The object below is MCP tool input, not artifact body.
    `instance_id` is a tool parameter that names the artifact instance; it is
@@ -71,7 +72,7 @@ The protocol is not a forge operation. It must not activate from a raw
    completion-record({
      instance_id: "<slug>",
      criterion_summary: "<how acceptance criteria were met>",
-     gaps: ["<known gaps or deferred work - empty array if none>"],
+     gaps: ["<known gaps or follow-up work - empty array if none>"],
      merge_reference: "<applied proposal reference>",
      documentation_status: "<documentation coverage summary>"
    })
@@ -82,16 +83,7 @@ The protocol is not a forge operation. It must not activate from a raw
    artifact store. The record distills the contract's closure: the
    criterion summary and documentation status derive from the performed
    validation in context, while code-quality validation remains committed
-   close-out evidence until the typed field exists.
-
-   For a documentation-deliverable work-unit, record the gate-form behavior
-   coverage as committed evidence. Structural, coherence, and conformance
-   gate coverage satisfies the behavior dimension in the deliverable's
-   behavior form, and the record still carries documentation and
-   code-quality validation-performed. Runa-backed runtime sequencing of
-   gate-form close artifacts — and any `completion-record` schema change it
-   would require — is deferred to #454; name that boundary honestly rather
-   than implying the gate-form runtime path closes end to end today.
+   close-out evidence in the existing schema fields and context.
 
 ## Failure Policy
 
@@ -123,8 +115,8 @@ The protocol is not a forge operation. It must not activate from a raw
   resolves and applies.
 - `schemas/completion-record.schema.json` defines the existing record fields:
   behavior closes through `criterion_summary`, documentation through
-  `documentation_status`, and typed code-quality record expansion is
-  deferred to #454.
+  `documentation_status`, and code quality remains close-out context and
+  committed evidence.
 - `contract` (skill): owns the lifecycle and behavior forms this protocol
   consults while recording validation-performed.
 - `take` (protocol): the opening bookend — the contract established there

@@ -8,8 +8,8 @@ description: >-
   carries to land; until the runtime sequences the stations autonomously,
   take carries it. Trigger on: 'take', 'take work', 'start work-unit'.
 metadata:
-  version: "3.3.0"
-  updated: "2026-06-17"
+  version: "3.4.0"
+  updated: "2026-06-20"
 ---
 
 # Take — Contract-First Entry
@@ -91,19 +91,25 @@ proves it, or records it.
    consideration is equal. Silence is valid only after you can say the
    general contract is enough for that dimension.
 
-5. **Deliver the behavior spine.** For a runtime-behavior work-unit, invoke
-   the `behavior-contract` MCP tool to deliver the scenario artifact. The
-   runtime-behavior work-unit path is the only path that invokes this tool.
-   The object below is MCP tool input, not artifact body. `instance_id` is
-   a tool parameter that names the artifact instance; it is extracted before
+5. **Deliver the behavior spine.** Invoke the `behavior-contract` MCP tool
+   in the deliverable's behavior form. For a runtime-behavior work-unit,
+   deliver scenario form. For a documentation-deliverable work-unit, deliver
+   gate form: structural, coherence, and conformance gates that are realized
+   as committed structural, coherence, and conformance tests. The object
+   below is MCP tool input, not artifact body. The `behavior-contract` MCP
+   tool accepts both forms through `behavior_form`. `instance_id` is a tool
+   parameter that names the artifact instance; it is extracted before
    validating artifact content, becomes the workspace filename, and must not
    appear in the artifact body. Runa injects `work_unit` from session
    context; the agent does not supply `work_unit`. Do not write the
-   workspace JSON file directly:
+   workspace JSON file directly.
+
+   Scenario form:
 
    ```
    behavior-contract({
      instance_id: "<slug>",
+     behavior_form: "scenario",
      title: "<human-readable contract title>",
      scenarios: [{
        name: "<sentence-named scenario>",
@@ -115,6 +121,22 @@ proves it, or records it.
    })
    ```
 
+   Gate form:
+
+   ```
+   behavior-contract({
+     instance_id: "<slug>",
+     behavior_form: "gate",
+     title: "<human-readable contract title>",
+     gates: [{
+       name: "<gate name>",
+       criterion: "<acceptance criterion this refines>",
+       category: "structural" | "coherence" | "conformance",
+       check: "<reviewer-checkable gate>"
+     }]
+   })
+   ```
+
    Runa validates the remaining artifact body fields against the
    behavior-contract schema, persists the artifact, and records it in the
    artifact store. Where no runtime is present to accept the MCP tool — a
@@ -122,14 +144,6 @@ proves it, or records it.
    contract as a committed workspace artifact (the behavior-contract JSON,
    or the work-unit issue if there is no workspace store) so the spine
    exists and binds the test-first cycle either way.
-
-   For a documentation-deliverable work-unit, the agent does not invoke the
-   scenario-only `behavior-contract` tool. Its behavior spine is delivered
-   as committed structural, coherence, and conformance tests that realize
-   the documentation-deliverable gates. Runa-backed runtime sequencing of
-   gate-form behavior is deferred to #454; name that boundary honestly
-   rather than implying the documentation-only runtime path advances end to
-   end today.
 
 6. **Carry the contract through to a submitted change.** Take does not end
    at contract delivery. When the runtime sequences the pipeline
@@ -165,7 +179,8 @@ proves it, or records it.
    separate agent that is not yet wired, and the work stalls; until it is
    wired, you drive the session directly. Do not stop at a boundary waiting
    to be carried. Review and land — the independent-judgment gate and the
-   governance close — follow once every scenario is green and verify passes.
+   governance close — follow once every scenario or gate is green and verify
+   passes.
 
 ## Scale
 
@@ -177,24 +192,24 @@ begins — the dose is proportional.
 ## Operating Principles
 
 - **The contract is the spine.** Every downstream artifact traces to the
-  scenarios named here. Vague scenarios at entry become unanchored work at
-  every later stage.
+  behavior items named here. Vague scenarios or gates at entry become
+  unanchored work at every later stage.
 - **Plan from the work-unit graph, not from memory.** Sessions end and
   context windows close; the work-unit graph and the artifact store are the
   working memory that survives. Read them; do not reconstruct from
   recollection.
 - **Dependencies are hard blockers.** Work whose dependencies are open
   produces partial results that complicate the graph.
-- **Direction over prediction.** Scenarios state observable outcomes, not
-  implementation forecasts. Implementation sharpens inside the contract's
-  boundaries, not around them.
+- **Direction over prediction.** Behavior items state observable outcomes or
+  reviewer-checkable gates, not implementation forecasts. Implementation
+  sharpens inside the contract's boundaries, not around them.
 
 ## Corruption Modes
 
 - `contract-after-code`: deferring contract authoring to implementation —
   the defining failure this protocol exists to prevent. Done gets defined by
   what was built instead of the work-unit's intent.
-- `scope-creep`: scenarios that exceed the work-unit's boundaries. The
+- `scope-creep`: behavior items that exceed the work-unit's boundaries. The
   contract covers the acceptance criteria — nearby work belongs in other
   work-units.
 - `criteria-parroting`: copying acceptance criteria verbatim as scenarios

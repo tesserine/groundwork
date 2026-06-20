@@ -112,7 +112,7 @@ class BuildProtocolContractDimensionTests(unittest.TestCase):
                 self.assertIn(expected, behavior_row)
                 self.assertIn(expected, combined)
 
-    def test_gate_form_runtime_artifact_delivery_names_454_deferral(self) -> None:
+    def test_gate_form_runtime_artifact_delivery_uses_existing_mcp_tools(self) -> None:
         plan_delivery = normalized(step(read(PLAN_PROTOCOL), 5))
         implement_delivery = normalized(section(read(IMPLEMENT_PROTOCOL), "Deliver `test-evidence`"))
 
@@ -127,11 +127,13 @@ class BuildProtocolContractDimensionTests(unittest.TestCase):
                     artifact,
                     "documentation-deliverable work-unit",
                     "gate-form",
-                    "committed evidence",
-                    "#454",
-                    "deferred",
+                    "behavior_form",
+                    "gate",
+                    "structural, coherence, and conformance",
                 ]:
                     self.assertIn(expected, delivery)
+                self.assertNotIn("#454", delivery)
+                self.assertNotIn("deferred", delivery)
                 self.assertNotRegex(delivery, r"documentation-deliverable work-unit[^.]+scenario")
 
     def test_scenario_only_corruption_modes_and_cross_references_are_generalized(self) -> None:
@@ -167,8 +169,8 @@ class BuildProtocolContractDimensionTests(unittest.TestCase):
         plan_body = read(PLAN_PROTOCOL)
         implement_body = read(IMPLEMENT_PROTOCOL)
 
-        self.assertIn("version: \"2.3.0\"", plan_body)
-        self.assertIn("version: \"2.2.0\"", implement_body)
+        self.assertIn("version: \"2.4.0\"", plan_body)
+        self.assertIn("version: \"2.3.0\"", implement_body)
         self.assertIn("the reckon skill is the move", plan_body)
         self.assertIn("the reckon skill is the move", implement_body)
         self.assertIn("NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST", implement_body)

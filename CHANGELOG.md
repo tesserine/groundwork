@@ -48,21 +48,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Gate-form behavior now runs through the runtime artifact spine** (#454).
+  `behavior-contract`, `implementation-plan`, `test-evidence`, and
+  `completion-evidence` now require `behavior_form` and accept either
+  scenario form or documentation-deliverable gate form. Gate form carries
+  structural/coherence/conformance gates through the existing MCP artifact
+  tools without fabricating scenarios. `completion-evidence` enforces the
+  same status-to-evidence conditional for both forms: `covered` and `partial`
+  criteria require at least one scenario or gate result, while `uncovered`
+  criteria may omit evidence. Close artifacts keep their existing schemas and
+  carry gate-form context through summaries and close-out evidence.
+  take 3.3.0->3.4.0, plan 2.3.0->2.4.0,
+  implement 2.2.0->2.3.0, verify 2.0.0->2.1.0,
+  submit 3.1.0->3.2.0, review 2.1.0->2.2.0, land 3.1.0->3.2.0.
 - **plan and implement work against the multidimensional contract** (#458).
   The build stations now consult the `contract` skill for the behavior
   lifecycle and declared dimensions: `plan` maps behavior in the deliverable's
   form (runtime scenarios or documentation-deliverable structural/coherence/
   conformance gates) while designing against documentation and code-quality
   validation, and `implement` drives each behavior item check-first in that
-  same form while carrying all three dimensions. Runtime delivery of
-  gate-form `implementation-plan` and `test-evidence` artifacts remains
-  deferred to #454. plan 2.2.0->2.3.0, implement 2.1.0->2.2.0.
+  same form while carrying all three dimensions. plan 2.2.0->2.3.0,
+  implement 2.1.0->2.2.0.
 - **verify reports documentation-deliverable behavior as gate coverage**
   (#456). The `verify` protocol now performs behavior coverage in the form
   the `contract` skill names for the deliverable: scenario coverage for
   runtime-behavior work-units, and structural/coherence/conformance gate
-  coverage for documentation-deliverable work-units. Runtime delivery of
-  gate-keyed `completion-evidence` remains deferred to #454.
+  coverage for documentation-deliverable work-units.
 - **work-unit-craft invokes reckon in its primary workflow** (#447). The
   `work-unit-craft` skill now points authors to `reckon` as the cognitive
   process for establishing a record's verified constraints before shaping the

@@ -45,6 +45,23 @@ Manifest `[[mechanics]]` entries may declare `forge_tags = [...]` to bind an
 operation handle to forge-specific C-3 mechanics; conformance requires exactly
 one matching `mechanics/**/*.toml` file for each declared operation/tag pair.
 
+The behavior artifact spine uses one artifact type per station and a required
+`behavior_form` discriminator instead of parallel scenario/gate artifact types:
+`behavior-contract`, `implementation-plan`, `test-evidence`, and
+`completion-evidence` each require `behavior_form: "scenario"` or
+`behavior_form: "gate"`. Scenario form carries executable Given/When/Then
+behavior through `scenarios`, scenario-keyed mappings, scenario-keyed evidence,
+and scenario coverage. Gate form carries documentation-deliverable behavior
+through structural/coherence/conformance `gates`, gate mappings, gate evidence,
+and gate coverage. In `completion-evidence`, both forms enforce the same
+status-to-evidence invariant: `covered` criteria carry passing evidence and no
+failures, `partial` criteria carry evidence plus at least one failure signal,
+and `uncovered` criteria carry no evidence or failures. Gate coverage treats a
+failed gate result and a non-empty `failures` list as the two valid partial
+failure channels. Root schemas remain ordinary top-level object schemas with no
+root `oneOf`, `anyOf`, `allOf`, or `$ref`, so runtime tool advertisement
+continues to expose them as MCP artifact tools.
+
 Downstream consumers that build against a Groundwork schema contract pin a
 release tag or the merged full commit SHA. They do not pin a branch name or
 pre-merge ref.

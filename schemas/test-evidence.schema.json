@@ -2,9 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/test-evidence.schema.json",
   "title": "Test Evidence",
-  "description": "Validates the content of a test-evidence artifact. Records test results against behavior-contract scenarios.",
+  "description": "Validates the content of a test-evidence artifact. Records test results against behavior-contract scenarios or gates.",
   "type": "object",
-  "required": ["work_unit", "evidence"],
+  "required": ["work_unit", "behavior_form", "evidence"],
   "additionalProperties": false,
   "properties": {
     "work_unit": {
@@ -12,17 +12,45 @@
       "description": "Common envelope — threads to work unit.",
       "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
     },
+    "behavior_form": {
+      "type": "string",
+      "description": "Behavior form this evidence carries forward.",
+      "enum": ["scenario", "gate"]
+    },
     "evidence": {
       "type": "array",
-      "description": "Test result entries, each referencing a behavior-contract scenario.",
-      "minItems": 1,
-      "items": {
-        "$ref": "#/$defs/evidence-entry"
+      "description": "Test result entries, each referencing a behavior-contract scenario or gate.",
+      "minItems": 1
+    }
+  },
+  "if": {
+    "properties": {
+      "behavior_form": {
+        "const": "scenario"
+      }
+    },
+    "required": ["behavior_form"]
+  },
+  "then": {
+    "properties": {
+      "evidence": {
+        "items": {
+          "$ref": "#/$defs/scenario-evidence-entry"
+        }
+      }
+    }
+  },
+  "else": {
+    "properties": {
+      "evidence": {
+        "items": {
+          "$ref": "#/$defs/gate-evidence-entry"
+        }
       }
     }
   },
   "$defs": {
-    "evidence-entry": {
+    "scenario-evidence-entry": {
       "type": "object",
       "description": "A single test result for a scenario.",
       "required": ["scenario", "result", "command", "output_summary"],
@@ -32,6 +60,44 @@
           "type": "string",
           "description": "The scenario name from the behavior contract.",
           "minLength": 1
+        },
+        "result": {
+          "type": "string",
+          "description": "Test outcome.",
+          "enum": ["pass", "fail"]
+        },
+        "command": {
+          "type": "string",
+          "description": "The command that was executed.",
+          "minLength": 1
+        },
+        "output_summary": {
+          "type": "string",
+          "description": "Summary of the command output — proof the test ran.",
+          "minLength": 1
+        }
+      }
+    },
+    "gate-evidence-entry": {
+      "type": "object",
+      "description": "A single test result for a gate.",
+      "required": ["name", "criterion", "category", "result", "command", "output_summary"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Gate name from behavior contract.",
+          "minLength": 1
+        },
+        "criterion": {
+          "type": "string",
+          "description": "Acceptance criterion this gate covers.",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "description": "Gate category.",
+          "enum": ["structural", "coherence", "conformance"]
         },
         "result": {
           "type": "string",

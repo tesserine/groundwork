@@ -6,7 +6,7 @@ description: >-
   production code is about to be written — implementing contracted
   behaviors, fixing bugs, or refactoring.
 metadata:
-  version: "2.2.0"
+  version: "2.3.0"
   updated: "2026-06-20"
   origin: "Adapted from obra/superpowers (MIT). See LICENSE-UPSTREAM."
 ---
@@ -101,18 +101,23 @@ should be built.
 
 ## Deliver `test-evidence`
 
-For a runtime-behavior work-unit, the capstone is delivery of the
-scenario-keyed `test-evidence` artifact. Invoke the `test-evidence` MCP
-tool. The object below is MCP tool input, not artifact body. `instance_id`
-is a tool parameter that names the artifact instance; it is extracted before
-validating artifact content, becomes the workspace filename, and must not
-appear in the artifact body. Runa injects `work_unit` from session context;
-the agent does not supply `work_unit`. Do not write the workspace JSON file
-directly:
+The capstone is delivery of the `test-evidence` artifact through the
+`test-evidence` MCP tool in the deliverable's behavior form. For a
+runtime-behavior work-unit, deliver scenario-keyed evidence. For a
+documentation-deliverable work-unit, deliver gate-form evidence for
+structural, coherence, and conformance gates. The object below is MCP tool
+input, not artifact body. `instance_id` is a tool parameter that names the
+artifact instance; it is extracted before validating artifact content,
+becomes the workspace filename, and must not appear in the artifact body.
+Runa injects `work_unit` from session context; the agent does not supply
+`work_unit`. Do not write the workspace JSON file directly.
+
+Scenario form:
 
 ```
 test-evidence({
   instance_id: "<slug>",
+  behavior_form: "scenario",
   evidence: [{
     scenario: "<scenario name from behavior-contract>",
     result: "pass",
@@ -122,14 +127,25 @@ test-evidence({
 })
 ```
 
+Gate form:
+
+```
+test-evidence({
+  instance_id: "<slug>",
+  behavior_form: "gate",
+  evidence: [{
+    name: "<gate name from behavior-contract>",
+    criterion: "<acceptance criterion this gate covers>",
+    category: "structural" | "coherence" | "conformance",
+    result: "pass",
+    command: "<verification command>",
+    output_summary: "<proof the check ran>"
+  }]
+})
+```
+
 Runa validates the remaining artifact body fields against the test-evidence
 schema, persists the artifact, and records it in the artifact store.
-
-For a documentation-deliverable work-unit, report the gate-form cycle as
-committed evidence and state that the runa-backed runtime sequencing of
-gate-form build artifacts is deferred to #454. Do not route a gate-only unit
-through the scenario-keyed `test-evidence` tool or encode gates as
-scenarios.
 
 This protocol owns per-cycle evidence — each behavior item watched failing,
 then passing. The aggregate completion gate belongs to `verify`.

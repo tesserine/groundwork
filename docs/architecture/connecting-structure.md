@@ -61,7 +61,7 @@ documentation impact.
 | decompose | work-unit | Work-units decomposed from requirements |
 | take      | behavior-contract | Contract-first entry: the executable definition of done that threads every downstream artifact |
 | plan      | implementation-plan | Design decisions informing execution |
-| implement | test-evidence | Proof of correct implementation — passing tests mapped to scenarios |
+| implement | test-evidence | Proof of correct implementation — results mapped to scenarios or gates |
 | verify    | completion-evidence | Criterion coverage plus documentation impact |
 | submit    | change-proposal | Forge-neutral proposal ready for review |
 | review    | change-approved or change-needs-revision | Typed review disposition |
@@ -576,6 +576,7 @@ agent inside a take session producing a behavior-contract calls:
 ```
 behavior-contract({
   instance_id: "work-unit-221",
+  behavior_form: "scenario",
   title: "User authentication",
   scenarios: [
     { name: "valid login",
@@ -653,30 +654,31 @@ This means the agent's tool interface can be as simple as
 ### Structured queries replace context parsing
 
 Instead of the agent parsing injected context, the MCP server exposes
-query tools: what are my acceptance criteria, what scenarios exist, what
-tests passed. Structured queries against the artifact store, returned
+query tools: what are my acceptance criteria, what behavior entries exist,
+what checks passed. Structured queries against the artifact store, returned
 in natural language or structured data.
 
 ### Cross-reference validation at write time
 
-When the agent references an acceptance criterion in a scenario, the
-MCP server verifies it exists in the work-unit artifact. Not just schema
+When the agent references an acceptance criterion in a scenario or gate,
+the MCP server verifies it exists in the work-unit artifact. Not just schema
 validation — semantic validation. The traceability thread is enforced
 mechanically.
 
 ### Progressive authoring
 
 Instead of one atomic `deliver()` call, the MCP server can support
-incremental building: add a scenario, get immediate feedback, add
-another, finalize. The agent discovers errors as it works, not after
+incremental building: add a scenario or gate, get immediate feedback,
+add another, finalize. The agent discovers errors as it works, not after
 producing the full artifact.
 
 ### Pre-population and cognitive scaffolding
 
 The MCP server can present pre-assembled data to reduce the agent's
 mechanical work. Verify's agent receives a pre-filled coverage matrix
-(criteria × scenarios × test results) and does judgment work — confirm,
-amend, flag gaps — not data assembly.
+in the deliverable's behavior form — criteria × scenarios × test results,
+or criteria × gates × check results — and does judgment work: confirm,
+amend, flag gaps, not data assembly.
 
 ### Observability from the start
 
@@ -691,7 +693,7 @@ chokepoint between agent and system. This enables:
   criterion. Measured, not estimated.
 - **Anomaly detection** — the server sees patterns across many work
   units. An implement protocol completing in two minutes when the
-  median is forty is a signal. A behavior-contract with one scenario
+  median is forty is a signal. A behavior-contract with one behavior entry
   for eight acceptance criteria is a signal.
 - **Replay and audit** — the full sequence of tool calls for a work
   unit is a structured trace. Debugging agent behavior means reading
@@ -718,8 +720,9 @@ The topology has two specification artifacts at different scales:
   This is the project-level specification.
 
 - **behavior-contract** (produced by take, the scoped-pipeline entry) —
-  declares how a single work-unit should behave as Given/When/Then
-  scenarios. This is the implementation-level specification.
+  declares how a single work-unit should be validated: Given/When/Then
+  scenarios for executable behavior, or gates for documentation-deliverable
+  behavior. This is the implementation-level specification.
 
 Decompose bridges the two levels. It consumes requirements and produces
 work-unit artifacts — the work-units that take picks up.
@@ -773,19 +776,22 @@ flow produces artifacts that runa tracks and threads by work-unit identity.
 ### implement
 
 - **requires:** behavior-contract, implementation-plan. The behavior
-  scenarios ARE the tests (authored at take). The plan provides the
-  design approach. Implement does RED-GREEN-REFACTOR: write failing
-  tests from scenarios, write code to pass them, refactor.
+  entries define the checks (authored at take): scenarios for executable
+  behavior, gates for documentation-deliverable behavior. The plan provides
+  the design approach. Implement drives each scenario or gate through the
+  same RED-GREEN-REFACTOR discipline: establish the failing check, make the
+  smallest change that passes it, refactor.
 - **accepts:** nothing currently identified.
 - **trigger:** `on_artifact("implementation-plan")`
 
 ### verify
 
 - **requires:** behavior-contract, test-evidence, work-unit. Verify checks
-  behavior coverage against the contract using test results as evidence.
+  behavior coverage against the contract using test-evidence results.
   The work-unit is required because verify must detect acceptance criteria
-  that have no scenario coverage — gaps that only the original criteria
-  list reveals.
+  that have no scenario or gate coverage — gaps that only the original
+  criteria list reveals. Verify reports coverage in the deliverable's
+  behavior form.
 - **accepts:** implementation-plan. The affected-files list helps map the
   change to the documentation it touches.
 - **trigger:** `on_artifact("test-evidence")`
@@ -901,8 +907,8 @@ decomposition.
 **What take needs:** the work to frame and the acceptance criteria the
 contract refines — what to do, how to know it's done, and whether it's
 ready to start. **What verify needs:** the criteria list, to detect
-acceptance criteria with no scenario coverage. The accepting consumers read
-scope boundaries (plan, review) and closure context (land).
+acceptance criteria with no scenario or gate coverage. The accepting
+consumers read scope boundaries (plan, review) and closure context (land).
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
@@ -966,23 +972,24 @@ not switch deployment identity because a handle points somewhere else.
 ### Traceability Thread
 
 Acceptance criteria on the work-unit are the high-level "done" statements.
-Behavior-contract scenarios are the precise behavioral refinement of
-those criteria into Given/When/Then. The traceability thread runs the
-full length of the execution chain:
+Behavior-contract entries are the precise behavioral refinement of
+those criteria: scenarios for executable Given/When/Then behavior, or gates
+for documentation-deliverable behavior. The traceability thread runs the full
+length of the execution chain:
 
 ```
 work-unit (acceptance_criteria)
-  → behavior-contract (scenarios trace to acceptance criteria)
-    → test-evidence (results trace to scenarios)
+  → behavior-contract (scenarios or gates trace to acceptance criteria)
+    → test-evidence (results trace to scenarios or gates)
       → completion-evidence (coverage at acceptance-criterion level,
         plus documentation impact)
 ```
 
 Schema implications:
-- behavior-contract scenarios carry a reference to which acceptance
-  criterion they refine
+- behavior-contract scenarios and gates carry a reference to which
+  acceptance criterion they refine
 - completion-evidence reports coverage at the acceptance-criterion
-  level, not just the scenario level — so verify can answer "are all
+  level, not just the scenario or gate level — so verify can answer "are all
   acceptance criteria covered?"
 
 ### Context Injection Is Not Transitive
@@ -998,11 +1005,12 @@ scoped artifact identifies the work-unit but does not carry its content.
 **Producer:** take — the contract-first entry.
 **Consumers:** plan, implement, verify, submit, review (requires); land
 (accepts).
-**What consumers need:** behavioral scenarios that trace to acceptance
-criteria, structured as executable Given/When/Then.
+**What consumers need:** behavior entries that trace to acceptance criteria:
+scenarios for executable Given/When/Then work, or gates for
+documentation-deliverable structural/coherence/conformance checks.
 
-Each scenario carries a `criterion` reference for traceability, and the
-common `work_unit` field threads it to the work-unit.
+Each scenario or gate carries a `criterion` reference for traceability, and
+the common `work_unit` field threads it to the work-unit.
 
 The existing `metadata` block (produced_by, date) is eliminated.
 Runa knows the producing protocol from the manifest. It tracks
@@ -1012,8 +1020,10 @@ already knows. By sufficiency, it has no place in the schema.
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
 | work_unit | string (work-unit ref) | yes | Common envelope — threads to work-unit |
+| behavior_form | enum: scenario, gate | yes | Selects the behavior contract form |
 | title | string | yes | Human-readable title for the contract |
-| scenarios | array of scenario | yes (min 1) | Behavioral scenarios |
+| scenarios | array of scenario | yes for scenario form | Executable Given/When/Then scenarios |
+| gates | array of gate | yes for gate form | Documentation-deliverable gates |
 
 **Scenario fields:**
 
@@ -1024,6 +1034,15 @@ already knows. By sufficiency, it has no place in the schema.
 | given | string | yes | Initial context or state |
 | when | string | yes | Action or event |
 | then | string | yes | Expected outcome |
+
+**Gate fields:**
+
+| Field | Type | Required | Purpose |
+|-------|------|----------|---------|
+| name | string | yes | Human-readable gate name |
+| criterion | string | yes | Which acceptance criterion this refines |
+| category | enum: structural, coherence, conformance | yes | Gate category |
+| check | string | yes | Concrete check that determines whether the gate passes |
 
 ### Metadata Elimination Principle
 
@@ -1037,10 +1056,10 @@ from its own state does not belong in artifact content. This eliminates
 
 **Consumers:** implement (requires); verify, review (accepts).
 **What implement needs:** the design approach — what to change, how, and which
-behavioral scenarios map to which implementation steps. **What verify needs:**
-the affected-files list, to map the change to the documentation it touches.
-**What review needs:** the recorded design decisions, as context for judging
-the proposal.
+behavior entries map to which implementation steps. **What verify needs:** the
+affected-files list, to map the change to the documentation it touches. **What
+review needs:** the recorded design decisions, as context for judging the
+proposal.
 
 The plan bridges behavior (from the contract) to code (in implement). Without
 the plan, the agent implements without design — which is what the plan
@@ -1049,10 +1068,11 @@ exists to prevent.
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
 | work_unit | string (work-unit ref) | yes | Common envelope |
+| behavior_form | enum: scenario, gate | yes | Selects scenario or gate mappings |
 | summary | string | yes | What the plan accomplishes |
 | design_decisions | array of decision | yes (min 1) | Decisions with rationale |
 | affected_files | array of strings | yes (min 1) | Files or modules that get changed |
-| behavior_mapping | array of mapping | yes (min 1) | How scenarios map to implementation steps |
+| behavior_mapping | array of mapping | yes (min 1) | How scenarios or gates map to implementation steps |
 
 **decision:**
 
@@ -1061,27 +1081,36 @@ exists to prevent.
 | decision | string | yes | What was decided |
 | rationale | string | yes | Why — traces to constraints or principles |
 
-**mapping:**
+**Scenario mapping:**
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
 | scenario | string | yes | Scenario name from behavior-contract |
 | steps | array of strings | yes (min 1) | Implementation steps for this scenario |
 
+**Gate mapping:**
+
+| Field | Type | Required | Purpose |
+|-------|------|----------|---------|
+| name | string | yes | Gate name from behavior-contract |
+| criterion | string | yes | Acceptance criterion this gate maps to |
+| category | enum: structural, coherence, conformance | yes | Gate category |
+| steps | array of strings | yes (min 1) | Implementation steps for this gate |
+
 ### test-evidence
 
 **Consumer:** verify (requires).
-**What verify needs:** proof that each scenario was tested and the result.
-Verify joins test-evidence with behavior-contract to roll up coverage at
-the acceptance-criterion level — no need to duplicate criterion references
-here.
+**What verify needs:** proof that each scenario or gate was checked and the
+result. Verify joins test-evidence with behavior-contract to roll up coverage
+at the acceptance-criterion level.
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
 | work_unit | string (work-unit ref) | yes | Common envelope |
-| evidence | array of evidence-entry | yes (min 1) | Test results per scenario |
+| behavior_form | enum: scenario, gate | yes | Selects scenario or gate evidence |
+| evidence | array of evidence-entry | yes (min 1) | Results per scenario or gate |
 
-**Evidence-entry fields:**
+**Scenario evidence-entry fields:**
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
@@ -1090,6 +1119,17 @@ here.
 | command | string | yes | The command that was executed |
 | output_summary | string | yes | Summary of command output — proof the test ran |
 
+**Gate evidence-entry fields:**
+
+| Field | Type | Required | Purpose |
+|-------|------|----------|---------|
+| name | string | yes | Gate name from behavior-contract |
+| criterion | string | yes | Acceptance criterion this gate covers |
+| category | enum: structural, coherence, conformance | yes | Gate category |
+| result | enum: pass, fail | yes | Gate outcome |
+| command | string | yes | The command that was executed |
+| output_summary | string | yes | Summary of command output — proof the check ran |
+
 ### completion-evidence
 
 **Consumers:** submit (requires), review (accepts), land (accepts).
@@ -1097,25 +1137,50 @@ here.
 review needs: the evidence-quality basis for judgment. What land needs:
 coverage context for the final record.
 
-Verify produces this by joining work-unit (acceptance criteria), behavior-
-contract (scenario-to-criterion mapping), and test-evidence (results), and
-by reviewing the documentation impact of the change. The output reports
-coverage at the acceptance-criterion level plus the documentation outcome.
+Verify produces this by joining work-unit (acceptance criteria),
+behavior-contract (scenario- or gate-to-criterion mapping), and test-evidence
+(results), and by reviewing the documentation impact of the change. The output
+reports coverage at the acceptance-criterion level plus the documentation
+outcome.
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
 | work_unit | string (work-unit ref) | yes | Common envelope |
+| behavior_form | enum: scenario, gate | yes | Selects scenario or gate coverage |
 | criterion_coverage | array of coverage-entry | yes (min 1) | Per-criterion coverage status |
 | documentation | object | yes | Documentation impact: `updated`, `verified_accurate`, `follow_up_work_units` |
 
-**Coverage-entry fields:**
+**Scenario coverage-entry fields:**
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
 | criterion | string | yes | Acceptance criterion from the work-unit |
 | status | enum: covered, partial, uncovered | yes | Coverage status |
-| scenarios | array of strings | no | Scenario names that cover this criterion |
-| failures | array of strings | no | Scenario names that failed for this criterion |
+| scenarios | array of strings | required for covered/partial; empty or absent for uncovered | Scenario names that cover this criterion |
+| failures | array of strings | empty/absent for covered/uncovered; non-empty for partial | Scenario names that failed for this criterion |
+
+**Gate coverage-entry fields:**
+
+| Field | Type | Required | Purpose |
+|-------|------|----------|---------|
+| criterion | string | yes | Acceptance criterion from the work-unit |
+| status | enum: covered, partial, uncovered | yes | Coverage status |
+| gates | array of gate-result | required for covered/partial; empty or absent for uncovered | Gates that cover this criterion |
+| failures | array of strings | empty/absent for covered/uncovered; non-empty can make partial valid | Gate names that failed for this criterion |
+
+For `covered`, every gate result must be `pass` and `failures` must be empty
+or absent. For `partial`, gate coverage must include either a failed gate
+result or a non-empty `failures` list. For `uncovered`, gate evidence and
+failures must both be empty or absent.
+
+**Gate-result fields:**
+
+| Field | Type | Required | Purpose |
+|-------|------|----------|---------|
+| name | string | yes | Gate name |
+| criterion | string | yes | Acceptance criterion this gate covers |
+| category | enum: structural, coherence, conformance | yes | Gate category |
+| result | enum: pass, fail | yes | Gate result |
 
 ### change-proposal
 

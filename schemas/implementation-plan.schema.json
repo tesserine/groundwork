@@ -2,15 +2,20 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/implementation-plan.schema.json",
   "title": "Implementation Plan",
-  "description": "Validates the content of an implementation-plan artifact. Bridges behavior (from specify) to code (in implement) with design decisions and scenario-to-step mappings.",
+  "description": "Validates the content of an implementation-plan artifact. Bridges behavior to code with design decisions and behavior-to-step mappings.",
   "type": "object",
-  "required": ["work_unit", "summary", "design_decisions", "affected_files", "behavior_mapping"],
+  "required": ["work_unit", "behavior_form", "summary", "design_decisions", "affected_files", "behavior_mapping"],
   "additionalProperties": false,
   "properties": {
     "work_unit": {
       "type": "string",
       "description": "Common envelope — threads to work unit.",
       "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
+    },
+    "behavior_form": {
+      "type": "string",
+      "description": "Behavior form this plan carries forward.",
+      "enum": ["scenario", "gate"]
     },
     "summary": {
       "type": "string",
@@ -35,10 +40,33 @@
     },
     "behavior_mapping": {
       "type": "array",
-      "description": "How scenarios map to implementation steps.",
-      "minItems": 1,
-      "items": {
-        "$ref": "#/$defs/mapping"
+      "description": "How behavior contract entries map to implementation steps.",
+      "minItems": 1
+    }
+  },
+  "if": {
+    "properties": {
+      "behavior_form": {
+        "const": "scenario"
+      }
+    },
+    "required": ["behavior_form"]
+  },
+  "then": {
+    "properties": {
+      "behavior_mapping": {
+        "items": {
+          "$ref": "#/$defs/scenario-mapping"
+        }
+      }
+    }
+  },
+  "else": {
+    "properties": {
+      "behavior_mapping": {
+        "items": {
+          "$ref": "#/$defs/gate-mapping"
+        }
       }
     }
   },
@@ -61,7 +89,7 @@
         }
       }
     },
-    "mapping": {
+    "scenario-mapping": {
       "type": "object",
       "description": "Mapping from a behavior-contract scenario to implementation steps.",
       "required": ["scenario", "steps"],
@@ -75,6 +103,37 @@
         "steps": {
           "type": "array",
           "description": "Implementation steps for this scenario.",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "gate-mapping": {
+      "type": "object",
+      "description": "Mapping from a behavior-contract gate to implementation steps.",
+      "required": ["name", "criterion", "category", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Gate name from behavior-contract.",
+          "minLength": 1
+        },
+        "criterion": {
+          "type": "string",
+          "description": "Acceptance criterion this gate maps to.",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "description": "Gate category.",
+          "enum": ["structural", "coherence", "conformance"]
+        },
+        "steps": {
+          "type": "array",
+          "description": "Implementation steps for this gate.",
           "minItems": 1,
           "items": {
             "type": "string"

@@ -6,7 +6,7 @@ description: >-
   through `change-approved` and blocking findings through
   `change-needs-revision`.
 metadata:
-  version: "2.1.0"
+  version: "2.2.0"
   updated: "2026-06-20"
 ---
 
@@ -63,15 +63,12 @@ dimension's projected-universal findings.
    produced artifact type; a review run that emits zero or two dispositions
    is invalid.
 
-   For a runtime-behavior work-unit, the disposition remains in the
-   scenario-keyed runtime close path. For a documentation-deliverable
-   work-unit, judge the gate-form packaging as committed evidence. The
-   structural, coherence, and conformance coverage is reviewable behavior
-   evidence, alongside documentation and code-quality validation-performed.
-   Runa-backed runtime sequencing of gate-form close artifacts — and any
-   review artifact schema change it would require — is deferred to #454;
-   name that boundary honestly rather than implying the gate-form runtime
-   path closes end to end today.
+   For a runtime-behavior work-unit, judge the scenario-keyed runtime close
+   path. For a documentation-deliverable work-unit, judge the gate-form
+   packaging through the existing proposal, completion evidence, and review
+   disposition context. The structural, coherence, and conformance coverage
+   is committed evidence and reviewable behavior evidence, alongside
+   documentation and code-quality validation-performed.
 
 ## The Independence of the Gate
 

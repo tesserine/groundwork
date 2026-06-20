@@ -2,15 +2,20 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/behavior-contract.schema.json",
   "title": "Behavior Contract",
-  "description": "Validates the content of a behavior-contract artifact. Defines expected system behavior as Given/When/Then scenarios that trace to acceptance criteria.",
+  "description": "Validates the content of a behavior-contract artifact. Defines expected system behavior as Given/When/Then scenarios or documentation-deliverable gates that trace to acceptance criteria.",
   "type": "object",
-  "required": ["work_unit", "title", "scenarios"],
+  "required": ["work_unit", "behavior_form", "title"],
   "additionalProperties": false,
   "properties": {
     "work_unit": {
       "type": "string",
       "description": "Common envelope — threads to work unit.",
       "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
+    },
+    "behavior_form": {
+      "type": "string",
+      "description": "Behavior contract form. Use scenario for executable Given/When/Then behavior, or gate for documentation-deliverable quality gates.",
+      "enum": ["scenario", "gate"]
     },
     "title": {
       "type": "string",
@@ -24,6 +29,34 @@
       "items": {
         "$ref": "#/$defs/scenario"
       }
+    },
+    "gates": {
+      "type": "array",
+      "description": "Documentation-deliverable gates that trace to acceptance criteria.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/gate"
+      }
+    }
+  },
+  "if": {
+    "properties": {
+      "behavior_form": {
+        "const": "scenario"
+      }
+    },
+    "required": ["behavior_form"]
+  },
+  "then": {
+    "required": ["scenarios"],
+    "properties": {
+      "gates": false
+    }
+  },
+  "else": {
+    "required": ["gates"],
+    "properties": {
+      "scenarios": false
     }
   },
   "$defs": {
@@ -56,6 +89,34 @@
         "then": {
           "type": "string",
           "description": "The expected outcome.",
+          "minLength": 1
+        }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "description": "A documentation-deliverable quality gate tracing to an acceptance criterion.",
+      "required": ["name", "criterion", "category", "check"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable gate name.",
+          "minLength": 1
+        },
+        "criterion": {
+          "type": "string",
+          "description": "Which acceptance criterion this gate refines.",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "description": "Gate category.",
+          "enum": ["structural", "coherence", "conformance"]
+        },
+        "check": {
+          "type": "string",
+          "description": "The concrete check that determines whether the gate passes.",
           "minLength": 1
         }
       }

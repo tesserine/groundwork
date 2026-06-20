@@ -5,7 +5,7 @@ description: >-
   completion evidence exists, and re-fires from change-needs-revision;
   preserves immutable proposal version history.
 metadata:
-  version: "3.1.0"
+  version: "3.2.0"
   updated: "2026-06-20"
 ---
 
@@ -62,16 +62,19 @@ carries the forge-tagged reference downstream.
    forge-specific delivery language.
 
 5. **Deliver the `change-proposal`.**
-   For a runtime-behavior work-unit, follow the scenario-keyed runtime close
-   path and invoke the `change-proposal` MCP tool. The proposal summary
-   carries the multidimensional claim: executable scenarios or scenario
-   coverage for behavior, documentation outcomes, and code-quality findings.
-   The object below is MCP tool input, not artifact body. `instance_id` is a
-   tool parameter that names the artifact instance; it is extracted before
-   validating artifact content, becomes the workspace filename, and must not
-   appear in the artifact body. Runa injects `work_unit` from session
-   context; the agent does not supply `work_unit`. Do not write the
-   workspace JSON file directly:
+   Invoke the `change-proposal` MCP tool through the existing
+   `change-proposal` schema. For a runtime-behavior work-unit, the proposal
+   summary carries scenario-keyed coverage. For a documentation-deliverable
+   work-unit, the same existing artifact carries gate-form behavior as
+   committed evidence in the summary and proposal context: structural,
+   coherence, and conformance coverage for the behavior dimension,
+   documentation outcomes, and code-quality findings. The object below is
+   MCP tool input, not artifact body. `instance_id` is a tool parameter that
+   names the artifact instance; it is extracted before validating artifact
+   content, becomes the workspace filename, and must not appear in the
+   artifact body. Runa injects `work_unit` from session context; the agent
+   does not supply `work_unit`. Do not write the workspace JSON file
+   directly:
 
    ```
    change-proposal({
@@ -91,16 +94,6 @@ carries the forge-tagged reference downstream.
    Runa validates the remaining artifact body fields against the
    change-proposal schema, persists the artifact, and records it in the
    artifact store.
-
-   For a documentation-deliverable work-unit, report the gate-form
-   packaging as committed evidence. The structural, coherence, and
-   conformance coverage is the behavior dimension in the deliverable's
-   behavior form, and the proposal still carries documentation and
-   code-quality validation-performed for review. Runa-backed runtime
-   sequencing of gate-form close artifacts — and any `change-proposal`
-   schema change it would require — is deferred to #454; name that boundary
-   honestly rather than routing this path through a runtime shape it cannot
-   satisfy today.
 
 A revision round never mutates an earlier proposal artifact: it creates a
 new valid `change-proposal` whose `version` advances for this work unit.

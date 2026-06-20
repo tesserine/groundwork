@@ -2,9 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/completion-evidence.schema.json",
   "title": "Completion Evidence",
-  "description": "Validates the content of a completion-evidence artifact. Reports coverage at the acceptance-criterion level by joining work-unit criteria, behavior-contract scenarios, and test results, and records the documentation impact of the change.",
+  "description": "Validates the content of a completion-evidence artifact. Reports coverage at the acceptance-criterion level by joining work-unit criteria, behavior-contract entries, and test results, and records the documentation impact of the change.",
   "type": "object",
-  "required": ["work_unit", "criterion_coverage", "documentation"],
+  "required": ["work_unit", "behavior_form", "criterion_coverage", "documentation"],
   "additionalProperties": false,
   "properties": {
     "work_unit": {
@@ -12,24 +12,127 @@
       "description": "Common envelope — threads to work unit.",
       "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
     },
+    "behavior_form": {
+      "type": "string",
+      "description": "Behavior form this completion evidence carries forward.",
+      "enum": ["scenario", "gate"]
+    },
     "criterion_coverage": {
       "type": "array",
       "description": "Per-criterion coverage status.",
-      "minItems": 1,
-      "items": {
-        "$ref": "#/$defs/coverage-entry"
-      }
+      "minItems": 1
     },
     "documentation": {
       "$ref": "#/$defs/documentation-impact"
     }
   },
+  "if": {
+    "properties": {
+      "behavior_form": {
+        "const": "scenario"
+      }
+    },
+    "required": ["behavior_form"]
+  },
+  "then": {
+    "properties": {
+      "criterion_coverage": {
+        "items": {
+          "$ref": "#/$defs/scenario-coverage-entry"
+        }
+      }
+    }
+  },
+  "else": {
+    "properties": {
+      "criterion_coverage": {
+        "items": {
+          "$ref": "#/$defs/gate-coverage-entry"
+        }
+      }
+    }
+  },
   "$defs": {
-    "coverage-entry": {
+    "scenario-coverage-entry": {
       "type": "object",
       "description": "Coverage status for a single acceptance criterion.",
       "required": ["criterion", "status"],
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": ["covered", "partial"]
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "required": ["scenarios"],
+            "properties": {
+              "scenarios": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "covered"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "failures": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "partial"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "required": ["failures"],
+            "properties": {
+              "failures": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "uncovered"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "scenarios": {
+                "maxItems": 0
+              },
+              "failures": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ],
       "properties": {
         "criterion": {
           "type": "string",
@@ -54,6 +157,169 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "gate-coverage-entry": {
+      "type": "object",
+      "description": "Gate coverage status for a single acceptance criterion.",
+      "required": ["criterion", "status"],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": ["covered", "partial"]
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "required": ["gates"],
+            "properties": {
+              "gates": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "covered"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "gates": {
+                "items": {
+                  "properties": {
+                    "result": {
+                      "const": "pass"
+                    }
+                  },
+                  "required": ["result"]
+                }
+              },
+              "failures": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "partial"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "properties": {
+                  "gates": {
+                    "contains": {
+                      "properties": {
+                        "result": {
+                          "const": "fail"
+                        }
+                      },
+                      "required": ["result"]
+                    }
+                  }
+                }
+              },
+              {
+                "required": ["failures"],
+                "properties": {
+                  "failures": {
+                    "minItems": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "uncovered"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "gates": {
+                "maxItems": 0
+              },
+              "failures": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "criterion": {
+          "type": "string",
+          "description": "Acceptance criterion from the work unit.",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "description": "Coverage status.",
+          "enum": ["covered", "partial", "uncovered"]
+        },
+        "gates": {
+          "type": "array",
+          "description": "Gates that cover this criterion.",
+          "items": {
+            "$ref": "#/$defs/gate-result"
+          }
+        },
+        "failures": {
+          "type": "array",
+          "description": "Gate names that failed for this criterion.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "gate-result": {
+      "type": "object",
+      "description": "A gate result included in criterion coverage.",
+      "required": ["name", "criterion", "category", "result"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Gate name.",
+          "minLength": 1
+        },
+        "criterion": {
+          "type": "string",
+          "description": "Acceptance criterion this gate covers.",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "description": "Gate category.",
+          "enum": ["structural", "coherence", "conformance"]
+        },
+        "result": {
+          "type": "string",
+          "description": "Gate result.",
+          "enum": ["pass", "fail"]
         }
       }
     },
