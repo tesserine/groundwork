@@ -1,0 +1,14 @@
+{
+  "work_unit": "work-unit-454-runtime-gate-form",
+  "title": "Documentation-deliverable gate-form behavior",
+  "behavior_form": "gate",
+  "scenarios": [
+    {
+      "name": "fabricated scenario",
+      "criterion": "A runtime-backed documentation-deliverable work-unit delivers its behavior dimension without scenarios.",
+      "given": "a documentation deliverable",
+      "when": "the contract is delivered",
+      "then": "a scenario-shaped artifact exists"
+    }
+  ]
+}

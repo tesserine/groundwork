@@ -1,3 +1,4 @@
+import json
 import unittest
 from pathlib import Path
 
@@ -46,6 +47,67 @@ class ArtifactSchemaTests(unittest.TestCase):
                 artifact = load_artifact("change-proposal", self.fixture(name))
 
                 self.assertIn(artifact["handle"]["forge_tag"], {"github", "sourcehut"})
+
+    def test_behavior_artifacts_require_behavior_form(self) -> None:
+        fixtures = {
+            "behavior-contract": "valid-behavior-contract.json",
+            "implementation-plan": "valid-implementation-plan.json",
+            "test-evidence": "valid-test-evidence.json",
+            "completion-evidence": "valid-completion-evidence.json",
+        }
+
+        for artifact_type, fixture_name in fixtures.items():
+            with self.subTest(artifact_type=artifact_type):
+                artifact = load_artifact(artifact_type, self.fixture(fixture_name))
+                self.assertEqual("scenario", artifact["behavior_form"])
+                artifact.pop("behavior_form")
+
+                with self.assertRaises(ArtifactSchemaError) as context:
+                    validate_artifact(artifact_type, artifact)
+
+                self.assertIn("behavior_form", context.exception.paths)
+
+    def test_gate_form_behavior_artifacts_validate_without_scenarios(self) -> None:
+        fixtures = {
+            "behavior-contract": "valid-behavior-contract-gate.json",
+            "implementation-plan": "valid-implementation-plan-gate.json",
+            "test-evidence": "valid-test-evidence-gate.json",
+            "completion-evidence": "valid-completion-evidence-gate.json",
+        }
+
+        for artifact_type, fixture_name in fixtures.items():
+            with self.subTest(artifact_type=artifact_type):
+                artifact = load_artifact(artifact_type, self.fixture(fixture_name))
+                serialized = json.dumps(artifact)
+                self.assertEqual("gate", artifact["behavior_form"])
+                self.assertNotIn('"scenarios"', serialized)
+                self.assertNotIn('"scenario"', serialized)
+
+    def test_gate_form_behavior_artifacts_reject_scenario_shaped_payloads(self) -> None:
+        fixtures = {
+            "behavior-contract": "invalid-behavior-contract-gate-with-scenarios.json",
+            "implementation-plan": "invalid-implementation-plan-gate-with-scenario-mapping.json",
+            "test-evidence": "invalid-test-evidence-gate-with-scenario-evidence.json",
+            "completion-evidence": "invalid-completion-evidence-gate-with-scenarios.json",
+        }
+
+        for artifact_type, fixture_name in fixtures.items():
+            with self.subTest(artifact_type=artifact_type):
+                with self.assertRaises(ArtifactSchemaError):
+                    load_artifact(artifact_type, self.fixture(fixture_name))
+
+    def test_runtime_behavior_artifact_schemas_remain_mcp_advertisable(self) -> None:
+        for schema_name in [
+            "behavior-contract.schema.json",
+            "implementation-plan.schema.json",
+            "test-evidence.schema.json",
+            "completion-evidence.schema.json",
+        ]:
+            with self.subTest(schema=schema_name):
+                schema = json.loads((SCHEMAS / schema_name).read_text(encoding="utf-8"))
+                self.assertEqual("object", schema.get("type"))
+                for keyword in ["oneOf", "anyOf", "allOf", "$ref"]:
+                    self.assertNotIn(keyword, schema)
 
     def test_change_proposal_schema_accepts_sourcehut_proposal_ref_handle(self) -> None:
         artifact = load_artifact("change-proposal", self.fixture("valid-change-proposal-sourcehut-v2.json"))

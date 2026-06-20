@@ -1,0 +1,12 @@
+{
+  "work_unit": "work-unit-454-runtime-gate-form",
+  "behavior_form": "gate",
+  "evidence": [
+    {
+      "scenario": "fabricated scenario",
+      "result": "pass",
+      "command": "python -m unittest tests.test_artifact_schemas",
+      "output_summary": "This should fail because gate evidence must be gate-keyed."
+    }
+  ]
+}

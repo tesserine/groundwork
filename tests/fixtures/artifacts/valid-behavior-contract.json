@@ -1,6 +1,7 @@
 {
   "work_unit": "work-unit-178-test-fixtures",
   "title": "Schema validation at ingestion entry point",
+  "behavior_form": "scenario",
   "scenarios": [
     {
       "name": "reject-missing-required-field",

@@ -1,0 +1,28 @@
+{
+  "work_unit": "work-unit-454-runtime-gate-form",
+  "behavior_form": "gate",
+  "summary": "Carry documentation-deliverable behavior through the runtime artifact chain as gates.",
+  "design_decisions": [
+    {
+      "decision": "Keep gate behavior on the existing artifact types.",
+      "rationale": "The behavior-contract surface is the single home for behavior validation across both forms."
+    }
+  ],
+  "affected_files": [
+    "schemas/behavior-contract.schema.json",
+    "schemas/implementation-plan.schema.json",
+    "schemas/test-evidence.schema.json",
+    "schemas/completion-evidence.schema.json"
+  ],
+  "behavior_mapping": [
+    {
+      "name": "gate-form behavior artifacts stay schema-valid",
+      "criterion": "A runtime-backed documentation-deliverable work-unit delivers its behavior dimension without scenarios.",
+      "category": "structural",
+      "steps": [
+        "Add gate-form schema variants to the existing behavior artifacts.",
+        "Reject gate artifacts that use scenario fields."
+      ]
+    }
+  ]
+}

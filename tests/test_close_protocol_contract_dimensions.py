@@ -103,14 +103,14 @@ class CloseProtocolContractDimensionTests(unittest.TestCase):
             "documentation_status",
             "code-quality dimension",
             "committed evidence",
-            "typed code-quality",
             "completion-record",
-            "#454",
-            "deferred",
+            "existing schema fields",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, delivery)
 
+        self.assertNotIn("#454", delivery)
+        self.assertNotIn("deferred", delivery)
         self.assertNotRegex(delivery, r"code_quality[\":]")
 
     def test_close_protocols_carry_behavior_in_the_deliverable_form(self) -> None:
@@ -157,7 +157,7 @@ class CloseProtocolContractDimensionTests(unittest.TestCase):
                 self.assertIn(expected, behavior_row)
                 self.assertIn(expected, combined)
 
-    def test_gate_form_runtime_close_artifact_delivery_names_454_deferral(self) -> None:
+    def test_gate_form_close_artifact_delivery_uses_existing_schema_context(self) -> None:
         for path, expected_artifact in [
             (SUBMIT_PROTOCOL, "`change-proposal`"),
             (LAND_PROTOCOL, "`completion-record`"),
@@ -171,10 +171,11 @@ class CloseProtocolContractDimensionTests(unittest.TestCase):
                     "documentation-deliverable work-unit",
                     "gate-form",
                     "committed evidence",
-                    "#454",
-                    "deferred",
+                    "existing",
                 ]:
                     self.assertIn(expected, delivery)
+                self.assertNotIn("#454", delivery)
+                self.assertNotIn("deferred", delivery)
 
         review_disposition = normalized(step(read(REVIEW_PROTOCOL), 4))
         for expected in [
@@ -183,11 +184,12 @@ class CloseProtocolContractDimensionTests(unittest.TestCase):
             "documentation-deliverable work-unit",
             "gate-form",
             "committed evidence",
-            "#454",
-            "deferred",
+            "existing",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, review_disposition)
+        self.assertNotIn("#454", review_disposition)
+        self.assertNotIn("deferred", review_disposition)
 
     def test_dimension_omission_corruption_modes_and_invariants_survive(self) -> None:
         corruption_modes = normalized(

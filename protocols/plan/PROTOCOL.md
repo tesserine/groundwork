@@ -6,7 +6,7 @@ description: >-
   before implement. If you are about to start coding with unresolved design
   choices, plan first.
 metadata:
-  version: "2.3.0"
+  version: "2.4.0"
   updated: "2026-06-20"
   origin: "Adapted from OpenAI Codex CLI (Apache-2.0). See LICENSE-UPSTREAM."
 ---
@@ -85,18 +85,23 @@ documentation outcomes and reviewer-checkable code-quality projections.
    would cause implementation mistakes.
 
 5. **Deliver the `implementation-plan`.**
-   For a runtime-behavior work-unit, invoke the scenario-keyed
-   `implementation-plan` MCP tool. The object below is MCP tool input, not
-   artifact body.
+   Invoke the `implementation-plan` MCP tool in the deliverable's behavior
+   form. For a runtime-behavior work-unit, deliver scenario-keyed mappings.
+   For a documentation-deliverable work-unit, deliver gate-form mappings for
+   structural, coherence, and conformance gates. The object below is MCP
+   tool input, not artifact body.
    `instance_id` is a tool parameter that names the artifact instance; it is
    extracted before validating artifact content, becomes the workspace
    filename, and must not appear in the artifact body. Runa injects
    `work_unit` from session context; the agent does not supply `work_unit`.
-   Do not write the workspace JSON file directly:
+   Do not write the workspace JSON file directly.
+
+   Scenario form:
 
    ```
    implementation-plan({
      instance_id: "<slug>",
+     behavior_form: "scenario",
      summary: "<what the plan accomplishes>",
      design_decisions: [{decision: "...", rationale: "..."}, ...],
      affected_files: ["..."],
@@ -104,15 +109,27 @@ documentation outcomes and reviewer-checkable code-quality projections.
    })
    ```
 
+   Gate form:
+
+   ```
+   implementation-plan({
+     instance_id: "<slug>",
+     behavior_form: "gate",
+     summary: "<what the plan accomplishes>",
+     design_decisions: [{decision: "...", rationale: "..."}, ...],
+     affected_files: ["..."],
+     behavior_mapping: [{
+       name: "<gate name>",
+       criterion: "<acceptance criterion this maps to>",
+       category: "structural" | "coherence" | "conformance",
+       steps: ["..."]
+     }]
+   })
+   ```
+
    Runa validates the remaining artifact body fields against the
    implementation-plan schema, persists the artifact, and records it in the
    artifact store.
-
-   For a documentation-deliverable work-unit, report the gate-form behavior
-   mapping as committed evidence and state that the runa-backed runtime
-   sequencing of gate-form build artifacts is deferred to #454. Do not route
-   a gate-only unit through the scenario-keyed `implementation-plan` tool or
-   encode gates as scenarios.
 
 ## Scale
 

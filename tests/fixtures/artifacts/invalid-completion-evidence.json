@@ -1,5 +1,6 @@
 {
   "work_unit": "work-unit-178-test-fixtures",
+  "behavior_form": "scenario",
   "criterion_coverage": [
     {
       "criterion": "Records missing required fields are rejected with a 400 status",

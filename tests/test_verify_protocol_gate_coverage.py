@@ -113,7 +113,7 @@ class VerifyProtocolGateCoverageTests(unittest.TestCase):
         )
         self.assertIsNone(lifecycle_table.search(body))
 
-    def test_gate_keyed_completion_evidence_runtime_delivery_names_454_deferral(self) -> None:
+    def test_gate_keyed_completion_evidence_runtime_delivery_uses_existing_mcp_tool(self) -> None:
         delivery = normalized(step(read(VERIFY_PROTOCOL), 5))
 
         for expected in [
@@ -122,13 +122,15 @@ class VerifyProtocolGateCoverageTests(unittest.TestCase):
             "`completion-evidence` MCP tool",
             "documentation-deliverable work-unit",
             "gate coverage",
-            "committed evidence",
-            "#454",
-            "deferred",
+            "behavior_form",
+            "gate",
+            "structural, coherence, and conformance",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, delivery)
 
+        self.assertNotIn("#454", delivery)
+        self.assertNotIn("deferred", delivery)
         self.assertNotRegex(delivery, r"documentation-deliverable work-unit[^.]+scenarios")
 
     def test_named_gate_form_agrees_with_contract_skill_lifecycle(self) -> None:

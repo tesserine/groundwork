@@ -128,27 +128,25 @@ class TakeProtocolContractDimensionTests(unittest.TestCase):
                     self.assertIn(form, rows[dimension])
                     self.assertIn(form, take_body)
 
-    def test_behavior_contract_delivery_is_conditional_on_deliverable_type(self) -> None:
+    def test_behavior_contract_delivery_supports_both_behavior_forms(self) -> None:
         delivery = normalized(step(read(TAKE_PROTOCOL), 5))
 
         for expected in [
             "runtime-behavior work-unit",
             "documentation-deliverable work-unit",
-            "scenario artifact",
-            "scenario-only",
-            "does not invoke",
+            "`behavior-contract` MCP tool",
+            "behavior_form",
+            "scenario",
+            "gate",
+            "structural, coherence, and conformance",
             "committed structural, coherence, and conformance tests",
-            "#454",
-            "deferred",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, delivery)
 
-        unconditional = re.compile(
-            r"^Invoke the `behavior-contract` MCP tool\.",
-            flags=re.MULTILINE,
-        )
-        self.assertIsNone(unconditional.search(read(TAKE_PROTOCOL)))
+        self.assertNotIn("#454", delivery)
+        self.assertNotIn("deferred", delivery)
+        self.assertNotRegex(delivery, r"documentation-deliverable work-unit[^.]+scenarios")
 
     def test_documentation_deliverable_gates_thread_to_carry_through_without_scenarios(self) -> None:
         carry = normalized(step(read(TAKE_PROTOCOL), 6))

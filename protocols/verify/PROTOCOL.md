@@ -7,8 +7,8 @@ description: >-
   running the verification and reading the output — evidence before
   assertions, always.
 metadata:
-  version: "2.0.0"
-  updated: "2026-06-11"
+  version: "2.1.0"
+  updated: "2026-06-20"
   origin: "Adapted from obra/superpowers (MIT). See LICENSE-UPSTREAM."
 ---
 
@@ -78,19 +78,23 @@ documentation-deliverable work-unit, coverage is gate coverage.
    [references/code-quality-review.md](references/code-quality-review.md).
 
 5. **Deliver `completion-evidence`.**
-   A runtime-behavior work-unit invokes the scenario-keyed
-   `completion-evidence` MCP tool. The
-   `completion-evidence` MCP tool is the runtime delivery path for scenario
-   coverage today. The object below is MCP tool input, not artifact body.
+   Invoke the `completion-evidence` MCP tool in the deliverable's behavior
+   form. For a runtime-behavior work-unit, deliver scenario-keyed coverage.
+   For a documentation-deliverable work-unit, deliver gate coverage for
+   structural, coherence, and conformance gates. The object below is MCP
+   tool input, not artifact body.
    `instance_id` is a tool parameter that names the artifact instance; it is
    extracted before validating artifact content, becomes the workspace
    filename, and must not appear in the artifact body. Runa injects
    `work_unit` from session context; the agent does not supply `work_unit`.
-   Do not write the workspace JSON file directly:
+   Do not write the workspace JSON file directly.
+
+   Scenario form:
 
    ```
    completion-evidence({
      instance_id: "<slug>",
+     behavior_form: "scenario",
      criterion_coverage: [{
        criterion: "<acceptance criterion>",
        status: "covered",
@@ -105,17 +109,34 @@ documentation-deliverable work-unit, coverage is gate coverage.
    })
    ```
 
+   Gate form:
+
+   ```
+   completion-evidence({
+     instance_id: "<slug>",
+     behavior_form: "gate",
+     criterion_coverage: [{
+       criterion: "<acceptance criterion>",
+       status: "covered",
+       gates: [{
+         name: "<gate name>",
+         criterion: "<acceptance criterion this gate covers>",
+         category: "structural" | "coherence" | "conformance",
+         result: "pass"
+       }],
+       failures: []
+     }],
+     documentation: {
+       updated: ["<docs updated in this change>"],
+       verified_accurate: ["<docs reviewed, confirmed accurate>"],
+       follow_up_work_units: ["<work-units filed for deeper doc work>"]
+     }
+   })
+   ```
+
    Runa validates the remaining artifact body fields against the
    completion-evidence schema, persists the artifact, and records it in the
    artifact store.
-
-   For a documentation-deliverable work-unit, report gate coverage as
-   committed evidence. The structural, coherence, and conformance gate
-   results name the covered criteria and any failures. Runa-backed runtime
-   sequencing of gate-keyed completion evidence is deferred to #454; name
-   that boundary honestly rather than routing this path through the
-   scenario-keyed tool or implying the documentation-only runtime path
-   advances end to end today.
 
 The evidence is honest, not aspirational: gaps and failures are recorded as
 gaps and failures. Review consumes this evidence and blocks on it — an
@@ -139,9 +160,6 @@ uncovered criterion shipped to review is a blocking finding, not a secret.
   the behavior form for that deliverable, not a scenario disguise.
 - `lifecycle-modeling`: re-encoding the behavior lifecycle in `verify`
   instead of consulting the `contract` skill as the single home.
-- `false-runtime-advance`: implying a documentation-deliverable unit can
-  deliver gate-keyed runtime `completion-evidence` before #454 supplies that
-  path.
 
 ## Cross-References
 
