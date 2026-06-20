@@ -96,6 +96,16 @@ class ArtifactSchemaTests(unittest.TestCase):
                 with self.assertRaises(ArtifactSchemaError):
                     load_artifact(artifact_type, self.fixture(fixture_name))
 
+    def test_gate_form_completion_evidence_accepts_uncovered_criteria_without_gates(self) -> None:
+        artifact = load_artifact(
+            "completion-evidence",
+            self.fixture("valid-completion-evidence-gate-uncovered.json"),
+        )
+
+        self.assertEqual("gate", artifact["behavior_form"])
+        self.assertEqual("uncovered", artifact["criterion_coverage"][0]["status"])
+        self.assertNotIn("gates", artifact["criterion_coverage"][0])
+
     def test_runtime_behavior_artifact_schemas_remain_mcp_advertisable(self) -> None:
         for schema_name in [
             "behavior-contract.schema.json",
