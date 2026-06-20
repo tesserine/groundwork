@@ -94,7 +94,13 @@ class ReckonAscentTests(unittest.TestCase):
 
         self.assertIn("upward purpose anchor", prose(section(excavation, "## Ascent (the Purpose Ladder)")))
         self.assertIn("upward purpose anchor", prose(two_faces))
-        self.assertIn("purpose as an anchor you return to", closing)
+        closing_prose = prose(closing)
+
+        self.assertIn(
+            "Orient returns you to what is needed and, through Ascent, back upward to purpose before structure sets.",
+            closing_prose,
+        )
+        self.assertNotIn("Ascent names purpose as an anchor you return to", closing_prose)
         self.assertIn("Purpose drift", prose(recognition))
         self.assertIn("Ascent", prose(recognition))
 

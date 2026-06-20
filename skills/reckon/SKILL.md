@@ -205,7 +205,7 @@ choice before committing.
 *The default is to float — in inherited frames, borrowed categories,
 accepted costs, unquestioned structures, precedent as constraint,
 descriptions of what is, and analogical reasoning from correct ground.
-Orient returns you to what is needed. Verify returns you to what is
-true. The selected principles give you direction. The chain keeps you
-honest. Ascent names purpose as an anchor you return to before structure
-sets. Reckon from there.*
+Orient returns you to what is needed and, through Ascent, back upward to
+purpose before structure sets. Verify returns you to what is true. The
+selected principles give you direction. The chain keeps you honest. Reckon
+from there.*
