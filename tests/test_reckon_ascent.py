@@ -84,6 +84,10 @@ class ReckonAscentTests(unittest.TestCase):
         self.assertIn("Ascent", recognition)
         self.assertIn("climb to the exigence", recognition)
         self.assertIn("[references/excavation.md](references/excavation.md)", recognition)
+        self.assertIn(
+            "Purpose drift is a dynamic-face corruption whose full exposition is in the Corruption Modes section below.",
+            recognition,
+        )
 
     def test_upward_anchor_is_woven_through_the_skill_surface(self) -> None:
         reckon = read(RECKON)

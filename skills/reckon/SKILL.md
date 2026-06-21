@@ -123,11 +123,14 @@ recognition-and-corrective machinery — not the principle definitions.
 ## Recognition Index
 
 When any of these fires, stop and re-derive. Full expositions with
-recognition and corrective for each:
+recognition and corrective for the analogical and assumed-constraint
+signals:
 [references/analogical-signals.md](references/analogical-signals.md) (the
 dynamic error — analogy from correct ground) and
 [references/assumed-constraints.md](references/assumed-constraints.md) (the
 static error — inherited assumptions accepted as constraints).
+Purpose drift is a dynamic-face corruption whose full exposition is in the
+Corruption Modes section below.
 
 | Signal | One-line trigger |
 |---|---|
