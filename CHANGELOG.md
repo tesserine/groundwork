@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Ascent in reckon** (#327). `reckon` now names Ascent, the Purpose
+  Ladder, as the upward counterpart to Recursive Why: structural choices
+  made during Reconstruct climb back through purpose to the exigence before
+  they commit to a dependency, artifact, or mechanism. The skill now carries
+  the `Purpose drift` corruption mode, recognition-index trigger, excavation
+  reference, and upward-anchor language across the reckon surface.
+
 - **Multi-dimensional contract.** The `contract` skill is now Contract-First
   given concrete form across dimensions, not behavior alone. A contract
   declares the dimensions a change demands — behavior (BDD, unchanged),
