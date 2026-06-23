@@ -708,6 +708,23 @@ class SelfInstallTests(unittest.TestCase):
             tree_payload(fixture.root / "mechanics"),
         )
 
+    def test_rerun_removes_retired_runtime_bundle_children(self) -> None:
+        fixture = self.add_fixture("runtime-retired-children")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        retired_bin = install.runtime_root() / "bin" / "groundwork-mechanic"
+        retired_lib = install.runtime_root() / "lib" / "tooling" / "forge_operations.py"
+        retired_bin.parent.mkdir(parents=True)
+        retired_lib.parent.mkdir(parents=True)
+        retired_bin.write_text("retired resolver\n", encoding="utf-8")
+        retired_lib.write_text("retired forge code\n", encoding="utf-8")
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        self.assertFalse(retired_bin.exists())
+        self.assertFalse(retired_lib.exists())
+
     def test_state_lives_under_self_install_namespace_distinct_from_legacy(self) -> None:
         fixture = self.add_fixture("state-namespace")
         install = InstallRun(self, fixture.root)

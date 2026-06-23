@@ -223,14 +223,28 @@ def _schema_definition_contract_errors(path: Path, schema: dict[str, Any]) -> li
     errors: list[str] = []
     if path.name in {"work-unit.schema.json", "change-proposal.schema.json"}:
         handle = schema.get("properties", {}).get("handle", {})
-        ref = handle.get("$ref") if isinstance(handle, dict) else None
-        expected = "forge-capability.schema.json#/$defs/handle"
-        if ref != expected:
-            errors.append(f"properties/handle/$ref: artifact handle must reference {expected}")
+        expected = _vendored_handle_schema(path)
+        handle_all_of = handle.get("allOf") if isinstance(handle, dict) else None
+        if not isinstance(handle, dict) or "$ref" in handle or handle_all_of != [expected]:
+            errors.append(
+                "properties/handle: artifact handle must carry a self-contained copy of "
+                "forge-capability.schema.json#/$defs/handle"
+            )
         defs = schema.get("$defs", {})
         if isinstance(defs, dict) and "handle" in defs:
             errors.append("$defs/handle: artifact schemas must not re-declare the forge capability handle")
     return errors
+
+
+def _vendored_handle_schema(path: Path) -> dict[str, Any]:
+    schema_path = path.parent / "forge-capability.schema.json"
+    if not schema_path.is_file():
+        schema_path = ROOT / "schemas" / "forge-capability.schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    handle = schema.get("$defs", {}).get("handle")
+    if not isinstance(handle, dict):
+        return {}
+    return handle
 
 
 def _check_manifest(path: Path) -> ConformanceResult:

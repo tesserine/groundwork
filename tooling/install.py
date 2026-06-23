@@ -261,6 +261,8 @@ def project_runtime_bundle(source: Path, sha: str, target: Path) -> None:
 # The resolved corpus (`principles/`) lives beside them and is converged
 # separately — bundle convergence never rebuilds the whole root.
 RUNTIME_BUNDLE_CHILDREN = ("manifest.toml", "mechanics", MARKER_NAME)
+RETIRED_RUNTIME_BUNDLE_CHILDREN = ("bin", "lib")
+RUNTIME_MANAGED_CHILDREN = RUNTIME_BUNDLE_CHILDREN + RETIRED_RUNTIME_BUNDLE_CHILDREN
 
 
 def converge_runtime_bundle(options: Options, sha: str) -> None:
@@ -274,12 +276,14 @@ def converge_runtime_bundle(options: Options, sha: str) -> None:
         ):
             return
         runtime_root.mkdir(parents=True, exist_ok=True)
-        for child in RUNTIME_BUNDLE_CHILDREN:
+        for child in RUNTIME_MANAGED_CHILDREN:
             current = runtime_root / child
             if current.is_dir():
                 shutil.rmtree(current)
             elif current.exists():
                 current.unlink()
+        for child in RUNTIME_BUNDLE_CHILDREN:
+            current = runtime_root / child
             (staging / child).replace(current)
     finally:
         shutil.rmtree(staging, ignore_errors=True)
@@ -288,7 +292,7 @@ def converge_runtime_bundle(options: Options, sha: str) -> None:
 def bundle_payload(runtime_root: Path) -> dict[str, bytes]:
     """The installed runtime bundle's payload, managed children only."""
     payload = {}
-    for child in RUNTIME_BUNDLE_CHILDREN:
+    for child in RUNTIME_MANAGED_CHILDREN:
         path = runtime_root / child
         if path.is_file():
             payload[child] = path.read_bytes()

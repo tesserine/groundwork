@@ -129,8 +129,7 @@ runtime_root() {
 runtime_available() {
   local sha
   sha="$(source_sha)"
-  git -C "$source_path" cat-file -e "$sha:manifest.toml" 2>/dev/null &&
-    git -C "$source_path" cat-file -e "$sha:mechanics" 2>/dev/null
+  git -C "$source_path" cat-file -e "$sha:manifest.toml" 2>/dev/null
 }
 
 principles_available() {
@@ -259,7 +258,9 @@ project_runtime_bundle() {
   local sha="$2"
   mkdir -p "$target/mechanics" || return 1
   git -C "$source_path" show "$sha:manifest.toml" > "$target/manifest.toml" || return 1
-  git -C "$source_path" archive --format=tar "$sha:mechanics" | tar -xf - -C "$target/mechanics" || return 1
+  if git -C "$source_path" cat-file -e "$sha:mechanics" 2>/dev/null; then
+    git -C "$source_path" archive --format=tar "$sha:mechanics" | tar -xf - -C "$target/mechanics" || return 1
+  fi
   write_marker "$target/$MARKER" "runtime" "groundwork" "$sha" || return 1
 }
 

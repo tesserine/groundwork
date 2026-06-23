@@ -625,7 +625,7 @@ name = "take"
         self.assertTrue(all(result.category == "C-4 schema-definition" for result in results))
         self.assertTrue(all(result.passed for result in results))
 
-    def test_artifact_handle_schema_must_reference_vendored_forge_handle(self) -> None:
+    def test_artifact_handle_schema_must_inline_the_vendored_forge_handle(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             schema = Path(directory) / "work-unit.schema.json"
             schema.write_text(
@@ -643,6 +643,37 @@ name = "take"
                                     "id": {"type": "string", "minLength": 1},
                                     "display": {"type": "string", "minLength": 1},
                                 },
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([schema])
+
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-4 schema-definition", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("self-contained copy", " ".join(results[0].errors))
+
+    def test_artifact_handle_schema_must_not_drift_from_vendored_forge_handle(self) -> None:
+        vendored_handle = json.loads(
+            (SCHEMAS / "forge-capability.schema.json").read_text(encoding="utf-8")
+        )["$defs"]["handle"]
+        drifted_handle = json.loads(json.dumps(vendored_handle))
+        drifted_handle["properties"]["id"]["minLength"] = 2
+        with tempfile.TemporaryDirectory() as directory:
+            schema = Path(directory) / "change-proposal.schema.json"
+            schema.write_text(
+                json.dumps(
+                    {
+                        "$schema": "https://json-schema.org/draft/2020-12/schema",
+                        "type": "object",
+                        "properties": {
+                            "handle": {
+                                "description": "Opaque connector handle.",
+                                "allOf": [drifted_handle],
                             }
                         },
                     }

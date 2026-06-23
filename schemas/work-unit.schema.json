@@ -26,8 +26,26 @@
       }
     },
     "handle": {
-      "$ref": "forge-capability.schema.json#/$defs/handle",
-      "description": "Optional opaque connector-issued handle for the tracker ticket backing this work unit."
+      "description": "Optional opaque connector-issued handle for the tracker ticket backing this work unit.",
+      "allOf": [
+        {
+          "type": "object",
+          "required": ["id", "display"],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Connector-issued identity token; compared for equality only by the engine. Must be a complete, scoped work-unit identity per FORGE-CAPABILITY.md (Forge Work-Unit Identity); the prose is authoritative.",
+              "minLength": 1
+            },
+            "display": {
+              "type": "string",
+              "description": "Human-readable rendering of the handled object.",
+              "minLength": 1
+            }
+          }
+        }
+      ]
     },
     "scope": {
       "type": "array",

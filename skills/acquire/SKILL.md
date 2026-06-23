@@ -41,7 +41,7 @@ session that entrypoint opens.
    MCP tool:
 
    ```
-   read-ticket({ref: "<connector ticket reference>"})
+   read-ticket({reference: "<connector ticket reference>"})
    ```
 
    Provider selection, credentials, and deployment identity belong to the

@@ -249,6 +249,28 @@ class GroundworkInstallTests(unittest.TestCase):
         self.assertFalse((install.runtime_root() / "bin" / "groundwork-mechanic").exists())
         self.assertFalse((install.runtime_root() / "lib" / "tooling" / "forge_operations.py").exists())
 
+    def test_install_projects_runtime_bundle_when_mechanics_tree_is_absent(self) -> None:
+        fixture = self.add_fixture("runtime-bundle-without-mechanics")
+        fixture.write(
+            "manifest.toml",
+            """
+            [[mechanics]]
+            name = "close-out"
+            """,
+        )
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        self.assertEqual(
+            (install.runtime_root() / "manifest.toml").read_bytes(),
+            (fixture.root / "manifest.toml").read_bytes(),
+        )
+        self.assertTrue((install.runtime_root() / "mechanics").is_dir())
+        self.assertEqual({}, tree_payload(install.runtime_root() / "mechanics"))
+
     def test_installed_protocol_mechanic_references_are_not_rewritten(self) -> None:
         fixture = self.add_fixture("installed-runtime-text")
         self.write_runtime_surface(fixture)
