@@ -96,8 +96,8 @@ reviewer is independent of the author is the invariant.
   stamp even when the behavior evidence passes.
 - `semantic-shift-dismissal`: treating meaning changes as harmless cleanup
   without reviewing their effect on contracts, schemas, or routing.
-- `forge-mechanic-leakage`: embedding forge-specific commands or
-  review-tool procedure in the protocol instead of the mechanics layer.
+- `forge-connector-leakage`: embedding forge-specific commands or
+  review-tool procedure in the protocol instead of the connector.
 
 ## Cross-References
 

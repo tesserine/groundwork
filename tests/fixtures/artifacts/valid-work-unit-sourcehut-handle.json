@@ -2,11 +2,10 @@
   "title": "Add SourceHut work-unit handle contract",
   "description": "Add a schema contract for SourceHut tracker-backed work-unit handles",
   "acceptance_criteria": [
-    "SourceHut tracker-backed work-units carry a forge-tagged ticket handle"
+    "Tracker-backed work-units carry an opaque connector handle"
   ],
   "handle": {
-    "forge_tag": "sourcehut",
-    "tracker_id": 4,
-    "number": 368
+    "id": "tenant-alpha:tracker-main:ticket-blue",
+    "display": "ticket blue"
   }
 }

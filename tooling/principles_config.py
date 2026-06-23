@@ -185,7 +185,7 @@ def _schema_errors(document: dict[str, Any]) -> list[tuple[str, str]]:
 
     Deliberately stdlib-only: setup-time resolution runs in deployments
     that carry no third-party packages (the same constraint
-    ``tooling/forge_operations.py`` observes). The JSON Schema at
+    the installer observes). The JSON Schema at
     ``schemas/principles-config.schema.json`` remains the documentation
     and conformance contract for the same shape; CI holds the two in
     agreement (tests/test_principles_config.py).

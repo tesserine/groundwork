@@ -13,37 +13,32 @@ ADR-0002. It is validated by `tooling.mechanics`, not declared as a runtime
 artifact type in `manifest.toml`. Mechanic parameters are shell environment
 variable names because invocation data is supplied through the child process
 environment; secret parameters use `secret = true` and must remain values, not
-rendered command text. Deployment-resolved parameters use `deployment_value` to
-declare which forge deployment value the resolver supplies from the
-`GROUNDWORK_*` environment contract; the resolver consults this declaration
-rather than inferring parameter categories from names.
+rendered command text.
+
+`forge-capability.schema.json` is a vendored copy of the commons forge
+capability contract. It defines the forge operation names Groundwork declares
+and the opaque handle shape `{id, display}` that connector-owned operations
+return. Groundwork conformance reads this schema when validating its manifest;
+provider selection and provider coordinates are not represented as Groundwork
+schema fields.
 
 `change-proposal.schema.json`, `change-approved.schema.json`, and
 `change-needs-revision.schema.json` are the C-4 artifact schemas for the
 submit -> review handoff from ADR-0002 and ADR-0003. `change-proposal`
 replaces the old PR-shaped `patch` artifact with a forge-neutral envelope plus
-a forge-tagged handle: GitHub proposals point at a pull request, and SourceHut
-proposals point at an immutable `refs/proposals/...` ref. The review disposition
-is the produced outcome type: `change-approved` cannot carry blocking findings,
-and `change-needs-revision` must carry at least one blocking finding.
-The SourceHut proposal-ref schema pattern is only a coarse fail-fast filter;
-mechanics use `git check-ref-format` as the authoritative ref-name boundary.
+an opaque connector-issued handle. The review disposition is the produced
+outcome type: `change-approved` cannot carry blocking findings, and
+`change-needs-revision` must carry at least one blocking finding.
 
 `work-unit.schema.json` is the planning-to-execution bridge. It remains
 forge-neutral and unpartitioned: tracker-backed units may carry an optional
-forge-tagged ticket `handle`, while non-tracker units omit `handle`, and
-planning-phase work-unit bodies do not carry a top-level `work_unit` field.
-Supported ticket handles are GitHub issue handles
-`{ forge_tag, url, number }` and SourceHut ticket handles
-`{ forge_tag, tracker_id, number }`; Groundwork artifact validation enforces
-registry membership and GitHub URL/number agreement.
+opaque connector-issued ticket `handle`, while non-tracker units omit
+`handle`, and planning-phase work-unit bodies do not carry a top-level
+`work_unit` field.
 
-Change-proposal and work-unit handle forge tags, plus mechanic-authored
-`forge_tag` values, resolve against the declarative `[[forge_tags]]` registry
-in `manifest.toml`.
-Manifest `[[mechanics]]` entries may declare `forge_tags = [...]` to bind an
-operation handle to forge-specific C-3 mechanics; conformance requires exactly
-one matching `mechanics/**/*.toml` file for each declared operation/tag pair.
+`[[forge_tags]]`, mechanic `forge_tag`, and `[[mechanics]].forge_tags` are
+retired. Conformance rejects them and instead requires Groundwork's manifest to
+declare the operation names from `forge-capability.schema.json`.
 
 The behavior artifact spine uses one artifact type per station and a required
 `behavior_form` discriminator instead of parallel scenario/gate artifact types:
@@ -66,13 +61,13 @@ Downstream consumers that build against a Groundwork schema contract pin a
 release tag or the merged full commit SHA. They do not pin a branch name or
 pre-merge ref.
 
-`request.schema.json` is different: it is a vendored copy of the canonical
-request contract maintained by `tesserine/commons`. Groundwork keeps the runtime
-copy here so runtime consumers still read schemas from groundwork, not from
+`request.schema.json` and `forge-capability.schema.json` are vendored copies of
+canonical contracts maintained by `tesserine/commons`. Groundwork keeps runtime
+copies here so runtime consumers still read schemas from groundwork, not from
 commons.
 
-The vendored request schema carries provenance metadata identifying the
-canonical authority, an immutable release-tag or commit-SHA URL for the
-canonical schema and prose, and the request spec's full semver. When updating
-the vendored copy, update both the schema content and the provenance metadata
-together so conformance stays explicit.
+Vendored schemas carry provenance metadata identifying the canonical authority,
+an immutable release-tag or commit-SHA URL for the canonical schema and prose,
+and the spec's full semver. When updating a vendored copy, update both the
+schema content and the provenance metadata together so conformance stays
+explicit.

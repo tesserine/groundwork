@@ -12,6 +12,7 @@ from jsonschema import Draft202012Validator
 from jsonschema.exceptions import SchemaError
 
 from tooling.artifact_schemas import ArtifactSchemaError, load_artifact, registry_from_manifest
+from tooling.forge_capability import operation_names
 from tooling.mechanics import MechanicError, load_mechanic
 from tooling.workflow_contracts import WorkflowContractError, load_workflow_contract, workflow_registry_from_manifest
 
@@ -27,16 +28,6 @@ CATEGORY_MANIFEST = "C-5 manifest"
 CATEGORY_UNKNOWN = "unknown"
 
 DIRECT_UNIT_DIRECTORY_NAMES = {"workflow-contracts", "mechanics", "schemas"}
-FORGE_TOUCHING_OPERATIONS = {
-    "apply-approved-change",
-    "claim-work-unit",
-    "close-out",
-    "create-ticket",
-    "deliver-change-proposal",
-    "read-ticket",
-    "record-progress",
-    "reflect-disposition",
-}
 FORGE_LEAKAGE_TOKEN_PATTERNS = {
     "gh": r"(?<![A-Za-z0-9_-])gh(?![A-Za-z0-9_-])",
     "github.com": r"github[.]com",
@@ -257,6 +248,8 @@ def _manifest_errors(manifest: dict[str, Any], root: Path) -> list[tuple[str, st
     outcome_types = _named_manifest_entries(outcome_type_entries, "outcome_types", "outcome type", errors)
     forge_tag_entries = _manifest_table_entries(manifest, "forge_tags", "forge tag", errors)
     forge_tags = _named_manifest_entries(forge_tag_entries, "forge_tags", "forge tag", errors)
+    if forge_tag_entries:
+        errors.append(("forge_tags", "forge_tags are retired; provider selection belongs to the selected forge connector"))
 
     for outcome_index, outcome_type in outcome_type_entries:
         name = outcome_type.get("name")
@@ -361,41 +354,53 @@ def _manifest_errors(manifest: dict[str, Any], root: Path) -> list[tuple[str, st
                 )
             )
 
-    errors.extend(_manifest_mechanic_binding_errors(mechanic_entries, forge_tags, root))
-    errors.extend(_manifest_forge_matrix_errors(mechanic_entries, forge_tags))
+    errors.extend(_manifest_retired_forge_tag_errors(mechanic_entries))
+    if manifest.get("name") == "groundwork":
+        errors.extend(_manifest_forge_capability_operation_errors(mechanic_entries))
     errors.extend(_manifest_protocol_leakage_errors(protocol_entries, root))
 
     return errors
 
 
-def _manifest_forge_matrix_errors(
+def _manifest_retired_forge_tag_errors(
     mechanic_entries: list[tuple[int, dict[str, Any]]],
-    forge_tags: set[str],
 ) -> list[tuple[str, str]]:
     errors: list[tuple[str, str]] = []
-    if not forge_tags:
-        return errors
+    for mechanic_index, mechanic in mechanic_entries:
+        if "forge_tags" in mechanic:
+            errors.append(
+                (
+                    f"mechanics/{mechanic_index}/forge_tags",
+                    "forge_tags are retired; provider selection belongs to the selected forge connector",
+                )
+            )
+    return errors
+
+
+def _manifest_forge_capability_operation_errors(
+    mechanic_entries: list[tuple[int, dict[str, Any]]],
+) -> list[tuple[str, str]]:
+    errors: list[tuple[str, str]] = []
     mechanic_by_name = {
         mechanic.get("name"): (mechanic_index, mechanic)
         for mechanic_index, mechanic in mechanic_entries
         if isinstance(mechanic.get("name"), str)
     }
-    for operation in sorted(FORGE_TOUCHING_OPERATIONS):
+    for operation in sorted(operation_names()):
         if operation not in mechanic_by_name:
             errors.append(
                 (
                     "mechanics",
-                    f"forge-touching operation `{operation}` must be declared in mechanics",
+                    f"forge capability operation `{operation}` must be declared in mechanics",
                 )
             )
             continue
         mechanic_index, mechanic = mechanic_by_name[operation]
-        declared = mechanic.get("forge_tags")
-        if not isinstance(declared, list) or set(declared) != forge_tags:
+        if "forge_tags" in mechanic:
             errors.append(
                 (
                     f"mechanics/{mechanic_index}/forge_tags",
-                    f"forge-touching operation `{operation}` must declare forge_tags for every registered forge",
+                    f"forge capability operation `{operation}` must not declare provider forge_tags",
                 )
             )
     return errors
@@ -427,64 +432,6 @@ def _manifest_protocol_leakage_errors(
                     )
                 )
     return errors
-
-
-def _manifest_mechanic_binding_errors(
-    mechanic_entries: list[tuple[int, dict[str, Any]]],
-    forge_tags: set[str],
-    root: Path,
-) -> list[tuple[str, str]]:
-    errors: list[tuple[str, str]] = []
-    c3_bindings = _c3_mechanic_bindings(root / "mechanics")
-
-    for mechanic_index, mechanic in mechanic_entries:
-        name = mechanic.get("name")
-        declared_forge_tags = mechanic.get("forge_tags")
-        if declared_forge_tags is None:
-            continue
-        if not isinstance(declared_forge_tags, list):
-            errors.append((f"mechanics/{mechanic_index}/forge_tags", "forge_tags must be an array"))
-            continue
-
-        for forge_tag_index, forge_tag in enumerate(declared_forge_tags):
-            forge_tag_path = f"mechanics/{mechanic_index}/forge_tags/{forge_tag_index}"
-            if not isinstance(forge_tag, str):
-                errors.append((forge_tag_path, "forge_tags member must be a string"))
-                continue
-            if forge_tag not in forge_tags:
-                errors.append((forge_tag_path, f"forge tag `{forge_tag}` does not resolve in forge_tags"))
-                continue
-            if not isinstance(name, str):
-                continue
-
-            match_count = c3_bindings.count((name, forge_tag))
-            if match_count != 1:
-                errors.append(
-                    (
-                        forge_tag_path,
-                        f"mechanic binding `{name}` for forge tag `{forge_tag}` resolves to "
-                        f"{match_count} C-3 mechanics; expected exactly 1",
-                    )
-                )
-
-    return errors
-
-
-def _c3_mechanic_bindings(directory: Path) -> list[tuple[str, str]]:
-    if not directory.exists():
-        return []
-
-    bindings: list[tuple[str, str]] = []
-    for path in directory.rglob("*.toml"):
-        try:
-            mechanic = tomllib.loads(path.read_text(encoding="utf-8"))
-        except (OSError, tomllib.TOMLDecodeError, UnicodeDecodeError):
-            continue
-        name = mechanic.get("name")
-        forge_tag = mechanic.get("forge_tag")
-        if isinstance(name, str) and isinstance(forge_tag, str):
-            bindings.append((name, forge_tag))
-    return bindings
 
 
 def _named_manifest_entries(

@@ -96,9 +96,8 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                             "Interactive sessions reach take through the runa session surface"
                         ],
                         "handle": {
-                            "forge_tag": "github",
-                            "url": "https://github.com/tesserine/groundwork/issues/382",
-                            "number": 382,
+                            "id": "tenant-alpha:tracker-main:ticket-382",
+                            "display": "ticket 382",
                         },
                     },
                     indent=2,
@@ -191,9 +190,8 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                         "description": "Make a documentation-deliverable work-unit sequence on gate-form behavior.",
                         "acceptance_criteria": [criterion],
                         "handle": {
-                            "forge_tag": "github",
-                            "url": "https://github.com/tesserine/groundwork/issues/454",
-                            "number": 454,
+                            "id": "tenant-alpha:tracker-main:ticket-454",
+                            "display": "ticket 454",
                         },
                     },
                     indent=2,

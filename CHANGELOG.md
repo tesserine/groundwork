@@ -55,6 +55,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Forge capability is connector-owned** (#440). Groundwork now vendors the
+  commons forge capability schema, declares its invariant forge operations
+  from that schema, and persists connector-issued opaque handles
+  (`{id, display}`) on `work-unit` and `change-proposal` artifacts. The
+  per-provider C-3 mechanics, `groundwork-mechanic` resolver, forge tag
+  registry, and provider-shaped handle schemas are retired; conformance now
+  rejects `[[forge_tags]]` and `[[mechanics]].forge_tags`.
+
 - **Gate-form behavior now runs through the runtime artifact spine** (#454).
   `behavior-contract`, `implementation-plan`, `test-evidence`, and
   `completion-evidence` now require `behavior_form` and accept either

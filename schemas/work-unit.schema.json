@@ -26,15 +26,8 @@
       }
     },
     "handle": {
-      "description": "Optional forge-specific reference to the tracker ticket backing this work unit.",
-      "oneOf": [
-        {
-          "$ref": "#/$defs/github-handle"
-        },
-        {
-          "$ref": "#/$defs/sourcehut-handle"
-        }
-      ]
+      "$ref": "#/$defs/handle",
+      "description": "Optional opaque connector-issued handle for the tracker ticket backing this work unit."
     },
     "scope": {
       "type": "array",
@@ -64,43 +57,20 @@
     }
   },
   "$defs": {
-    "github-handle": {
+    "handle": {
       "type": "object",
-      "required": ["forge_tag", "url", "number"],
+      "required": ["id", "display"],
       "additionalProperties": false,
       "properties": {
-        "forge_tag": {
-          "const": "github"
-        },
-        "url": {
+        "id": {
           "type": "string",
-          "description": "GitHub issue URL.",
-          "pattern": "^https://github\\.com/[^/]+/[^/]+/issues/[0-9]+$"
+          "description": "Connector-issued identity token; compared for equality only by the engine. Must be a complete, scoped work-unit identity per FORGE-CAPABILITY.md (Forge Work-Unit Identity); the prose is authoritative.",
+          "minLength": 1
         },
-        "number": {
-          "type": "integer",
-          "description": "GitHub issue number.",
-          "minimum": 1
-        }
-      }
-    },
-    "sourcehut-handle": {
-      "type": "object",
-      "required": ["forge_tag", "tracker_id", "number"],
-      "additionalProperties": false,
-      "properties": {
-        "forge_tag": {
-          "const": "sourcehut"
-        },
-        "tracker_id": {
-          "type": "integer",
-          "description": "SourceHut tracker ID assigned by the deployment.",
-          "minimum": 1
-        },
-        "number": {
-          "type": "integer",
-          "description": "SourceHut ticket number.",
-          "minimum": 1
+        "display": {
+          "type": "string",
+          "description": "Human-readable rendering of the handled object.",
+          "minLength": 1
         }
       }
     }

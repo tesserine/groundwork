@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/mechanic.schema.json",
   "title": "Mechanic",
-  "description": "Validates C-3 mechanics: TOML-authored HOW recipes with optional forge tagging.",
+  "description": "Validates C-3 mechanics: TOML-authored HOW recipes.",
   "type": "object",
   "required": [
     "name",
@@ -22,11 +22,6 @@
     "purpose": {
       "type": "string",
       "minLength": 1
-    },
-    "forge_tag": {
-      "type": "string",
-      "minLength": 1,
-      "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
     },
     "parameters": {
       "type": "array",

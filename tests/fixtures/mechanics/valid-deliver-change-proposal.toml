@@ -1,0 +1,15 @@
+name = "deliver-change-proposal"
+purpose = "Deliver a change proposal through the selected connector."
+default_invocation = 'printf "%s\\n" "$title"'
+examples = [
+  "printf '%s\\n' 'Add mechanic parser'",
+]
+
+[[parameters]]
+name = "title"
+purpose = "Change proposal title."
+required = true
+
+[outcome]
+description = "A change proposal exists."
+artifact_type = "change-proposal"

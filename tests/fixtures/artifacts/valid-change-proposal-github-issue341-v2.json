@@ -6,8 +6,7 @@
   "summary": "Independent second-round proposal with a colliding version number.",
   "version": 2,
   "handle": {
-    "forge_tag": "github",
-    "url": "https://github.com/tesserine/groundwork/pull/341",
-    "number": 341
+    "id": "tenant-alpha:proposal:341-v2",
+    "display": "proposal 341 v2"
   }
 }

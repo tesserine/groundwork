@@ -54,20 +54,12 @@ name = "change-approved"
 [[outcome_types]]
 name = "change-needs-revision"
 
-# --- Forge Tags ---
-#
-# Canonical forge tags used by forge-tagged artifact handles and mechanics.
-
-[[forge_tags]]
-name = "github"
-
-[[forge_tags]]
-name = "sourcehut"
-
 # --- Mechanics ---
 #
-# Referenceable mechanic handles for C-2 workflow contracts. Full C-3 mechanic
-# definitions may refine these handles as the mechanic library is authored.
+# Referenceable mechanic handles for C-2 workflow contracts. Forge-domain
+# operation handles name connector-contributed MCP tools from the vendored
+# forge capability; provider selection and provider identity live in the
+# selected connector, not in methodology mechanics.
 
 [[mechanics]]
 name = "read-artifact"
@@ -77,7 +69,6 @@ name = "inspect-change-proposals"
 
 [[mechanics]]
 name = "deliver-change-proposal"
-forge_tags = ["github", "sourcehut"]
 
 [[mechanics]]
 name = "revise"
@@ -87,31 +78,24 @@ name = "review"
 
 [[mechanics]]
 name = "apply-approved-change"
-forge_tags = ["github", "sourcehut"]
 
 [[mechanics]]
 name = "reflect-disposition"
-forge_tags = ["github", "sourcehut"]
 
 [[mechanics]]
 name = "close-out"
-forge_tags = ["github", "sourcehut"]
 
 [[mechanics]]
 name = "create-ticket"
-forge_tags = ["github", "sourcehut"]
 
 [[mechanics]]
 name = "read-ticket"
-forge_tags = ["github", "sourcehut"]
 
 [[mechanics]]
 name = "claim-work-unit"
-forge_tags = ["github", "sourcehut"]
 
 [[mechanics]]
 name = "record-progress"
-forge_tags = ["github", "sourcehut"]
 
 [[mechanics]]
 name = "inspect-worktree"

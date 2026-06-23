@@ -224,7 +224,7 @@ artifacts with tracker as an optional sync target — is separate future work.
 Deliver each `work-unit` artifact by invoking the `work-unit` MCP tool once
 per delivered artifact. For tracker-backed work-units that decompose is newly
 creating, create the tracker ticket before invoking the `work-unit` MCP tool so
-the artifact can use the forge-assigned ticket identity. `create-ticket` is a
+the artifact can use the connector-issued ticket identity. `create-ticket` is a
 first-delivery-only step: refinement never calls it, and decompose does not
 adopt a pre-existing tracker ticket into a new artifact. If a tracker ticket
 already exists, this delivery path must not create a second ticket for it. The
@@ -239,11 +239,12 @@ identity outside `handle`. Do not write the workspace JSON file directly.
 Use a fresh `instance_id` when creating a new work-unit. Reuse the existing
 `instance_id` when refining an already-delivered work-unit artifact so artifact
 identity and inbound dependency references remain stable. A new tracker-backed
-work-unit first calls the active forge's `create-ticket` mechanic. First MCP
-delivery then uses `work-unit-<N>-<short-slug>`, where `<N>` is the
-forge-assigned ticket number, and must populate `handle` exactly once from the
-identity returned by `create-ticket`. Non-tracker work-units omit `handle` and
-first delivery uses `<short-slug>` directly. Subsequent updates reuse the
+work-unit first invokes the selected forge connector's `create-ticket`
+operation. First MCP delivery then uses
+`work-unit-<handle-digest>-<short-slug>`, where `<handle-digest>` is a short
+stable digest of the opaque handle, and must populate `handle` exactly once
+from the identity returned by `create-ticket`. Non-tracker work-units omit
+`handle` and first delivery uses `<short-slug>` directly. Subsequent updates reuse the
 `instance_id` established at first delivery. If the artifact is tracker-backed,
 subsequent updates also carry the existing `handle` through unchanged from the
 previously delivered artifact body. Do not call `create-ticket`, re-derive
@@ -264,9 +265,8 @@ work-unit({
   out_of_scope: ["submit protocol", "land protocol"],
   dependencies: ["work-unit-122-artifact-store-cleanup"],
   handle: {
-    forge_tag: "github",
-    url: "<issue URL returned by create-ticket>",
-    number: 123
+    id: "<connector handle id returned by create-ticket>",
+    display: "<human-readable ticket label>"
   }
 })
 ```
@@ -298,9 +298,8 @@ work-unit({
   out_of_scope: ["submit protocol", "land protocol"],
   dependencies: ["work-unit-122-artifact-store-cleanup"],
   handle: {
-    forge_tag: "github",
-    url: "<existing issue URL from the delivered artifact handle>",
-    number: 123
+    id: "<existing connector handle id>",
+    display: "<existing human-readable ticket label>"
   }
 })
 ```
@@ -315,8 +314,8 @@ the artifact store.
 Dependency references must use canonical delivered work-unit `instance_id`
 values, not tracker shorthand such as `#123`, `123`, `work-unit-123`, or
 `issue-123`. For tracker-backed dependencies, first delivery uses the same
-`work-unit-<N>-<short-slug>` convention. For non-tracker-backed dependencies,
-use the dependency's bare `<short-slug>` `instance_id`.
+`work-unit-<handle-digest>-<short-slug>` convention. For non-tracker-backed
+dependencies, use the dependency's bare `<short-slug>` `instance_id`.
 
 ## Triggers
 

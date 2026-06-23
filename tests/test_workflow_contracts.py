@@ -208,7 +208,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("declares 2 manifest required_output_choices groups", str(context.exception))
 
     def test_parser_registries_resolve_mechanic_names_across_parsers(self) -> None:
-        mechanic = load_mechanic(MECHANIC_FIXTURES / "valid-github.toml")
+        mechanic = load_mechanic(MECHANIC_FIXTURES / "valid-deliver-change-proposal.toml")
         registry = WorkflowRegistry(
             disciplines={"orient"},
             mechanics={mechanic["name"]},
@@ -236,8 +236,8 @@ class WorkflowContractTests(unittest.TestCase):
             (root / "skills" / "orient").mkdir(parents=True)
             nested_mechanics = root / "mechanics" / "delivery"
             nested_mechanics.mkdir(parents=True)
-            (nested_mechanics / "valid-github.toml").write_text(
-                (MECHANIC_FIXTURES / "valid-github.toml").read_text(encoding="utf-8"),
+            (nested_mechanics / "valid-deliver-change-proposal.toml").write_text(
+                (MECHANIC_FIXTURES / "valid-deliver-change-proposal.toml").read_text(encoding="utf-8"),
                 encoding="utf-8",
             )
             manifest = root / "manifest.toml"

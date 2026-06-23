@@ -29,7 +29,6 @@ class MechanicError(ValueError):
 class MechanicRegistry:
     artifact_schemas: set[str] = field(default_factory=set)
     artifact_types: set[str] = field(default_factory=set)
-    forge_tags: set[str] = field(default_factory=set)
 
 
 def load_mechanic(path: Path | str, registry: MechanicRegistry | None = None) -> dict[str, Any]:
@@ -197,9 +196,5 @@ def _registry_errors(mechanic: dict[str, Any], registry: MechanicRegistry) -> li
                 f"artifact type `{artifact_type}` does not resolve in registry",
             )
         )
-
-    forge_tag = mechanic.get("forge_tag")
-    if forge_tag is not None and forge_tag not in registry.forge_tags:
-        errors.append(("forge_tag", f"forge tag `{forge_tag}` does not resolve in registry"))
 
     return errors

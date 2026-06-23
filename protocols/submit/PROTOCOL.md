@@ -23,11 +23,11 @@ deliverable's behavior form, the documentation dimension's audience-outcome
 review, and the code-quality dimension's projected-universal findings.
 
 The protocol is not a forge operation. It names the methodology obligation:
-collect the verified change, deliver it through the configured mechanics,
+collect the verified change, deliver it through the selected connector,
 and record the proposal in a stable artifact with branch, commit, base,
-summary, immutable `version`, and forge-tagged `handle`. Forge-specific
-delivery lives entirely in the mechanic layer; the artifact's `handle`
-carries the forge-tagged reference downstream.
+summary, immutable `version`, and opaque connector-issued `handle`.
+Forge-specific delivery lives entirely in the connector; the artifact's
+`handle` carries the connector reference downstream.
 
 ## Steps
 
@@ -54,11 +54,9 @@ carries the forge-tagged reference downstream.
    protocol packages the validation-performed, it does not restate the
    lifecycle.
 
-4. **Deliver through the forge mechanic.** Initial delivery resolves the
-   invariant `deliver-change-proposal` operation; revision delivery resolves
-   the invariant `revise` operation and then delivers the new version. An
-   executing agent resolves each operation through `groundwork-mechanic` and
-   runs the active-forge mechanic it returns. The protocol encodes no
+4. **Deliver through the forge connector.** Initial delivery invokes the
+   selected connector's `deliver-change-proposal` operation; revision delivery
+   invokes `revise` and then delivers the new version. The protocol encodes no
    forge-specific delivery language.
 
 5. **Deliver the `change-proposal`.**
@@ -85,8 +83,8 @@ carries the forge-tagged reference downstream.
      summary: "<human-readable proposal summary>",
      version: <review-round version>,
      handle: {
-       forge_tag: "<registered forge tag>",
-       "...": "<forge-specific handle fields>"
+       id: "<connector handle id>",
+       display: "<human label>"
      }
    })
    ```
@@ -105,8 +103,8 @@ Review re-runs through its `on_change` trigger on the new version.
   `change-proposal` artifact.
 - If a revision round cannot identify the prior reviewed proposal version,
   stop rather than overwrite proposal history.
-- If delivery mechanics expose forge-specific details, keep them inside the
-  forge-tagged `handle` and the configured mechanics layer.
+- If connector delivery exposes forge-specific details, keep them inside the
+  connector and persist only the opaque `{id, display}` handle.
 
 ## Corruption Modes
 
@@ -115,7 +113,7 @@ Review re-runs through its `on_change` trigger on the new version.
 - `version-overwrite`: replacing an earlier proposal artifact instead of
   preserving review-round history.
 - `forge-leakage`: embedding forge-specific delivery procedure in the
-  protocol rather than in mechanics and handles.
+  protocol rather than in the connector and opaque handles.
 - `summary-drift`: a proposal summary that names work the evidence does not
   support, or omits a declared dimension the contract requires. A
   behavior-only summary that drops documentation or code-quality validation

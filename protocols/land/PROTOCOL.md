@@ -36,15 +36,14 @@ The protocol is not a forge operation. It must not activate from a raw
    resolved proposal supplies the apply detail: `branch`, `commit`, `base`,
    and `handle`.
 
-2. **Apply.** Resolve the invariant `apply-approved-change` operation
-   through `groundwork-mechanic` and run the active-forge mechanic it
-   returns, with the resolved proposal detail. Never the latest proposal —
+2. **Apply.** Invoke the selected forge connector's `apply-approved-change`
+   operation with the resolved proposal detail. Never the latest proposal —
    the approved one.
 
-3. **Reflect the disposition.** Resolve and run `reflect-disposition`: the
+3. **Reflect the disposition.** Invoke `reflect-disposition`: the
    collaboration surface records that the approval was acted on.
 
-4. **Close out.** Resolve and run `close-out`: the work unit's tracker
+4. **Close out.** Invoke `close-out`: the work unit's tracker
    record carries its completion context — behavior coverage in scenario or
    gate form, documentation outcomes, code-quality findings, gaps named,
    and the merge reference.
@@ -102,7 +101,7 @@ The protocol is not a forge operation. It must not activate from a raw
 - `latest-proposal-drift`: applying the latest proposal instead of the
   version review approved.
 - `forge-leakage`: embedding forge-specific apply or close-out procedure in
-  the protocol rather than in mechanics.
+  the protocol rather than in the connector.
 - `dimension-drop`: recording behavior-only completion while omitting a
   declared dimension. Dropping documentation or code-quality evidence from
   close-out breaks the contract even when `criterion_summary` is complete.
