@@ -228,6 +228,14 @@ def extract_tree(source: Path, sha: str, tree_path: str, destination: Path) -> N
         tar.extractall(destination, filter="data")
 
 
+def tree_exists(source: Path, sha: str, tree_path: str) -> bool:
+    result = subprocess.run(
+        ["git", "-C", str(source), "cat-file", "-e", f"{sha}:{tree_path}"],
+        capture_output=True,
+    )
+    return result.returncode == 0
+
+
 def show_file(source: Path, sha: str, file_path: str) -> bytes:
     result = subprocess.run(
         ["git", "-C", str(source), "show", f"{sha}:{file_path}"],
@@ -242,7 +250,11 @@ def project_runtime_bundle(source: Path, sha: str, target: Path) -> None:
     """Build the methodology runtime bundle into ``target``."""
     target.mkdir(parents=True, exist_ok=True)
     (target / "manifest.toml").write_bytes(show_file(source, sha, "manifest.toml"))
-    extract_tree(source, sha, "mechanics", target / "mechanics")
+    mechanics = target / "mechanics"
+    if tree_exists(source, sha, "mechanics"):
+        extract_tree(source, sha, "mechanics", mechanics)
+    else:
+        mechanics.mkdir(parents=True, exist_ok=True)
 
 
 # The runtime-bundle children this installer manages under `~/.groundwork`.

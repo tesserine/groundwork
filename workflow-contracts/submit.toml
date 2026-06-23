@@ -31,7 +31,7 @@ outcomes = ["change proposal version 1 is available for review"]
 name = "revise-change-proposal"
 intent = "Deliver a new immutable proposal version that answers the review disposition."
 disciplines = ["orient"]
-mechanics = ["revise", "deliver-change-proposal"]
+mechanics = ["deliver-change-proposal"]
 outcomes = ["revised change proposal version is available for review"]
 
 [[edges]]

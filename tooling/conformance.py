@@ -215,7 +215,22 @@ def _check_schema_definition(path: Path) -> ConformanceResult:
         return ConformanceResult(path=path, category=CATEGORY_SCHEMA, passed=False, errors=[f"<json>: {error}"])
     except SchemaError as error:
         return ConformanceResult(path=path, category=CATEGORY_SCHEMA, passed=False, errors=[error.message])
-    return ConformanceResult(path=path, category=CATEGORY_SCHEMA, passed=True, errors=[])
+    errors = _schema_definition_contract_errors(path, schema)
+    return ConformanceResult(path=path, category=CATEGORY_SCHEMA, passed=not errors, errors=errors)
+
+
+def _schema_definition_contract_errors(path: Path, schema: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if path.name in {"work-unit.schema.json", "change-proposal.schema.json"}:
+        handle = schema.get("properties", {}).get("handle", {})
+        ref = handle.get("$ref") if isinstance(handle, dict) else None
+        expected = "forge-capability.schema.json#/$defs/handle"
+        if ref != expected:
+            errors.append(f"properties/handle/$ref: artifact handle must reference {expected}")
+        defs = schema.get("$defs", {})
+        if isinstance(defs, dict) and "handle" in defs:
+            errors.append("$defs/handle: artifact schemas must not re-declare the forge capability handle")
+    return errors
 
 
 def _check_manifest(path: Path) -> ConformanceResult:

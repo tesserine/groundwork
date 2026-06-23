@@ -13,8 +13,8 @@ are illustrative; the outcomes are the contract.
 2. **Current base.** The local base branch matches the remote:
    `git checkout main && git fetch origin --prune && git merge --ff-only origin/main`.
 3. **Feature branch.** All work happens on a branch named for the work-unit:
-   - Tracker-linked work-unit: `work-unit-<handle-digest>/<slug>` where
-     `<handle-digest>` is a short stable digest of the opaque `handle`.
+   - Tracker-linked work-unit: `work-unit-<handle-id-digest>/<slug>` where
+     `<handle-id-digest>` is a short stable digest of `handle.id`.
    - No tracker linkage: `feat/<slug>`, `fix/<slug>`, or `chore/<slug>`.
    - `<slug>` is the work-unit title — lowercase, hyphenated, truncated to
      40 characters.

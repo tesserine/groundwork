@@ -56,8 +56,8 @@ Forge-specific delivery lives entirely in the connector; the artifact's
 
 4. **Deliver through the forge connector.** Initial delivery invokes the
    selected connector's `deliver-change-proposal` operation; revision delivery
-   invokes `revise` and then delivers the new version. The protocol encodes no
-   forge-specific delivery language.
+   invokes the same `deliver-change-proposal` operation for the new immutable
+   version. The protocol encodes no forge-specific delivery language.
 
 5. **Deliver the `change-proposal`.**
    Invoke the `change-proposal` MCP tool through the existing

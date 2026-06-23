@@ -64,6 +64,34 @@ class MaterializeTicketTests(unittest.TestCase):
             payload["artifact"]["acceptance_criteria"],
         )
 
+    def test_instance_id_uses_stable_handle_id_not_display_label(self) -> None:
+        first = {
+            "handle": {
+                "id": "tenant-alpha:tracker-main:ticket-blue",
+                "display": "GW-blue",
+            },
+            "title": "task(entry): cold-start scoped entry from a forge ticket",
+            "body": TICKET_BODY,
+            "state": "open",
+        }
+        second = {
+            **first,
+            "handle": {
+                "id": first["handle"]["id"],
+                "display": "Tracker Main / Ticket Blue",
+            },
+        }
+
+        first_result = materialize(json.dumps(first))
+        second_result = materialize(json.dumps(second))
+
+        self.assertEqual(0, first_result.returncode, first_result.stderr)
+        self.assertEqual(0, second_result.returncode, second_result.stderr)
+        self.assertEqual(
+            json.loads(first_result.stdout)["instance_id"],
+            json.loads(second_result.stdout)["instance_id"],
+        )
+
     def test_materializer_routes_quality_gaps_to_refinement(self) -> None:
         base_handle = {"id": "tenant-alpha:tracker-main:ticket-blue", "display": "GW-blue"}
 

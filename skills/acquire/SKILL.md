@@ -60,7 +60,8 @@ session that entrypoint opens.
    It derives the work-unit body — `title`, `description`, and
    `acceptance_criteria` from the ticket content, `handle` carried through
    verbatim — and the `instance_id`
-   (`work-unit-<handle-digest>-<short-slug>`). The
+   (`work-unit-<handle-id-digest>-<short-slug>`), where
+   `<handle-id-digest>` is a short stable digest of `handle.id`. The
    derivation never invents content (see step 3).
 
 3. **Surface gaps; never invent.** When the ticket does not map cleanly onto
@@ -81,7 +82,7 @@ session that entrypoint opens.
 
    ```
    work-unit({
-     instance_id: "work-unit-<handle-digest>-<short-slug>",
+     instance_id: "work-unit-<handle-id-digest>-<short-slug>",
      title: "<from the ticket>",
      description: "<from the ticket>",
      acceptance_criteria: ["<from the ticket>"],

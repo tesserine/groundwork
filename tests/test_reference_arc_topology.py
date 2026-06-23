@@ -41,7 +41,6 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertTrue(
             {
                 "deliver-change-proposal",
-                "revise",
                 "review",
                 "apply-approved-change",
                 "reflect-disposition",
@@ -122,6 +121,8 @@ class ReferenceArcTopologyTests(unittest.TestCase):
         self.assertIn("`change-proposal` MCP tool", submit)
         self.assertIn("`completion-record` MCP tool", land)
         self.assertIn("`change-needs-revision`", submit)
+        self.assertIn("revision delivery invokes the same `deliver-change-proposal` operation", submit)
+        self.assertNotIn("`revise`", submit)
         self.assertIn("`change-approved`", land)
         self.assertIn("`work_unit` matches `change-approved.work_unit`", land)
         self.assertIn("`version` equals `change-approved.against_version`", land)

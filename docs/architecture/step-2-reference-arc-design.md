@@ -21,12 +21,14 @@ cross-protocol routing signal is the produced outcome type rather than a
 
 ## Grounding
 
-ADR-0002's 2026-05-28 revision fixes the arc vocabulary at six
-forge-invariant operations: `deliver-change-proposal`, `review`, `revise`,
-`apply-approved-change`, `reflect-disposition`, and `close-out`. It also
+ADR-0002's 2026-05-28 revision fixes the arc vocabulary around proposal
+delivery, review, apply, disposition reflection, and close-out. In the current
+forge capability contract, revision rounds re-invoke
+`deliver-change-proposal` for the next immutable proposal version rather than
+introducing a separate connector operation. The arc also
 replaces `patch` with `change-proposal`, gives each proposal an immutable
 `version`, and adds a forge-tagged `handle`. ADR-0003 moves the review
-disposition into the produced outcome type consumed by the land/revise flow.
+disposition into the produced outcome type consumed by the land/revision flow.
 
 The Step-1 substrate on `main` has these relevant facts:
 
@@ -138,8 +140,8 @@ same commit-identity guard through `gh pr merge --match-head-commit`.
 ## Downstream Constraints
 
 - #330: `submit` produces `change-proposal`, not `patch`; its contract uses
-  `deliver-change-proposal` and, for revision rounds, `revise` as invariant
-  operation handles. It must not embed GitHub or SourceHut vocabulary.
+  `deliver-change-proposal` for both initial delivery and revision rounds. It
+  must not embed GitHub or SourceHut vocabulary.
 - #331: `review` consumes `change-proposal`, triggers on
   `on_change("change-proposal")`, declares a required-choice output group over
   `change-approved` / `change-needs-revision`, and names the disposition by the

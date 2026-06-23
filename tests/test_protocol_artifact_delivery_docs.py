@@ -116,7 +116,7 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
             "refinement never calls it",
             "decompose does not adopt a pre-existing tracker ticket into a new artifact",
             "must not create a second ticket",
-            "`work-unit-<handle-digest>-<short-slug>`, where `<handle-digest>` is a short stable digest of the opaque handle",
+            "`work-unit-<handle-id-digest>-<short-slug>`, where `<handle-id-digest>` is a short stable digest of `handle.id`",
             "populate `handle` exactly once from the identity returned by `create-ticket`",
             "carry the existing `handle` through unchanged",
             "Do not call `create-ticket`, re-derive `handle`, or omit `handle` during refinement",

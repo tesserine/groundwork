@@ -625,6 +625,38 @@ name = "take"
         self.assertTrue(all(result.category == "C-4 schema-definition" for result in results))
         self.assertTrue(all(result.passed for result in results))
 
+    def test_artifact_handle_schema_must_reference_vendored_forge_handle(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            schema = Path(directory) / "work-unit.schema.json"
+            schema.write_text(
+                json.dumps(
+                    {
+                        "$schema": "https://json-schema.org/draft/2020-12/schema",
+                        "type": "object",
+                        "properties": {"handle": {"$ref": "#/$defs/handle"}},
+                        "$defs": {
+                            "handle": {
+                                "type": "object",
+                                "required": ["id", "display"],
+                                "additionalProperties": False,
+                                "properties": {
+                                    "id": {"type": "string", "minLength": 1},
+                                    "display": {"type": "string", "minLength": 1},
+                                },
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            results = run_conformance([schema])
+
+        self.assertEqual(1, len(results))
+        self.assertEqual("C-4 schema-definition", results[0].category)
+        self.assertFalse(results[0].passed)
+        self.assertIn("forge-capability.schema.json#/$defs/handle", " ".join(results[0].errors))
+
     def test_direct_unit_directory_argument_reports_invalid_units(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

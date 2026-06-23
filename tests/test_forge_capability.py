@@ -50,14 +50,14 @@ class ForgeCapabilityContractTests(unittest.TestCase):
         self.assertEqual("#/$defs/handle", schema["properties"]["handle_schema"]["const"])
 
     def test_artifact_handle_schemas_consult_the_vendored_handle_definition(self) -> None:
-        forge_schema = load_json(SCHEMAS / "forge-capability.schema.json")
-        handle_schema = forge_schema["$defs"]["handle"]
-
         for schema_name in ("work-unit.schema.json", "change-proposal.schema.json"):
             with self.subTest(schema=schema_name):
                 schema = load_json(SCHEMAS / schema_name)
-                self.assertEqual("#/$defs/handle", schema["properties"]["handle"]["$ref"])
-                self.assertEqual(handle_schema, schema["$defs"]["handle"])
+                self.assertEqual(
+                    "forge-capability.schema.json#/$defs/handle",
+                    schema["properties"]["handle"]["$ref"],
+                )
+                self.assertNotIn("handle", schema.get("$defs", {}))
                 self.assertNotIn("github-handle", schema.get("$defs", {}))
                 self.assertNotIn("sourcehut-handle", schema.get("$defs", {}))
 

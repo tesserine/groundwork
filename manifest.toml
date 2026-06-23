@@ -71,9 +71,6 @@ name = "inspect-change-proposals"
 name = "deliver-change-proposal"
 
 [[mechanics]]
-name = "revise"
-
-[[mechanics]]
 name = "review"
 
 [[mechanics]]

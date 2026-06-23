@@ -53,9 +53,8 @@ def slugify(title: str) -> str:
     return slug[:40].rstrip("-")
 
 
-def handle_slug(handle: dict) -> str:
-    canonical = json.dumps(handle, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:12]
+def handle_slug(handle_id: str) -> str:
+    return hashlib.sha256(handle_id.encode("utf-8")).hexdigest()[:12]
 
 
 def list_items(block: str) -> list[str]:
@@ -132,7 +131,7 @@ def materialize(ticket: dict) -> dict:
         "acceptance_criteria": criteria,
         "handle": handle,
     }
-    return {"instance_id": f"work-unit-{handle_slug(handle)}-{slug}", "artifact": artifact}
+    return {"instance_id": f"work-unit-{handle_slug(handle['id'])}-{slug}", "artifact": artifact}
 
 
 def load_ticket(path: str | None) -> dict:

@@ -160,8 +160,8 @@ provider API calls belong to the selected forge connector.
 
 The forge operations are invariant names declared by the vendored commons
 forge capability schema: `create-ticket`, `read-ticket`, `claim-work-unit`,
-`record-progress`, `deliver-change-proposal`, `revise`,
-`apply-approved-change`, `reflect-disposition`, and `close-out`. A connector
+`record-progress`, `deliver-change-proposal`, `apply-approved-change`,
+`reflect-disposition`, and `close-out`. A connector
 contributes MCP tools for those operations and returns opaque handles of the
 shape `{id, display}`. Groundwork persists those handles without interpreting
 provider coordinates such as issue URLs, tracker IDs, pull request numbers, or

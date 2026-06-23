@@ -40,27 +40,8 @@
       "minimum": 1
     },
     "handle": {
-      "$ref": "#/$defs/handle",
+      "$ref": "forge-capability.schema.json#/$defs/handle",
       "description": "Opaque connector-issued reference to where reviewers inspect this version."
-    }
-  },
-  "$defs": {
-    "handle": {
-      "type": "object",
-      "required": ["id", "display"],
-      "additionalProperties": false,
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Connector-issued identity token; compared for equality only by the engine. Must be a complete, scoped work-unit identity per FORGE-CAPABILITY.md (Forge Work-Unit Identity); the prose is authoritative.",
-          "minLength": 1
-        },
-        "display": {
-          "type": "string",
-          "description": "Human-readable rendering of the handled object.",
-          "minLength": 1
-        }
-      }
     }
   }
 }

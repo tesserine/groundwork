@@ -241,8 +241,8 @@ Use a fresh `instance_id` when creating a new work-unit. Reuse the existing
 identity and inbound dependency references remain stable. A new tracker-backed
 work-unit first invokes the selected forge connector's `create-ticket`
 operation. First MCP delivery then uses
-`work-unit-<handle-digest>-<short-slug>`, where `<handle-digest>` is a short
-stable digest of the opaque handle, and must populate `handle` exactly once
+`work-unit-<handle-id-digest>-<short-slug>`, where `<handle-id-digest>` is a
+short stable digest of `handle.id`, and must populate `handle` exactly once
 from the identity returned by `create-ticket`. Non-tracker work-units omit
 `handle` and first delivery uses `<short-slug>` directly. Subsequent updates reuse the
 `instance_id` established at first delivery. If the artifact is tracker-backed,
@@ -314,7 +314,7 @@ the artifact store.
 Dependency references must use canonical delivered work-unit `instance_id`
 values, not tracker shorthand such as `#123`, `123`, `work-unit-123`, or
 `issue-123`. For tracker-backed dependencies, first delivery uses the same
-`work-unit-<handle-digest>-<short-slug>` convention. For non-tracker-backed
+`work-unit-<handle-id-digest>-<short-slug>` convention. For non-tracker-backed
 dependencies, use the dependency's bare `<short-slug>` `instance_id`.
 
 ## Triggers

@@ -242,6 +242,23 @@ class SelfInstallTests(unittest.TestCase):
         self.assertFalse((install.runtime_root() / "lib" / "tooling" / "forge_operations.py").exists())
 
 
+    def test_install_projects_runtime_bundle_when_mechanics_tree_is_absent(self) -> None:
+        fixture = self.add_fixture("runtime-bundle-without-mechanics")
+        fixture.remove("mechanics")
+        fixture.commit("retire mechanics tree")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        self.assertEqual(
+            (install.runtime_root() / "manifest.toml").read_bytes(),
+            (fixture.root / "manifest.toml").read_bytes(),
+        )
+        self.assertTrue((install.runtime_root() / "mechanics").is_dir())
+        self.assertEqual({}, tree_payload(install.runtime_root() / "mechanics"))
+
+
     def test_absent_input_and_config_resolves_embedded_default(self) -> None:
         fixture = self.add_fixture("zero-config-corpus")
         install = InstallRun(self, fixture.root)
