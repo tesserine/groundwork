@@ -55,6 +55,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Contract disposition default** (#472). The `contract` skill now names
+  regenerate as the default disposition for review-discovered contract
+  defects. A delivery keeps its branch only by proving
+  qualification-to-remain on every declared dimension, using a teeth-style
+  check that rejects patched branches carrying structure a fresh derivation
+  would not. Boundaries are necessary but not sufficient, unclear
+  qualification regenerates, and the new `Refine-default` corruption mode
+  captures the replaced branch-keeps-by-default stance. contract 2.3.0->2.4.0.
 - **Gate-form behavior now runs through the runtime artifact spine** (#454).
   `behavior-contract`, `implementation-plan`, `test-evidence`, and
   `completion-evidence` now require `behavior_form` and accept either

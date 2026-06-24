@@ -11,8 +11,8 @@ description: >-
   or completion claims must stay traceable to a defined contract instead of
   drifting toward implementation convenience.
 metadata:
-  version: "2.3.0"
-  updated: "2026-06-19"
+  version: "2.4.0"
+  updated: "2026-06-24"
 ---
 
 # Contract
@@ -50,6 +50,39 @@ doc-less delivery fails. Code quality earns them through corpus principles
 projected onto the change, each a locus a careless change fails. Forcing
 one form — a test — onto every dimension is the mistake; the constant is
 the failing-hollow-delivery test, not the apparatus that runs it.
+
+## The disposition default
+
+Teeth governs authoring: a dimension's criterion is real only when a
+hollow delivery fails it. The disposition default governs review: when a
+delivery is reviewed against the contract and a defect is found, the
+delivery does not keep its branch by default. The **default disposition is
+regenerate**. The implementation, planning through submission, carries the
+burden of proof; the contract is corrected at its home and the unit is
+regenerated, unless the delivery proves it qualifies to remain.
+
+**Qualification-to-remain is positive, per-dimension, and conjunctive.** A
+delivery qualifies only when it proves, on every declared contract
+dimension, that correcting the defect leaves the derivation as sound and
+elegant as a fresh derivation from the corrected contract; failing the
+proof on any one dimension regenerates.
+
+The qualification test has teeth form per dimension: *could a patched
+branch pass this dimension while carrying structure a fresh derivation from
+the corrected contract would not?* If yes, the branch fails to qualify and
+the unit regenerates. A reviewer can point at the dimension whose proof
+failed; the test never resolves to an uncheckable judgment.
+
+**A boundary is necessary, not sufficient.** A correction having a boundary
+does not qualify the branch. The boundary must be small enough that the
+in-place fix is indistinguishable from a fresh derivation. When
+qualification is not clear, the default decides: regenerate.
+
+This stance is the review sibling of the teeth principle, not a rewrite of
+the behavioral failing-test classification. `When an existing test fails
+after a change` decides where the defect lives: bug introduced, behavior
+moved, or behavior obsolete. The disposition default decides what survives
+after the defect is known to be a contract defect.
 
 ## The dimensions
 
@@ -355,6 +388,12 @@ hollow delivery that would fail it.
 instead of consulting it — a code-quality rulebook paraphrasing the corpus,
 a documentation checklist re-listing the audience taxonomy `orient` already
 owns. *Recognition:* two homes for one truth, kept in agreement by hand.
+
+**Refine-default.** A defective branch keeps its branch by default, or a
+strictly-bounded-but-large correction is routed to an in-place fix even
+when a fresh derivation would be simpler or sounder. *Recognition:* the
+delivery is patched because a boundary can be named, not because every
+declared dimension proves qualification-to-remain.
 
 ## Principles
 

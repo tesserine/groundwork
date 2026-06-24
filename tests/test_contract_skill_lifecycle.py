@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_SKILL = ROOT / "skills" / "contract" / "SKILL.md"
+CHANGELOG = ROOT / "CHANGELOG.md"
 CONTRACT_SURFACE = [
     CONTRACT_SKILL,
     ROOT / "skills" / "contract" / "references" / "documentation-contract.md",
@@ -52,6 +53,30 @@ def section(body: str, heading: str) -> str:
     return match.group("section")
 
 
+def top_section(body: str, heading: str) -> str:
+    pattern = re.compile(
+        rf"^## {re.escape(heading)}\n(?P<section>.*?)(?=^## |\Z)",
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    match = pattern.search(body)
+    if match is None:
+        raise AssertionError(f"missing section: {heading}")
+    return match.group("section")
+
+
+def nested_section(body: str, heading: str, level: int) -> str:
+    marks = "#" * level
+    parent_or_sibling_heading = rf"#{{1,{min(level, 6)}}}"
+    pattern = re.compile(
+        rf"^{marks} {re.escape(heading)}\n(?P<section>.*?)(?=^{parent_or_sibling_heading} |\Z)",
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    match = pattern.search(body)
+    if match is None:
+        raise AssertionError(f"missing section: {heading}")
+    return match.group("section")
+
+
 def lifecycle_rows(body: str) -> dict[str, str]:
     rows = {}
     for line in body.splitlines():
@@ -62,6 +87,113 @@ def lifecycle_rows(body: str) -> dict[str, str]:
 
 
 class ContractSkillLifecycleTests(unittest.TestCase):
+    def test_nested_section_stops_at_parent_heading(self) -> None:
+        body = """## Parent
+### Sibling
+#### Target
+target content
+##### Child
+child content
+## Next Parent
+outside content
+"""
+
+        result = nested_section(body, "Target", 4)
+
+        self.assertIn("target content", result)
+        self.assertIn("child content", result)
+        self.assertNotIn("outside content", result)
+
+    def test_contract_version_and_changelog_record_disposition_default(self) -> None:
+        body = read(CONTRACT_SKILL)
+        changelog = read(CHANGELOG)
+
+        self.assertIn('version: "2.4.0"', body)
+        self.assertIn('updated: "2026-06-24"', body)
+        self.assertEqual(1, changelog.splitlines().count("## [Unreleased]"))
+        self.assertIn("**Contract disposition default** (#472)", changelog)
+        self.assertIn("contract 2.3.0->2.4.0", changelog)
+
+    def test_disposition_default_is_sibling_of_teeth_principle(self) -> None:
+        body = read(CONTRACT_SKILL)
+
+        self.assertIn("## The disposition default", body)
+        teeth_index = body.index("## The teeth principle")
+        disposition_index = body.index("## The disposition default")
+        dimensions_index = body.index("## The dimensions")
+
+        self.assertLess(teeth_index, disposition_index)
+        self.assertLess(disposition_index, dimensions_index)
+        self.assertNotIn("## The dimensions", body[teeth_index:disposition_index])
+
+    def test_disposition_default_defines_regenerate_as_the_review_default(self) -> None:
+        disposition = normalized(top_section(read(CONTRACT_SKILL), "The disposition default"))
+
+        for expected in [
+            "default disposition is regenerate",
+            "implementation, planning through submission, carries the burden of proof",
+            "contract is corrected",
+            "unit is regenerated",
+            "unless the delivery proves it qualifies to remain",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, disposition)
+
+    def test_qualification_to_remain_is_positive_per_dimension_and_conjunctive(self) -> None:
+        disposition = normalized(top_section(read(CONTRACT_SKILL), "The disposition default"))
+
+        for expected in [
+            "Qualification-to-remain is positive, per-dimension, and conjunctive",
+            "every declared contract dimension",
+            "as sound and elegant as a fresh derivation from the corrected contract",
+            "failing the proof on any one dimension regenerates",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, disposition)
+
+        self.assertNotRegex(disposition, r"preference|feels bounded|clearly bounded")
+
+    def test_qualification_test_uses_teeth_form_and_boundary_default(self) -> None:
+        disposition = normalized(top_section(read(CONTRACT_SKILL), "The disposition default"))
+
+        for expected in [
+            "could a patched branch pass this dimension while carrying structure a fresh derivation from the corrected contract would not",
+            "A boundary is necessary, not sufficient",
+            "small enough that the in-place fix is indistinguishable from a fresh derivation",
+            "When qualification is not clear, the default decides: regenerate",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, disposition)
+
+    def test_disposition_default_stays_distinct_from_failing_test_classification(self) -> None:
+        body = read(CONTRACT_SKILL)
+        disposition = normalized(top_section(body, "The disposition default"))
+        failing_test = normalized(nested_section(body, "When an existing test fails after a change", 4))
+
+        for expected in [
+            "where the defect lives",
+            "what survives",
+            "`When an existing test fails after a change`",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, disposition)
+
+        self.assertNotIn("qualifies to remain", failing_test)
+        self.assertNotIn("default disposition is regenerate", failing_test)
+
+    def test_refine_default_corruption_mode_is_named(self) -> None:
+        corruption_modes = normalized(top_section(read(CONTRACT_SKILL), "Corruption Modes"))
+
+        for expected in [
+            "**Refine-default.**",
+            "defective branch keeps its branch by default",
+            "strictly-bounded-but-large correction",
+            "in-place fix",
+            "fresh derivation would be simpler or sounder",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, corruption_modes)
+
     def test_lifecycle_matrix_covers_every_dimension_stage_cell(self) -> None:
         rows = lifecycle_rows(read(CONTRACT_SKILL))
         expected_cells = {
