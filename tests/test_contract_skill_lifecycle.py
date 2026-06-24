@@ -66,9 +66,9 @@ def top_section(body: str, heading: str) -> str:
 
 def nested_section(body: str, heading: str, level: int) -> str:
     marks = "#" * level
-    next_heading = "#" * min(level, 6)
+    parent_or_sibling_heading = rf"#{{1,{min(level, 6)}}}"
     pattern = re.compile(
-        rf"^{marks} {re.escape(heading)}\n(?P<section>.*?)(?=^{next_heading}#* |\Z)",
+        rf"^{marks} {re.escape(heading)}\n(?P<section>.*?)(?=^{parent_or_sibling_heading} |\Z)",
         flags=re.MULTILINE | re.DOTALL,
     )
     match = pattern.search(body)
@@ -87,6 +87,23 @@ def lifecycle_rows(body: str) -> dict[str, str]:
 
 
 class ContractSkillLifecycleTests(unittest.TestCase):
+    def test_nested_section_stops_at_parent_heading(self) -> None:
+        body = """## Parent
+### Sibling
+#### Target
+target content
+##### Child
+child content
+## Next Parent
+outside content
+"""
+
+        result = nested_section(body, "Target", 4)
+
+        self.assertIn("target content", result)
+        self.assertIn("child content", result)
+        self.assertNotIn("outside content", result)
+
     def test_contract_version_and_changelog_record_disposition_default(self) -> None:
         body = read(CONTRACT_SKILL)
         changelog = read(CHANGELOG)
