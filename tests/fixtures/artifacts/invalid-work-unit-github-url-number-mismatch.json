@@ -1,12 +1,12 @@
 {
-  "title": "Reject mismatched GitHub work-unit handle",
-  "description": "GitHub work-unit handle URL and number must agree",
+  "title": "Provider-shaped handle is invalid",
+  "description": "## Acceptance criteria\n- [ ] Reject provider shape",
   "acceptance_criteria": [
-    "GitHub URL and number mismatches are rejected"
+    "Reject provider shape"
   ],
   "handle": {
     "forge_tag": "github",
-    "url": "https://github.com/tesserine/groundwork/issues/367",
+    "url": "https://github.com/tesserine/groundwork/issues/368",
     "number": 368
   }
 }

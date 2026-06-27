@@ -2,23 +2,23 @@ name = "submit-smoke"
 purpose = "Exercise workflow mechanic registry resolution with a mechanic parser output."
 session_role = "integration smoke"
 preconditions = ["a mechanic parser registry exists"]
-start_node = "deliver-change-proposal"
+start_node = "produce-artifact"
 failure_modes = ["mechanic reference drifts"]
 corruption_modes = ["cross-parser drift"]
 
 [[nodes]]
-name = "deliver-change-proposal"
-intent = "Deliver the change proposal through the selected forge mechanic."
+name = "produce-artifact"
+intent = "Produce an artifact through a generic runtime mechanic."
 disciplines = ["orient"]
-mechanics = ["deliver-change-proposal"]
-outcomes = ["change proposal delivered"]
+mechanics = ["produce-artifact"]
+outcomes = ["artifact produced"]
 
 [[edges]]
-from = "deliver-change-proposal"
+from = "produce-artifact"
 to = "delivered"
 condition = { type = "always" }
 
 [[terminals]]
 name = "delivered"
-outcome = "The change proposal exists."
-artifact_produced = "change-proposal"
+outcome = "The artifact exists."
+artifact_produced = "completion-evidence"

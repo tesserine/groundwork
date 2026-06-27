@@ -35,9 +35,12 @@ exactly three surfaces and carries no projection machinery:
    `~/.agents/skills/<name>`, enumerated from the tree at the source
    commit. No transformation of any shipped file; the only added file is
    the ownership marker.
-2. **The methodology runtime.** `~/.groundwork` with `manifest.toml`,
-   `mechanics/`, the forge-operations module, and the
-   `bin/groundwork-mechanic` resolver wrapper.
+2. **The methodology runtime.** `~/.groundwork` with `manifest.toml` and
+   the ownership marker. Provider mechanics, forge-operations modules, and
+   resolver binaries are retired runtime children; they are pruned on
+   upgrade rather than projected or replaced. Forge operations are
+   connector capability tools supplied through runa's MCP surface, not
+   installed runtime children.
 3. **The principles corpus.** The corpus source is an operator input
    (`--corpus-git URL [--corpus-ref REF]` | `--corpus-path PATH` |
    `--corpus-embedded` — ADR-0005's discriminated union as flags). The

@@ -6,8 +6,7 @@
   "summary": "Revise the submit and land disposition migration after review.",
   "version": 2,
   "handle": {
-    "forge_tag": "github",
-    "url": "https://github.com/tesserine/groundwork/pull/340",
-    "number": 340
+    "id": "proposal:valid-change-proposal-github-issue340-v2",
+    "display": "valid-change-proposal-github-issue340-v2"
   }
 }

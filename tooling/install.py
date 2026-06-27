@@ -8,9 +8,7 @@ it. It owns exactly what that channel does not deliver:
 - **Skills, verbatim** — every ``skills/<name>/`` carrying a ``SKILL.md``
   installs unmodified into the agent harnesses' native skill-discovery
   locations. No projection, no transformation of any shipped file.
-- **The methodology runtime** — ``~/.groundwork`` with the
-  ``groundwork-mechanic`` resolver, the ``mechanics/`` set, the
-  forge-operations module, and the manifest.
+- **The methodology runtime** — ``~/.groundwork`` with the manifest.
 - **The principles corpus** — an operator input recorded into the
   deployment-owned config (ADR-0005) and materialized at
   ``~/.groundwork/principles`` through the existing resolution layer.
@@ -229,16 +227,6 @@ def extract_tree(source: Path, sha: str, tree_path: str, destination: Path) -> N
         tar.extractall(destination, filter="data")
 
 
-# The resolver wrapper the runtime bundle ships: resolves its own root and
-# execs the bundled forge-operations module.
-RESOLVER_WRAPPER = """\
-#!/usr/bin/env sh
-set -eu
-root="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)"
-PYTHONPATH="$root/lib${PYTHONPATH:+:$PYTHONPATH}" exec python3 "$root/lib/tooling/forge_operations.py" --root "$root" "$@"
-"""
-
-
 def show_file(source: Path, sha: str, file_path: str) -> bytes:
     result = subprocess.run(
         ["git", "-C", str(source), "show", f"{sha}:{file_path}"],
@@ -251,16 +239,8 @@ def show_file(source: Path, sha: str, file_path: str) -> bytes:
 
 def project_runtime_bundle(source: Path, sha: str, target: Path) -> None:
     """Build the methodology runtime bundle into ``target``."""
-    (target / "bin").mkdir(parents=True, exist_ok=True)
-    (target / "lib" / "tooling").mkdir(parents=True, exist_ok=True)
+    target.mkdir(parents=True, exist_ok=True)
     (target / "manifest.toml").write_bytes(show_file(source, sha, "manifest.toml"))
-    extract_tree(source, sha, "mechanics", target / "mechanics")
-    (target / "lib" / "tooling" / "forge_operations.py").write_bytes(
-        show_file(source, sha, "tooling/forge_operations.py")
-    )
-    resolver = target / "bin" / "groundwork-mechanic"
-    resolver.write_text(RESOLVER_WRAPPER, encoding="utf-8")
-    resolver.chmod(0o755)
 
 
 # The runtime-bundle children this installer manages under `~/.groundwork`.
@@ -278,10 +258,6 @@ def converge_runtime_bundle(options: Options, sha: str) -> None:
         if runtime_root.is_dir() and tree_payload(staging, include_marker=True) == bundle_payload(
             runtime_root
         ):
-            # Byte-identical contents do not imply correct modes: restore the
-            # resolver's executable bit if it drifted, since that is not
-            # captured by the payload comparison.
-            ensure_resolver_executable(runtime_root / "bin" / "groundwork-mechanic")
             return
         runtime_root.mkdir(parents=True, exist_ok=True)
         for child in RUNTIME_BUNDLE_CHILDREN:
@@ -290,19 +266,10 @@ def converge_runtime_bundle(options: Options, sha: str) -> None:
                 shutil.rmtree(current)
             elif current.exists():
                 current.unlink()
-            (staging / child).replace(current)
+        for child in ("manifest.toml", MARKER_NAME):
+            (staging / child).replace(runtime_root / child)
     finally:
         shutil.rmtree(staging, ignore_errors=True)
-
-
-def ensure_resolver_executable(resolver: Path) -> None:
-    """Add the execute bits to the resolver if missing; idempotent, so it
-    leaves an already-executable resolver (and its mtime) untouched."""
-    if not resolver.is_file():
-        return
-    mode = resolver.stat().st_mode
-    if mode & 0o111 != 0o111:
-        resolver.chmod(mode | 0o111)
 
 
 def bundle_payload(runtime_root: Path) -> dict[str, bytes]:

@@ -98,39 +98,9 @@ class MethodologyFixture:
         self.write(
             "manifest.toml",
             """
-            [[forge_tags]]
-            name = "github"
-
-            [[forge_tags]]
-            name = "sourcehut"
-
             [[mechanics]]
-            name = "close-out"
-            forge_tags = ["github", "sourcehut"]
+            name = "read-artifact"
             """,
-        )
-        for forge in ["github", "sourcehut"]:
-            self.write(
-                f"mechanics/{forge}/close-out.toml",
-                f"""
-                name = "close-out"
-                purpose = "Close out on {forge}."
-                forge_tag = "{forge}"
-                default_invocation = 'printf "%s\\n" "$message"'
-                examples = ['printf "%s\\n" "$message"']
-
-                [[parameters]]
-                name = "message"
-                purpose = "Completion message."
-                required = true
-
-                [outcome]
-                description = "Closed."
-                """,
-            )
-        self.write(
-            "tooling/forge_operations.py",
-            (ROOT / "tooling" / "forge_operations.py").read_text(encoding="utf-8"),
         )
 
     def init_git(self) -> None:
@@ -236,7 +206,7 @@ class SelfInstallTests(unittest.TestCase):
                 )
 
 
-    def test_install_projects_runtime_bundle_and_resolver_executes(self) -> None:
+    def test_install_projects_post_retirement_runtime_bundle(self) -> None:
         fixture = self.add_fixture("runtime-bundle")
         install = InstallRun(self, fixture.root)
 
@@ -247,20 +217,44 @@ class SelfInstallTests(unittest.TestCase):
             (install.runtime_root() / "manifest.toml").read_bytes(),
             (fixture.root / "manifest.toml").read_bytes(),
         )
-        self.assertEqual(
-            tree_payload(install.runtime_root() / "mechanics"),
-            tree_payload(fixture.root / "mechanics"),
-        )
-        resolver = install.runtime_root() / "bin" / "groundwork-mechanic"
-        self.assertTrue(resolver.is_file())
-        resolved = run(
-            [str(resolver), "resolve", "close-out"],
-            install.runtime_root(),
-            env={"PATH": "/usr/bin:/bin", "RUNA_FORGE_TYPE": "sourcehut"},
-        )
-        assert_success(self, resolved)
-        self.assertEqual("close-out[sourcehut]\n", resolved.stdout)
+        self.assertFalse((install.runtime_root() / "mechanics").exists())
+        self.assertFalse((install.runtime_root() / "bin" / "groundwork-mechanic").exists())
 
+    def test_install_runtime_bundle_has_no_retired_provider_resolver_or_mechanics(self) -> None:
+        fixture = self.add_fixture("post-retirement-runtime")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        runtime = install.runtime_root()
+        self.assertTrue((runtime / "manifest.toml").is_file())
+        self.assertTrue((runtime / MARKER_NAME).is_file())
+        self.assertTrue((runtime / "principles" / "PRINCIPLES.md").is_file())
+        self.assertFalse((runtime / "mechanics").exists())
+        self.assertFalse((runtime / "lib" / "tooling" / "forge_operations.py").exists())
+        self.assertFalse((runtime / "bin" / "groundwork-mechanic").exists())
+
+    def test_upgrade_prunes_retired_provider_runtime_children(self) -> None:
+        fixture = self.add_fixture("runtime-prune")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        runtime = install.runtime_root()
+        (runtime / "bin").mkdir()
+        (runtime / "bin" / "groundwork-mechanic").write_text("stale resolver\n", encoding="utf-8")
+        (runtime / "lib" / "tooling").mkdir(parents=True)
+        (runtime / "lib" / "tooling" / "forge_operations.py").write_text("stale resolver module\n", encoding="utf-8")
+        (runtime / "mechanics" / "github").mkdir(parents=True)
+        (runtime / "mechanics" / "github" / "read-ticket.toml").write_text("stale mechanic\n", encoding="utf-8")
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        self.assertTrue((runtime / "manifest.toml").is_file())
+        self.assertTrue((runtime / MARKER_NAME).is_file())
+        self.assertFalse((runtime / "mechanics").exists())
+        self.assertFalse((runtime / "lib" / "tooling" / "forge_operations.py").exists())
+        self.assertFalse((runtime / "bin" / "groundwork-mechanic").exists())
 
     def test_absent_input_and_config_resolves_embedded_default(self) -> None:
         fixture = self.add_fixture("zero-config-corpus")
@@ -580,11 +574,11 @@ class SelfInstallTests(unittest.TestCase):
         for body in installed_bodies:
             self.assertNotIn("session-surface-handoff", body)
 
-    def test_installed_skill_referencing_mechanic_is_not_rewritten(self) -> None:
+    def test_installed_skill_referencing_connector_operation_is_not_rewritten(self) -> None:
         fixture = self.add_fixture("no-rewriting")
-        body = "---\nname: orient\n---\n# Orient\n\nRun `groundwork-mechanic resolve close-out`.\n"
+        body = "---\nname: orient\n---\n# Orient\n\nInvoke connector capability `close-out`.\n"
         fixture.write("skills/orient/SKILL.md", body)
-        fixture.commit("mechanic reference")
+        fixture.commit("connector operation reference")
         install = InstallRun(self, fixture.root)
 
         result = install.run_installer("install")
@@ -694,19 +688,6 @@ class SelfInstallTests(unittest.TestCase):
             f"source-sha={fixture.head_sha()}",
             (install.target(".claude", "orient") / ".groundwork-managed").read_text(encoding="utf-8"),
         )
-
-    def test_rerun_restores_resolver_executable_bit(self) -> None:
-        fixture = self.add_fixture("resolver-mode-drift")
-        install = InstallRun(self, fixture.root)
-        assert_success(self, install.run_installer("install"))
-        resolver = install.runtime_root() / "bin" / "groundwork-mechanic"
-        resolver.chmod(0o644)
-        self.assertFalse(os.access(resolver, os.X_OK))
-
-        result = install.run_installer("install")
-
-        assert_success(self, result)
-        self.assertTrue(os.access(resolver, os.X_OK), "rerun must restore the resolver executable bit")
 
     def test_state_lives_under_self_install_namespace_distinct_from_legacy(self) -> None:
         fixture = self.add_fixture("state-namespace")

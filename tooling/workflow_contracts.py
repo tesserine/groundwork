@@ -8,6 +8,8 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
+from tooling.forge_capability import operation_names as forge_operation_names
+
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "manifest.toml"
@@ -74,6 +76,8 @@ def workflow_registry_from_manifest(
         if isinstance(entry, dict) and isinstance(entry.get("name"), str)
     }
     mechanic_names.update(_mechanic_names_from_directory(root_path / "mechanics"))
+    if (root_path / "schemas" / "forge-capability" / "v1" / "forge-capability.schema.json").exists() or root_path.resolve() == ROOT:
+        mechanic_names.update(forge_operation_names())
 
     return WorkflowRegistry(
         disciplines=_directory_names(root_path / "skills") | _directory_names(root_path / "protocols"),

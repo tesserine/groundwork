@@ -50,7 +50,7 @@ in the shipped manifest crosses that boundary.
 
 ### Why not environment atoms
 
-Post-#389, env atoms are runtime-owned session identity (`RUNA_FORGE_*`)
+Post-#389, env atoms are runtime-owned session identity (`connector deployment *`)
 or narrowly-scoped forge deployment values. The corpus is methodology
 content resolved once at setup, not per-session identity. Env vars also
 offer no structural validation; the repo's established

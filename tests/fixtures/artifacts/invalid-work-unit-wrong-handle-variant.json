@@ -1,12 +1,12 @@
 {
-  "title": "Reject wrong work-unit handle variant",
-  "description": "GitHub work-unit handles must not carry SourceHut fields",
+  "title": "Provider-shaped handle is invalid",
+  "description": "## Acceptance criteria\n- [ ] Reject provider shape",
   "acceptance_criteria": [
-    "Wrong forge handle variants are rejected"
+    "Reject provider shape"
   ],
   "handle": {
     "forge_tag": "github",
-    "tracker_id": 4,
+    "url": "https://github.com/tesserine/groundwork/issues/368",
     "number": 368
   }
 }

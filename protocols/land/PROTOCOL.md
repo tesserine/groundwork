@@ -32,22 +32,32 @@ The protocol is not a forge operation. It must not activate from a raw
    `work_unit` matches `change-approved.work_unit` and whose `version`
    equals `change-approved.against_version`. The pair is the binding —
    `against_version` alone is not globally unique across work units. If
-   zero or more than one proposal matches, stop before applying. The
-   resolved proposal supplies the apply detail: `branch`, `commit`, `base`,
-   and `handle`.
+   zero or more than one proposal matches, stop before applying. Also read
+   the matching `work-unit` artifact so the connector input can use the
+   connector-issued work-unit handle.
 
-2. **Apply.** Resolve the invariant `apply-approved-change` operation
-   through `groundwork-mechanic` and run the active-forge mechanic it
-   returns, with the resolved proposal detail. Never the latest proposal —
-   the approved one.
+2. **Apply.** Invoke the connector capability `apply-approved-change`
+   operation with the input shape required by the vendored
+   `apply-approved-change-input` schema:
 
-3. **Reflect the disposition.** Resolve and run `reflect-disposition`: the
+   - `work_unit`: the matching `work-unit.handle`
+   - `change`: the resolved `change-proposal.handle`
+   - `approved_version`: `change-approved.against_version`, equal to the
+     resolved `change-proposal.version`
+   - `approved_commit`: the resolved `change-proposal.commit`
+   - `base`: the resolved `change-proposal.base`
+
+   `branch` is not passed to `apply-approved-change`; the connector schema
+   rejects extra fields. Never apply the latest proposal — apply the approved
+   one.
+
+3. **Reflect the disposition.** Invoke `reflect-disposition`: the
    collaboration surface records that the approval was acted on.
 
-4. **Close out.** Resolve and run `close-out`: the work unit's tracker
-   record carries its completion context — behavior coverage in scenario or
-   gate form, documentation outcomes, code-quality findings, gaps named,
-   and the merge reference.
+4. **Close out.** Invoke `close-out`: the work unit's tracker record carries
+   its completion context — behavior coverage in scenario or gate form,
+   documentation outcomes, code-quality findings, gaps named, and the merge
+   reference.
 
 5. **Deliver the `completion-record`.**
    Invoke the `completion-record` MCP tool through the existing schema
@@ -112,7 +122,9 @@ The protocol is not a forge operation. It must not activate from a raw
 - `workflow-contracts/land.toml` defines the C-2 approved-disposition flow.
 - `schemas/change-approved.schema.json` defines the approval disposition.
 - `schemas/change-proposal.schema.json` defines the proposal detail land
-  resolves and applies.
+  resolves before mapping it to the connector apply input.
+- `schemas/forge-capability/v1/forge-capability.schema.json` defines the
+  `apply-approved-change-input` connector payload land must satisfy.
 - `schemas/completion-record.schema.json` defines the existing record fields:
   behavior closes through `criterion_summary`, documentation through
   `documentation_status`, and code quality remains close-out context and
