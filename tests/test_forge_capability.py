@@ -199,9 +199,13 @@ class ForgeCapabilityTests(unittest.TestCase):
         self.assertNotIn("GitHub handles name an issue URL and number", connecting_structure)
         self.assertNotIn("SourceHut handles name a tracker ID and ticket number", connecting_structure)
 
-        self.assertRegex(adr_0006, r"`~/.groundwork` with `manifest\.toml` and\s+the ownership marker")
-        self.assertRegex(adr_0006, r"mechanics, forge-operations modules, and\s+resolver binaries are retired")
-        self.assertRegex(adr_0006, r"pruned on\s+upgrade")
+        self.assertRegex(adr_0006, r"`~/.groundwork` is a self-contained\s+methodology layout")
+        self.assertIn("`schemas/{artifact_type}.schema.json`", adr_0006)
+        self.assertIn("`protocols/{name}/PROTOCOL.md`", adr_0006)
+        self.assertIn("connector capability tools supplied through runa's MCP surface", adr_0006)
+        self.assertNotIn("mechanics, forge-operations modules, and", adr_0006)
+        self.assertNotIn("resolver binaries are retired", adr_0006)
+        self.assertNotIn("pruned on upgrade", adr_0006)
         self.assertNotIn("`mechanics/`, the forge-operations module", adr_0006)
         self.assertNotIn("bin/connector capability tool", adr_0006)
 

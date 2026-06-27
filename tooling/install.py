@@ -8,7 +8,9 @@ it. It owns exactly what that channel does not deliver:
 - **Skills, verbatim** — every ``skills/<name>/`` carrying a ``SKILL.md``
   installs unmodified into the agent harnesses' native skill-discovery
   locations. No projection, no transformation of any shipped file.
-- **The methodology runtime** — ``~/.groundwork`` with the manifest.
+- **The methodology runtime** — ``~/.groundwork`` with ``manifest.toml``,
+  every manifest-declared artifact schema, and every manifest-declared
+  protocol instruction file.
 - **The principles corpus** — an operator input recorded into the
   deployment-owned config (ADR-0005) and materialized at
   ``~/.groundwork/principles`` through the existing resolution layer.
@@ -25,6 +27,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import tomllib
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
@@ -239,37 +242,94 @@ def show_file(source: Path, sha: str, file_path: str) -> bytes:
 
 def project_runtime_bundle(source: Path, sha: str, target: Path) -> None:
     """Build the methodology runtime bundle into ``target``."""
+    manifest = show_file(source, sha, "manifest.toml")
+    layout_paths = runtime_layout_paths(manifest)
+    layout_payload = {relative: show_file(source, sha, relative) for relative in layout_paths}
+
     target.mkdir(parents=True, exist_ok=True)
-    (target / "manifest.toml").write_bytes(show_file(source, sha, "manifest.toml"))
+    (target / "manifest.toml").write_bytes(manifest)
+    for relative, content in layout_payload.items():
+        destination = target / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(content)
+
+
+def runtime_layout_paths(manifest: bytes) -> list[str]:
+    """Runtime layout files derived from the methodology manifest."""
+    try:
+        document = tomllib.loads(manifest.decode("utf-8"))
+    except (tomllib.TOMLDecodeError, UnicodeDecodeError) as error:
+        raise InstallError(f"cannot parse manifest.toml: {error}") from error
+    paths = []
+    for entry in document.get("artifact_types", []):
+        paths.append(f"schemas/{manifest_entry_name(entry, 'artifact_types')}.schema.json")
+    for entry in document.get("protocols", []):
+        paths.append(f"protocols/{manifest_entry_name(entry, 'protocols')}/PROTOCOL.md")
+    return paths
+
+
+def manifest_entry_name(entry: object, section: str) -> str:
+    if isinstance(entry, dict) and isinstance(entry.get("name"), str):
+        name = entry["name"]
+        if is_safe_manifest_entry_name(name):
+            return name
+        raise InstallError(
+            f"manifest.toml [[{section}]] name {name!r} must be a safe single path component"
+        )
+    raise InstallError(f"manifest.toml [[{section}]] entries must declare string name")
+
+
+def is_safe_manifest_entry_name(name: str) -> bool:
+    return (
+        bool(name)
+        and name != "."
+        and "/" not in name
+        and "\\" not in name
+        and ".." not in name
+    )
 
 
 # The runtime-bundle children this installer manages under `~/.groundwork`.
 # The resolved corpus (`principles/`) lives beside them and is converged
 # separately — bundle convergence never rebuilds the whole root.
-RUNTIME_BUNDLE_CHILDREN = ("manifest.toml", "mechanics", "lib", "bin", MARKER_NAME)
+RUNTIME_BUNDLE_CHILDREN = ("manifest.toml", "schemas", "protocols", MARKER_NAME)
+RETIRED_RUNTIME_BUNDLE_CHILDREN = ("mechanics", "lib", "bin")
 
 
-def converge_runtime_bundle(options: Options, sha: str) -> None:
-    runtime_root = options.home / ".groundwork"
+def stage_runtime_bundle(options: Options, sha: str) -> Path:
     staging = Path(tempfile.mkdtemp(prefix=".groundwork.bundle.", dir=options.home))
     try:
         project_runtime_bundle(options.source, sha, staging)
         write_marker(staging, options.source, sha, "runtime", "groundwork")
-        if runtime_root.is_dir() and tree_payload(staging, include_marker=True) == bundle_payload(
-            runtime_root
-        ):
-            return
-        runtime_root.mkdir(parents=True, exist_ok=True)
-        for child in RUNTIME_BUNDLE_CHILDREN:
-            current = runtime_root / child
-            if current.is_dir():
-                shutil.rmtree(current)
-            elif current.exists():
-                current.unlink()
-        for child in ("manifest.toml", MARKER_NAME):
-            (staging / child).replace(runtime_root / child)
-    finally:
+    except BaseException:
         shutil.rmtree(staging, ignore_errors=True)
+        raise
+    return staging
+
+
+def converge_runtime_bundle(options: Options, staged: Path) -> None:
+    runtime_root = options.home / ".groundwork"
+    if (
+        runtime_root.is_dir()
+        and tree_payload(staged, include_marker=True) == bundle_payload(runtime_root)
+        and not has_retired_runtime_children(runtime_root)
+    ):
+        return
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    for child in (*RUNTIME_BUNDLE_CHILDREN, *RETIRED_RUNTIME_BUNDLE_CHILDREN):
+        current = runtime_root / child
+        if current.is_dir():
+            shutil.rmtree(current)
+        elif current.exists():
+            current.unlink()
+    for child in RUNTIME_BUNDLE_CHILDREN:
+        staged_child = staged / child
+        if staged_child.exists():
+            staged_child.replace(runtime_root / child)
+
+
+def has_retired_runtime_children(runtime_root: Path) -> bool:
+    return any((runtime_root / child).exists() for child in RETIRED_RUNTIME_BUNDLE_CHILDREN)
 
 
 def bundle_payload(runtime_root: Path) -> dict[str, bytes]:
@@ -546,15 +606,21 @@ def install(options: Options) -> None:
     corpus_config = effective_corpus_config(options)
     check_resolvable(corpus_config, embedded_corpus_path(options.source))
     preflight_conflicts(options, skills)
-    staged_corpus = stage_corpus(options, corpus_config)
+    staged_corpus: Path | None = None
+    staged_runtime: Path | None = None
     try:
+        staged_corpus = stage_corpus(options, corpus_config)
+        staged_runtime = stage_runtime_bundle(options, sha)
         record_corpus_config(options)
         remove_obsolete_entries(options, skills)
         converge_skills(options, sha, skills)
-        converge_runtime_bundle(options, sha)
+        converge_runtime_bundle(options, staged_runtime)
         swap_corpus(options, staged_corpus)
     finally:
-        shutil.rmtree(staged_corpus.parent, ignore_errors=True)
+        if staged_corpus is not None:
+            shutil.rmtree(staged_corpus.parent, ignore_errors=True)
+        if staged_runtime is not None:
+            shutil.rmtree(staged_runtime, ignore_errors=True)
     write_state(options, sha, skills)
     print(f"{PROGRAM}: installed {sha}")
 

@@ -99,9 +99,11 @@ scripts/install install --corpus-git https://example.org/owner/corpus
   unmodified in `~/.claude/skills/<name>` and `~/.agents/skills/<name>`.
   Skills are agent-invoked by judgment and are not runtime-delivered, so they
   install natively; no projection or rewriting of any kind.
-- **The methodology runtime** — `~/.groundwork` with the manifest. Forge
-  operations are connector capability tools contributed through runa's MCP
-  surface, not local provider mechanics.
+- **The methodology runtime** — `~/.groundwork` with `manifest.toml`,
+  `schemas/{artifact_type}.schema.json` for each declared artifact type, and
+  `protocols/{name}/PROTOCOL.md` for each declared protocol. Forge operations
+  are connector capability tools contributed through runa's MCP surface, not
+  local provider mechanics.
 - **The principles corpus** — the `--corpus-git URL [--corpus-ref REF]`,
   `--corpus-path PATH`, or `--corpus-embedded` operator input is recorded in
   the deployment-owned `${XDG_CONFIG_HOME:-~/.config}/groundwork/principles.toml`
