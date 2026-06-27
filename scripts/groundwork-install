@@ -3,6 +3,9 @@ set -euo pipefail
 
 PROGRAM="groundwork-install"
 MARKER=".groundwork-install"
+CANONICAL_MARKER=".groundwork-managed"
+CANONICAL_INSTALLER="scripts/install"
+DEPRECATION_REF="groundwork#415"
 STATE_FILE_NAME="interactive-install.tsv"
 SESSION_SURFACE_HANDOFF_PATH="scripts/interactive-session-surface-handoff.md"
 
@@ -192,8 +195,29 @@ target_has_marker() {
   [[ -f "$1/$MARKER" ]]
 }
 
+target_has_canonical_marker() {
+  [[ -f "$1/$CANONICAL_MARKER" ]]
+}
+
 target_exists() {
   [[ -e "$1" || -L "$1" ]]
+}
+
+deprecation_notice() {
+  printf '%s: DEPRECATED — superseded by the canonical installer %s (tooling/install.py); see %s.\n' \
+    "$PROGRAM" "$CANONICAL_INSTALLER" "$DEPRECATION_REF" >&2
+  printf '%s: this fallback remains only until the runtime-driven install is acceptance-proven. Prefer %s.\n' \
+    "$PROGRAM" "$CANONICAL_INSTALLER" >&2
+}
+
+report_conflict() {
+  local target="$1"
+  if target_has_canonical_marker "$target"; then
+    printf '%s: %s is owned by the canonical installer %s (marker %s); %s is deprecated (%s). Use %s — to switch, run: %s uninstall\n' \
+      "$PROGRAM" "$target" "$CANONICAL_INSTALLER" "$CANONICAL_MARKER" "$PROGRAM" "$DEPRECATION_REF" "$CANONICAL_INSTALLER" "$CANONICAL_INSTALLER" >&2
+  else
+    printf '%s: unmanaged conflict at %s\n' "$PROGRAM" "$target" >&2
+  fi
 }
 
 desired_name_exists() {
@@ -226,7 +250,7 @@ preflight_conflicts() {
       target="$root/$name"
       if target_exists "$target"; then
         if ! state_owns_target "$target"; then
-          printf '%s: unmanaged conflict at %s\n' "$PROGRAM" "$target" >&2
+          report_conflict "$target"
           conflict=1
         fi
       fi
@@ -235,7 +259,7 @@ preflight_conflicts() {
   if runtime_available; then
     target="$(runtime_root)"
     if target_exists "$target" && ! target_has_marker "$target"; then
-      printf '%s: unmanaged conflict at %s\n' "$PROGRAM" "$target" >&2
+      report_conflict "$target"
       conflict=1
     fi
   fi
@@ -514,6 +538,7 @@ write_state() {
 }
 
 install_or_sync() {
+  deprecation_notice
   validate_source
   preflight_conflicts
   prepare_target_roots
