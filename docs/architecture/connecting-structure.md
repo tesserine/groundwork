@@ -1181,7 +1181,7 @@ approval's `work_unit` and `against_version`.
 | base | string | yes | Target base revision |
 | summary | string | yes | Human-readable proposal summary |
 | version | integer | yes | Immutable review-round version for the work-unit |
-| handle | object | yes | Forge-tagged inspection/apply handle |
+| handle | object | yes | Connector `{id,display}` inspection/apply handle |
 
 ### change-approved / change-needs-revision
 

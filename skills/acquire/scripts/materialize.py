@@ -48,11 +48,6 @@ class MaterializeError(Exception):
     """A work-unit-quality defect in the source ticket."""
 
 
-def slugify(title: str) -> str:
-    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
-    return slug[:40].rstrip("-")
-
-
 def list_items(block: str) -> list[str]:
     return [match.group("text").strip() for match in LIST_ITEM.finditer(block)]
 
@@ -113,13 +108,6 @@ def materialize(ticket: dict) -> dict:
             f"ticket {identity!r} has no extractable acceptance criteria "
             "(no checklist items, no Acceptance Criteria section); route it to "
             "decompose's refine-work-unit discipline rather than inventing them"
-        )
-
-    slug = slugify(title)
-    if not slug:
-        raise MaterializeError(
-            f"ticket {identity!r} title {title!r} yields an empty slug; it needs a "
-            "human-readable title before acquisition"
         )
 
     artifact = {

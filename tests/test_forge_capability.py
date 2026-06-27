@@ -139,13 +139,14 @@ class ForgeCapabilityTests(unittest.TestCase):
 
     def test_methodology_docs_present_connector_model_without_retired_mechanism(self) -> None:
         retired_tokens = [
-            "forge_tag",
-            "forge_tags",
             "groundwork-mechanic",
             "provider-mechanic resolver",
             "forge-type dispatch",
             "RUNA_FORGE_",
             "GROUNDWORK_FORGE_",
+        ]
+        retired_patterns = [
+            re.compile(r"forge[-_ ]?tags?", re.IGNORECASE),
         ]
         documents = [
             ROOT / "README.md",
@@ -168,6 +169,19 @@ class ForgeCapabilityTests(unittest.TestCase):
                 self.assertIn("capability", body)
                 for token in retired_tokens:
                     self.assertNotIn(token, body)
+                for pattern in retired_patterns:
+                    self.assertIsNone(pattern.search(body), pattern.pattern)
+
+    def test_land_protocol_maps_apply_input_to_vendored_connector_schema(self) -> None:
+        schema = vendored_schema()
+        apply_input = schema["$defs"]["apply-approved-change-input"]
+        body = (ROOT / "protocols" / "land" / "PROTOCOL.md").read_text(encoding="utf-8")
+
+        for field in apply_input["required"]:
+            with self.subTest(field=field):
+                self.assertIn(f"`{field}`", body)
+        self.assertIn("`branch` is not passed", body)
+        self.assertNotIn("operation with the resolved proposal detail", body)
 
     def test_methodology_docs_preserve_connector_model_coherence(self) -> None:
         connecting_structure = (ROOT / "docs" / "architecture" / "connecting-structure.md").read_text(encoding="utf-8")

@@ -82,6 +82,21 @@ class MaterializeTicketTests(unittest.TestCase):
             json.loads(second_result.stdout)["instance_id"],
         )
 
+    def test_materializer_accepts_valid_titles_that_do_not_slugify(self) -> None:
+        ticket = {
+            "handle": {"id": "ticket:stable-non-ascii-title", "display": "TRACK-I18N"},
+            "title": "修正",
+            "body": TICKET_BODY,
+            "state": "open",
+        }
+
+        result = materialize(json.dumps(ticket))
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(ticket["title"], payload["artifact"]["title"])
+        self.assertRegex(payload["instance_id"], r"^work-unit-[0-9a-f]{64}$")
+
     def test_materializer_routes_quality_gaps_to_refinement(self) -> None:
         base_handle = {"id": "ticket:quality-gap", "display": "QUALITY-GAP"}
 
