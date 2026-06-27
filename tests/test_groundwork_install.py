@@ -547,6 +547,50 @@ class GroundworkInstallTests(unittest.TestCase):
         self.assertTrue(install.target(".agents", "orient").is_dir())
         self.assertEqual(install.state_file().read_text(encoding="utf-8"), before_state)
 
+    def test_install_redirects_skill_target_owned_by_canonical_installer(self) -> None:
+        fixture = self.add_fixture("canonical-skill-conflict")
+        install = InstallRun(self, fixture.root)
+        conflict = install.target(".claude", "orient")
+        conflict.mkdir(parents=True)
+        (conflict / "SKILL.md").write_text("# Canonical\n", encoding="utf-8")
+        (conflict / ".groundwork-managed").write_text("managed-by=groundwork\n", encoding="utf-8")
+
+        result = install.run_installer("install")
+
+        self.assertNotEqual(result.returncode, 0, "command unexpectedly succeeded")
+        self.assertIn("scripts/install", result.stderr)
+        self.assertNotIn("unmanaged conflict at %s" % conflict, result.stderr)
+        self.assertEqual((conflict / "SKILL.md").read_text(encoding="utf-8"), "# Canonical\n")
+        self.assertFalse((install.home / ".agents" / "skills" / "take").exists())
+        self.assertFalse(install.state_file().exists())
+
+    def test_install_redirects_runtime_owned_by_canonical_installer(self) -> None:
+        fixture = self.add_fixture("canonical-runtime-conflict")
+        self.write_runtime_surface(fixture)
+        fixture.commit_new_ref("v2")
+        install = InstallRun(self, fixture.root)
+        runtime = install.runtime_root()
+        runtime.mkdir()
+        (runtime / "manifest.toml").write_text("[methodology]\n", encoding="utf-8")
+        (runtime / ".groundwork-managed").write_text("managed-by=groundwork\n", encoding="utf-8")
+
+        result = install.run_installer("install")
+
+        self.assertNotEqual(result.returncode, 0, "command unexpectedly succeeded")
+        self.assertIn("scripts/install", result.stderr)
+        self.assertTrue((runtime / ".groundwork-managed").is_file())
+        self.assertFalse(install.state_file().exists())
+
+    def test_install_emits_deprecation_notice(self) -> None:
+        fixture = self.add_fixture("deprecation-notice")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        self.assertIn("DEPRECATED", result.stderr)
+        self.assertIn("scripts/install", result.stderr)
+
     def test_install_rejects_unmanaged_conflicts_before_changing_targets(self) -> None:
         fixture = self.add_fixture("conflict")
         install = InstallRun(self, fixture.root)
