@@ -601,6 +601,39 @@ class SelfInstallTests(unittest.TestCase):
         for surface in [".claude", ".agents", ".groundwork"]:
             self.assertFalse((install.home / surface).exists(), f"{surface} must be untouched")
 
+    def test_unsafe_manifest_entry_name_fails_without_staging_escape(self) -> None:
+        fixture = self.add_fixture("unsafe-runtime-name")
+        fixture.write(
+            "manifest.toml",
+            """
+            name = "groundwork"
+
+            [[artifact_types]]
+            name = "../../escaped/work-unit"
+
+            [[protocols]]
+            name = "take"
+            requires = ["work-unit"]
+            produces = ["work-unit"]
+            scoped = true
+            trigger = { type = "on_artifact", name = "work-unit" }
+            """,
+        )
+        fixture.commit("declare unsafe artifact name")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_failure_contains(self, result, "safe single path component")
+        assert_failure_contains(self, result, "../../escaped/work-unit")
+        for surface in [".claude", ".agents", ".groundwork", "escaped"]:
+            self.assertFalse((install.home / surface).exists(), f"{surface} must be untouched")
+        self.assertEqual(
+            [],
+            [path for path in install.home.iterdir() if path.name.startswith(".groundwork.bundle.")],
+            "failed projection must not leave staging directories behind",
+        )
+
     @unittest.skipUnless(RUNA is not None, "runa binary unavailable")
     def test_installed_runtime_bundle_initializes_runa_project(self) -> None:
         assert RUNA is not None

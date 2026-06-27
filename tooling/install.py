@@ -242,13 +242,16 @@ def show_file(source: Path, sha: str, file_path: str) -> bytes:
 
 def project_runtime_bundle(source: Path, sha: str, target: Path) -> None:
     """Build the methodology runtime bundle into ``target``."""
-    target.mkdir(parents=True, exist_ok=True)
     manifest = show_file(source, sha, "manifest.toml")
+    layout_paths = runtime_layout_paths(manifest)
+    layout_payload = {relative: show_file(source, sha, relative) for relative in layout_paths}
+
+    target.mkdir(parents=True, exist_ok=True)
     (target / "manifest.toml").write_bytes(manifest)
-    for relative in runtime_layout_paths(manifest):
+    for relative, content in layout_payload.items():
         destination = target / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(show_file(source, sha, relative))
+        destination.write_bytes(content)
 
 
 def runtime_layout_paths(manifest: bytes) -> list[str]:
@@ -267,8 +270,23 @@ def runtime_layout_paths(manifest: bytes) -> list[str]:
 
 def manifest_entry_name(entry: object, section: str) -> str:
     if isinstance(entry, dict) and isinstance(entry.get("name"), str):
-        return entry["name"]
+        name = entry["name"]
+        if is_safe_manifest_entry_name(name):
+            return name
+        raise InstallError(
+            f"manifest.toml [[{section}]] name {name!r} must be a safe single path component"
+        )
     raise InstallError(f"manifest.toml [[{section}]] entries must declare string name")
+
+
+def is_safe_manifest_entry_name(name: str) -> bool:
+    return (
+        bool(name)
+        and name != "."
+        and "/" not in name
+        and "\\" not in name
+        and ".." not in name
+    )
 
 
 # The runtime-bundle children this installer manages under `~/.groundwork`.
