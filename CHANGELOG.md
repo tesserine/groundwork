@@ -55,6 +55,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Runtime-driven self-install ships the complete methodology layout**
+  (#482). `scripts/install` now derives the `~/.groundwork` runtime bundle
+  from `manifest.toml`, projecting every declared artifact schema and
+  protocol instruction file byte-identically beside the manifest. Missing
+  declared layout files fail before target mutation, complete re-runs leave
+  managed runtime files untouched, stale retired runtime children are pruned
+  without becoming managed content, and the runtime-driven install docs name
+  the complete bundle shape.
+
 - **Forge work now consumes the connector capability** (#440). Groundwork
   vendors Forge Capability v1.1.0 with immutable provenance, derives
   work-unit and change-proposal handles from its `{ id, display }` handle

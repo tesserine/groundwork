@@ -35,11 +35,12 @@ exactly three surfaces and carries no projection machinery:
    `~/.agents/skills/<name>`, enumerated from the tree at the source
    commit. No transformation of any shipped file; the only added file is
    the ownership marker.
-2. **The methodology runtime.** `~/.groundwork` with `manifest.toml` and
-   the ownership marker. Provider mechanics, forge-operations modules, and
-   resolver binaries are retired runtime children; they are pruned on
-   upgrade rather than projected or replaced. Forge operations are
-   connector capability tools supplied through runa's MCP surface, not
+2. **The methodology runtime.** `~/.groundwork` is a self-contained
+   methodology layout: `manifest.toml`,
+   `schemas/{artifact_type}.schema.json` for each manifest-declared
+   artifact type, `protocols/{name}/PROTOCOL.md` for each
+   manifest-declared protocol, and the ownership marker. Forge operations
+   are connector capability tools supplied through runa's MCP surface, not
    installed runtime children.
 3. **The principles corpus.** The corpus source is an operator input
    (`--corpus-git URL [--corpus-ref REF]` | `--corpus-path PATH` |
@@ -74,7 +75,7 @@ write — including protocol projections it must never manage.
 
 - Re-running converges with exit 0 and leaves every managed inode
   untouched (compare-before-swap on all three surfaces, including the
-  recorded config and the state file).
+  runtime bundle files, recorded config, and state file).
 - An entry installed previously but no longer shipped is removed; removal
   is gated on this installer's own marker, and a missing marker at a
   deletion boundary fails loudly with state intact.

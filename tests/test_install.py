@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import tempfile
 import textwrap
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -21,6 +22,27 @@ ROOT = Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "scripts" / "install"
 MARKER_NAME = ".groundwork-managed"
 LEGACY_MARKER_NAME = ".groundwork-install"
+
+
+def runa_binary() -> Path | None:
+    configured = os.environ.get("GROUNDWORK_RUNA_BIN")
+    if configured:
+        configured_path = Path(configured)
+        if configured_path.is_file():
+            return configured_path
+    discovered = shutil.which("runa")
+    if discovered:
+        return Path(discovered)
+    for candidate in [
+        ROOT.parent / "runa" / "target" / "release" / "runa",
+        ROOT.parent / "runa" / "target" / "debug" / "runa",
+    ]:
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+RUNA = runa_binary()
 
 
 def run(
@@ -94,12 +116,50 @@ class MethodologyFixture:
         self.write("skills/reckon/SKILL.md", "---\nname: reckon\n---\n# Reckon\n")
         self.write("skills/reckon/references/example.md", "reckon reference\n")
         self.write("protocols/take/PROTOCOL.md", "---\nname: take\n---\n# Take\n")
+        self.write(
+            "schemas/work-unit.schema.json",
+            """
+            {
+              "type": "object",
+              "required": ["title"],
+              "properties": {"title": {"type": "string"}}
+            }
+            """,
+        )
+        self.write(
+            "schemas/behavior-contract.schema.json",
+            """
+            {
+              "type": "object",
+              "required": ["work_unit", "title"],
+              "properties": {
+                "work_unit": {"type": "string"},
+                "title": {"type": "string"}
+              }
+            }
+            """,
+        )
         self.write("principles/PRINCIPLES.md", "# Principles\n\n1. Understand.\n")
         self.write(
             "manifest.toml",
             """
+            name = "groundwork"
+
+            [[artifact_types]]
+            name = "work-unit"
+
+            [[artifact_types]]
+            name = "behavior-contract"
+
             [[mechanics]]
             name = "read-artifact"
+
+            [[protocols]]
+            name = "take"
+            requires = ["work-unit"]
+            produces = ["behavior-contract"]
+            scoped = true
+            trigger = { type = "on_artifact", name = "work-unit" }
             """,
         )
 
@@ -184,6 +244,26 @@ class SelfInstallTests(unittest.TestCase):
         self.addCleanup(fixture.cleanup)
         return fixture
 
+    def manifest_declared_runtime_paths(self, manifest: Path) -> set[str]:
+        document = tomllib.loads(manifest.read_text(encoding="utf-8"))
+        artifact_paths = {
+            f"schemas/{entry['name']}.schema.json"
+            for entry in document.get("artifact_types", [])
+        }
+        protocol_paths = {
+            f"protocols/{entry['name']}/PROTOCOL.md"
+            for entry in document.get("protocols", [])
+        }
+        return {"manifest.toml"} | artifact_paths | protocol_paths
+
+    def managed_runtime_files(self, runtime: Path) -> dict[str, Path]:
+        return {
+            str(path.relative_to(runtime)): path
+            for path in sorted(runtime.rglob("*"))
+            if path.is_file()
+            and path.relative_to(runtime).parts[0] in {"manifest.toml", "schemas", "protocols", MARKER_NAME}
+        }
+
     def test_install_places_skills_byte_identical_in_both_discovery_roots(self) -> None:
         fixture = self.add_fixture("skills-verbatim")
         install = InstallRun(self, fixture.root)
@@ -213,12 +293,70 @@ class SelfInstallTests(unittest.TestCase):
         result = install.run_installer("install")
 
         assert_success(self, result)
-        self.assertEqual(
-            (install.runtime_root() / "manifest.toml").read_bytes(),
-            (fixture.root / "manifest.toml").read_bytes(),
-        )
+        runtime_payload = tree_payload(install.runtime_root(), exclude=frozenset({MARKER_NAME, "principles"}))
+        for relative in self.manifest_declared_runtime_paths(fixture.root / "manifest.toml"):
+            self.assertEqual(
+                (install.runtime_root() / relative).read_bytes(),
+                (fixture.root / relative).read_bytes(),
+                f"{relative} did not project byte-identically",
+            )
+            self.assertIn(relative, runtime_payload)
         self.assertFalse((install.runtime_root() / "mechanics").exists())
         self.assertFalse((install.runtime_root() / "bin" / "groundwork-mechanic").exists())
+
+    def test_runtime_bundle_projection_is_derived_from_manifest_declarations(self) -> None:
+        fixture = self.add_fixture("manifest-derived-runtime")
+        fixture.write(
+            "schemas/research-record.schema.json",
+            '{"type":"object","required":["topic"],"properties":{"topic":{"type":"string"}}}\n',
+        )
+        fixture.write("protocols/plan/PROTOCOL.md", "# Plan\n")
+        fixture.write(
+            "manifest.toml",
+            """
+            name = "groundwork"
+
+            [[artifact_types]]
+            name = "work-unit"
+
+            [[artifact_types]]
+            name = "behavior-contract"
+
+            [[artifact_types]]
+            name = "research-record"
+
+            [[mechanics]]
+            name = "read-artifact"
+
+            [[outcome_types]]
+            name = "behavior-contract"
+
+            [[protocols]]
+            name = "take"
+            requires = ["work-unit"]
+            produces = ["behavior-contract"]
+            scoped = true
+            trigger = { type = "on_artifact", name = "work-unit" }
+
+            [[protocols]]
+            name = "plan"
+            requires = ["behavior-contract"]
+            produces = ["research-record"]
+            scoped = true
+            trigger = { type = "on_artifact", name = "behavior-contract" }
+            """,
+        )
+        fixture.commit("add declared runtime entries")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        self.assertEqual(
+            self.manifest_declared_runtime_paths(fixture.root / "manifest.toml"),
+            set(self.managed_runtime_files(install.runtime_root())) - {MARKER_NAME},
+        )
+        self.assertFalse((install.runtime_root() / "mechanics").exists())
 
     def test_install_runtime_bundle_has_no_retired_provider_resolver_or_mechanics(self) -> None:
         fixture = self.add_fixture("post-retirement-runtime")
@@ -252,6 +390,8 @@ class SelfInstallTests(unittest.TestCase):
         assert_success(self, result)
         self.assertTrue((runtime / "manifest.toml").is_file())
         self.assertTrue((runtime / MARKER_NAME).is_file())
+        self.assertTrue((runtime / "schemas" / "work-unit.schema.json").is_file())
+        self.assertTrue((runtime / "protocols" / "take" / "PROTOCOL.md").is_file())
         self.assertFalse((runtime / "mechanics").exists())
         self.assertFalse((runtime / "lib" / "tooling" / "forge_operations.py").exists())
         self.assertFalse((runtime / "bin" / "groundwork-mechanic").exists())
@@ -411,6 +551,72 @@ class SelfInstallTests(unittest.TestCase):
         assert_success(self, result)
         self.assertEqual(self.stat_snapshot(install.home, install.state), before)
 
+    def test_second_run_does_not_rewrite_managed_runtime_bundle_files(self) -> None:
+        fixture = self.add_fixture("idempotent-runtime-bundle")
+        install = InstallRun(self, fixture.root)
+        assert_success(self, install.run_installer("install"))
+        fixed_time = 1_700_000_000_000_000_000
+        files = self.managed_runtime_files(install.runtime_root())
+        for path in files.values():
+            os.utime(path, ns=(fixed_time, fixed_time))
+        before = {
+            relative: (path.read_bytes(), path.stat().st_mtime_ns)
+            for relative, path in files.items()
+        }
+
+        result = install.run_installer("install")
+
+        assert_success(self, result)
+        after_files = self.managed_runtime_files(install.runtime_root())
+        self.assertEqual(set(before), set(after_files))
+        self.assertEqual(
+            {
+                relative: (path.read_bytes(), path.stat().st_mtime_ns)
+                for relative, path in after_files.items()
+            },
+            before,
+        )
+
+    def test_missing_manifest_declared_schema_fails_before_target_mutation(self) -> None:
+        fixture = self.add_fixture("missing-declared-schema")
+        fixture.remove("schemas/behavior-contract.schema.json")
+        fixture.commit("drop declared schema")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_failure_contains(self, result, "schemas/behavior-contract.schema.json")
+        for surface in [".claude", ".agents", ".groundwork"]:
+            self.assertFalse((install.home / surface).exists(), f"{surface} must be untouched")
+
+    def test_missing_manifest_declared_protocol_fails_before_target_mutation(self) -> None:
+        fixture = self.add_fixture("missing-declared-protocol")
+        fixture.remove("protocols/take")
+        fixture.commit("drop declared protocol")
+        install = InstallRun(self, fixture.root)
+
+        result = install.run_installer("install")
+
+        assert_failure_contains(self, result, "protocols/take/PROTOCOL.md")
+        for surface in [".claude", ".agents", ".groundwork"]:
+            self.assertFalse((install.home / surface).exists(), f"{surface} must be untouched")
+
+    @unittest.skipUnless(RUNA is not None, "runa binary unavailable")
+    def test_installed_runtime_bundle_initializes_runa_project(self) -> None:
+        assert RUNA is not None
+        fixture = self.add_fixture("runa-init-runtime-bundle")
+        install = InstallRun(self, fixture.root)
+        project = Path(tempfile.mkdtemp(prefix="groundwork-self-install-runa-project-"))
+        self.addCleanup(lambda: shutil.rmtree(project, ignore_errors=True))
+        assert_success(self, install.run_installer("install"))
+
+        result = run(
+            [str(RUNA), "init", "--methodology", str(install.runtime_root() / "manifest.toml")],
+            project,
+        )
+
+        assert_success(self, result)
+        self.assertTrue((project / ".runa" / "config.toml").is_file())
 
     def test_skill_removed_from_tree_is_removed_on_rerun(self) -> None:
         fixture = self.add_fixture("stale-skill")
@@ -548,12 +754,12 @@ class SelfInstallTests(unittest.TestCase):
         result = install.run_installer("uninstall")
 
         assert_success(self, result)
+        self.assertTrue((operator_skill / "SKILL.md").is_file(), "unmanaged content must survive")
         for root in [".claude", ".agents"]:
             for name in ["orient", "reckon"]:
                 self.assertFalse(install.target(root, name).exists())
         self.assertFalse(install.runtime_root().exists())
         self.assertFalse(install.state_file().exists())
-        self.assertTrue((operator_skill / "SKILL.md").is_file(), "unmanaged content must survive")
         self.assertTrue(install.config_file().is_file(), "deployment-owned config must survive")
 
 
