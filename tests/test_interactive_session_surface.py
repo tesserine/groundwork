@@ -61,10 +61,6 @@ def append_agent_command_config(project_dir: Path, command: list[Path]) -> None:
 
 def groundwork_env() -> dict[str, str]:
     env = os.environ.copy()
-    env.pop("RUNA_FORGE_TYPE", None)
-    env.pop("RUNA_FORGE_TRACKER_ID", None)
-    env["RUNA_FORGE_OWNER"] = "tesserine"
-    env["RUNA_FORGE_NAME"] = "groundwork"
     return env
 
 
@@ -96,9 +92,8 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                             "Interactive sessions reach take through the runa session surface"
                         ],
                         "handle": {
-                            "forge_tag": "github",
-                            "url": "https://github.com/tesserine/groundwork/issues/382",
-                            "number": 382,
+                            "id": "ticket:382-session-surface",
+                            "display": "382",
                         },
                     },
                     indent=2,
@@ -191,9 +186,8 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                         "description": "Make a documentation-deliverable work-unit sequence on gate-form behavior.",
                         "acceptance_criteria": [criterion],
                         "handle": {
-                            "forge_tag": "github",
-                            "url": "https://github.com/tesserine/groundwork/issues/454",
-                            "number": 454,
+                            "id": "ticket:454-runtime-gate-form-behavior",
+                            "display": "454",
                         },
                     },
                     indent=2,

@@ -6,8 +6,7 @@
   "summary": "Add change-proposal and typed review outcome artifact schemas.",
   "version": 1,
   "handle": {
-    "forge_tag": "github",
-    "url": "https://github.com/tesserine/groundwork/pull/323",
-    "number": 323
+    "id": "proposal:valid-change-proposal-github-v1",
+    "display": "valid-change-proposal-github-v1"
   }
 }

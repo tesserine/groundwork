@@ -25,7 +25,7 @@ ADR-0002's 2026-05-28 revision fixes the arc vocabulary at six
 forge-invariant operations: `deliver-change-proposal`, `review`, `revise`,
 `apply-approved-change`, `reflect-disposition`, and `close-out`. It also
 replaces `patch` with `change-proposal`, gives each proposal an immutable
-`version`, and adds a forge-tagged `handle`. ADR-0003 moves the review
+`version`, and adds a connector-backed `handle`. ADR-0003 moves the review
 disposition into the produced outcome type consumed by the land/revise flow.
 
 The Step-1 substrate on `main` has these relevant facts:
@@ -33,11 +33,11 @@ The Step-1 substrate on `main` has these relevant facts:
 - `workflow-contracts/*.toml` node `mechanics` are bare strings. The conformance
   runner resolves them as names from `manifest.toml` plus any `mechanics/**/*.toml`
   `name` values.
-- `schemas/mechanic.schema.json` has `name` and an optional `forge_tag`; it has no
+- `schemas/mechanic.schema.json` has `name` and an optional `connector handle`; it has no
   separate operation field.
-- `tooling.mechanics` validates that a mechanic's `forge_tag` is registered.
-- `manifest.toml` registers available forge tags (`github`, `sourcehut`) and
-  operation-to-mechanic bindings through `[[mechanics]].forge_tags`.
+- `tooling.mechanics` validates that a mechanic's `connector handle` is registered.
+- `manifest.toml` registers available connector capabilitys (`github`, `sourcehut`) and
+  operation-to-mechanic bindings through `[[mechanics]].connector capability operations`.
 - `change-approved.schema.json` and `change-needs-revision.schema.json` make
   classification structural: approval cannot contain blocking observations, and
   needs-revision must contain at least one blocking observation.
@@ -101,8 +101,8 @@ C-2 contracts must reference forge-invariant operation names only. They must not
 contain `create-pr`, `pr-merge`, or other forge-specific HOW vocabulary.
 
 The Step-2 substrate adds the resolution mechanism needed by that decision.
-Bare mechanic names plus optional `forge_tag` validation prove that a mechanic
-has a registered forge tag; manifest-declared `forge_tags` additionally prove
+Bare mechanic names plus optional `connector handle` validation prove that a mechanic
+has a registered connector capability; manifest-declared `connector capability operations` additionally prove
 that an operation reference resolves to exactly one C-3 mechanic for the
 declared forge.
 
@@ -110,9 +110,9 @@ The Step-2 resolution mechanism is:
 
 - Treat a C-2 node mechanic string as an operation handle when it names one of
   the six invariant operations.
-- Treat a C-3 mechanic's `name` as the operation it implements; when `forge_tag`
+- Treat a C-3 mechanic's `name` as the operation it implements; when `connector handle`
   is present, the mechanic is a forge-specific implementation of that operation.
-- Resolve a forge-specific operation as `(operation name, active forge_tag)`.
+- Resolve a forge-specific operation as `(operation name, active connector handle)`.
 - Reject missing matches and ambiguous matches.
 - Validate, for the reference arc, that `github` and `sourcehut` each provide
   implementations for every forge-touching operation they need.
@@ -120,8 +120,8 @@ The Step-2 resolution mechanism is:
 #333 introduced this mechanism for GitHub as the first C-3 mechanic library,
 and #334 extends the same invariant operations to SourceHut:
 `deliver-change-proposal`, `apply-approved-change`, and
-`reflect-disposition` are bound under `forge_tag = "github"` and
-`forge_tag = "sourcehut"`. Conformance rejects unknown, missing, or duplicate
+`reflect-disposition` are bound under `connector handle = "github"` and
+`connector handle = "sourcehut"`. Conformance rejects unknown, missing, or duplicate
 operation/tag implementations.
 
 SourceHut uses pushed git refs instead of a platform merge. Delivery advances
@@ -148,7 +148,7 @@ same commit-identity guard through `gh pr merge --match-head-commit`.
   disposition, and closes out. It activates on the typed approval outcome, not a
   field predicate.
 - #333/#334: GitHub and SourceHut mechanics implement the invariant operation
-  handles through `forge_tag`-selected C-3 mechanics. They do not create
+  handles through `connector handle`-selected C-3 mechanics. They do not create
   per-(forge x mode) mechanics; interactive mode reaches the same runa session
   surface as autonomous mode, with `runa go` controlling cadence.
 

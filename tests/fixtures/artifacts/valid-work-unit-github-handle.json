@@ -5,8 +5,7 @@
     "GitHub tracker-backed work-units carry a forge-tagged issue handle"
   ],
   "handle": {
-    "forge_tag": "github",
-    "url": "https://github.com/tesserine/groundwork/issues/368",
-    "number": 368
+    "id": "ticket:valid-work-unit-github-handle",
+    "display": "valid-work-unit-github-handle"
   }
 }

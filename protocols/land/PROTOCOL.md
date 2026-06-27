@@ -36,18 +36,17 @@ The protocol is not a forge operation. It must not activate from a raw
    resolved proposal supplies the apply detail: `branch`, `commit`, `base`,
    and `handle`.
 
-2. **Apply.** Resolve the invariant `apply-approved-change` operation
-   through `groundwork-mechanic` and run the active-forge mechanic it
-   returns, with the resolved proposal detail. Never the latest proposal —
+2. **Apply.** Invoke the connector capability `apply-approved-change`
+   operation with the resolved proposal detail. Never the latest proposal —
    the approved one.
 
-3. **Reflect the disposition.** Resolve and run `reflect-disposition`: the
+3. **Reflect the disposition.** Invoke `reflect-disposition`: the
    collaboration surface records that the approval was acted on.
 
-4. **Close out.** Resolve and run `close-out`: the work unit's tracker
-   record carries its completion context — behavior coverage in scenario or
-   gate form, documentation outcomes, code-quality findings, gaps named,
-   and the merge reference.
+4. **Close out.** Invoke `close-out`: the work unit's tracker record carries
+   its completion context — behavior coverage in scenario or gate form,
+   documentation outcomes, code-quality findings, gaps named, and the merge
+   reference.
 
 5. **Deliver the `completion-record`.**
    Invoke the `completion-record` MCP tool through the existing schema

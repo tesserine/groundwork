@@ -24,15 +24,10 @@ class MechanicTests(unittest.TestCase):
 
         self.assertEqual(mechanic["name"], "git-push")
 
-    def test_schema_accepts_github_tagged_forge_mechanic(self) -> None:
-        mechanic = load_mechanic(self.fixture("valid-github.toml"))
-
-        self.assertEqual(mechanic["forge_tag"], "github")
-
     def test_schema_accepts_generic_runtime_mcp_tool_mechanic(self) -> None:
         mechanic = load_mechanic(self.fixture("valid-mcp-tool.toml"))
 
-        self.assertNotIn("forge_tag", mechanic)
+        self.assertEqual("produce-artifact", mechanic["name"])
 
     def test_schema_accepts_secret_parameter_metadata(self) -> None:
         mechanic = {
@@ -48,49 +43,6 @@ class MechanicTests(unittest.TestCase):
         }
 
         validate_mechanic(mechanic)
-
-    def test_schema_accepts_deployment_value_parameter_metadata(self) -> None:
-        mechanic = {
-            "name": "sourcehut-upload",
-            "purpose": "Upload to a configured forge repository.",
-            "default_invocation": 'printf "%s\\n" "$repo_number"',
-            "examples": ['printf "%s\\n" "$repo_number"'],
-            "parameters": [
-                {
-                    "name": "repo_number",
-                    "purpose": "Configured forge repository ID.",
-                    "required": True,
-                    "deployment_value": "repo_id",
-                }
-            ],
-            "outcome": {"description": "Printed."},
-        }
-
-        validate_mechanic(mechanic)
-
-    def test_schema_rejects_secret_deployment_value_parameter_conflict(self) -> None:
-        mechanic = {
-            "name": "sourcehut-upload",
-            "purpose": "Upload to a configured forge repository.",
-            "default_invocation": 'printf "%s\\n" "$repo_number"',
-            "examples": ['printf "%s\\n" "$repo_number"'],
-            "parameters": [
-                {
-                    "name": "repo_number",
-                    "purpose": "Configured forge repository ID.",
-                    "required": True,
-                    "secret": True,
-                    "deployment_value": "repo_id",
-                }
-            ],
-            "outcome": {"description": "Printed."},
-        }
-
-        with self.assertRaises(MechanicError) as context:
-            validate_mechanic(mechanic)
-
-        self.assertIn("parameters/0/deployment_value", context.exception.paths)
-        self.assertIn("must not also be secret", str(context.exception))
 
     def test_invocation_rejects_bare_placeholder_parameters(self) -> None:
         mechanic = {
@@ -185,12 +137,6 @@ class MechanicTests(unittest.TestCase):
         self.assertIn("purpose", context.exception.paths)
         self.assertIn("outcome", context.exception.paths)
 
-    def test_schema_rejects_malformed_forge_tag_with_field_path(self) -> None:
-        with self.assertRaises(MechanicError) as context:
-            load_mechanic(self.fixture("invalid-forge-tag.toml"))
-
-        self.assertIn("forge_tag", context.exception.paths)
-
     def test_schema_rejects_empty_examples_with_field_path(self) -> None:
         with self.assertRaises(MechanicError) as context:
             load_mechanic(self.fixture("invalid-empty-examples.toml"))
@@ -215,36 +161,16 @@ class MechanicTests(unittest.TestCase):
         self.assertIn("outcome/artifact_type", context.exception.paths)
         self.assertIn("artifact schema `missing-schema` does not resolve in registry", str(context.exception))
 
-    def test_registry_resolution_accepts_known_forge_tag_when_registry_is_loaded(self) -> None:
-        registry = MechanicRegistry(
-            artifact_types={"change-proposal"},
-            forge_tags={"github"},
-        )
-
-        mechanic = load_mechanic(self.fixture("valid-github.toml"), registry=registry)
-
-        self.assertEqual(mechanic["forge_tag"], "github")
-
     def test_registry_resolution_accepts_manifest_backed_artifact_declaring_mechanic(self) -> None:
-        mechanic = load_mechanic(self.fixture("valid-github.toml"), registry=registry_from_manifest())
+        mechanic = load_mechanic(self.fixture("valid-mcp-tool.toml"), registry=registry_from_manifest())
 
-        self.assertEqual(mechanic["outcome"]["artifact_type"], "change-proposal")
-        self.assertEqual(mechanic["forge_tag"], "github")
+        self.assertEqual(mechanic["outcome"]["artifact_type"], "completion-evidence")
 
     def test_registry_resolution_accepts_manifest_backed_schema_ref_declaring_mechanic(self) -> None:
         mechanic = load_mechanic(self.fixture("valid-mcp-tool.toml"), registry=registry_from_manifest())
 
         self.assertEqual(mechanic["parameters"][0]["schema_ref"], "completion-evidence")
         self.assertEqual(mechanic["outcome"]["artifact_type"], "completion-evidence")
-
-    def test_registry_resolution_rejects_unknown_forge_tag_when_registry_is_loaded(self) -> None:
-        registry = MechanicRegistry(forge_tags={"github"})
-
-        with self.assertRaises(MechanicError) as context:
-            load_mechanic(self.fixture("invalid-forge-tag-unregistered.toml"), registry=registry)
-
-        self.assertIn("forge_tag", context.exception.paths)
-        self.assertIn("forge tag `sourcehut-lists` does not resolve in registry", str(context.exception))
 
     def test_validate_mechanic_accepts_already_loaded_toml_data(self) -> None:
         mechanic = load_mechanic(self.fixture("valid-git.toml"))

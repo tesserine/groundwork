@@ -1,12 +1,13 @@
 {
-  "work_unit": "issue-316",
-  "branch": "issue-316/feat-architecture-step-1-change-proposal",
-  "commit": "5ef2870a5958971f84ec33b46d389dd920d4933a",
+  "work_unit": "issue-323",
+  "branch": "issue-323/example",
+  "commit": "abc123",
   "base": "main",
-  "summary": "GitHub forge tag with sourcehut handle fields should fail.",
+  "summary": "Provider-shaped handle is invalid.",
   "version": 1,
   "handle": {
     "forge_tag": "github",
-    "proposal_ref": "refs/proposals/issue-316/1"
+    "url": "https://github.com/tesserine/groundwork/pull/323",
+    "number": 323
   }
 }

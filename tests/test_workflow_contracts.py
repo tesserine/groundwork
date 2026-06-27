@@ -208,11 +208,11 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("declares 2 manifest required_output_choices groups", str(context.exception))
 
     def test_parser_registries_resolve_mechanic_names_across_parsers(self) -> None:
-        mechanic = load_mechanic(MECHANIC_FIXTURES / "valid-github.toml")
+        mechanic = load_mechanic(MECHANIC_FIXTURES / "valid-mcp-tool.toml")
         registry = WorkflowRegistry(
             disciplines={"orient"},
             mechanics={mechanic["name"]},
-            artifact_schemas={"change-proposal"},
+            artifact_schemas={"completion-evidence"},
         )
 
         contract = load_workflow_contract(self.fixture("valid-mechanic-smoke.toml"), registry=registry)
@@ -222,13 +222,13 @@ class WorkflowContractTests(unittest.TestCase):
         renamed_registry = WorkflowRegistry(
             disciplines={"orient"},
             mechanics={f"{mechanic['name']}-renamed"},
-            artifact_schemas={"change-proposal"},
+            artifact_schemas={"completion-evidence"},
         )
         with self.assertRaises(WorkflowContractError) as context:
             load_workflow_contract(self.fixture("valid-mechanic-smoke.toml"), registry=renamed_registry)
 
         self.assertIn("nodes/0/mechanics/0", context.exception.paths)
-        self.assertIn("mechanic `deliver-change-proposal` does not resolve in registry", str(context.exception))
+        self.assertIn("mechanic `produce-artifact` does not resolve in registry", str(context.exception))
 
     def test_registry_from_manifest_resolves_nested_mechanic_directory_names(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -236,21 +236,21 @@ class WorkflowContractTests(unittest.TestCase):
             (root / "skills" / "orient").mkdir(parents=True)
             nested_mechanics = root / "mechanics" / "delivery"
             nested_mechanics.mkdir(parents=True)
-            (nested_mechanics / "valid-github.toml").write_text(
-                (MECHANIC_FIXTURES / "valid-github.toml").read_text(encoding="utf-8"),
+            (nested_mechanics / "valid-mcp-tool.toml").write_text(
+                (MECHANIC_FIXTURES / "valid-mcp-tool.toml").read_text(encoding="utf-8"),
                 encoding="utf-8",
             )
             manifest = root / "manifest.toml"
             manifest.write_text(
                 """
 [[artifact_types]]
-name = "change-proposal"
+name = "completion-evidence"
 """.lstrip(),
                 encoding="utf-8",
             )
 
             registry = workflow_registry_from_manifest(manifest, root=root)
-            self.assertIn("deliver-change-proposal", registry.mechanics)
+            self.assertIn("produce-artifact", registry.mechanics)
             contract = load_workflow_contract(self.fixture("valid-mechanic-smoke.toml"), registry=registry)
 
         self.assertEqual("submit-smoke", contract["name"])

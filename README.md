@@ -16,9 +16,8 @@ assertion; progress survives session boundaries because state lives in the
 work-unit graph, not in any one agent's memory. The methodology practices
 what it enforces: every belief below traces to its enforcing file, the
 dependency-graph notation and every script path in its instructions are
-CI-gated against drift, and the forge layer is abstracted so the same
-methodology runs against GitHub or SourceHut unchanged
-([mechanics/](mechanics/)).
+CI-gated against drift, and forge work is carried through connector-owned
+capability operations so the methodology owns no provider implementation.
 
 For what methodology plugins are and how runa executes them, see runa's
 [core concepts](https://github.com/tesserine/runa#core-concepts). Groundwork
@@ -100,9 +99,9 @@ scripts/install install --corpus-git https://example.org/owner/corpus
   unmodified in `~/.claude/skills/<name>` and `~/.agents/skills/<name>`.
   Skills are agent-invoked by judgment and are not runtime-delivered, so they
   install natively; no projection or rewriting of any kind.
-- **The methodology runtime** — `~/.groundwork` with the manifest, the
-  mechanic library, the forge-operations module, and
-  `bin/groundwork-mechanic`.
+- **The methodology runtime** — `~/.groundwork` with the manifest. Forge
+  operations are connector capability tools contributed through runa's MCP
+  surface, not local provider mechanics.
 - **The principles corpus** — the `--corpus-git URL [--corpus-ref REF]`,
   `--corpus-path PATH`, or `--corpus-embedded` operator input is recorded in
   the deployment-owned `${XDG_CONFIG_HOME:-~/.config}/groundwork/principles.toml`
@@ -155,64 +154,20 @@ tool, and `advance` inside runa's validated cascade. Installed entries are
 copies, not source-checkout symlinks, so later changes to the checkout do not
 drift into the active discovery surface.
 
-When `manifest.toml`, `mechanics/`, and the forge-operation resolver are
-present, the installer also projects a managed runtime bundle under
-`~/.groundwork/`. The bundle contains the manifest, mechanic library, resolver
-module, and `bin/groundwork-mechanic`, so installed protocol sessions can
-resolve forge-invariant operations through the active `RUNA_FORGE_TYPE`
-configuration without reaching back into the source checkout. Installed
-protocol copies reference the managed resolver path directly, so users do not
-need to add `~/.groundwork/bin` to `PATH`.
+When `manifest.toml` is present, the installer projects a managed runtime
+bundle under `~/.groundwork/`. The bundle contains the manifest and ownership
+marker. It deliberately contains no provider mechanics, resolver module, or
+forge-operation binary; upgrading removes stale copies of those retired runtime
+children.
 
-The early-arc tracker operations are forge-invariant at the call site and
-forge-tagged in the mechanic library: `create-ticket`, `read-ticket`,
-`claim-work-unit`, and `record-progress` resolve to either GitHub issue
-mechanics or SourceHut ticket mechanics. Ticket creation emits the
-forge-assigned identity needed for a `work-unit.handle`: GitHub emits
-`forge_tag`, issue `url`, and issue `number`; SourceHut emits `forge_tag`,
-`tracker_id`, and ticket `number`. The mechanics validate the expected API or
-GraphQL result field before accepting a response, so an HTTP- or CLI-successful
-response that contains application errors or omits the expected operation
-result is rejected.
-
-Secret mechanic parameters must be bound from an environment variable rather
-than from `NAME=VALUE` argv bindings. For example, pass
-`--secret-env token=WEFORGE_OPERATOR_PAT` to bind a secret `token` parameter
-from the current process environment without placing the secret value in the
-resolver command line.
-
-Forge deployment identity is also supplied by environment contract, not by
-mechanic call-site bindings. Mechanics mark deployment-resolved parameters with
-`deployment_value`, and `groundwork-mechanic` derives those values from these
-atoms:
-
-| Variable | Holds | Example | Forge-assigned? |
-|---|---|---|---|
-| `RUNA_FORGE_TYPE` | active forge selector, defaulting to `github` | `sourcehut` | no |
-| `RUNA_FORGE_OWNER` | tracker/repo owner handle | `operator` | no |
-| `RUNA_FORGE_NAME` | tracker/repo name | `weforge` | no |
-| `RUNA_FORGE_TRACKER_ID` | tracker integer ID | `4` | yes |
-| `GROUNDWORK_FORGE_ENDPOINT` | deployment host used to derive service hosts | `weforge.build` | no |
-| `GROUNDWORK_FORGE_REPO_ID` | git repo integer ID | `42` | yes |
-
-For SourceHut, the resolver derives `todo_query_url` as
-`https://todo.<endpoint>/query`, `git_query_url` as
-`https://git.<endpoint>/query`, and `ssh_remote` as
-`git@git.<endpoint>:~<owner>/<name>`, while `tracker_id` and `repo_id` come
-directly from their atoms. For GitHub, it derives `repository` as
-`<owner>/<name>`. Runa owns the four scoped identity atoms it injects into
-agent and MCP environments; Groundwork still owns endpoint and repo-id atoms
-that are not part of runtime scoped identity. The atoms are the only deployment
-facts; composed endpoints and remotes are not separate configuration values.
-
-The cross-repo seam for this ticket identity is documented in
-[`docs/architecture/connecting-structure.md`](docs/architecture/connecting-structure.md#phase-2-forge-tagging-seam).
-Groundwork owns the schema-as-contract shape of `work-unit.handle`, the
-mechanics that produce handles from active deployment identity, and the
-decompose delivery rules. runa owns scoped runtime enforcement: exact recorded
-`--work-unit` ids, tracker-handle consistency, duplicate-root rejection, and
-active deployment agreement. Cross-deployment work is composed from separate
-sessions; a handle never overrides the active deployment.
+Forge work uses the vendored Forge Capability v1.1.0 contract at
+`schemas/forge-capability/v1/forge-capability.schema.json`. The eight canonical
+operations are connector MCP tools: `read-ticket`, `create-ticket`,
+`claim-work-unit`, `record-progress`, `deliver-change-proposal`,
+`reflect-disposition`, `apply-approved-change`, and `close-out`. Work units and
+change proposals carry the connector-issued `{ id, display }` handle. The
+handle is opaque to Groundwork: internal identity derives from `id` equality,
+not from provider coordinates or a human-readable display string.
 
 The source checkout must be clean and pinned at a tag or full commit SHA. The
 command refuses branch checkouts because a branch is a moving source. To update
@@ -277,10 +232,10 @@ an outcome must use `on_artifact`, while successor triggers must not target a
 disposition-agnostic output of an outcome-bearing protocol through any trigger
 form or composite trigger.
 
-It also validates forge-tagged C-3 mechanic bindings. When a manifest
-`[[mechanics]]` entry declares `forge_tags = [...]`, each tag must resolve to
-`[[forge_tags]]` and exactly one `mechanics/**/*.toml` file whose `name` and
-`forge_tag` match that operation/tag pair.
+It also validates connector capability conformance. Forge operation names,
+operation input/output references, and the handle definition are read from the
+vendored Forge Capability schema; absence checks for retired provider runtime
+files are guards on top of that positive contract.
 
 ## What Groundwork Believes
 

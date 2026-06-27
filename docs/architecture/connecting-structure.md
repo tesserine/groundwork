@@ -5,6 +5,14 @@ the artifacts, manifest edges, and schemas that link protocols and skills
 into a coherent topology. It is built incrementally during the design
 session and captures decisions as they are reached.
 
+## Current Forge Connector Model
+
+Groundwork's forge work is supplied by the connector-owned Forge Capability
+v1.1.0 contract. Work-unit and change-proposal artifacts carry the
+connector-issued `{ id, display }` handle, and workflow contracts reference
+the eight canonical capability operations as operation names surfaced by
+runa's connector MCP tools.
+
 ## Settled Constraints
 
 These survived prior reckoning sessions and are ground for this design.
@@ -915,7 +923,7 @@ consumers read scope boundaries (plan, review) and closure context (land).
 | title | string | yes | What this work-unit is |
 | description | string | yes | What needs doing |
 | acceptance_criteria | array of strings | yes | Discrete, verifiable conditions for "done" |
-| handle | forge-tagged ticket handle | no | Forge-assigned tracker identity for tracker-backed work-units |
+| handle | connector-backed ticket handle | no | Forge-assigned tracker identity for tracker-backed work-units |
 | scope | array of strings | no | In-scope boundaries for the session frame |
 | out_of_scope | array of strings | no | Explicit nearby exclusions |
 | dependencies | array of work-unit refs | no | Work-units that must be complete before this starts, referenced by `instance_id` |

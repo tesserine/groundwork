@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Derive a work-unit artifact body from an existing forge ticket.
+"""Derive a work-unit artifact body from an existing connector ticket.
 
-Input (stdin or path): the JSON a `read-ticket` mechanic emits —
+Input (stdin or path): the JSON a `read-ticket` connector operation emits —
 ``{"handle": {...}, "title": str, "body": str|null, "state": str}``.
 
 Output (stdout, on success): ``{"instance_id": str, "artifact": {...}}`` where
 ``artifact`` is a work-unit body ready for the `work-unit` MCP tool — its
-``handle`` is the ticket's, carried through verbatim (one-way derivation; the
-ticket is the planning home, the artifact its execution-scoped snapshot).
+``handle`` is the ticket's opaque connector handle, carried through verbatim
+(one-way derivation; the ticket is the planning home, the artifact its
+execution-scoped snapshot).
 
 Derivation is deterministic and never invents content. Where the ticket does
 not map cleanly onto the required schema fields — no extractable acceptance
@@ -20,6 +21,7 @@ re-acquire) rather than fabricating fields.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -72,28 +74,35 @@ def extract_acceptance_criteria(body: str) -> list[str]:
 
 def materialize(ticket: dict) -> dict:
     handle = ticket.get("handle")
-    if not isinstance(handle, dict) or "forge_tag" not in handle or "number" not in handle:
+    if (
+        not isinstance(handle, dict)
+        or set(handle) != {"id", "display"}
+        or not isinstance(handle.get("id"), str)
+        or not handle["id"]
+        or not isinstance(handle.get("display"), str)
+        or not handle["display"]
+    ):
         raise MaterializeError(
-            "ticket payload is missing a forge handle; read-ticket must emit "
-            "handle.forge_tag and handle.number"
+            "ticket payload is missing a connector handle; read-ticket must emit "
+            "handle.id and handle.display"
         )
-    number = handle["number"]
+    identity = handle["id"]
 
     title = ticket.get("title")
     if not isinstance(title, str) or not title.strip():
-        raise MaterializeError(f"ticket #{number} has no title to derive the work-unit from")
+        raise MaterializeError(f"ticket {identity!r} has no title to derive the work-unit from")
 
     state = ticket.get("state")
     if isinstance(state, str) and state.strip().lower() in CLOSED_STATES:
         raise MaterializeError(
-            f"ticket #{number} is {state!r}, not open; acquire materializes open "
+            f"ticket {identity!r} is {state!r}, not open; acquire materializes open "
             "tickets — reopen it or pick another"
         )
 
     body = ticket.get("body")
     if not isinstance(body, str) or not body.strip():
         raise MaterializeError(
-            f"ticket #{number} has an empty body; it carries no description or "
+            f"ticket {identity!r} has an empty body; it carries no description or "
             "acceptance criteria — route it to decompose's refine-work-unit "
             "discipline to fill the ticket, then re-acquire"
         )
@@ -101,7 +110,7 @@ def materialize(ticket: dict) -> dict:
     criteria = extract_acceptance_criteria(body)
     if not criteria:
         raise MaterializeError(
-            f"ticket #{number} has no extractable acceptance criteria "
+            f"ticket {identity!r} has no extractable acceptance criteria "
             "(no checklist items, no Acceptance Criteria section); route it to "
             "decompose's refine-work-unit discipline rather than inventing them"
         )
@@ -109,7 +118,7 @@ def materialize(ticket: dict) -> dict:
     slug = slugify(title)
     if not slug:
         raise MaterializeError(
-            f"ticket #{number} title {title!r} yields an empty slug; it needs a "
+            f"ticket {identity!r} title {title!r} yields an empty slug; it needs a "
             "human-readable title before acquisition"
         )
 
@@ -119,7 +128,8 @@ def materialize(ticket: dict) -> dict:
         "acceptance_criteria": criteria,
         "handle": handle,
     }
-    return {"instance_id": f"work-unit-{number}-{slug}", "artifact": artifact}
+    digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()
+    return {"instance_id": f"work-unit-{digest}", "artifact": artifact}
 
 
 def load_ticket(path: str | None) -> dict:

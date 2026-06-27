@@ -1,0 +1,189 @@
+import json
+import unittest
+from pathlib import Path
+
+from jsonschema import Draft202012Validator
+
+from tooling.artifact_schemas import ArtifactSchemaError, validate_artifact
+from tooling.conformance import run_conformance
+from tooling.workflow_contracts import workflow_registry_from_manifest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCHEMAS = ROOT / "schemas"
+VENDORED_SCHEMA = SCHEMAS / "forge-capability" / "v1" / "forge-capability.schema.json"
+PROVENANCE_URL = (
+    "https://raw.githubusercontent.com/tesserine/commons/"
+    "6924159fc4ff58745f0e2c68ed16849ffd9b4086/"
+    "schemas/forge-capability/v1/forge-capability.schema.json"
+)
+EXPECTED_OPERATIONS = {
+    "read-ticket",
+    "create-ticket",
+    "claim-work-unit",
+    "record-progress",
+    "deliver-change-proposal",
+    "reflect-disposition",
+    "apply-approved-change",
+    "close-out",
+}
+
+
+def load_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def vendored_schema() -> dict:
+    return load_json(VENDORED_SCHEMA)
+
+
+def connector_handle() -> dict:
+    return {"id": "ticket:opaque-alpha", "display": "TRACK-ALPHA"}
+
+
+class ForgeCapabilityTests(unittest.TestCase):
+    def test_capability_schema_is_vendored_with_immutable_provenance(self) -> None:
+        schema = vendored_schema()
+
+        self.assertEqual("forge", schema["properties"]["capability"]["const"])
+        self.assertEqual("1.1.0", schema["properties"]["version"]["const"])
+        self.assertEqual("#/$defs/handle", schema["properties"]["handle_schema"]["const"])
+        self.assertEqual(
+            {
+                "version": "1.1.0",
+                "schema_url": PROVENANCE_URL,
+            },
+            schema["x-tesserine-canonical"],
+        )
+
+    def test_operation_surface_derives_from_vendored_schema(self) -> None:
+        schema = vendored_schema()
+        operation_names = set(schema["$defs"]["operation-name"]["enum"])
+        tool_operations = {
+            schema["$defs"][name]["allOf"][1]["properties"]["operation"]["const"]
+            for name in schema["$defs"]
+            if name.endswith("-tool") and name != "tool"
+        }
+        registry = workflow_registry_from_manifest()
+
+        self.assertEqual(EXPECTED_OPERATIONS, operation_names)
+        self.assertEqual(operation_names, tool_operations)
+        self.assertTrue(operation_names.issubset(registry.mechanics))
+
+    def test_artifact_handle_schemas_are_self_contained_copies_of_the_vendored_handle(self) -> None:
+        handle_schema = vendored_schema()["$defs"]["handle"]
+
+        for schema_name in ["work-unit.schema.json", "change-proposal.schema.json"]:
+            with self.subTest(schema=schema_name):
+                artifact_schema = load_json(SCHEMAS / schema_name)
+                self.assertEqual(handle_schema, artifact_schema["$defs"]["handle"])
+                self.assertEqual({"$ref": "#/$defs/handle"}, artifact_schema["properties"]["handle"])
+                if schema_name == "work-unit.schema.json":
+                    self.assertIn("handle", artifact_schema["required"])
+
+    def test_work_unit_and_change_proposal_accept_only_connector_handles(self) -> None:
+        work_unit = {
+            "title": "Opaque connector work",
+            "description": "## Acceptance criteria\n- [ ] Prove the handle shape",
+            "acceptance_criteria": ["Prove the handle shape"],
+            "handle": connector_handle(),
+        }
+        change_proposal = {
+            "work_unit": "work-unit-abc",
+            "branch": "issue-440/capability",
+            "commit": "abc123",
+            "base": "main",
+            "summary": "Use connector handle.",
+            "version": 1,
+            "handle": {"id": "proposal:opaque-alpha:v1", "display": "PR alpha"},
+        }
+
+        validate_artifact("work-unit", work_unit)
+        validate_artifact("change-proposal", change_proposal)
+
+        work_unit["handle"] = {
+            "forge_tag": "github",
+            "url": "https://github.com/tesserine/groundwork/issues/440",
+            "number": 440,
+        }
+        change_proposal["handle"] = {
+            "forge_tag": "sourcehut",
+            "proposal_ref": "refs/proposals/issue-440/1",
+        }
+        for artifact_type, artifact in [("work-unit", work_unit), ("change-proposal", change_proposal)]:
+            with self.subTest(artifact_type=artifact_type):
+                with self.assertRaises(ArtifactSchemaError):
+                    validate_artifact(artifact_type, artifact)
+
+    def test_conformance_discovers_and_checks_nested_vendored_schema(self) -> None:
+        results = run_conformance([SCHEMAS])
+        checked_paths = {result.path for result in results}
+
+        self.assertIn(VENDORED_SCHEMA.resolve(), checked_paths)
+        self.assertTrue(all(result.passed for result in results))
+
+    def test_source_manifest_retains_non_forge_mechanics_and_no_provider_forge_mechanics(self) -> None:
+        manifest_text = (ROOT / "manifest.toml").read_text(encoding="utf-8")
+        registry = workflow_registry_from_manifest()
+
+        for mechanic in ["read-artifact", "inspect-change-proposals", "revise", "review", "inspect-worktree", "run-test"]:
+            with self.subTest(mechanic=mechanic):
+                self.assertIn(mechanic, registry.mechanics)
+        self.assertNotIn("[[forge_tags]]", manifest_text)
+        self.assertNotIn("forge_tags", manifest_text)
+        self.assertFalse((ROOT / "mechanics" / "github").exists())
+        self.assertFalse((ROOT / "mechanics" / "sourcehut").exists())
+        self.assertFalse((ROOT / "tooling" / "forge_operations.py").exists())
+        self.assertFalse((ROOT / "scripts" / "groundwork-mechanic").exists())
+
+    def test_methodology_docs_present_connector_model_without_retired_mechanism(self) -> None:
+        retired_tokens = [
+            "forge_tag",
+            "forge_tags",
+            "groundwork-mechanic",
+            "provider-mechanic resolver",
+            "forge-type dispatch",
+            "RUNA_FORGE_",
+            "GROUNDWORK_FORGE_",
+        ]
+        documents = [
+            ROOT / "README.md",
+            ROOT / "schemas" / "README.md",
+            ROOT / "docs" / "architecture" / "connecting-structure.md",
+            ROOT / "docs" / "architecture" / "decisions" / "0002-methodology-sovereignty.md",
+            ROOT / "docs" / "architecture" / "decisions" / "0004-contract-first-scoped-pipeline.md",
+            ROOT / "docs" / "architecture" / "decisions" / "0006-runtime-driven-self-install-surface.md",
+            ROOT / "skills" / "acquire" / "SKILL.md",
+            ROOT / "protocols" / "decompose" / "PROTOCOL.md",
+            ROOT / "protocols" / "submit" / "PROTOCOL.md",
+            ROOT / "protocols" / "land" / "PROTOCOL.md",
+            ROOT / "protocols" / "take" / "references" / "workspace.md",
+        ]
+
+        for document in documents:
+            body = document.read_text(encoding="utf-8")
+            with self.subTest(document=document.relative_to(ROOT)):
+                self.assertIn("connector", body)
+                self.assertIn("capability", body)
+                for token in retired_tokens:
+                    self.assertNotIn(token, body)
+
+    def test_read_ticket_output_schema_declares_connector_handle(self) -> None:
+        schema = vendored_schema()
+        ticket_snapshot_ref = schema["$defs"]["read-ticket-tool"]["allOf"][1]["properties"]["output_schema"]["const"]
+        ticket_snapshot = schema
+        for part in ticket_snapshot_ref.removeprefix("#/").split("/"):
+            ticket_snapshot = ticket_snapshot[part]
+
+        handle = connector_handle()
+        snapshot = {
+            "handle": handle,
+            "title": "Opaque ticket",
+            "body": "## Acceptance criteria\n- [ ] Materialize opaque ticket",
+            "state": "open",
+        }
+        Draft202012Validator(schema).evolve(schema=ticket_snapshot).validate(snapshot)
+
+
+if __name__ == "__main__":
+    unittest.main()

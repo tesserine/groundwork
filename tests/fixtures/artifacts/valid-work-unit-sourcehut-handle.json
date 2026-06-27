@@ -5,8 +5,7 @@
     "SourceHut tracker-backed work-units carry a forge-tagged ticket handle"
   ],
   "handle": {
-    "forge_tag": "sourcehut",
-    "tracker_id": 4,
-    "number": 368
+    "id": "ticket:valid-work-unit-sourcehut-handle",
+    "display": "valid-work-unit-sourcehut-handle"
   }
 }

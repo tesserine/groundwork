@@ -1,17 +1,4 @@
-"""Acquisition: materializing a work-unit artifact from an existing forge ticket.
-
-Two layers, mirroring the repo's two-forge test standard:
-
-- Materialization (always runs): the real `read-ticket` mechanic on each forge,
-  driven against a fake `gh`/`curl`, piped through `materialize.py`, yields a
-  schema-valid work-unit whose handle identifies the ticket — and the forge is
-  only read, never mutated (ticket count unchanged).
-- Live end-to-end (skipped without runa): a materialized work-unit delivered
-  through `runa-mcp --protocol decompose` (the surface that serves the
-  `work-unit` tool) persists into the store, and the cascade then computes
-  `take` as the next READY station for that work-unit — entry from an existing
-  ticket, end to end.
-"""
+"""Acquisition: materializing a work-unit artifact from an existing connector ticket."""
 
 import json
 import os
@@ -20,24 +7,17 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest import mock
 
 from tooling.artifact_schemas import registry_from_manifest, validate_artifact
-from tooling.forge_operations import resolve_operation, run_invocation
 
 ROOT = Path(__file__).resolve().parents[1]
 MATERIALIZE = ROOT / "skills" / "acquire" / "scripts" / "materialize.py"
 
-GITHUB_TICKET_BODY = (
+TICKET_BODY = (
     "Cold-start entry from a forge ticket reference.\n\n"
     "## Acceptance criteria\n\n"
     "- [ ] Given an existing ticket, an artifact is materialized\n"
     "- [ ] The artifact handle identifies that ticket\n"
-)
-SOURCEHUT_TICKET_BODY = (
-    "Cold-start entry from a forge ticket reference.\n\n"
-    "## Acceptance criteria\n\n"
-    "- [ ] Materialize the work-unit from the ticket\n"
 )
 
 
@@ -56,134 +36,54 @@ def write_fake_command(path: Path, body: str) -> None:
 
 
 class MaterializeTicketTests(unittest.TestCase):
-    def test_github_ticket_materializes_to_schema_valid_adopted_work_unit(self) -> None:
-        mechanic = resolve_operation(ROOT, "read-ticket", forge_type="github")
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            bin_dir = root / "bin"
-            bin_dir.mkdir()
-            call_log = root / "gh-calls.log"
-            issue = {
-                "html_url": "https://github.com/tesserine/runa/issues/188",
-                "number": 188,
-                "title": "task(entry): cold-start scoped entry from a forge ticket",
-                "body": GITHUB_TICKET_BODY,
-                "state": "open",
-            }
-            write_fake_command(
-                bin_dir / "gh",
-                f'printf "%s\\n" "gh $*" >> "{call_log}"\n'
-                f"cat <<'JSON'\n{json.dumps(issue)}\nJSON",
-            )
-            with mock.patch.dict(
-                os.environ,
-                {
-                    "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    "RUNA_FORGE_OWNER": "tesserine",
-                    "RUNA_FORGE_NAME": "runa",
-                },
-            ):
-                read = run_invocation(mechanic, {"ticket_number": "188"}, cwd=root)
+    def test_opaque_connector_ticket_materializes_to_schema_valid_adopted_work_unit(self) -> None:
+        ticket = {
+            "handle": {"id": "ticket:opaque-alpha", "display": "TRACK-ALPHA"},
+            "title": "task(entry): cold-start scoped entry from a connector ticket",
+            "body": TICKET_BODY,
+            "state": "open",
+        }
 
-            self.assertEqual(0, read.returncode, read.stderr)
-            result = materialize(read.stdout)
-            self.assertEqual(0, result.returncode, result.stderr)
-            payload = json.loads(result.stdout)
+        result = materialize(json.dumps(ticket))
+        self.assertEqual(0, result.returncode, result.stderr)
+        payload = json.loads(result.stdout)
 
-            validate_artifact(
-                "work-unit", payload["artifact"], registry=registry_from_manifest()
-            )
-            self.assertEqual(
-                {"forge_tag": "github", "url": issue["html_url"], "number": 188},
-                payload["artifact"]["handle"],
-            )
-            self.assertEqual(
-                "work-unit-188-task-entry-cold-start-scoped-entry-from",
-                payload["instance_id"],
-            )
-            self.assertEqual(
-                [
-                    "Given an existing ticket, an artifact is materialized",
-                    "The artifact handle identifies that ticket",
-                ],
-                payload["artifact"]["acceptance_criteria"],
-            )
+        validate_artifact("work-unit", payload["artifact"], registry=registry_from_manifest())
+        self.assertEqual(ticket["handle"], payload["artifact"]["handle"])
+        self.assertEqual(
+            [
+                "Given an existing ticket, an artifact is materialized",
+                "The artifact handle identifies that ticket",
+            ],
+            payload["artifact"]["acceptance_criteria"],
+        )
+        self.assertRegex(payload["instance_id"], r"^work-unit-[0-9a-f]{64}$")
 
-            # The forge was only read — no create/edit/mutation: ticket count
-            # on the forge is unchanged.
-            gh_calls = call_log.read_text(encoding="utf-8")
-            self.assertIn("api repos/tesserine/runa/issues/188", gh_calls)
-            for mutating in ("issue create", "--method POST", "--method PATCH", "-X POST"):
-                self.assertNotIn(mutating, gh_calls)
+    def test_materializer_identity_uses_handle_id_not_display(self) -> None:
+        first = {
+            "handle": {"id": "ticket:stable-identity", "display": "First display"},
+            "title": "First title",
+            "body": TICKET_BODY,
+            "state": "open",
+        }
+        second = {
+            **first,
+            "handle": {"id": "ticket:stable-identity", "display": "Second display"},
+            "title": "Second title",
+        }
 
-    def test_sourcehut_ticket_materializes_to_schema_valid_adopted_work_unit(self) -> None:
-        mechanic = resolve_operation(ROOT, "read-ticket", forge_type="sourcehut")
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            bin_dir = root / "bin"
-            bin_dir.mkdir()
-            payload_file = root / "graphql-payload.json"
-            graphql_response = {
-                "data": {
-                    "user": {
-                        "tracker": {
-                            "id": 4,
-                            "ticket": {
-                                "id": 188,
-                                "ref": "todo/188",
-                                "subject": "cold-start scoped entry from a forge ticket",
-                                "body": SOURCEHUT_TICKET_BODY,
-                                "status": "REPORTED",
-                                "resolution": None,
-                            },
-                        }
-                    }
-                }
-            }
-            write_fake_command(
-                bin_dir / "curl",
-                f'for arg in "$@"; do case "$arg" in @*) cp "${{arg#@}}" "{payload_file}" ;; esac; done\n'
-                f"cat <<'JSON'\n{json.dumps(graphql_response)}\nJSON",
-            )
-            with mock.patch.dict(
-                os.environ,
-                {
-                    "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    "GROUNDWORK_FORGE_ENDPOINT": "weforge.build",
-                    "RUNA_FORGE_OWNER": "operator",
-                    "RUNA_FORGE_NAME": "weforge",
-                    "RUNA_FORGE_TRACKER_ID": "4",
-                },
-            ):
-                read = run_invocation(
-                    mechanic, {"ticket_number": "188", "token": "secret-token"}, cwd=root
-                )
+        first_result = materialize(json.dumps(first))
+        second_result = materialize(json.dumps(second))
 
-            self.assertEqual(0, read.returncode, read.stderr)
-            result = materialize(read.stdout)
-            self.assertEqual(0, result.returncode, result.stderr)
-            payload = json.loads(result.stdout)
-
-            validate_artifact(
-                "work-unit", payload["artifact"], registry=registry_from_manifest()
-            )
-            self.assertEqual(
-                {"forge_tag": "sourcehut", "tracker_id": 4, "number": 188},
-                payload["artifact"]["handle"],
-            )
-            self.assertTrue(payload["instance_id"].startswith("work-unit-188-"))
-            self.assertEqual(
-                ["Materialize the work-unit from the ticket"],
-                payload["artifact"]["acceptance_criteria"],
-            )
-
-            # Read path only — a GraphQL query, never a mutation.
-            graphql = json.loads(payload_file.read_text(encoding="utf-8"))
-            self.assertIn("query readTicket", graphql["query"])
-            self.assertNotIn("mutation", graphql["query"])
+        self.assertEqual(0, first_result.returncode, first_result.stderr)
+        self.assertEqual(0, second_result.returncode, second_result.stderr)
+        self.assertEqual(
+            json.loads(first_result.stdout)["instance_id"],
+            json.loads(second_result.stdout)["instance_id"],
+        )
 
     def test_materializer_routes_quality_gaps_to_refinement(self) -> None:
-        base_handle = {"forge_tag": "github", "url": "https://github.com/o/r/issues/3", "number": 3}
+        base_handle = {"id": "ticket:quality-gap", "display": "QUALITY-GAP"}
 
         no_criteria = json.dumps(
             {"handle": base_handle, "title": "T", "body": "A description, no list.", "state": "open"}
@@ -232,21 +132,14 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
         if runa_mcp is None:
             self.skipTest("runa-mcp binary not available")
 
-        # Materialize from a faked existing GitHub ticket (no runtime needed).
-        issue = {
-            "html_url": "https://github.com/tesserine/runa/issues/188",
-            "number": 188,
+        ticket = {
+            "handle": {"id": "ticket:e2e-188", "display": "188"},
             "title": "cold-start entry",
-            "body": GITHUB_TICKET_BODY,
+            "body": TICKET_BODY,
             "state": "open",
         }
-        mechanic = resolve_operation(ROOT, "read-ticket", forge_type="github")
-
         with tempfile.TemporaryDirectory(prefix="groundwork-acquire-") as tmp:
             root = Path(tmp)
-            bin_dir = root / "bin"
-            bin_dir.mkdir()
-            write_fake_command(bin_dir / "gh", f"cat <<'JSON'\n{json.dumps(issue)}\nJSON")
             project = root / "project"
             project.mkdir()
 
@@ -256,23 +149,7 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
             )
             self.assertEqual(init.returncode, 0, f"{init.stdout}\n{init.stderr}")
 
-            forge_env = {
-                **os.environ,
-                "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                "RUNA_FORGE_OWNER": "tesserine",
-                "RUNA_FORGE_NAME": "runa",
-            }
-            with mock.patch.dict(
-                os.environ,
-                {
-                    "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                    "RUNA_FORGE_OWNER": "tesserine",
-                    "RUNA_FORGE_NAME": "runa",
-                },
-            ):
-                read = run_invocation(mechanic, {"ticket_number": "188"}, cwd=root)
-            self.assertEqual(0, read.returncode, read.stderr)
-            payload = json.loads(materialize(read.stdout).stdout)
+            payload = json.loads(materialize(json.dumps(ticket)).stdout)
             instance_id = payload["instance_id"]
             artifact = payload["artifact"]
 
@@ -293,7 +170,6 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
             delivery = subprocess.run(
                 [str(runa_mcp), "--protocol", "decompose"],
                 cwd=project, input=rpc, capture_output=True, text=True,
-                env={**forge_env, "RUNA_WORKING_DIR": str(project)},
             )
             self.assertNotIn('"error"', delivery.stdout,
                              f"stdout:\n{delivery.stdout}\nstderr:\n{delivery.stderr}")
@@ -301,14 +177,13 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
             recorded = project / ".runa" / "workspace" / "work-unit" / f"{instance_id}.json"
             self.assertTrue(recorded.is_file(), f"artifact not persisted:\n{delivery.stdout}")
             body = json.loads(recorded.read_text(encoding="utf-8"))
-            self.assertEqual(188, body["handle"]["number"])
-            self.assertEqual("github", body["handle"]["forge_tag"])
+            self.assertEqual(ticket["handle"], body["handle"])
 
             # The cascade now computes take as the next READY station for the
             # acquired work-unit — entry from an existing ticket reached take.
             state = subprocess.run(
                 [str(runa), "state", "--work-unit", instance_id],
-                cwd=project, capture_output=True, text=True, env=forge_env,
+                cwd=project, capture_output=True, text=True,
             )
             self.assertEqual(state.returncode, 0, f"{state.stdout}\n{state.stderr}")
             ready_block = state.stdout.split("BLOCKED")[0]

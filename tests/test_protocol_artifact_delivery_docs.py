@@ -111,18 +111,18 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
         body = normalized_protocol("decompose")
 
         for expected in [
-            "For tracker-backed work-units that decompose is newly creating, create the tracker ticket before invoking the `work-unit` MCP tool",
+            "Every work-unit is tracker-backed",
+            "first invoke the connector capability `create-ticket` operation",
             "`create-ticket` is a first-delivery-only step",
             "refinement never calls it",
             "decompose does not adopt a pre-existing tracker ticket into a new artifact",
             "must not create a second ticket",
-            "`work-unit-<N>-<short-slug>`, where `<N>` is the forge-assigned ticket number",
+            "uses a stable id derived from the connector handle's `id`",
             "populate `handle` exactly once from the identity returned by `create-ticket`",
             "carry the existing `handle` through unchanged",
             "Do not call `create-ticket`, re-derive `handle`, or omit `handle` during refinement",
-            "Non-tracker work-units omit `handle`",
             "no top-level `work_unit` field",
-            "no forge-specific identity outside `handle`",
+            "no forge identity outside the connector handle",
             "Dependency references must use canonical delivered work-unit `instance_id` values",
             "not tracker shorthand such as `#123`, `123`, `work-unit-123`, or `issue-123`",
         ]:
@@ -143,9 +143,8 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
         for expected in [
             'instance_id: "<existing-instance-id>"',
             "handle: {",
-            'forge_tag: "github"',
-            'url: "<existing issue URL from the delivered artifact handle>"',
-            "number: 123",
+            'id: "<existing connector handle id>"',
+            'display: "<existing connector handle display>"',
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, example)

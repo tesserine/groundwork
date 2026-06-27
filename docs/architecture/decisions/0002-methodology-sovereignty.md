@@ -1,5 +1,10 @@
 # ADR-0002: Methodology Sovereignty
 
+Current forge work follows the connector-owned Forge Capability v1.1.0
+contract: Groundwork carries connector-issued `{ id, display }` handles in
+artifacts and invokes canonical capability operations through runa's connector
+MCP surface.
+
 **Status:** Provisional — revised 2026-05-28 (regrounded on a second forge; see Revision below) \
 **Date:** 2026-05-02 (revised 2026-05-28) \
 **Traces to:** [Sovereignty](https://github.com/pentaxis93/principles/blob/main/principles/sovereignty.md)
@@ -41,7 +46,7 @@ and "merge" are HOW and never appear in a workflow contract. This supersedes the
 **`change-proposal`**: a forge-neutral envelope (`work_unit`, `branch`, `commit`,
 `base`, `summary`) plus a **required `version`** (each review round is an
 immutable version on both forges; GitHub's mutable PR is the degenerate case)
-and a **forge-tagged `handle` variant** (`oneOf` keyed by `forge_tag`: GitHub →
+and a **connector-backed `handle` variant** (`oneOf` keyed by `connector handle`: GitHub →
 PR URL, a pointer outward to a server object; SourceHut → an immutable proposal
 ref under `refs/proposals/`). A new
 **`review-findings`** artifact carries the review disposition, and `land`
@@ -62,7 +67,7 @@ by cadence only — the operator issues `runa go --work-unit <id>` one tick at a
 time while the configured agent speaks the cascade tools inside that tick.
 Forge mechanics therefore compose with the runa session surface; no mechanic is
 authored per (forge × mode) cell.
-Status-reflection is a forge-tagged mechanic invoked at stage edges (GitHub →
+Status-reflection is a connector-backed mechanic invoked at stage edges (GitHub →
 PR/issue state; SourceHut → tracker-ticket state), mandatory in practice but
 producing no artifact, so it stays HOW. lists.sr.ht / patchset submission for
 external contributor teams is a named, deliberate deferral.
@@ -72,12 +77,12 @@ external contributor teams is a named, deliberate deferral.
 0. **Reground** — this revision. Establishes the corrected line and the
    `change-proposal` / `review-findings` artifacts. Cheap; comes first.
 1. **Minimal substrate for the arc** — the C-2 contract schema+parser, the C-3
-   mechanic schema+parser (with `forge_tag`), the C-4 `change-proposal` and
+   mechanic schema+parser (with `connector handle`), the C-4 `change-proposal` and
    `review-findings` schemas, and a conformance runner narrowed to those
    categories. Closes with R1: the C-2 format exercised once on a simple,
    already-forge-neutral protocol (`verify` or `take`) before the arc.
 2. **Reference arc** — author `submit → review → land` on both forges (contracts
-   + forge-tagged mechanics + mode-adapter composition) and dogfood it. This is
+   + connector-backed mechanics + mode-adapter composition) and dogfood it. This is
    the two-forge proof.
 3. **Generalize** — remaining mechanics; the other seven protocols; discipline
    and ADR conformance; the body-pattern linter; CI gate; verification migration
@@ -168,7 +173,7 @@ Per category, format and tier:
 |---|---|---|
 | C-1 Disciplines | Markdown body + JSON Schema-validated YAML frontmatter + body-pattern linter | Structural-impossibility (frontmatter); after-the-fact detection (body) |
 | C-2 Workflow contracts | TOML + JSON Schema; internal shape is a directed graph with conditional edges and explicit terminals | Structural-impossibility |
-| C-3 Mechanics | TOML + JSON Schema with required `forge_tag` for forge-specific recipes | Structural-impossibility |
+| C-3 Mechanics | TOML + JSON Schema with required `connector handle` for forge-specific recipes | Structural-impossibility |
 | C-4 Artifact schemas | JSON Schema 2020-12 | Structural-impossibility |
 | C-5 Verification (conformance) | Code (parsers + linters) dispatched per category | Structural-impossibility for shape; after-the-fact for body |
 | C-5 Verification (behavior) | Not specified at the methodology layer | Deferred to integration in user projects |
@@ -182,10 +187,10 @@ the sub-structural layer. Conditions on outgoing edges from a single node
 are mutually exclusive (parser-enforced); loops require a typed exit
 condition; every terminal is reachable from a designated start node.
 
-The `forge_tag` on C-3 mechanics structurally encodes forge-neutrality: a
+The `connector handle` on C-3 mechanics structurally encodes forge-neutrality: a
 workflow contract references a forge-invariant operation (e.g.,
 `deliver-change-proposal` — **not** `create-pr`; see Revision 2026-05-28);
-methodology configuration selects which forge-tagged mechanic resolves the
+methodology configuration selects which connector-backed mechanic resolves the
 reference. Forge substitution lives at config time, not at workflow-contract
 time.
 
@@ -228,7 +233,7 @@ The rollout is phased:
 3. **Artifact schema review.** Cross-reference and registry consistency
    passes over existing schemas.
 4. **Mechanic library.** Reusable HOW recipes extracted from current
-   protocol bodies, authored as C-3 units with `forge_tag` where
+   protocol bodies, authored as C-3 units with `connector handle` where
    applicable.
 5. **Per-protocol workflow contracts.** One PR per protocol, ordered
    smallest-first so the format is exercised on simpler protocols before
@@ -273,7 +278,7 @@ deliverables should have updated.
   unenumerated interface; the principle is realizable in current substrate
   (skills already implement it) and structurally enforced in the new
   substrate.
-- Forge-neutrality is a unit-layer property (C-3 `forge_tag`), not a
+- Forge-neutrality is a unit-layer property (C-3 `connector handle`), not a
   repository-layer property. Future relocation to per-forge repositories
   remains admissible at higher scale; not motivated now.
 - Per-phase decomposition deferral prevents later phases from inheriting

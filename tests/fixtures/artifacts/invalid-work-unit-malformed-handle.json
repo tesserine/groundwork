@@ -1,11 +1,11 @@
 {
-  "title": "Reject malformed work-unit handle",
-  "description": "Work-unit handles must use the declared forge tag variants",
+  "title": "Provider-shaped handle is invalid",
+  "description": "## Acceptance criteria\n- [ ] Reject provider shape",
   "acceptance_criteria": [
-    "Malformed handles are rejected"
+    "Reject provider shape"
   ],
   "handle": {
-    "forge_tag": "GitHub",
+    "forge_tag": "github",
     "url": "https://github.com/tesserine/groundwork/issues/368",
     "number": 368
   }

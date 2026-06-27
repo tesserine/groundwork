@@ -247,8 +247,8 @@ context to fire passively — with full expositions in references.
   redesign is shaped so the entrypoint slots in front of `take` without
   further methodology change.
 - **Forge identity namespace.** The protocols reference only invariant
-  operations resolved through `groundwork-mechanic`; the resolver reads the
-  runtime-owned `RUNA_FORGE_*` identity atoms (the #389/#390 repair, on
+  operations resolved through `connector capability tool`; the resolver reads the
+  runtime-owned `connector deployment *` identity atoms (the #389/#390 repair, on
   which this redesign now sits), with endpoint and repo-id remaining
   methodology-owned atoms.
 - **Best-of-field call — verify may repair its own gate failures.** When

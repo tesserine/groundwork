@@ -55,6 +55,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Forge work now consumes the connector capability** (#440). Groundwork
+  vendors Forge Capability v1.1.0 with immutable provenance, derives
+  work-unit and change-proposal handles from its `{ id, display }` handle
+  contract, and treats forge operation names as connector MCP tools rather
+  than local provider mechanics. Work-unit acquisition derives stable local
+  identity from opaque `handle.id`, installers prune the retired provider
+  resolver/runtime children, and conformance now checks the vendored
+  capability schema as the forge authority.
+
 - **Contract disposition default** (#472). The `contract` skill now names
   regenerate as the default disposition for review-discovered contract
   defects. A delivery keeps its branch only by proving

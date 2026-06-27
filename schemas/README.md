@@ -10,40 +10,29 @@ declared as a runtime artifact type in `manifest.toml`.
 
 `mechanic.schema.json` is an authoring substrate for C-3 mechanics from
 ADR-0002. It is validated by `tooling.mechanics`, not declared as a runtime
-artifact type in `manifest.toml`. Mechanic parameters are shell environment
-variable names because invocation data is supplied through the child process
-environment; secret parameters use `secret = true` and must remain values, not
-rendered command text. Deployment-resolved parameters use `deployment_value` to
-declare which forge deployment value the resolver supplies from the
-`GROUNDWORK_*` environment contract; the resolver consults this declaration
-rather than inferring parameter categories from names.
+artifact type in `manifest.toml`. Mechanics cover non-forge runtime actions.
+Mechanic parameters are shell environment variable names because invocation
+data is supplied through the child process environment; secret parameters use
+`secret = true` and must remain values, not rendered command text.
 
 `change-proposal.schema.json`, `change-approved.schema.json`, and
 `change-needs-revision.schema.json` are the C-4 artifact schemas for the
 submit -> review handoff from ADR-0002 and ADR-0003. `change-proposal`
-replaces the old PR-shaped `patch` artifact with a forge-neutral envelope plus
-a forge-tagged handle: GitHub proposals point at a pull request, and SourceHut
-proposals point at an immutable `refs/proposals/...` ref. The review disposition
-is the produced outcome type: `change-approved` cannot carry blocking findings,
-and `change-needs-revision` must carry at least one blocking finding.
-The SourceHut proposal-ref schema pattern is only a coarse fail-fast filter;
-mechanics use `git check-ref-format` as the authoritative ref-name boundary.
+carries a forge-neutral envelope plus the connector-issued `{ id, display }`
+handle for the delivered proposal. The review disposition is the produced
+outcome type: `change-approved` cannot carry blocking findings, and
+`change-needs-revision` must carry at least one blocking finding.
 
-`work-unit.schema.json` is the planning-to-execution bridge. It remains
-forge-neutral and unpartitioned: tracker-backed units may carry an optional
-forge-tagged ticket `handle`, while non-tracker units omit `handle`, and
-planning-phase work-unit bodies do not carry a top-level `work_unit` field.
-Supported ticket handles are GitHub issue handles
-`{ forge_tag, url, number }` and SourceHut ticket handles
-`{ forge_tag, tracker_id, number }`; Groundwork artifact validation enforces
-registry membership and GitHub URL/number agreement.
+`work-unit.schema.json` is the planning-to-execution bridge. Every work unit
+is tracker-backed and carries the connector-issued `{ id, display }` handle.
+Planning-phase work-unit bodies do not carry a top-level `work_unit` field.
 
-Change-proposal and work-unit handle forge tags, plus mechanic-authored
-`forge_tag` values, resolve against the declarative `[[forge_tags]]` registry
-in `manifest.toml`.
-Manifest `[[mechanics]]` entries may declare `forge_tags = [...]` to bind an
-operation handle to forge-specific C-3 mechanics; conformance requires exactly
-one matching `mechanics/**/*.toml` file for each declared operation/tag pair.
+The vendored forge capability schema at
+`schemas/forge-capability/v1/forge-capability.schema.json` is the authority for
+the connector handle definition and the eight canonical forge operations.
+Groundwork artifact schemas carry self-contained copies of the handle schema so
+runa can validate artifacts without an external registry or network fetch, and
+conformance checks that those copies do not drift from the vendored contract.
 
 The behavior artifact spine uses one artifact type per station and a required
 `behavior_form` discriminator instead of parallel scenario/gate artifact types:
