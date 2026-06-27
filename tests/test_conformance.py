@@ -2,6 +2,7 @@ import contextlib
 import io
 import json
 import os
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -503,6 +504,31 @@ name = "close-out"
         self.assertEqual("C-5 manifest", results[0].category)
         self.assertFalse(results[0].passed)
         self.assertIn("forge operation `close-out` is supplied by the connector capability", " ".join(results[0].errors))
+
+    def test_manifest_conformance_rejects_artifact_handle_drift_from_vendored_capability(self) -> None:
+        for artifact_schema_name in ["work-unit.schema.json", "change-proposal.schema.json"]:
+            with self.subTest(artifact_schema_name=artifact_schema_name), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                schemas = root / "schemas"
+                vendored = schemas / "forge-capability" / "v1"
+                vendored.mkdir(parents=True)
+                shutil.copy2(SCHEMAS / "forge-capability" / "v1" / "forge-capability.schema.json", vendored)
+                shutil.copy2(SCHEMAS / "work-unit.schema.json", schemas)
+                shutil.copy2(SCHEMAS / "change-proposal.schema.json", schemas)
+                manifest = root / "manifest.toml"
+                manifest.write_text('name = "local-methodology"\n', encoding="utf-8")
+
+                artifact_schema_path = schemas / artifact_schema_name
+                artifact_schema = json.loads(artifact_schema_path.read_text(encoding="utf-8"))
+                artifact_schema["$defs"]["handle"]["properties"]["id"]["minLength"] = 2
+                artifact_schema_path.write_text(json.dumps(artifact_schema), encoding="utf-8")
+
+                results = run_conformance([manifest])
+
+                self.assertEqual("C-5 manifest", results[0].category)
+                self.assertFalse(results[0].passed)
+                self.assertIn(artifact_schema_name, " ".join(results[0].errors))
+                self.assertIn("$defs.handle", " ".join(results[0].errors))
 
     def test_manifest_forge_leakage_scan_covers_registered_protocol_without_workflow_contract(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

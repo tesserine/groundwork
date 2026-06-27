@@ -923,59 +923,34 @@ consumers read scope boundaries (plan, review) and closure context (land).
 | title | string | yes | What this work-unit is |
 | description | string | yes | What needs doing |
 | acceptance_criteria | array of strings | yes | Discrete, verifiable conditions for "done" |
-| handle | connector-backed ticket handle | no | Forge-assigned tracker identity for tracker-backed work-units |
+| handle | connector-backed ticket handle | yes | Connector-issued tracker identity every work-unit carries |
 | scope | array of strings | no | In-scope boundaries for the session frame |
 | out_of_scope | array of strings | no | Explicit nearby exclusions |
 | dependencies | array of work-unit refs | no | Work-units that must be complete before this starts, referenced by `instance_id` |
 
-Tracker-backed work-units create the forge ticket before first delivery and
-use `instance_id` convention `work-unit-<N>-<short-slug>`, where `<N>` is the
-forge-assigned ticket number. Work-units without tracker linkage use
-`<short-slug>`. Dependency references use those exact `instance_id` values,
-not tracker shorthand.
+Every work-unit is tracker-backed. New work-units create the forge ticket
+before first delivery, use a stable `instance_id` derived from the connector
+handle's `id`, and populate `handle` exactly once from the identity returned by
+the connector capability `create-ticket` operation. Refinements carry the
+existing `handle` through unchanged. Dependency references use delivered
+work-unit `instance_id` values, not tracker shorthand.
 
-Tracker-backed work-units populate `handle` exactly once from the
-forge-assigned ticket identity returned by `create-ticket`; non-tracker
-work-units omit it. The body remains unpartitioned and does not carry a
-top-level `work_unit` field or forge-specific identity outside `handle`.
-GitHub handles name an issue URL and number; SourceHut handles name a tracker
-ID and ticket number.
+The body remains unpartitioned and does not carry a top-level `work_unit` field
+or forge-specific identity outside `handle`. Groundwork treats the handle as an
+opaque connector-issued `{ id, display }` object: schema validity and
+conformance are checked against the vendored Forge Capability handle
+definition, while identity comparisons derive from `id` equality rather than
+provider coordinates or display text.
 
-### Phase-2 Forge-Tagging Seam
+### Connector Handle Seam
 
 The `work-unit.handle` field is the schema-as-contract seam between Groundwork
-and runa. Groundwork owns structural validity: the optional handle variants in
-`schemas/work-unit.schema.json`, conformance and artifact tooling, registered
-forge-tag membership, and GitHub `url`/`number` agreement. The released
-Groundwork contract was introduced by [#368](https://github.com/tesserine/groundwork/issues/368)
-and merged by [PR #372](https://github.com/tesserine/groundwork/pull/372);
-downstream consumers pin the release tag that contains that contract or the
-merged full commit SHA, never a branch or pre-merge ref.
-
-Groundwork also owns production of schema-conforming handles. The early-arc
-mechanics from [#369](https://github.com/tesserine/groundwork/issues/369) /
-[PR #373](https://github.com/tesserine/groundwork/pull/373) resolve active
-deployment identity from the `#362` `GROUNDWORK_*` atoms, create/read/claim
-tracker tickets, record progress, and return the forge-assigned identity needed
-for `handle`. The decompose delivery rules from
-[#370](https://github.com/tesserine/groundwork/issues/370) /
-[PR #374](https://github.com/tesserine/groundwork/pull/374) create the tracker
-ticket before first work-unit delivery, use the ticket-derived
-`work-unit-<N>-<short-slug>` instance id, and carry the returned handle exactly
-once. Together, the mechanics and decompose path act on the active `#362`
-deployment identity and produce schema-conforming handles. Those child issues
-carried their own local docs and changelog updates; this section ties their
-repo boundary together.
-
-runa owns runtime enforcement that cannot be expressed by Groundwork's schema.
-The guard in [tesserine/runa#163](https://github.com/tesserine/runa/issues/163)
-merged by [tesserine/runa#164](https://github.com/tesserine/runa/pull/164)
-implements the exact-or-reject `--work-unit` rule for recorded work-unit roots,
-checks instance-id/handle number agreement, rejects duplicate roots for the same
-forge ticket identity, and rejects valid tracker handles whose forge location
-does not match the active `GROUNDWORK_*` deployment. A session has one active
-deployment. Cross-deployment work is represented as separate sessions; runa does
-not switch deployment identity because a handle points somewhere else.
+and runa. The vendored Forge Capability schema is the single home for the
+handle definition. Groundwork artifact schemas carry self-contained copies so
+runa can validate artifacts directly, and conformance fails when those copies
+drift from the vendored `#/$defs/handle` definition. The decompose delivery
+rules create the tracker ticket before first work-unit delivery and carry the
+returned connector handle exactly once.
 
 ### Traceability Thread
 

@@ -1,4 +1,5 @@
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -167,6 +168,28 @@ class ForgeCapabilityTests(unittest.TestCase):
                 self.assertIn("capability", body)
                 for token in retired_tokens:
                     self.assertNotIn(token, body)
+
+    def test_methodology_docs_preserve_connector_model_coherence(self) -> None:
+        connecting_structure = (ROOT / "docs" / "architecture" / "connecting-structure.md").read_text(encoding="utf-8")
+        adr_0006 = (
+            ROOT / "docs" / "architecture" / "decisions" / "0006-runtime-driven-self-install-surface.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn(
+            "| handle | connector-backed ticket handle | yes | Connector-issued tracker identity every work-unit carries |",
+            connecting_structure,
+        )
+        self.assertIn("Every work-unit is tracker-backed.", connecting_structure)
+        self.assertNotIn("Work-units without tracker linkage", connecting_structure)
+        self.assertNotIn("non-tracker work-units", connecting_structure)
+        self.assertNotIn("GitHub handles name an issue URL and number", connecting_structure)
+        self.assertNotIn("SourceHut handles name a tracker ID and ticket number", connecting_structure)
+
+        self.assertRegex(adr_0006, r"`~/.groundwork` with `manifest\.toml` and\s+the ownership marker")
+        self.assertRegex(adr_0006, r"mechanics, forge-operations modules, and\s+resolver binaries are retired")
+        self.assertRegex(adr_0006, r"pruned on\s+upgrade")
+        self.assertNotIn("`mechanics/`, the forge-operations module", adr_0006)
+        self.assertNotIn("bin/connector capability tool", adr_0006)
 
     def test_read_ticket_output_schema_declares_connector_handle(self) -> None:
         schema = vendored_schema()

@@ -408,6 +408,27 @@ def _manifest_capability_contract_errors(root: Path) -> list[tuple[str, str]]:
         errors.append(("schemas/forge-capability/v1/forge-capability.schema.json", "forge capability handle_schema must point at #/$defs/handle"))
     if len(forge_operation_names(schema)) != 8:
         errors.append(("schemas/forge-capability/v1/forge-capability.schema.json", "forge capability must declare exactly eight operations"))
+    errors.extend(_manifest_artifact_handle_contract_errors(root, schema))
+    return errors
+
+
+def _manifest_artifact_handle_contract_errors(root: Path, capability_schema: dict[str, Any]) -> list[tuple[str, str]]:
+    errors: list[tuple[str, str]] = []
+    expected_handle = capability_schema.get("$defs", {}).get("handle")
+    if not isinstance(expected_handle, dict):
+        return [("schemas/forge-capability/v1/forge-capability.schema.json", "forge capability #/$defs/handle must be an object")]
+
+    for schema_name in ("work-unit.schema.json", "change-proposal.schema.json"):
+        relative = Path("schemas") / schema_name
+        schema_path = root / relative
+        try:
+            artifact_schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+            errors.append((str(relative), f"cannot load artifact schema for handle drift check: {error}"))
+            continue
+        artifact_handle = artifact_schema.get("$defs", {}).get("handle")
+        if artifact_handle != expected_handle:
+            errors.append((str(relative), "$defs.handle must equal vendored forge capability #/$defs/handle"))
     return errors
 
 
