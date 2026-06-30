@@ -62,8 +62,8 @@ commons.
 
 The vendored intent schema carries provenance metadata identifying the
 canonical authority, the canonical schema and prose URLs, and the intent spec's
-full semver. This pre-release vendoring pins commons `main` because no release
-tag yet contains the intent path; released vendoring should use immutable
-release-tag or commit-SHA URLs. When updating the vendored copy, update both
-the schema content and the provenance metadata together so conformance stays
-explicit.
+full semver. This pre-release vendoring pins the commons merge commit because
+no release tag yet contains the intent path; released vendoring should use
+immutable release-tag or commit-SHA URLs. When updating the vendored copy,
+update both the schema content and the provenance metadata together so
+conformance stays explicit.

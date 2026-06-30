@@ -1,4 +1,5 @@
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -7,6 +8,14 @@ ROOT = Path(__file__).resolve().parents[1]
 INTENT_SCHEMA_PATH = ROOT / "schemas" / "intent.schema.json"
 SCHEMAS_README_PATH = ROOT / "schemas" / "README.md"
 FIXTURES = ROOT / "tests" / "fixtures" / "artifacts"
+COMMONS_IMMUTABLE_REF = (
+    r"(?:[0-9a-f]{40}|v[0-9]+\.[0-9]+\.[0-9]+"
+    r"(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?)"
+)
+COMMONS_CANONICAL_URL = re.compile(
+    rf"^https://raw\.githubusercontent\.com/tesserine/commons/"
+    rf"(?P<ref>{COMMONS_IMMUTABLE_REF})/(?P<path>.+)$"
+)
 
 
 def validate_instance(schema: dict, instance: object, path: str = "instance") -> None:
@@ -55,23 +64,29 @@ def validate_instance(schema: dict, instance: object, path: str = "instance") ->
 
 
 class IntentSchemaVendoringTests(unittest.TestCase):
+    def assert_commons_canonical_url(self, url: str, expected_path: str) -> str:
+        match = COMMONS_CANONICAL_URL.fullmatch(url)
+        self.assertIsNotNone(match, f"{url!r} is not an immutable commons raw URL")
+        assert match is not None
+        self.assertEqual(match.group("path"), expected_path)
+        self.assertNotEqual(match.group("ref"), "main")
+        return match.group("ref")
+
     def test_intent_schema_declares_canonical_provenance(self) -> None:
         schema = json.loads(INTENT_SCHEMA_PATH.read_text())
+        canonical = schema["x-tesserine-canonical"]
 
         self.assertNotIn("$id", schema)
-        self.assertEqual(
-            schema["x-tesserine-canonical"],
-            {
-                "version": "1.0.0",
-                "schema_url": (
-                    "https://raw.githubusercontent.com/tesserine/commons/"
-                    "main/schemas/intent/v1/intent.schema.json"
-                ),
-                "prose_url": (
-                    "https://raw.githubusercontent.com/tesserine/commons/main/INTENT.md"
-                ),
-            },
+        self.assertEqual(canonical["version"], "1.0.0")
+        schema_ref = self.assert_commons_canonical_url(
+            canonical["schema_url"],
+            "schemas/intent/v1/intent.schema.json",
         )
+        prose_ref = self.assert_commons_canonical_url(
+            canonical["prose_url"],
+            "INTENT.md",
+        )
+        self.assertEqual(schema_ref, prose_ref)
 
     def test_schemas_readme_documents_intent_vendoring_discipline(self) -> None:
         readme = SCHEMAS_README_PATH.read_text()
@@ -80,7 +95,8 @@ class IntentSchemaVendoringTests(unittest.TestCase):
         self.assertIn("intent.schema.json", readme)
         self.assertIn("tesserine/commons", readme)
         self.assertIn("runtime consumers still read schemas from groundwork", readme)
-        self.assertIn("pins commons `main`", readme)
+        self.assertNotIn("pins commons `main`", readme)
+        self.assertIn("pins the commons merge commit", readme)
         self.assertIn("immutable", readme)
         self.assertIn("release-tag or commit-SHA URLs", readme)
         self.assertIn("full semver", readme)
