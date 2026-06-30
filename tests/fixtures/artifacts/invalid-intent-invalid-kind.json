@@ -1,0 +1,10 @@
+{
+  "description": "Add input validation to the data ingestion pipeline",
+  "source": "operator",
+  "references": [
+    {
+      "kind": "issue",
+      "ref": "tesserine/commons#94"
+    }
+  ]
+}

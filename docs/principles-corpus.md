@@ -145,7 +145,7 @@ Design rationale for the surface choice is recorded in
 - **`pentaxis93/principles`** is the canonical principles corpus for the
   Tesserine ecosystem's own deployments — configured, never hard-coded.
 - **`tesserine/commons`** is scoped as shared contracts, schemas, and
-  ecosystem-specific decisions (exit codes, the request contract, release
+  ecosystem-specific decisions (exit codes, the intent contract, release
   machinery, live ecosystem ADRs). It is no longer a principles home; its
   legacy principle mirrors and pointer-stub ADRs are being retired under
   [tesserine/commons#55](https://github.com/tesserine/commons/issues/55),

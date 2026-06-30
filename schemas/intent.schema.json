@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Intent",
+  "description": "Canonical schema for the intent artifact — the operator's crystallized intent at the session seed. Version 1.0.0. commons is the spec authority; INTENT.md carries the governing prose and ADR-0005 describes the system-conventions pattern under which this lives. When this schema and INTENT.md disagree, INTENT.md is authoritative.",
+  "$comment": "Groundwork vendors this runtime copy of the commons canonical intent schema.",
+  "x-tesserine-canonical": {
+    "version": "1.0.0",
+    "schema_url": "https://raw.githubusercontent.com/tesserine/commons/5230acd0d58b99f447f5f7576e3e74f73f19759b/schemas/intent/v1/intent.schema.json",
+    "prose_url": "https://raw.githubusercontent.com/tesserine/commons/5230acd0d58b99f447f5f7576e3e74f73f19759b/INTENT.md"
+  },
+  "type": "object",
+  "required": ["description", "source"],
+  "additionalProperties": false,
+  "properties": {
+    "description": {
+      "type": "string",
+      "description": "What the operator intends to accomplish.",
+      "minLength": 1
+    },
+    "source": {
+      "type": "string",
+      "description": "Where this came from (operator, user report, automated detection).",
+      "minLength": 1
+    },
+    "references": {
+      "type": "array",
+      "description": "Optional opaque upstream anchors that shaped this intent.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["kind", "ref"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["ticket", "work-unit"],
+            "description": "The upstream anchor kind."
+          },
+          "ref": {
+            "type": "string",
+            "description": "Opaque upstream reference identifier.",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

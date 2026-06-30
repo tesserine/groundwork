@@ -8,7 +8,7 @@ version = "0.3.0-rc.1"
 # --- Artifact Types ---
 
 [[artifact_types]]
-name = "request"
+name = "intent"
 
 [[artifact_types]]
 name = "requirements"
@@ -89,11 +89,11 @@ name = "run-test"
 
 [[protocols]]
 name = "survey"
-requires = ["request"]
+requires = ["intent"]
 accepts = ["research-record"]
 produces = ["requirements"]
 may_produce = ["research-record"]
-trigger = { type = "on_artifact", name = "request" }
+trigger = { type = "on_artifact", name = "intent" }
 
 [[protocols]]
 name = "decompose"

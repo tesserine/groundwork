@@ -30,7 +30,7 @@ is the proof the tier generalizes beyond code (ecosystem map:
 
 Work moves through two phases connected by the work-unit artifact.
 
-**Planning** takes an external request and produces work-units.
+**Planning** takes external intent and produces work-units.
 Survey examines what actually needs doing; decompose breaks that into work
 units with acceptance criteria and dependency edges.
 

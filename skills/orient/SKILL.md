@@ -45,7 +45,7 @@ See [work-unit-model.md](../../docs/architecture/work-unit-model.md).
 
 Two phases, connected by the work-unit artifact.
 
-**Planning (unscoped).** An external request becomes work-units: `survey`
+**Planning (unscoped).** An external intent becomes work-units: `survey`
 establishes what actually needs doing; `decompose` breaks it into
 work-units with acceptance criteria and dependency edges.
 

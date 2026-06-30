@@ -15,8 +15,8 @@ metadata:
 # Survey
 
 Survey is the entry point to the groundwork pipeline. Runa activates the
-protocol when a `request` artifact enters the system — an external change
-request, question, bug report, or feature idea. Request intake is external;
+protocol when an `intent` artifact enters the system — an external change
+request, question, bug report, or feature idea. Intent intake is external;
 once survey produces `requirements`, runa manages the downstream cascade
 through decompose and the execution-phase protocols.
 
@@ -226,7 +226,7 @@ succeeds.
 
 ## Invocation Pattern
 
-Survey triggers on a `request` artifact — an external input that enters the
+Survey triggers on an `intent` artifact — an external input that enters the
 system as a change request, question, bug report, or feature idea. This is the
 entry point to the managed pipeline. Once `requirements` is produced, runa
 manages the downstream cascade through decompose and the execution-phase

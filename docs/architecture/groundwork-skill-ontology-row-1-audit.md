@@ -52,7 +52,7 @@ Groundwork scoped pipeline.
 | plan | protocol | domain:software | protocol | Another domain can reuse decision-complete planning, but this shell maps Groundwork behavior contracts to implementation plans for the scoped software pipeline. |
 | review | protocol | domain:software | protocol | Another domain can reuse independent judgment, but this shell routes Groundwork `change-proposal` artifacts through `change-approved` or `change-needs-revision`. |
 | submit | protocol | domain:software | protocol | Another domain can reuse proposal packaging, but this shell delivers verified software changes through forge mechanics into a `change-proposal`. |
-| survey | protocol | domain:software | protocol | The inquiry discipline projects and gazette also has a `survey` protocol, but this shell transforms `request` into Groundwork `requirements`. |
+| survey | protocol | domain:software | protocol | The inquiry discipline projects and gazette also has a `survey` protocol, but this shell transforms `intent` into Groundwork `requirements`. |
 | take | protocol | domain:software | protocol | Another domain can reuse contract-first entry, but this shell claims a work-unit issue, prepares a feature branch, and authors a `behavior-contract` for a software work-unit. |
 | verify | protocol | domain:software | protocol | Another domain can reuse evidence-before-claim, but this shell gates software completion with `completion-evidence` tied to work-unit criteria, tests, and documentation review. |
 
@@ -72,7 +72,7 @@ addition to contract-first entry.
 | plan | decision-complete-planning | yes | The cognitive band is convergence before mutation; the wrapper maps gates or scenarios to an `implementation-plan`. |
 | review | quality-review | no | The protocol depends on `code-review`, a software projection. The universal quality-review parent is predicted but not yet extracted. |
 | submit | proposal-submission | yes | The cognitive band is packaging verified work for review; forge delivery and `change-proposal` shape are wrapper concerns. |
-| survey | disciplined-inquiry | yes | The cognitive band is separating descriptive state from normative need; the wrapper turns `request` into `requirements`. |
+| survey | disciplined-inquiry | yes | The cognitive band is separating descriptive state from normative need; the wrapper turns `intent` into `requirements`. |
 | take | contract-first-entry | no | The core band is contract-first entry, but the current body also owns workspace preparation, tracker claiming, and temporary carry-through to later stations. |
 | verify | evidence-gate | yes | The cognitive band is evidence before completion claims; the wrapper records Groundwork gate or scenario coverage in `completion-evidence`. |
 

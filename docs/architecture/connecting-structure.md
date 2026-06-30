@@ -83,7 +83,7 @@ artifact graph.
 
 | Artifact type | Origin | Purpose |
 |---------------|--------|---------|
-| request | External: change request, question, bug report, feature idea | Enters the system and triggers survey |
+| intent | External: change request, question, bug report, feature idea | Enters the system and triggers survey |
 
 ### Take — contract-first entry
 
@@ -139,7 +139,7 @@ without it."
 
 If artifacts are the sole state mechanism, then signals are a second
 channel. Every protocol triggers on artifact state. External events
-enter the system as artifacts (a request landing in the workspace),
+enter the system as artifacts (an intent landing in the workspace),
 not as signals. The topology is pure graph.
 
 This eliminates the `on_signal` trigger primitive from groundwork's
@@ -152,7 +152,7 @@ With no signals, every link between protocols is an artifact.
 The complete chain across both phases:
 
 ```
-request → requirements → work-unit → behavior-contract
+intent → requirements → work-unit → behavior-contract
 → implementation-plan → test-evidence → completion-evidence
 → change-proposal → change-approved → completion-record
 ```
@@ -175,7 +175,7 @@ behavior-contract — not every behavior-contract in the workspace. The
 manifest doesn't express this scoping. Runa computes it from artifact
 content.
 
-Planning-phase artifacts (request, requirements, work-unit) predate work-unit
+Planning-phase artifacts (intent, requirements, work-unit) predate work-unit
 identity and are not partitioned this way. Research-record is always
 scoped by topic; optionally scoped by work-unit when research is
 specific to a work-unit.
@@ -196,7 +196,7 @@ name = "groundwork"
 # --- Artifact Types ---
 
 [[artifact_types]]
-name = "request"
+name = "intent"
 
 [[artifact_types]]
 name = "requirements"
@@ -238,11 +238,11 @@ name = "research-record"
 
 [[protocols]]
 name = "survey"
-requires = ["request"]
+requires = ["intent"]
 accepts = ["research-record"]
 produces = ["requirements"]
 may_produce = ["research-record"]
-trigger = { type = "on_artifact", name = "request" }
+trigger = { type = "on_artifact", name = "intent" }
 
 [[protocols]]
 name = "decompose"
@@ -354,7 +354,7 @@ trigger = { type = "on_artifact", name = "change-approved" }
 
 | Artifact type | Producer |
 |---------------|----------|
-| request | external |
+| intent | external |
 | requirements | survey |
 | work-unit | decompose (the `acquire` skill also delivers through decompose's tool; see *Take — contract-first entry*) |
 | behavior-contract | take |
@@ -389,7 +389,7 @@ principle in action: skills produce artifacts that runa validates
 but doesn't trigger on.
 
 **No cycles.** The requires graph is a DAG. Verified by walking the
-full chain from request through completion-record.
+full chain from intent through completion-record.
 
 **Most-referenced artifacts.** behavior-contract is required by five
 protocols (plan, implement, verify, submit, review) and accepted by land —
@@ -739,8 +739,8 @@ work-unit artifacts — the work-units that take picks up.
 
 The work-unit artifact bridges two phases:
 
-**Planning phase:** request → survey → requirements → decompose → work-unit.
-External input enters as a request artifact, survey produces requirements,
+**Planning phase:** intent → survey → requirements → decompose → work-unit.
+External input enters as an intent artifact, survey produces requirements,
 decompose breaks requirements into work-unit artifacts.
 
 **Scoped pipeline:** work-unit → take → plan → implement → verify →
@@ -752,10 +752,10 @@ flow produces artifacts that runa tracks and threads by work-unit identity.
 
 ### survey
 
-- **requires:** request. The external input that prompted the work.
-  Survey cannot produce requirements without knowing what was requested.
+- **requires:** intent. The external input that prompted the work.
+  Survey cannot produce requirements without knowing the operator's intent.
 - **accepts:** research-record. Prior research may inform requirements.
-- **trigger:** `on_artifact("request")`
+- **trigger:** `on_artifact("intent")`
 
 ### decompose
 
@@ -860,7 +860,7 @@ uses this to scope context injection: when plan activates, it delivers
 the behavior-contract for this work-unit, not every behavior-contract in
 the workspace.
 
-**Planning-phase artifacts** (request, requirements, work-unit) do not carry
+**Planning-phase artifacts** (intent, requirements, work-unit) do not carry
 `work_unit`. They predate work-unit identity. Runa scopes them through
 trigger evaluation against specific artifact instances.
 
@@ -874,20 +874,20 @@ content hashes from the store. The common envelope is minimal by design.
 Designed consumer-backward: what does the consuming protocol need in its
 injected context to produce its own capstone?
 
-### request
+### intent
 
 **Consumer:** survey.
 **What survey needs:** understand what's being asked, orient to the domain.
 
-The request is the entry point to the system — a door, not a document.
-Lightweight enough that creating one isn't burdensome, structured enough
-that survey has something to work from.
+The intent artifact is the entry point to the system — a door, not a document.
+Lightweight enough that creating one isn't burdensome, structured enough that
+survey has something to work from.
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
-| description | string | yes | What is being asked for |
+| description | string | yes | What the operator intends to accomplish |
 | source | string | yes | Where this came from (operator, user report, automated detection) |
-| context | string | no | Anything else the requester wants to include |
+| references | array | no | Opaque upstream ticket or work-unit anchors |
 
 ### requirements
 
