@@ -55,6 +55,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Intent replaces request as the planning entry artifact** (#94).
+  Groundwork now declares `intent` as the external planning seed, activates
+  `survey` on `intent`, and vendors the commons canonical intent schema with
+  provenance pointing at the active pre-release commons `main` contract.
+
 - **Runtime-driven self-install ships the complete methodology layout**
   (#482). `scripts/install` now derives the `~/.groundwork` runtime bundle
   from `manifest.toml`, projecting every declared artifact schema and
