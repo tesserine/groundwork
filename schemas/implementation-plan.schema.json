@@ -40,7 +40,7 @@
     },
     "behavior_mapping": {
       "type": "array",
-      "description": "How behavior contract entries map to implementation steps.",
+      "description": "How contract entries map to implementation steps.",
       "minItems": 1
     }
   },
@@ -91,13 +91,13 @@
     },
     "scenario-mapping": {
       "type": "object",
-      "description": "Mapping from a behavior-contract scenario to implementation steps.",
+      "description": "Mapping from a contract scenario to implementation steps.",
       "required": ["scenario", "steps"],
       "additionalProperties": false,
       "properties": {
         "scenario": {
           "type": "string",
-          "description": "Scenario name from behavior-contract.",
+          "description": "Scenario name from contract.",
           "minLength": 1
         },
         "steps": {
@@ -112,13 +112,13 @@
     },
     "gate-mapping": {
       "type": "object",
-      "description": "Mapping from a behavior-contract gate to implementation steps.",
+      "description": "Mapping from a contract gate to implementation steps.",
       "required": ["name", "criterion", "category", "steps"],
       "additionalProperties": false,
       "properties": {
         "name": {
           "type": "string",
-          "description": "Gate name from behavior-contract.",
+          "description": "Gate name from contract.",
           "minLength": 1
         },
         "criterion": {

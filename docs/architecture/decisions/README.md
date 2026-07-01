@@ -31,8 +31,9 @@ only that the operator may still revise the decision.
 | [0001](0001-internal-development-history-policy.md) | Internal Development History Policy | Provisional | 2026-03-10 |
 | [0002](0002-methodology-sovereignty.md) | Methodology Sovereignty | Provisional (revised 2026-05-28) | 2026-05-02 |
 | [0003](0003-disposition-as-artifact-type.md) | Disposition as Artifact Type | Provisional | 2026-05-31 |
-| [0004](0004-contract-first-scoped-pipeline.md) | Contract-First Scoped Pipeline | Proposed — delivered for operator review | 2026-06-11 |
+| [0004](0004-contract-first-scoped-pipeline.md) | Contract-First Scoped Pipeline | Superseded by ADR-0007 | 2026-06-11 |
 | [0005](0005-principles-corpus-configuration.md) | Principles Corpus Configuration | Provisional | 2026-06-12 |
 | [0006](0006-runtime-driven-self-install-surface.md) | Runtime-Driven Self-Install Surface | Proposed — delivered for operator review | 2026-06-12 |
+| [0007](0007-dimension-agnostic-contract-machine.md) | Dimension-Agnostic Contract Machine | Proposed — delivered for operator review | 2026-07-01 |
 
 New decisions add a row here in the same change.

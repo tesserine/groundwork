@@ -30,15 +30,13 @@ claim-by-claim requirements, and the rationalization table:
 
 This protocol owns the aggregate gate — the moment before "done." Per-test
 cycle evidence (each test watched failing, then passing) belongs to
-`implement`. Completion here means: the contract's behavior coverage is
-performed in the form the deliverable requires, the work-unit's criteria
-are covered, and the documentation still tells the truth. For a
-runtime-behavior work-unit, coverage is scenario coverage; for a
-documentation-deliverable work-unit, coverage is gate coverage.
+`implement`. Completion here means: every contract criterion has performed
+evidence in the shape warranted by its `check_kind`, the work-unit's
+criteria are covered, and the documentation still tells the truth.
 
 ## Steps
 
-1. **Identify the gate.** From the behavior contract and the work-unit's
+1. **Identify the gate.** From the contract and the work-unit's
    acceptance criteria, name what proves completion: the full verification
    command (test suite, build, linter as applicable) and the behavior
    coverage that must hold. Consult the `contract` skill's behavior
@@ -78,53 +76,40 @@ documentation-deliverable work-unit, coverage is gate coverage.
    [references/code-quality-review.md](references/code-quality-review.md).
 
 5. **Deliver `completion-evidence`.**
-   Invoke the `completion-evidence` MCP tool in the deliverable's behavior
-   form. For a runtime-behavior work-unit, deliver scenario-keyed coverage.
-   For a documentation-deliverable work-unit, deliver gate coverage for
-   structural, coherence, and conformance gates. The object below is MCP
-   tool input, not artifact body.
+   Invoke the `completion-evidence` MCP tool with one result per contract
+   criterion. Executable criteria record run or artifact evidence. Attested
+   criteria record reviewer identity and finding; a bare pass is not
+   evidence. The object below is MCP tool input, not artifact body.
    `instance_id` is a tool parameter that names the artifact instance; it is
    extracted before validating artifact content, becomes the workspace
    filename, and must not appear in the artifact body. Runa injects
    `work_unit` from session context; the agent does not supply `work_unit`.
    Do not write the workspace JSON file directly.
 
-   Scenario form:
-
    ```
    completion-evidence({
      instance_id: "<slug>",
-     behavior_form: "scenario",
-     criterion_coverage: [{
-       criterion: "<acceptance criterion>",
-       status: "covered",
-       scenarios: ["<covering scenario names>"],
-       failures: []
-     }],
-     documentation: {
-       updated: ["<docs updated in this change>"],
-       verified_accurate: ["<docs reviewed, confirmed accurate>"],
-       follow_up_work_units: ["<work-units filed for deeper doc work>"]
-     }
-   })
-   ```
-
-   Gate form:
-
-   ```
-   completion-evidence({
-     instance_id: "<slug>",
-     behavior_form: "gate",
-     criterion_coverage: [{
-       criterion: "<acceptance criterion>",
-       status: "covered",
-       gates: [{
-         name: "<gate name>",
-         criterion: "<acceptance criterion this gate covers>",
-         category: "structural" | "coherence" | "conformance",
-         result: "pass"
-       }],
-       failures: []
+     results: [{
+       criterion_id: "<contract criterion id>",
+       result: "pass" | "fail",
+       evidence: {
+         summary: "<what the evidence proves>",
+         run: {
+           command: "<fresh verification command>",
+           result: "pass" | "fail",
+           output_summary: "<relevant output summary>"
+         }
+       }
+     }, {
+       criterion_id: "<attested contract criterion id>",
+       result: "pass" | "fail",
+       evidence: {
+         summary: "<what the reviewer found>",
+         attestation: {
+           reviewer: "<reviewer identity>",
+           finding: "<finding with enough substance to audit>"
+         }
+       }
      }],
      documentation: {
        updated: ["<docs updated in this change>"],

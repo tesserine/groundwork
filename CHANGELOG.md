@@ -55,6 +55,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **One contract machine** (#492). The live `behavior-contract` artifact is
+  renamed to `contract` and now carries dimension-agnostic `criteria[]` with
+  criterion-level `check_kind`, `hollow_delivery`, and check descriptors.
+  `completion-evidence` now records uniform `results[]` keyed by contract
+  criterion id; executable criteria require run/artifact evidence and
+  attested criteria require reviewer identity plus finding. ADR-0007 records
+  the replacement of ADR-0004's behavior-spine framing.
+
 - **Intent replaces request as the planning entry artifact** (#94).
   Groundwork now declares `intent` as the external planning seed, activates
   `survey` on `intent`, and vendors the commons canonical intent schema with

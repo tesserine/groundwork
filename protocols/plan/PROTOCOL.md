@@ -2,7 +2,7 @@
 name: plan
 description: >-
   Converge from exploration to a decision-complete implementation design
-  before any code changes. Fires after the behavior contract exists and
+  before any code changes. Fires after the contract exists and
   before implement. If you are about to start coding with unresolved design
   choices, plan first.
 metadata:

@@ -1,6 +1,6 @@
 # ADR-0004: Contract-First Scoped Pipeline
 
-**Status:** Proposed — delivered for operator review with the 2026-06-11 redesign \
+**Status:** Superseded by [ADR-0007](0007-dimension-agnostic-contract-machine.md) \
 **Date:** 2026-06-11 \
 **Traces to:** [pentaxis93/principles](https://github.com/pentaxis93/principles)
 (Sequence, Grounding, Parsimony, Single Home, Sovereignty, Traceability,
@@ -8,6 +8,11 @@ Verifiable Completion, Honest Signal, Dosed Compliance); ADR-0002 (Methodology
 Sovereignty); ADR-0003 (Disposition as Artifact Type); runa
 [interface contract](https://github.com/tesserine/runa/blob/main/docs/interface-contract.md)
 and [session surface contract](https://github.com/tesserine/runa/blob/main/docs/session-surface-contract.md).
+
+> ADR-0007 keeps the contract-first scoped pipeline but supersedes this
+> decision's behavior-contract-as-spine artifact framing with a
+> dimension-agnostic `contract` artifact and uniform `completion-evidence`
+> results.
 
 ## Context
 

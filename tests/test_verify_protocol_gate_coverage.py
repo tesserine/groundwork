@@ -113,25 +113,25 @@ class VerifyProtocolGateCoverageTests(unittest.TestCase):
         )
         self.assertIsNone(lifecycle_table.search(body))
 
-    def test_gate_keyed_completion_evidence_runtime_delivery_uses_existing_mcp_tool(self) -> None:
+    def test_completion_evidence_delivery_records_per_criterion_results(self) -> None:
         delivery = normalized(step(read(VERIFY_PROTOCOL), 5))
 
         for expected in [
-            "runtime-behavior work-unit",
-            "scenario-keyed",
             "`completion-evidence` MCP tool",
-            "documentation-deliverable work-unit",
-            "gate coverage",
-            "behavior_form",
-            "gate",
-            "structural, coherence, and conformance",
+            "one result per contract criterion",
+            "results",
+            "criterion_id",
+            "run",
+            "attestation",
+            "reviewer",
+            "bare pass is not evidence",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, delivery)
 
         self.assertNotIn("#454", delivery)
         self.assertNotIn("deferred", delivery)
-        self.assertNotRegex(delivery, r"documentation-deliverable work-unit[^.]+scenarios")
+        self.assertNotIn("criterion_coverage", delivery)
 
     def test_named_gate_form_agrees_with_contract_skill_lifecycle(self) -> None:
         verify_body = normalized(read(VERIFY_PROTOCOL))

@@ -1,0 +1,21 @@
+{
+  "work_unit": "work-unit-492-contract-machine",
+  "results": [
+    {
+      "criterion_id": "documentation-api-reference",
+      "result": "pass",
+      "evidence": {
+        "summary": "Reviewer confirmed documentation accuracy.",
+        "attestation": {
+          "reviewer": "core",
+          "finding": "Documentation describes the delivered behavior and omits stale scenario framing."
+        }
+      }
+    }
+  ],
+  "documentation": {
+    "updated": ["schemas/README.md", "CHANGELOG.md"],
+    "verified_accurate": ["protocols/take/PROTOCOL.md", "protocols/verify/PROTOCOL.md"],
+    "follow_up_work_units": []
+  }
+}

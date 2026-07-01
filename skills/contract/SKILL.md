@@ -88,7 +88,7 @@ after the defect is known to be a contract defect.
 
 A contract declares the dimensions the work demands — behavior is always
 present; documentation and code quality are declared as the change
-warrants, and a subset is legitimate the way a behavior contract need not
+warrants, and a subset is legitimate the way a contract need not
 exercise every code path. The lifecycle is inputs to validation ->
 validation defined -> validation performed, with validation carried through
 `implement` and recorded at `land`.
@@ -106,7 +106,7 @@ The stage boundary is part of the contract lifecycle:
 - `work-unit-craft`/`decompose` produces inputs to validation: the work-unit criteria,
   recipient outcomes, and corpus pointers each dimension must consider.
 - `take` consumes inputs to validation and produces validation defined: the
-  behavior contract plus the documentation and code-quality outcomes the
+  contract plus the documentation and code-quality outcomes the
   change puts under verification.
 - `implement` consumes validation defined and keeps the change traced to it:
   tests, docs, and code-quality decisions name the scenario or dimension

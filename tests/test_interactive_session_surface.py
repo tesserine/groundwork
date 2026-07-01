@@ -116,7 +116,7 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                     printf '%s\\n' '{{"jsonrpc":"2.0","id":1,"method":"initialize","params":{{"protocolVersion":"2024-11-05","capabilities":{{}},"clientInfo":{{"name":"groundwork-go-smoke","version":"1.0.0"}}}}}}'
                     printf '%s\\n' '{{"jsonrpc":"2.0","method":"notifications/initialized"}}'
                     printf '%s\\n' '{{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{{"name":"next-protocol-context","arguments":{{}}}}}}'
-                    printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"behavior-contract","arguments":{{"instance_id":"contract-1","title":"Interactive sessions use the session surface","behavior_form":"scenario","scenarios":[{{"name":"records output through the session surface","criterion":"Interactive sessions reach take through the runa session surface","given":"a scoped interactive session","when":"the agent records the protocol output","then":"the artifact is validated and persisted by runa"}}]}}}}}}'
+                    printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"contract","arguments":{{"instance_id":"contract-1","title":"Interactive sessions use the session surface","criteria":[{{"id":"session-surface-records-output","dimension":"behavior","acceptance_criterion":"Interactive sessions reach take through the runa session surface","statement":"The scoped session records the produced contract artifact through the MCP session surface.","hollow_delivery":"The agent prints a contract but no validated artifact is persisted.","check_kind":"executable","check":"Run the interactive session smoke test."}}]}}}}}}'
                     printf '%s\\n' '{{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{{"name":"advance","arguments":{{}}}}}}'
                     sleep 1
                 }} | "$3" --session --work-unit {WORK_UNIT_ID} > "$4"
@@ -151,12 +151,11 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
             self.assertIn("runa-mcp", mcp_config["command"])
 
             contract = json.loads(
-                (workspace / "behavior-contract" / "contract-1.json").read_text(encoding="utf-8")
+                (workspace / "contract" / "contract-1.json").read_text(encoding="utf-8")
             )
             self.assertEqual(contract["work_unit"], WORK_UNIT_ID)
-            self.assertEqual(contract["behavior_form"], "scenario")
             self.assertEqual(
-                contract["scenarios"][0]["criterion"],
+                contract["criteria"][0]["acceptance_criterion"],
                 "Interactive sessions reach take through the runa session surface",
             )
 
@@ -213,16 +212,16 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                     printf '%s\\n' '{{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{{"name":"next-protocol-context","arguments":{{}}}}}}'
                     case "$protocol" in
                       take)
-                        printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"behavior-contract","arguments":{{"instance_id":"contract-1","title":"Gate-form behavior stays on the behavior-contract surface","behavior_form":"gate","gates":[{{"name":"gate-form behavior artifacts stay schema-valid","criterion":{json.dumps(criterion)},"category":"structural","check":"Validate gate-form artifacts through the runtime MCP tool."}}]}}}}}}'
+                        printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"contract","arguments":{{"instance_id":"contract-1","title":"Dimension criteria stay on the contract surface","criteria":[{{"id":"gate-form-behavior-artifacts","dimension":"behavior","acceptance_criterion":{json.dumps(criterion)},"statement":"Gate-form behavior artifacts stay schema-valid through the runtime MCP tool.","hollow_delivery":"The artifact validates only by fabricating a scenario-shaped contract.","check_kind":"executable","check":"Validate runtime artifacts through the MCP tool."}}]}}}}}}'
                         ;;
                       plan)
-                        printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"implementation-plan","arguments":{{"instance_id":"plan-1","behavior_form":"gate","summary":"Map gate-form behavior without scenarios.","design_decisions":[{{"decision":"Use gate-keyed mappings for documentation deliverables.","rationale":"Gate behavior is the behavior form the contract defines for documentation deliverables."}}],"affected_files":["schemas/behavior-contract.schema.json"],"behavior_mapping":[{{"name":"gate-form behavior artifacts stay schema-valid","criterion":{json.dumps(criterion)},"category":"structural","steps":["Validate the gate artifact.","Advance to implement on the produced artifact."]}}]}}}}}}'
+                        printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"implementation-plan","arguments":{{"instance_id":"plan-1","behavior_form":"gate","summary":"Map gate-form behavior without scenarios.","design_decisions":[{{"decision":"Use gate-keyed mappings for documentation deliverables.","rationale":"Gate behavior is the behavior form the contract defines for documentation deliverables."}}],"affected_files":["schemas/contract.schema.json"],"behavior_mapping":[{{"name":"gate-form behavior artifacts stay schema-valid","criterion":{json.dumps(criterion)},"category":"structural","steps":["Validate the gate artifact.","Advance to implement on the produced artifact."]}}]}}}}}}'
                         ;;
                       implement)
                         printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"test-evidence","arguments":{{"instance_id":"evidence-1","behavior_form":"gate","evidence":[{{"name":"gate-form behavior artifacts stay schema-valid","criterion":{json.dumps(criterion)},"category":"structural","result":"pass","command":"python -m unittest tests.test_artifact_schemas","output_summary":"Gate-form artifact fixtures validated."}}]}}}}}}'
                         ;;
                       verify)
-                        printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"completion-evidence","arguments":{{"instance_id":"completion-1","behavior_form":"gate","criterion_coverage":[{{"criterion":{json.dumps(criterion)},"status":"covered","gates":[{{"name":"gate-form behavior artifacts stay schema-valid","criterion":{json.dumps(criterion)},"category":"structural","result":"pass"}}]}}],"documentation":{{"updated":["schemas/README.md","CHANGELOG.md"],"verified_accurate":["protocols/take/PROTOCOL.md"],"follow_up_work_units":[]}}}}}}}}'
+                        printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"completion-evidence","arguments":{{"instance_id":"completion-1","results":[{{"criterion_id":"gate-form-behavior-artifacts","result":"pass","evidence":{{"summary":"Gate-form runtime artifacts validated.","run":{{"command":"python -m unittest tests.test_artifact_schemas","result":"pass","output_summary":"Artifact fixtures validated."}}}}}}],"documentation":{{"updated":["schemas/README.md","CHANGELOG.md"],"verified_accurate":["protocols/take/PROTOCOL.md"],"follow_up_work_units":[]}}}}}}}}'
                         ;;
                       *)
                         printf 'unexpected protocol: %s\\n' "$protocol" >&2
@@ -260,7 +259,7 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                     )
 
             for artifact_type, instance_id in [
-                ("behavior-contract", "contract-1"),
+                ("contract", "contract-1"),
                 ("implementation-plan", "plan-1"),
                 ("test-evidence", "evidence-1"),
                 ("completion-evidence", "completion-1"),
@@ -271,9 +270,11 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                     )
                     serialized = json.dumps(artifact)
                     self.assertEqual(artifact["work_unit"], work_unit_id)
-                    self.assertEqual(artifact["behavior_form"], "gate")
+                    if artifact_type in {"implementation-plan", "test-evidence"}:
+                        self.assertEqual(artifact["behavior_form"], "gate")
+                    else:
+                        self.assertNotIn("behavior_form", artifact)
                     self.assertNotIn('"scenarios"', serialized)
-                    self.assertNotIn('"scenario"', serialized)
 
 
 if __name__ == "__main__":

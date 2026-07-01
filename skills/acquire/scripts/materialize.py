@@ -38,10 +38,8 @@ ACCEPTANCE_HEADING = re.compile(
 )
 ANY_HEADING = re.compile(r"^\s{0,3}#{1,6}\s+\S", re.MULTILINE)
 # A list item: bullet (-, *, +) or ordered (1.), optionally a [ ]/[x] checkbox.
-LIST_ITEM = re.compile(
-    r"^\s*(?:[-*+]|\d+\.)\s+(?:\[[ xX]\]\s+)?(?P<text>\S.*?)\s*$",
-    re.MULTILINE,
-)
+LIST_ITEM = re.compile(r"^\s*(?:[-*+]|\d+\.)\s+(?:\[[ xX]\]\s+)?(?P<text>\S.*?)\s*$")
+CHECKBOX_ITEM = re.compile(r"^\s*[-*+]\s+\[[ xX]\]\s+(?P<text>\S.*?)\s*$")
 
 
 class MaterializeError(Exception):
@@ -49,7 +47,45 @@ class MaterializeError(Exception):
 
 
 def list_items(block: str) -> list[str]:
-    return [match.group("text").strip() for match in LIST_ITEM.finditer(block)]
+    items: list[str] = []
+    current: list[str] = []
+
+    for line in block.splitlines():
+        match = LIST_ITEM.match(line)
+        if match is not None:
+            if current:
+                items.append(" ".join(current))
+            current = [match.group("text").strip()]
+            continue
+
+        if current and line.strip():
+            current.append(line.strip())
+
+    if current:
+        items.append(" ".join(current))
+
+    return items
+
+
+def checkbox_items(block: str) -> list[str]:
+    items: list[str] = []
+    current: list[str] = []
+
+    for line in block.splitlines():
+        match = CHECKBOX_ITEM.match(line)
+        if match is not None:
+            if current:
+                items.append(" ".join(current))
+            current = [match.group("text").strip()]
+            continue
+
+        if current and line.strip():
+            current.append(line.strip())
+
+    if current:
+        items.append(" ".join(current))
+
+    return items
 
 
 def extract_acceptance_criteria(body: str) -> list[str]:
@@ -63,8 +99,7 @@ def extract_acceptance_criteria(body: str) -> list[str]:
         if items:
             return items
     # No usable heading section — fall back to markdown checkboxes anywhere.
-    checkbox = re.compile(r"^\s*[-*+]\s+\[[ xX]\]\s+(?P<text>\S.*?)\s*$", re.MULTILINE)
-    return [match.group("text").strip() for match in checkbox.finditer(body)]
+    return checkbox_items(body)
 
 
 def materialize(ticket: dict) -> dict:

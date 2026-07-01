@@ -49,11 +49,11 @@ Groundwork scoped pipeline.
 | decompose | protocol | domain:software | protocol | The cognitive craft projects, but this shell produces `work-unit` artifacts and tracker-backed handles, not gazette's non-code artifact crossings. |
 | implement | protocol | domain:software | protocol | Another domain can reuse test-first construction, but this shell consumes implementation plans and emits `test-evidence` for software work-unit behavior. |
 | land | protocol | domain:software | protocol | Another domain can reuse governance closure, but this shell applies approved software change proposals, reflects forge disposition, and emits a `completion-record`. |
-| plan | protocol | domain:software | protocol | Another domain can reuse decision-complete planning, but this shell maps Groundwork behavior contracts to implementation plans for the scoped software pipeline. |
+| plan | protocol | domain:software | protocol | Another domain can reuse decision-complete planning, but this shell maps Groundwork contracts to implementation plans for the scoped software pipeline. |
 | review | protocol | domain:software | protocol | Another domain can reuse independent judgment, but this shell routes Groundwork `change-proposal` artifacts through `change-approved` or `change-needs-revision`. |
 | submit | protocol | domain:software | protocol | Another domain can reuse proposal packaging, but this shell delivers verified software changes through forge mechanics into a `change-proposal`. |
 | survey | protocol | domain:software | protocol | The inquiry discipline projects and gazette also has a `survey` protocol, but this shell transforms `intent` into Groundwork `requirements`. |
-| take | protocol | domain:software | protocol | Another domain can reuse contract-first entry, but this shell claims a work-unit issue, prepares a feature branch, and authors a `behavior-contract` for a software work-unit. |
+| take | protocol | domain:software | protocol | Another domain can reuse contract-first entry, but this shell claims a work-unit issue, prepares a feature branch, and authors a `contract` for a software work-unit. |
 | verify | protocol | domain:software | protocol | Another domain can reuse evidence-before-claim, but this shell gates software completion with `completion-evidence` tied to work-unit criteria, tests, and documentation review. |
 
 ## Protocol Reduction Test

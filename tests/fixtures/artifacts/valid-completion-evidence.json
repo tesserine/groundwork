@@ -1,21 +1,39 @@
 {
-  "work_unit": "work-unit-178-test-fixtures",
-  "behavior_form": "scenario",
-  "criterion_coverage": [
+  "work_unit": "work-unit-492-contract-machine",
+  "results": [
     {
-      "criterion": "Records missing required fields are rejected with a 400 status",
-      "status": "covered",
-      "scenarios": ["reject-missing-required-field"]
+      "criterion_id": "behavior-api-validates-records",
+      "result": "pass",
+      "evidence": {
+        "summary": "Behavior test passed for valid record forwarding.",
+        "run": {
+          "command": "python -m unittest tests.test_ingestion",
+          "result": "pass",
+          "output_summary": "valid record forwarding test passed"
+        }
+      }
     },
     {
-      "criterion": "Rejected records are logged with a reason code",
-      "status": "uncovered"
+      "criterion_id": "documentation-api-reference",
+      "result": "pass",
+      "evidence": {
+        "summary": "Reviewer confirmed the API reference matches the delivered behavior.",
+        "attestation": {
+          "reviewer": "core",
+          "finding": "The API reference describes accepted records and validation failures."
+        }
+      }
     },
     {
-      "criterion": "Valid records pass through unchanged",
-      "status": "partial",
-      "scenarios": ["pass-valid-record"],
-      "failures": ["pass-valid-record"]
+      "criterion_id": "code-quality-single-validation-path",
+      "result": "pass",
+      "evidence": {
+        "summary": "The shared validation path remains the only endpoint validation path.",
+        "artifact": {
+          "path": "src/ingestion/validation.py",
+          "description": "The endpoint delegates to the shared validator."
+        }
+      }
     }
   ],
   "documentation": {

@@ -1,0 +1,15 @@
+{
+  "work_unit": "work-unit-492-contract-machine",
+  "title": "Contract criteria admit a fourth dimension",
+  "criteria": [
+    {
+      "id": "release-notes-call-out",
+      "dimension": "release-notes",
+      "acceptance_criterion": "User-facing changes are announced",
+      "statement": "The release notes call out the user-visible behavior change.",
+      "hollow_delivery": "The change ships with no release-note entry.",
+      "check_kind": "attested",
+      "check": "Reviewer confirms the release-note entry matches the delivered change."
+    }
+  ]
+}

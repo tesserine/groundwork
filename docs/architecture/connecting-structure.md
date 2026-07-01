@@ -53,7 +53,7 @@ Survey and decompose precede take when project-level planning is needed.
 Survey produces requirements; decompose breaks requirements into work-unit
 artifacts. Take picks up a work-unit and starts the scoped pipeline.
 
-Take is contract-first: its capstone is the behavior-contract, the spine
+Take is contract-first: its capstone is the contract, the spine
 threaded through every downstream protocol. Documentation review lives
 inside verify — documentation ships with the code it explains, and the
 completion-evidence artifact records both criterion coverage and
@@ -67,7 +67,7 @@ documentation impact.
 |-----------|----------|---------------------|
 | survey    | requirements | Declaration of what needs doing, at any scope |
 | decompose | work-unit | Work-units decomposed from requirements |
-| take      | behavior-contract | Contract-first entry: the executable definition of done that threads every downstream artifact |
+| take      | contract | Contract-first entry: the executable definition of done that threads every downstream artifact |
 | plan      | implementation-plan | Design decisions informing execution |
 | implement | test-evidence | Proof of correct implementation — results mapped to scenarios or gates |
 | verify    | completion-evidence | Criterion coverage plus documentation impact |
@@ -90,9 +90,9 @@ artifact graph.
 In work-unit-first entry, selection is no longer take's job: the work-unit
 is already the entry, and runa activates take on it. What entry truly is —
 once selection is gone — is the place where done gets defined. Take
-prepares the workspace, frames the work, and authors the behavior-contract.
+prepares the workspace, frames the work, and authors the contract.
 
-The behavior-contract is the root of the scoped artifact chain and the
+The contract is the root of the scoped artifact chain and the
 spine of the pipeline. A separate threading artifact (the former `claim`)
 is not needed: work-unit identity is runtime-enforced (runa injects
 `work_unit` into every scoped artifact and validates canonical ids), so the
@@ -152,7 +152,7 @@ With no signals, every link between protocols is an artifact.
 The complete chain across both phases:
 
 ```
-intent → requirements → work-unit → behavior-contract
+intent → requirements → work-unit → contract
 → implementation-plan → test-evidence → completion-evidence
 → change-proposal → change-approved → completion-record
 ```
@@ -170,8 +170,8 @@ The manifest declares type-level edges. Runa evaluates triggers per work
 unit at runtime, using the `work_unit` field to partition the workspace.
 
 When multiple work-units are active simultaneously, plan triggering on
-`on_artifact("behavior-contract")` fires for a specific work-unit's
-behavior-contract — not every behavior-contract in the workspace. The
+`on_artifact("contract")` fires for a specific work-unit's
+contract — not every contract in the workspace. The
 manifest doesn't express this scoping. Runa computes it from artifact
 content.
 
@@ -205,7 +205,7 @@ name = "requirements"
 name = "work-unit"
 
 [[artifact_types]]
-name = "behavior-contract"
+name = "contract"
 
 [[artifact_types]]
 name = "implementation-plan"
@@ -257,23 +257,23 @@ name = "take"
 scoped = true
 requires = ["work-unit"]
 accepts = ["research-record"]
-produces = ["behavior-contract"]
+produces = ["contract"]
 may_produce = ["research-record"]
 trigger = { type = "on_artifact", name = "work-unit" }
 
 [[protocols]]
 name = "plan"
 scoped = true
-requires = ["behavior-contract"]
+requires = ["contract"]
 accepts = ["work-unit", "research-record"]
 produces = ["implementation-plan"]
 may_produce = ["research-record"]
-trigger = { type = "on_artifact", name = "behavior-contract" }
+trigger = { type = "on_artifact", name = "contract" }
 
 [[protocols]]
 name = "implement"
 scoped = true
-requires = ["behavior-contract", "implementation-plan"]
+requires = ["contract", "implementation-plan"]
 accepts = []
 produces = ["test-evidence"]
 may_produce = []
@@ -282,7 +282,7 @@ trigger = { type = "on_artifact", name = "implementation-plan" }
 [[protocols]]
 name = "verify"
 scoped = true
-requires = ["behavior-contract", "test-evidence", "work-unit"]
+requires = ["contract", "test-evidence", "work-unit"]
 accepts = ["implementation-plan"]
 produces = ["completion-evidence"]
 may_produce = []
@@ -291,7 +291,7 @@ trigger = { type = "on_artifact", name = "test-evidence" }
 [[protocols]]
 name = "submit"
 scoped = true
-requires = ["completion-evidence", "behavior-contract"]
+requires = ["completion-evidence", "contract"]
 accepts = ["change-proposal", "change-needs-revision"]
 produces = ["change-proposal"]
 may_produce = []
@@ -303,7 +303,7 @@ trigger = { type = "any_of", conditions = [
 [[protocols]]
 name = "review"
 scoped = true
-requires = ["change-proposal", "behavior-contract"]
+requires = ["change-proposal", "contract"]
 accepts = ["work-unit", "implementation-plan", "completion-evidence"]
 produces = []
 may_produce = []
@@ -317,7 +317,7 @@ members = ["change-approved", "change-needs-revision"]
 name = "land"
 scoped = true
 requires = ["change-approved", "change-proposal"]
-accepts = ["behavior-contract", "completion-evidence", "work-unit"]
+accepts = ["contract", "completion-evidence", "work-unit"]
 produces = ["completion-record"]
 may_produce = []
 trigger = { type = "on_artifact", name = "change-approved" }
@@ -327,7 +327,7 @@ trigger = { type = "on_artifact", name = "change-approved" }
 
 **Protocols merged:**
 - `specify` merged into `take` — the entry is contract-first; the
-  behavior-contract is authored where work begins.
+  contract is authored where work begins.
 - `document` merged into `verify` — documentation accuracy is completion
   evidence; the review method lives in
   `protocols/verify/references/documentation-review.md`.
@@ -338,10 +338,10 @@ trigger = { type = "on_artifact", name = "change-approved" }
 - `documentation-record` — folded into `completion-evidence.documentation`.
 
 **Edge changes:**
-- The behavior-contract is required by every judgment station (plan,
+- The contract is required by every judgment station (plan,
   implement, verify, submit, review) and accepted by land. The spine is
   unbroken from entry to close.
-- review now requires the behavior-contract and accepts work-unit,
+- review now requires the contract and accepts work-unit,
   implementation-plan, and completion-evidence — the reviewer judges
   against the contract and evidence, not the diff alone.
 - submit triggers on completion-evidence (or change-needs-revision for
@@ -357,7 +357,7 @@ trigger = { type = "on_artifact", name = "change-approved" }
 | intent | external |
 | requirements | survey |
 | work-unit | decompose (the `acquire` skill also delivers through decompose's tool; see *Take — contract-first entry*) |
-| behavior-contract | take |
+| contract | take |
 | implementation-plan | plan |
 | test-evidence | implement |
 | completion-evidence | verify |
@@ -391,7 +391,7 @@ but doesn't trigger on.
 **No cycles.** The requires graph is a DAG. Verified by walking the
 full chain from intent through completion-record.
 
-**Most-referenced artifacts.** behavior-contract is required by five
+**Most-referenced artifacts.** contract is required by five
 protocols (plan, implement, verify, submit, review) and accepted by land —
 it is the spine of the scoped pipeline. work-unit is required by take and
 verify and accepted by plan, review, and land. The behavioral spec and the
@@ -554,7 +554,7 @@ owned by runa. The agent touches neither directly.
 ### Input: Context injection as prompt
 
 Runa constructs a prompt with all context pre-integrated. The agent
-reads natural language, not JSON. The behavior-contract, implementation-
+reads natural language, not JSON. The contract, implementation-
 plan, research-records are already woven into the context window.
 The agent doesn't parse artifacts or know about schemas.
 
@@ -565,7 +565,7 @@ for the active protocol — the union of `produces` and `may_produce`,
 subject to runa's tool-generation rules. Each tool is derived from
 the artifact type:
 
-- **Name:** the artifact type name (e.g., `behavior-contract`,
+- **Name:** the artifact type name (e.g., `contract`,
   `research-record`).
 - **Description:** runa's MCP server supplies a default description
   naming the artifact type.
@@ -579,10 +579,10 @@ for the eligibility rules and how unscoped sessions interact with
 `work_unit`-bearing schemas.
 
 The agent calls one of these tools by its type name. Concretely, an
-agent inside a take session producing a behavior-contract calls:
+agent inside a take session producing a contract calls:
 
 ```
-behavior-contract({
+contract({
   instance_id: "work-unit-221",
   behavior_form: "scenario",
   title: "User authentication",
@@ -697,11 +697,11 @@ chokepoint between agent and system. This enables:
   was produced, when, whether it validated. Without the agent doing
   anything extra.
 - **Cost tracking** — tool calls correlated with LLM calls. Cost per
-  behavior-contract, cost per work-unit implementation, cost per acceptance
+  contract, cost per work-unit implementation, cost per acceptance
   criterion. Measured, not estimated.
 - **Anomaly detection** — the server sees patterns across many work
   units. An implement protocol completing in two minutes when the
-  median is forty is a signal. A behavior-contract with one behavior entry
+  median is forty is a signal. A contract with one behavior entry
   for eight acceptance criteria is a signal.
 - **Replay and audit** — the full sequence of tool calls for a work
   unit is a structured trace. Debugging agent behavior means reading
@@ -727,7 +727,7 @@ The topology has two specification artifacts at different scales:
   Consumed by decompose, which breaks it into work-units.
   This is the project-level specification.
 
-- **behavior-contract** (produced by take, the scoped-pipeline entry) —
+- **contract** (produced by take, the scoped-pipeline entry) —
   declares how a single work-unit should be validated: Given/When/Then
   scenarios for executable behavior, or gates for documentation-deliverable
   behavior. This is the implementation-level specification.
@@ -745,7 +745,7 @@ decompose breaks requirements into work-unit artifacts.
 
 **Scoped pipeline:** work-unit → take → plan → implement → verify →
 submit → review → land. Take picks up a work-unit artifact whose
-dependencies are satisfied, authors the behavior contract, and the forward
+dependencies are satisfied, authors the contract, and the forward
 flow produces artifacts that runa tracks and threads by work-unit identity.
 
 ## Input Edges — Protocol by Protocol
@@ -770,20 +770,20 @@ flow produces artifacts that runa tracks and threads by work-unit identity.
   it supplies the acceptance criteria the contract refines.
 - **accepts:** research-record. Contract authoring may need external
   evidence.
-- **produces:** behavior-contract — the contract-first capstone.
+- **produces:** contract — the contract-first capstone.
 - **trigger:** `on_artifact("work-unit")`
 
 ### plan
 
-- **requires:** behavior-contract. Cannot design an implementation
+- **requires:** contract. Cannot design an implementation
   without knowing what behavior is being implemented.
 - **accepts:** work-unit (scope boundaries), research-record (design
   evidence).
-- **trigger:** `on_artifact("behavior-contract")`
+- **trigger:** `on_artifact("contract")`
 
 ### implement
 
-- **requires:** behavior-contract, implementation-plan. The behavior
+- **requires:** contract, implementation-plan. The behavior
   entries define the checks (authored at take): scenarios for executable
   behavior, gates for documentation-deliverable behavior. The plan provides
   the design approach. Implement drives each scenario or gate through the
@@ -794,7 +794,7 @@ flow produces artifacts that runa tracks and threads by work-unit identity.
 
 ### verify
 
-- **requires:** behavior-contract, test-evidence, work-unit. Verify checks
+- **requires:** contract, test-evidence, work-unit. Verify checks
   behavior coverage against the contract using test-evidence results.
   The work-unit is required because verify must detect acceptance criteria
   that have no scenario or gate coverage — gaps that only the original
@@ -806,7 +806,7 @@ flow produces artifacts that runa tracks and threads by work-unit identity.
 
 ### submit
 
-- **requires:** completion-evidence, behavior-contract. Cannot submit
+- **requires:** completion-evidence, contract. Cannot submit
   unverified work, and the proposal summary is the contract's public
   claim.
 - **accepts:** change-proposal, change-needs-revision. Revision rounds see the
@@ -816,7 +816,7 @@ flow produces artifacts that runa tracks and threads by work-unit identity.
 
 ### review
 
-- **requires:** change-proposal, behavior-contract. The reviewer judges the
+- **requires:** change-proposal, contract. The reviewer judges the
   proposal against the contract, not the diff alone.
 - **accepts:** work-unit (scope honesty), implementation-plan (design
   context), completion-evidence (evidence quality).
@@ -828,7 +828,7 @@ flow produces artifacts that runa tracks and threads by work-unit identity.
 
 - **requires:** change-approved, change-proposal. Cannot land without typed
   approval and the proposal detail approved by review.
-- **accepts:** behavior-contract, completion-evidence, work-unit. Context
+- **accepts:** contract, completion-evidence, work-unit. Context
   for the completion record. Completion-evidence already carries
   criterion-level coverage, so work-unit is enrichment not structural.
 - **trigger:** `on_artifact("change-approved")`
@@ -853,11 +853,11 @@ Not from a guess about what the producer might write.
 
 ### Common envelope
 
-**Scoped-pipeline artifacts** (behavior-contract through completion-record)
+**Scoped-pipeline artifacts** (contract through completion-record)
 carry a `work_unit` field — the work-unit reference that threads them
 together. Runa
 uses this to scope context injection: when plan activates, it delivers
-the behavior-contract for this work-unit, not every behavior-contract in
+the contract for this work-unit, not every contract in
 the workspace.
 
 **Planning-phase artifacts** (intent, requirements, work-unit) do not carry
@@ -962,14 +962,14 @@ length of the execution chain:
 
 ```
 work-unit (acceptance_criteria)
-  → behavior-contract (scenarios or gates trace to acceptance criteria)
+  → contract (scenarios or gates trace to acceptance criteria)
     → test-evidence (results trace to scenarios or gates)
       → completion-evidence (coverage at acceptance-criterion level,
         plus documentation impact)
 ```
 
 Schema implications:
-- behavior-contract scenarios and gates carry a reference to which
+- contract scenarios and gates carry a reference to which
   acceptance criterion they refine
 - completion-evidence reports coverage at the acceptance-criterion
   level, not just the scenario or gate level — so verify can answer "are all
@@ -983,17 +983,16 @@ content (to read acceptance criteria), it must declare the work-unit
 artifact in its own edges — the `work_unit` reference carried by every
 scoped artifact identifies the work-unit but does not carry its content.
 
-### behavior-contract
+### contract
 
 **Producer:** take — the contract-first entry.
 **Consumers:** plan, implement, verify, submit, review (requires); land
 (accepts).
-**What consumers need:** behavior entries that trace to acceptance criteria:
-scenarios for executable Given/When/Then work, or gates for
-documentation-deliverable structural/coherence/conformance checks.
+**What consumers need:** dimension-agnostic criteria that trace to acceptance
+criteria and declare how each dimension is checked.
 
-Each scenario or gate carries a `criterion` reference for traceability, and
-the common `work_unit` field threads it to the work-unit.
+Each criterion carries an `acceptance_criterion` reference for traceability,
+and the common `work_unit` field threads it to the work-unit.
 
 The existing `metadata` block (produced_by, date) is eliminated.
 Runa knows the producing protocol from the manifest. It tracks
@@ -1003,29 +1002,20 @@ already knows. By sufficiency, it has no place in the schema.
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
 | work_unit | string (work-unit ref) | yes | Common envelope — threads to work-unit |
-| behavior_form | enum: scenario, gate | yes | Selects the behavior contract form |
 | title | string | yes | Human-readable title for the contract |
-| scenarios | array of scenario | yes for scenario form | Executable Given/When/Then scenarios |
-| gates | array of gate | yes for gate form | Documentation-deliverable gates |
+| criteria | array of criterion | yes (min 1) | Dimension-agnostic contract criteria |
 
-**Scenario fields:**
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| name | string | yes | Human-readable scenario name |
-| criterion | string | yes | Which acceptance criterion this refines |
-| given | string | yes | Initial context or state |
-| when | string | yes | Action or event |
-| then | string | yes | Expected outcome |
-
-**Gate fields:**
+**Criterion fields:**
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
-| name | string | yes | Human-readable gate name |
-| criterion | string | yes | Which acceptance criterion this refines |
-| category | enum: structural, coherence, conformance | yes | Gate category |
-| check | string | yes | Concrete check that determines whether the gate passes |
+| id | string | yes | Stable id referenced by completion evidence |
+| dimension | string | yes | Open dimension name |
+| acceptance_criterion | string | yes | Which acceptance criterion this refines |
+| statement | string | yes | Definition of done for this dimension |
+| hollow_delivery | string | yes | Plausible delivery that would fail this criterion |
+| check_kind | enum: executable, attested | yes | Whether evidence is performed by run/artifact or reviewer attestation |
+| check | string | yes | Concrete check descriptor |
 
 ### Metadata Elimination Principle
 
@@ -1068,14 +1058,14 @@ exists to prevent.
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
-| scenario | string | yes | Scenario name from behavior-contract |
+| scenario | string | yes | Scenario name from contract |
 | steps | array of strings | yes (min 1) | Implementation steps for this scenario |
 
 **Gate mapping:**
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
-| name | string | yes | Gate name from behavior-contract |
+| name | string | yes | Gate name from contract |
 | criterion | string | yes | Acceptance criterion this gate maps to |
 | category | enum: structural, coherence, conformance | yes | Gate category |
 | steps | array of strings | yes (min 1) | Implementation steps for this gate |
@@ -1084,7 +1074,7 @@ exists to prevent.
 
 **Consumer:** verify (requires).
 **What verify needs:** proof that each scenario or gate was checked and the
-result. Verify joins test-evidence with behavior-contract to roll up coverage
+result. Verify joins test-evidence with contract to roll up coverage
 at the acceptance-criterion level.
 
 | Field | Type | Required | Purpose |
@@ -1097,7 +1087,7 @@ at the acceptance-criterion level.
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
-| scenario | string | yes | Scenario name from behavior-contract |
+| scenario | string | yes | Scenario name from contract |
 | result | enum: pass, fail | yes | Test outcome |
 | command | string | yes | The command that was executed |
 | output_summary | string | yes | Summary of command output — proof the test ran |
@@ -1106,7 +1096,7 @@ at the acceptance-criterion level.
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
-| name | string | yes | Gate name from behavior-contract |
+| name | string | yes | Gate name from contract |
 | criterion | string | yes | Acceptance criterion this gate covers |
 | category | enum: structural, coherence, conformance | yes | Gate category |
 | result | enum: pass, fail | yes | Gate outcome |
@@ -1120,50 +1110,24 @@ at the acceptance-criterion level.
 review needs: the evidence-quality basis for judgment. What land needs:
 coverage context for the final record.
 
-Verify produces this by joining work-unit (acceptance criteria),
-behavior-contract (scenario- or gate-to-criterion mapping), and test-evidence
-(results), and by reviewing the documentation impact of the change. The output
-reports coverage at the acceptance-criterion level plus the documentation
-outcome.
+Verify produces this by recording one result per contract criterion and by
+reviewing the documentation impact of the change. Executable criteria record
+run or artifact evidence. Attested criteria record reviewer identity and
+finding; a bare pass is not evidence.
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
 | work_unit | string (work-unit ref) | yes | Common envelope |
-| behavior_form | enum: scenario, gate | yes | Selects scenario or gate coverage |
-| criterion_coverage | array of coverage-entry | yes (min 1) | Per-criterion coverage status |
+| results | array of result-entry | yes (min 1) | Per-contract-criterion performed evidence |
 | documentation | object | yes | Documentation impact: `updated`, `verified_accurate`, `follow_up_work_units` |
 
-**Scenario coverage-entry fields:**
+**Result-entry fields:**
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
-| criterion | string | yes | Acceptance criterion from the work-unit |
-| status | enum: covered, partial, uncovered | yes | Coverage status |
-| scenarios | array of strings | required for covered/partial; empty or absent for uncovered | Scenario names that cover this criterion |
-| failures | array of strings | empty/absent for covered/uncovered; non-empty for partial | Scenario names that failed for this criterion |
-
-**Gate coverage-entry fields:**
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| criterion | string | yes | Acceptance criterion from the work-unit |
-| status | enum: covered, partial, uncovered | yes | Coverage status |
-| gates | array of gate-result | required for covered/partial; empty or absent for uncovered | Gates that cover this criterion |
-| failures | array of strings | empty/absent for covered/uncovered; non-empty can make partial valid | Gate names that failed for this criterion |
-
-For `covered`, every gate result must be `pass` and `failures` must be empty
-or absent. For `partial`, gate coverage must include either a failed gate
-result or a non-empty `failures` list. For `uncovered`, gate evidence and
-failures must both be empty or absent.
-
-**Gate-result fields:**
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| name | string | yes | Gate name |
-| criterion | string | yes | Acceptance criterion this gate covers |
-| category | enum: structural, coherence, conformance | yes | Gate category |
-| result | enum: pass, fail | yes | Gate result |
+| criterion_id | string | yes | Contract criterion id |
+| result | enum: pass, fail | yes | Observed result |
+| evidence | object | yes | Run/artifact evidence or reviewer attestation, plus summary |
 
 ### change-proposal
 

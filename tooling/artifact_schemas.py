@@ -128,4 +128,132 @@ def _is_uri(instance: object) -> bool:
 
 
 def _artifact_contract_errors(artifact_type: str, artifact: dict[str, Any]) -> list[tuple[str, str]]:
+    if artifact_type == "contract":
+        return _contract_artifact_errors(artifact)
+    if artifact_type == "completion-evidence":
+        return _completion_evidence_artifact_errors(artifact)
     return []
+
+
+def _contract_artifact_errors(artifact: dict[str, Any]) -> list[tuple[str, str]]:
+    errors: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for index, criterion in enumerate(artifact.get("criteria", [])):
+        if not isinstance(criterion, dict):
+            continue
+        criterion_id = criterion.get("id")
+        if isinstance(criterion_id, str):
+            if criterion_id in seen:
+                errors.append((f"criteria/{index}/id", f"duplicate criterion id {criterion_id!r}"))
+            seen.add(criterion_id)
+    return errors
+
+
+def _completion_evidence_artifact_errors(artifact: dict[str, Any]) -> list[tuple[str, str]]:
+    errors: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for index, result in enumerate(artifact.get("results", [])):
+        if not isinstance(result, dict):
+            continue
+        criterion_id = result.get("criterion_id")
+        if isinstance(criterion_id, str):
+            if criterion_id in seen:
+                errors.append((f"results/{index}/criterion_id", f"duplicate criterion result {criterion_id!r}"))
+            seen.add(criterion_id)
+        evidence = result.get("evidence")
+        if not isinstance(evidence, dict):
+            continue
+        run = evidence.get("run")
+        if isinstance(run, dict) and run.get("result") != result.get("result"):
+            errors.append((f"results/{index}/evidence/run/result", "run result must match criterion result"))
+    return errors
+
+
+def validate_contract_evidence(
+    contract: dict[str, Any],
+    completion_evidence: dict[str, Any],
+    *,
+    warranted_dimensions: set[str] | None = None,
+    warranted_acceptance_criteria: dict[str, set[str]] | None = None,
+) -> None:
+    """Validate completion evidence against its contract artifact."""
+    validate_artifact("contract", contract)
+    validate_artifact("completion-evidence", completion_evidence)
+    errors = detect_contract_evidence_defects(
+        contract,
+        completion_evidence,
+        warranted_dimensions=warranted_dimensions,
+        warranted_acceptance_criteria=warranted_acceptance_criteria,
+    )
+    if errors:
+        raise ArtifactSchemaError(errors)
+
+
+def detect_contract_evidence_defects(
+    contract: dict[str, Any],
+    completion_evidence: dict[str, Any],
+    *,
+    warranted_dimensions: set[str] | None = None,
+    warranted_acceptance_criteria: dict[str, set[str]] | None = None,
+) -> list[tuple[str, str]]:
+    """Return generic contract/evidence defects without dimension-specific logic."""
+    errors: list[tuple[str, str]] = []
+    criteria = [
+        criterion
+        for criterion in contract.get("criteria", [])
+        if isinstance(criterion, dict) and isinstance(criterion.get("id"), str)
+    ]
+    criteria_by_id = {criterion["id"]: criterion for criterion in criteria}
+    criteria_by_dimension: dict[str, list[dict[str, Any]]] = {}
+    for criterion in criteria:
+        dimension = criterion.get("dimension")
+        if isinstance(dimension, str):
+            criteria_by_dimension.setdefault(dimension, []).append(criterion)
+
+    for dimension in sorted(warranted_dimensions or set()):
+        if dimension not in criteria_by_dimension:
+            errors.append(("criteria", f"warranted dimension {dimension!r} has no contract criteria"))
+
+    for dimension, warranted_criteria in sorted((warranted_acceptance_criteria or {}).items()):
+        declared = {
+            criterion.get("acceptance_criterion")
+            for criterion in criteria_by_dimension.get(dimension, [])
+            if isinstance(criterion.get("acceptance_criterion"), str)
+        }
+        for acceptance_criterion in sorted(warranted_criteria - declared):
+            errors.append(
+                (
+                    "criteria",
+                    f"dimension {dimension!r} does not declare warranted criterion {acceptance_criterion!r}",
+                )
+            )
+
+    result_ids: set[str] = set()
+    for index, result in enumerate(completion_evidence.get("results", [])):
+        if not isinstance(result, dict):
+            continue
+        criterion_id = result.get("criterion_id")
+        if not isinstance(criterion_id, str):
+            continue
+        result_ids.add(criterion_id)
+        criterion = criteria_by_id.get(criterion_id)
+        if criterion is None:
+            errors.append((f"results/{index}/criterion_id", f"unknown contract criterion {criterion_id!r}"))
+            continue
+        evidence = result.get("evidence")
+        if not isinstance(evidence, dict):
+            continue
+        check_kind = criterion.get("check_kind")
+        has_executable_evidence = "run" in evidence or "artifact" in evidence
+        has_attestation = "attestation" in evidence
+        if check_kind == "executable" and not has_executable_evidence:
+            errors.append((f"results/{index}/evidence", "executable criterion requires run or artifact evidence"))
+        if check_kind == "attested" and not has_attestation:
+            errors.append((f"results/{index}/evidence", "attested criterion requires reviewer attestation"))
+
+    for criterion in criteria:
+        criterion_id = criterion["id"]
+        if criterion_id not in result_ids:
+            errors.append(("results", f"contract criterion {criterion_id!r} has no completion evidence"))
+
+    return errors

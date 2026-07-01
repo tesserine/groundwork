@@ -1,0 +1,33 @@
+{
+  "work_unit": "work-unit-492-contract-machine",
+  "title": "Contract criteria cover behavior, docs, and code quality",
+  "criteria": [
+    {
+      "id": "behavior-api-validates-records",
+      "dimension": "behavior",
+      "acceptance_criterion": "Valid records pass through unchanged",
+      "statement": "The ingestion endpoint forwards a valid record without changing its fields.",
+      "hollow_delivery": "The endpoint accepts the request but silently drops or rewrites a field.",
+      "check_kind": "executable",
+      "check": "Run the ingestion endpoint behavior test."
+    },
+    {
+      "id": "documentation-api-reference",
+      "dimension": "documentation",
+      "acceptance_criterion": "Public API behavior is documented",
+      "statement": "The API reference describes accepted records and validation failures.",
+      "hollow_delivery": "The code changes but the API reference still describes the old behavior.",
+      "check_kind": "attested",
+      "check": "Reviewer reads the API reference against the implemented behavior."
+    },
+    {
+      "id": "code-quality-single-validation-path",
+      "dimension": "code-quality",
+      "acceptance_criterion": "Validation remains centralized",
+      "statement": "Record validation continues through the shared validator path.",
+      "hollow_delivery": "A second validator is added for this endpoint only.",
+      "check_kind": "executable",
+      "check": "Inspect tests and code paths for one validation entry."
+    }
+  ]
+}

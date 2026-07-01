@@ -29,7 +29,7 @@ investigation. Investigate from evidence. No exceptions.
 The failure is not a phase: it surfaces during framing, planning,
 execution, verification, and landing alike. The trigger is the failure,
 not the stage. "Unexpected" is only meaningful relative to a defined
-expectation — check the behavior contract first.
+expectation — check the contract first.
 
 ## The Investigation Move
 
@@ -125,4 +125,4 @@ step is rationalizing, not investigating.
 - `resolve` (skill): when investigation reveals the failure is operational
   friction (missing tool, broken config, stale convention), the root cause
   is environmental — hand off.
-- `contract` (skill): the behavior contract defines what "expected" means.
+- `contract` (skill): the contract defines what "expected" means.
