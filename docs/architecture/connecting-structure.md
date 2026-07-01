@@ -885,9 +885,9 @@ survey has something to work from.
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
-| description | string | yes | What the operator intends to accomplish |
+| statement | string | yes | What the operator intends to accomplish |
 | source | string | yes | Where this came from (operator, user report, automated detection) |
-| references | array | no | Opaque upstream ticket or work-unit anchors |
+| target | string | no | Optional opaque locator for what the intent is aimed at |
 
 ### requirements
 

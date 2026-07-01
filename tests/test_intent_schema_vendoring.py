@@ -77,10 +77,10 @@ class IntentSchemaVendoringTests(unittest.TestCase):
         canonical = schema["x-tesserine-canonical"]
 
         self.assertNotIn("$id", schema)
-        self.assertEqual(canonical["version"], "1.0.0")
+        self.assertEqual(canonical["version"], "2.0.0")
         schema_ref = self.assert_commons_canonical_url(
             canonical["schema_url"],
-            "schemas/intent/v1/intent.schema.json",
+            "schemas/intent/v2/intent.schema.json",
         )
         prose_ref = self.assert_commons_canonical_url(
             canonical["prose_url"],
@@ -88,13 +88,31 @@ class IntentSchemaVendoringTests(unittest.TestCase):
         )
         self.assertEqual(schema_ref, prose_ref)
 
+    def test_intent_schema_body_matches_v2_contract(self) -> None:
+        schema = json.loads(INTENT_SCHEMA_PATH.read_text())
+
+        self.assertEqual(schema["required"], ["statement", "source"])
+        self.assertIs(schema["additionalProperties"], False)
+        self.assertEqual(set(schema["properties"]), {"statement", "source", "target"})
+
+        for field in ["statement", "source", "target"]:
+            with self.subTest(field=field):
+                self.assertEqual(schema["properties"][field]["type"], "string")
+                self.assertEqual(schema["properties"][field]["minLength"], 1)
+
+        self.assertNotIn("description", schema["properties"])
+        self.assertNotIn("references", schema["properties"])
+        self.assertNotIn("kind", json.dumps(schema))
+
     def test_schemas_readme_documents_intent_vendoring_discipline(self) -> None:
         readme = SCHEMAS_README_PATH.read_text()
 
         self.assertIn("methodology-private", readme)
         self.assertIn("intent.schema.json", readme)
+        self.assertIn("2.0.0", readme)
+        self.assertIn("schemas/intent/v2/intent.schema.json", readme)
         self.assertIn("tesserine/commons", readme)
-        self.assertIn("runtime consumers still read schemas from groundwork", readme)
+        self.assertRegex(readme, r"runtime consumers still read schemas from\s+groundwork")
         self.assertNotIn("pins commons `main`", readme)
         self.assertIn("pins the commons merge commit", readme)
         self.assertIn("immutable", readme)
@@ -106,7 +124,7 @@ class IntentSchemaVendoringTests(unittest.TestCase):
 
         for fixture_name in [
             "valid-intent.json",
-            "valid-intent-with-references.json",
+            "valid-intent-with-target.json",
         ]:
             with self.subTest(fixture_name=fixture_name):
                 fixture = json.loads((FIXTURES / fixture_name).read_text())
@@ -119,9 +137,7 @@ class IntentSchemaVendoringTests(unittest.TestCase):
             "invalid-intent-missing-source.json": "missing required field: source",
             "invalid-intent-context.json": "unexpected fields: \\['context'\\]",
             "invalid-intent-unknown-field.json": "unexpected fields: \\['priority'\\]",
-            "invalid-intent-empty-references.json": "references must contain at least 1 item",
-            "invalid-intent-empty-ref.json": "references\\[0\\]\\.ref must be at least 1 characters",
-            "invalid-intent-invalid-kind.json": "references\\[0\\]\\.kind must be one of",
+            "invalid-intent-empty-target.json": "target must be at least 1 characters",
         }
 
         for fixture_name, error in cases.items():

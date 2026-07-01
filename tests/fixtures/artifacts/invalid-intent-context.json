@@ -1,5 +1,5 @@
 {
-  "description": "Add input validation to the data ingestion pipeline",
+  "statement": "Add input validation to the data ingestion pipeline",
   "source": "operator",
   "context": "Several malformed records were observed in the staging environment last week"
 }
