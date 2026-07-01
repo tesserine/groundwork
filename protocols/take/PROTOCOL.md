@@ -8,8 +8,8 @@ description: >-
   carries to land; until the runtime sequences the stations autonomously,
   take carries it. Trigger on: 'take', 'take work', 'start work-unit'.
 metadata:
-  version: "3.4.0"
-  updated: "2026-06-20"
+  version: "3.5.0"
+  updated: "2026-07-01"
 ---
 
 # Take — Contract-First Entry
@@ -84,12 +84,13 @@ proves it, or records it.
    asks the universal as a question of the change, names the failing tell,
    and names the locus where it holds.
 
-   Apply pointer-as-default after you consider every dimension; this is the
-   defined-validation pass for all three dimensions. A
-   dimension with no special input uses its general contract as the
-   validation pointer; it does not force a dense block. Density is unequal,
-   consideration is equal. Silence is valid only after you can say the
-   general contract is enough for that dimension.
+   After considering all three dimensions, decide which dimensions the
+   change actually has. Every present dimension gets at least one authored
+   criterion in `contract.criteria[]`; it may be simple, but it names the
+   statement, `hollow_delivery`, `check_kind`, and check descriptor. Density
+   may be light; coverage is never zero for a present dimension. A dimension
+   absent from the change has no criterion; a dimension present in the
+   change has authored teeth-bearing validation.
 
 5. **Deliver the contract spine.** Invoke the `contract` MCP tool with
    dimension-agnostic criteria. Each criterion declares the dimension it

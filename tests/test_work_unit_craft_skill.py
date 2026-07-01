@@ -122,7 +122,7 @@ class WorkUnitCraftSkillTests(unittest.TestCase):
             with self.subTest(expected=expected):
                 self.assertIn(expected, primary_workflow)
 
-    def test_pointer_as_default_is_a_considered_dimension_not_a_body_requirement(self) -> None:
+    def test_present_dimensions_require_visible_contract_inputs(self) -> None:
         body = read_work_unit_craft()
         primary_workflow = normalized(
             section_between(
@@ -132,10 +132,22 @@ class WorkUnitCraftSkillTests(unittest.TestCase):
             )
         )
 
-        self.assertIn("consider every dimension", primary_workflow)
-        self.assertIn("not a mandatory per-dimension body section", primary_workflow)
-        self.assertIn("general contract pointer", primary_workflow)
-        self.assertIn("silence is valid only after the dimension was considered", primary_workflow)
+        for expected in [
+            "Every present dimension gets visible contract input",
+            "Density may be light",
+            "coverage is never zero for a present dimension",
+            "hollow delivery",
+            "authored criterion",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, primary_workflow)
+
+        forbidden = re.compile(
+            r"general contract pointer|silence is valid|"
+            r"not a mandatory per-dimension body section",
+            flags=re.IGNORECASE,
+        )
+        self.assertIsNone(forbidden.search(primary_workflow))
 
     def test_declared_contract_work_consults_the_contract_instead_of_modeling_it(self) -> None:
         body = read_work_unit_craft()

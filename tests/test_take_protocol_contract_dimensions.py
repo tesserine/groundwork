@@ -75,21 +75,25 @@ class TakeProtocolContractDimensionTests(unittest.TestCase):
         self.assertIn("reviewer-checkable", authoring)
         self.assertIn("projected", authoring)
 
-    def test_pointer_as_default_is_defined_as_general_contract_not_dense_required_blocks(self) -> None:
+    def test_take_requires_authored_criteria_for_present_dimensions(self) -> None:
         authoring = normalized(step(read(TAKE_PROTOCOL), 4))
-        authoring_lower = authoring.lower()
 
         for expected in [
-            "consider every dimension",
-            "general contract",
-            "pointer-as-default",
-            "density is unequal",
-            "consideration is equal",
+            "Every present dimension gets at least one authored criterion",
+            "Density may be light",
+            "coverage is never zero for a present dimension",
+            "hollow_delivery",
+            "check_kind",
         ]:
             with self.subTest(expected=expected):
-                self.assertIn(expected, authoring_lower)
+                self.assertIn(expected, authoring)
 
-        self.assertNotRegex(authoring, r"mandatory per-dimension (?:declaration|block)")
+        forbidden = re.compile(
+            r"Pointer-as-default|general contract (?:remains the validation pointer|pointer)|"
+            r"silence is valid|not a mandatory per-dimension (?:declaration|block)",
+            flags=re.IGNORECASE,
+        )
+        self.assertIsNone(forbidden.search(authoring))
 
     def test_take_consults_dimension_homes_without_reencoding_lifecycle_table(self) -> None:
         body = read(TAKE_PROTOCOL)

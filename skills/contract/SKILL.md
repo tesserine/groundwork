@@ -11,7 +11,7 @@ description: >-
   or completion claims must stay traceable to a defined contract instead of
   drifting toward implementation convenience.
 metadata:
-  version: "2.5.0"
+  version: "2.6.0"
   updated: "2026-07-01"
 ---
 
@@ -95,11 +95,20 @@ There is one contract machine. Every dimension a change demands is a
 first-class symmetric citizen in that machine: Behavior is one dimension
 among N, documentation and code quality carry the identical teeth
 obligation, and every dimension carries the same performed-evidence
-obligation. A subset of dimensions is legitimate the way a contract need
-not exercise every code path; what is illegitimate is a dimension present
-in lighter structure. The lifecycle is inputs to validation -> validation
-defined -> validation performed, with validation carried through
-`implement` and recorded at `land`.
+obligation. Every dimension the change has carries at least one authored
+criterion in the uniform contract surface. Density may be light; coverage
+is never zero for a present dimension. Each present dimension's criterion
+names a statement of done, `hollow_delivery`, `check_kind`, check
+descriptor, and a performed evidence path through
+`completion-evidence.results[]`.
+
+A criterion is legitimate only when a hollow delivery fails it. The same
+hollow-delivery test rejects filler criteria and silent dimensions: a
+dimension with no authored criterion has no hollow delivery to fail. A
+dimension absent from the change has no criterion; a dimension present in
+the change has at least one criterion with teeth. The lifecycle is inputs
+to validation -> validation defined -> validation performed, with
+validation carried through `implement` and recorded at `land`.
 
 | Dimension | Lifecycle |
 |---|---|
@@ -124,16 +133,14 @@ The stage boundary is part of the contract lifecycle:
 - `land` consumes validation performed and records what shipped, including
   explicit gaps if any remain.
 
-### Pointer-as-default
+### Density and coverage
 
-`work-unit-craft`/`decompose` must consider every dimension, but consideration is not a
-mandatory per-dimension declaration. A dimension carrying no special input
-is still validated: its general contract remains the validation pointer.
-The rule is: density across dimensions is unequal; consideration is equal. A
-refactor may need detailed code-quality inputs and only the general
-documentation contract; a user-facing capability may need dense user
-documentation inputs and ordinary code-quality projection. Silence is valid
-only after the dimension was considered and the general contract is enough.
+The density rule is about size, not existence. A small bug fix may need one
+behavior criterion and one terse code-quality projection; a documentation
+unit may need several audience outcomes and one simple internal-form
+projection. Unequal density is valid when every present dimension still has
+authored criteria with teeth and every absent dimension is truly outside the
+change.
 
 - **[Behavior dimension](#the-behavior-dimension)** — what the system
   does. Its common checking apparatus is BDD scenarios or
@@ -396,6 +403,10 @@ any dimension:
 a checklist of artifact-existence items, a code-quality line that says
 "clean," a scenario a stub satisfies. *Recognition:* you cannot name the
 hollow delivery that would fail it.
+
+**Silent dimension.** A dimension the change has, but no criterion in that
+dimension can fail. *Recognition:* a present dimension has no authored
+criterion, coverage is zero, or a pointer cannot fail a hollow delivery.
 
 **Modeled, not consulted.** A dimension that re-derives its authority
 instead of consulting it — a code-quality rulebook paraphrasing the corpus,

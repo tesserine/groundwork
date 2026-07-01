@@ -55,6 +55,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Silent dimension doctrine** (#498). The contract doctrine now states
+  that every present dimension carries authored teeth-bearing criteria:
+  density may be light, but coverage is never zero for a dimension the
+  change has. The pointer-as-default and silence-as-valid framing is
+  retired across `contract`, `take`, and `work-unit-craft`; hollow delivery
+  is the discriminator for filler criteria and silent dimensions alike.
+  contract 2.5.0->2.6.0, take 3.4.0->3.5.0,
+  work-unit-craft 1.1.0->1.2.0.
+
 - **Uniform contract form** (#493). The `contract` skill now states the
   invariant behind the #492 surfaces: every dimension uses the same
   contract structure and the same performed-evidence obligation, while

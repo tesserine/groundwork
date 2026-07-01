@@ -9,8 +9,8 @@ description: >-
   and the corruption modes that make records mis-steer the agents who
   read them.
 metadata:
-  version: "1.1.0"
-  updated: "2026-06-19"
+  version: "1.2.0"
+  updated: "2026-07-01"
   origin: >-
     Adapted from pentaxis93/with-claude
     _shared/methodology/issue-craft.md (internal), renamed and
@@ -58,20 +58,18 @@ The authoring pass must **consider every dimension**:
   These are the behavior input the later contract sharpens into executable
   checks.
 - **Documentation:** consult `orient`'s audience taxonomy and record any
-  recipient outcomes the work must make true. If no recipient needs a special
-  outcome beyond the general documentation contract, say nothing more.
+  recipient outcomes the work must make true. If documentation is outside
+  the change, leave that dimension absent from the record.
 - **Code quality:** point to the principles corpus and name any stressed
-  universals the work puts under unusual pressure. If the general code-quality
-  contract is enough, the corpus pointer is sufficient.
+  universals the work puts under unusual pressure. If code quality is part
+  of the change, name the principle outcome the later contract must verify.
 
-This is a consideration prompt, **not a mandatory per-dimension body
-section**. The **general contract pointer** carries any dimension with no
-special input. Density is unequal; consideration is equal. A terse bug may
-carry only behavior criteria after the documentation and code quality
-dimensions were considered. A documentation-deliverable unit may carry dense
-recipient outcomes and only the general corpus pointer. In every case,
-silence is valid only after the dimension was considered and the general
-contract is enough.
+Every present dimension gets visible contract input the later `take`
+contract can sharpen into an authored criterion. Density may be light;
+coverage is never zero for a present dimension. A terse bug may carry brief
+inputs, and a documentation-deliverable unit may carry dense recipient
+outcomes with a terse internal-form projection, but each present dimension
+still exposes the hollow delivery its authored criterion must fail.
 
 ## The Sovereignty Test
 
