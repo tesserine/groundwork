@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Documentation is a first-class inhabitant of the contract machine**
+  (#495). The pipeline's canonical exemplar now models the documentation
+  dimension as an audience outcome — an API consumer acting from the
+  reference alone — instead of artifact-content phrasing. A pillar exemplar
+  pair expresses the three recipient pillars (user, developer, discovery)
+  as attested audience-outcome criteria with per-pillar reviewer
+  attestations, and a hollow exemplar shows a generic
+  "documentation is reviewed" criterion failing the same shared
+  warranted-acceptance-criteria check every dimension answers to.
+  `tests/test_documentation_dimension.py` pins the pillar coverage, the
+  hollow-fails tooth (same detector, same message shape as sibling
+  dimensions), and evidence-shape parity; the documentation-contract
+  reference names the pillar-outcomes → warranted-set wiring.
+
 - **Ascent in reckon** (#327). `reckon` now names Ascent, the Purpose
   Ladder, as the upward counterpart to Recursive Why: structural choices
   made during Reconstruct climb back through purpose to the exigence before

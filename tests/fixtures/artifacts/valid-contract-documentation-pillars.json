@@ -1,0 +1,33 @@
+{
+  "work_unit": "work-unit-495-first-public-release",
+  "title": "First public release reaches every documentation recipient",
+  "criteria": [
+    {
+      "id": "documentation-user-first-task",
+      "dimension": "documentation",
+      "acceptance_criterion": "A new user completes the primary task from the README alone",
+      "statement": "A new user, reading only the README, installs the tool and completes the primary task end to end without reading source.",
+      "hollow_delivery": "The README is touched but a new user still cannot reach first success from it alone — or no README change lands at all.",
+      "check_kind": "attested",
+      "check": "Reviewer performs the install and primary task following only the README."
+    },
+    {
+      "id": "documentation-developer-integration",
+      "dimension": "documentation",
+      "acceptance_criterion": "A contributor locates where the change lives and integrates against its documented contract",
+      "statement": "A contributor, starting from the architecture docs, locates where the released surface lives and integrates against its documented signatures and errors without reverse-engineering the code.",
+      "hollow_delivery": "Architecture and API docs are untouched or restate file names, so a contributor still reverse-engineers the code to integrate.",
+      "check_kind": "attested",
+      "check": "Reviewer traces the release surface from the architecture docs and drafts an integration call from the documented contract alone."
+    },
+    {
+      "id": "documentation-discovery-entry",
+      "dimension": "documentation",
+      "acceptance_criterion": "A discovery reader tells what the project is, who it is for, and why to choose it from the entry surface",
+      "statement": "A reader who does not know the project exists tells, within the first few sentences of the entry surface, what it is, who it is for, and why to choose it over the status quo.",
+      "hollow_delivery": "The entry surface leads with internals or borrowed prestige, so a discovery reader leaves without learning who it is for or why to choose it.",
+      "check_kind": "attested",
+      "check": "Reviewer reads only the entry surface's opening and states the project's what, who, and why."
+    }
+  ]
+}

@@ -8,7 +8,7 @@
     },
     {
       "decision": "Validate at the HTTP handler level before enqueuing",
-      "rationale": "Fail fast — rejected records never touch the queue, reducing wasted processing"
+      "rationale": "Fail fast \u2014 rejected records never touch the queue, reducing wasted processing"
     }
   ],
   "affected_files": [
@@ -29,7 +29,7 @@
     {
       "criterion_id": "documentation-api-reference",
       "steps": [
-        "Describe accepted records and validation failures in the API reference"
+        "Document, in the API reference, the record submission an API consumer performs and the recovery step for each validation failure"
       ]
     },
     {

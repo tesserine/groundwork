@@ -1,0 +1,15 @@
+{
+  "work_unit": "work-unit-495-hollow-user-facing",
+  "title": "User-facing change with a generic documentation criterion",
+  "criteria": [
+    {
+      "id": "documentation-generic-review",
+      "dimension": "documentation",
+      "acceptance_criterion": "Documentation is reviewed",
+      "statement": "A README exists and documentation was reviewed.",
+      "hollow_delivery": "The reviewer marks documentation as reviewed while no reader outcome was checked.",
+      "check_kind": "attested",
+      "check": "Reviewer notes documentation as reviewed."
+    }
+  ]
+}

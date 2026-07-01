@@ -1,0 +1,43 @@
+{
+  "work_unit": "work-unit-495-first-public-release",
+  "results": [
+    {
+      "criterion_id": "documentation-user-first-task",
+      "result": "pass",
+      "evidence": {
+        "summary": "Reviewer reached first success from the README alone.",
+        "attestation": {
+          "reviewer": "core",
+          "finding": "Following only the README, the reviewer installed the tool and completed the primary task end to end without reading source."
+        }
+      }
+    },
+    {
+      "criterion_id": "documentation-developer-integration",
+      "result": "pass",
+      "evidence": {
+        "summary": "Reviewer integrated against the documented contract without reading source.",
+        "attestation": {
+          "reviewer": "core",
+          "finding": "Starting from the architecture docs, the reviewer located the release surface and drafted a working integration call from its documented signatures and errors alone."
+        }
+      }
+    },
+    {
+      "criterion_id": "documentation-discovery-entry",
+      "result": "pass",
+      "evidence": {
+        "summary": "Reviewer stated the project's what, who, and why from the entry surface opening.",
+        "attestation": {
+          "reviewer": "core",
+          "finding": "Reading only the entry surface's first sentences, the reviewer stated what the project is, who it is for, and the reason to choose it over the status quo."
+        }
+      }
+    }
+  ],
+  "documentation": {
+    "updated": ["README.md", "docs/architecture.md", "CHANGELOG.md"],
+    "verified_accurate": ["docs/api-reference.md"],
+    "follow_up_work_units": []
+  }
+}

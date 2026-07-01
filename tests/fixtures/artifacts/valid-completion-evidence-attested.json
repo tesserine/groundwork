@@ -5,17 +5,23 @@
       "criterion_id": "documentation-api-reference",
       "result": "pass",
       "evidence": {
-        "summary": "Reviewer confirmed documentation accuracy.",
+        "summary": "Reviewer performed the submission and a failure recovery from the API reference alone.",
         "attestation": {
           "reviewer": "core",
-          "finding": "Documentation describes the delivered behavior and omits stale scenario framing."
+          "finding": "Following only the API reference, the reviewer constructed a valid record submission and recovered from the invalid-field validation failure."
         }
       }
     }
   ],
   "documentation": {
-    "updated": ["schemas/README.md", "CHANGELOG.md"],
-    "verified_accurate": ["protocols/take/PROTOCOL.md", "protocols/verify/PROTOCOL.md"],
+    "updated": [
+      "schemas/README.md",
+      "CHANGELOG.md"
+    ],
+    "verified_accurate": [
+      "protocols/take/PROTOCOL.md",
+      "protocols/verify/PROTOCOL.md"
+    ],
     "follow_up_work_units": []
   }
 }
