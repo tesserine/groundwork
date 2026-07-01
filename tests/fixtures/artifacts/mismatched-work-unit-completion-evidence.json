@@ -17,10 +17,10 @@
       "criterion_id": "documentation-api-reference",
       "result": "pass",
       "evidence": {
-        "summary": "Reviewer confirmed the API reference matches the delivered behavior.",
+        "summary": "Reviewer performed the submission and a failure recovery from the API reference alone.",
         "attestation": {
           "reviewer": "core",
-          "finding": "The API reference describes accepted records and validation failures."
+          "finding": "Following only the API reference, the reviewer constructed a valid record submission and recovered from the invalid-field validation failure."
         }
       }
     },
@@ -37,8 +37,12 @@
     }
   ],
   "documentation": {
-    "updated": ["README.md"],
-    "verified_accurate": ["docs/api-reference.md"],
+    "updated": [
+      "README.md"
+    ],
+    "verified_accurate": [
+      "docs/api-reference.md"
+    ],
     "follow_up_work_units": []
   }
 }

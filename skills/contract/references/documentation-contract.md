@@ -43,7 +43,12 @@ subset is legitimate — a refactor with no user-visible effect carries no
 user pillar; a first public release carries all three. What is illegitimate
 is silence where the change clearly serves a recipient: a new user-facing
 capability with no user pillar is an under-declared contract, not a small
-one.
+one. Mechanically, the pillar outcomes selected for a change enter the
+warranted acceptance-criteria set the shared contract/evidence detector
+checks — the same under-declaration flag every dimension answers to. The
+exemplar fixtures under `tests/fixtures/artifacts/` model both sides: the
+rich pillar pair that passes that gate, and the hollow generic form it
+catches (`tests/test_documentation_dimension.py` pins the pair).
 
 The audience taxonomy, artifact types, and writing stance are **not**
 restated here — they live in the `orient` skill's documentation discipline

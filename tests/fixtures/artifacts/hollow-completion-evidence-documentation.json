@@ -1,0 +1,21 @@
+{
+  "work_unit": "work-unit-495-hollow-user-facing",
+  "results": [
+    {
+      "criterion_id": "documentation-generic-review",
+      "result": "pass",
+      "evidence": {
+        "summary": "Reviewer marked documentation as reviewed.",
+        "attestation": {
+          "reviewer": "core",
+          "finding": "Documentation reviewed."
+        }
+      }
+    }
+  ],
+  "documentation": {
+    "updated": ["README.md"],
+    "verified_accurate": [],
+    "follow_up_work_units": []
+  }
+}

@@ -14,11 +14,11 @@
     {
       "id": "documentation-api-reference",
       "dimension": "documentation",
-      "acceptance_criterion": "Public API behavior is documented",
-      "statement": "The API reference describes accepted records and validation failures.",
-      "hollow_delivery": "The code changes but the API reference still describes the old behavior.",
+      "acceptance_criterion": "An API consumer submits a valid record and handles each validation failure from the reference alone",
+      "statement": "An API consumer, reading only the API reference, constructs a valid record submission and recovers from each documented validation failure without reading source.",
+      "hollow_delivery": "The reference is touched but an API consumer still cannot construct a submission or handle a failure from it alone \u2014 or no reference change lands at all.",
       "check_kind": "attested",
-      "check": "Reviewer reads the API reference against the implemented behavior."
+      "check": "Reviewer performs the primary submission and one failure recovery following only the API reference."
     },
     {
       "id": "code-quality-single-validation-path",
