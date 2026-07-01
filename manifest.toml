@@ -83,6 +83,12 @@ name = "run-test"
 # Scoped pipeline (per work unit):
 #   take → plan → implement → verify → submit → review → land
 #
+# `decompose` is also the acquisition surface: it is the sole unscoped
+# producer of `work-unit`. Ordinary planning still reaches it through the
+# `requirements` trigger, while cold-start ticket entry substitutes that
+# trigger so acquisition can materialize the work-unit before requirements
+# exist.
+#
 # The contract is the spine: take produces it at entry, and every
 # judgment station (plan, implement, verify, submit, review) requires it.
 # land, the mechanical applier, accepts it for the completion record.
@@ -97,8 +103,7 @@ trigger = { type = "on_artifact", name = "intent" }
 
 [[protocols]]
 name = "decompose"
-requires = ["requirements"]
-accepts = ["research-record"]
+accepts = ["requirements", "research-record"]
 produces = ["work-unit"]
 may_produce = ["research-record"]
 trigger = { type = "on_artifact", name = "requirements" }

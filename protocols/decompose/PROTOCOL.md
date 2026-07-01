@@ -14,6 +14,15 @@ person who sees the problem to the agent who will solve it. The agent has no
 access to your context, your codebase familiarity, or your unstated assumptions.
 Everything it needs must be in the work-unit.
 
+`decompose` is also Groundwork's acquisition surface: it is the sole unscoped
+producer of the `work-unit` artifact. Ordinary planning reaches this protocol
+when a `requirements` artifact satisfies its trigger, so requirements still
+precede decomposition in the planning route. Cold-start ticket entry substitutes
+that trigger with the entry reference and serves the same work-unit output
+surface so the acquire discipline can read the ticket and materialize the
+work-unit before any planning-phase requirements artifact exists. The manifest
+therefore keeps `requirements` as the trigger, not as a `requires` precondition.
+
 For concrete templates, see [references/templates.md](references/templates.md).
 For the work-unit state model and dependency graph format, see
 [`work-unit-model.md`](../../docs/architecture/work-unit-model.md).

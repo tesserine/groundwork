@@ -3,6 +3,7 @@
 import json
 import os
 import subprocess
+import shutil
 import sys
 import tempfile
 import unittest
@@ -33,6 +34,35 @@ def materialize(read_ticket_stdout: str) -> subprocess.CompletedProcess[str]:
 def write_fake_command(path: Path, body: str) -> None:
     path.write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8")
     path.chmod(0o755)
+
+
+def append_github_forge_config(project_dir: Path, owner: str, name: str) -> None:
+    config_path = project_dir / ".runa" / "config.toml"
+    existing = config_path.read_text(encoding="utf-8")
+    config_path.write_text(
+        f'{existing}\n[forge]\ntype = "github"\nowner = "{owner}"\nname = "{name}"\n',
+        encoding="utf-8",
+    )
+
+
+def init_groundwork_project(root: Path, runa: Path) -> Path:
+    project = root / "project"
+    project.mkdir()
+    init = subprocess.run(
+        [str(runa), "init", "--methodology", str(ROOT / "manifest.toml")],
+        cwd=project,
+        capture_output=True,
+        text=True,
+    )
+    assert init.returncode == 0, f"{init.stdout}\n{init.stderr}"
+    append_github_forge_config(project, "tesserine", "groundwork")
+    return project
+
+
+def write_workspace_artifact(project: Path, artifact_type: str, instance_id: str, body: dict) -> None:
+    directory = project / ".runa" / "workspace" / artifact_type
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / f"{instance_id}.json").write_text(json.dumps(body, indent=2), encoding="utf-8")
 
 
 class MaterializeTicketTests(unittest.TestCase):
@@ -183,12 +213,26 @@ class MaterializeTicketTests(unittest.TestCase):
 
 
 def runa_bin() -> Path | None:
+    candidates: list[Path] = []
     configured = os.environ.get("GROUNDWORK_RUNA_BIN")
     if configured:
-        path = Path(configured)
-        return path if path.is_file() else None
-    sibling = ROOT.parent / "runa" / "target" / "debug" / "runa"
-    return sibling if sibling.is_file() else None
+        candidates.append(Path(configured))
+    discovered = shutil.which("runa")
+    if discovered:
+        candidates.append(Path(discovered))
+    candidates.append(ROOT.parent / "runa" / "target" / "debug" / "runa")
+
+    for path in candidates:
+        if not path.is_file():
+            continue
+        help_result = subprocess.run(
+            [str(path), "run", "--help"],
+            capture_output=True,
+            text=True,
+        )
+        if "--ticket" in help_result.stdout:
+            return path
+    return None
 
 
 def runa_mcp_bin(runa: Path) -> Path | None:
@@ -202,6 +246,101 @@ def runa_mcp_bin(runa: Path) -> Path | None:
 
 @unittest.skipUnless(runa_bin() is not None, "runa binary not available")
 class AcquisitionEntryEndToEndTests(unittest.TestCase):
+    def test_ticket_entry_dry_run_reaches_acquisition_and_projects_take(self) -> None:
+        runa = runa_bin()
+        self.assertIsNotNone(runa)
+
+        with tempfile.TemporaryDirectory(prefix="groundwork-acquire-entry-") as tmp:
+            project = init_groundwork_project(Path(tmp), runa)
+
+            output = subprocess.run(
+                [
+                    str(runa),
+                    "run",
+                    "--ticket",
+                    "tesserine/groundwork#499",
+                    "--dry-run",
+                    "--json",
+                ],
+                cwd=project,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(output.returncode, 0, f"stdout:\n{output.stdout}\nstderr:\n{output.stderr}")
+            payload = json.loads(output.stdout)
+            self.assertEqual(payload["entry"]["acquisition_protocol"], "decompose")
+            self.assertGreater(len(payload["execution_plan"]), 0, payload)
+            self.assertEqual(payload["execution_plan"][0]["protocol"], "decompose")
+            self.assertEqual(payload["execution_plan"][0]["projection"], "current")
+            projected = [
+                entry for entry in payload["execution_plan"]
+                if entry["protocol"] == "take" and entry["projection"] == "projected"
+            ]
+            self.assertEqual(1, len(projected), payload["execution_plan"])
+            self.assertEqual("work-unit-499", projected[0]["work_unit"])
+
+    def test_untargeted_intent_waits_for_requirements_before_decompose(self) -> None:
+        runa = runa_bin()
+        self.assertIsNotNone(runa)
+
+        with tempfile.TemporaryDirectory(prefix="groundwork-acquire-planning-") as tmp:
+            project = init_groundwork_project(Path(tmp), runa)
+            write_workspace_artifact(
+                project,
+                "intent",
+                "intent-untargeted",
+                {
+                    "statement": "Plan ordinary work before decomposition.",
+                    "source": "operator",
+                },
+            )
+
+            intent_only = subprocess.run(
+                [str(runa), "state", "--json"],
+                cwd=project,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(
+                intent_only.returncode,
+                0,
+                f"stdout:\n{intent_only.stdout}\nstderr:\n{intent_only.stderr}",
+            )
+            intent_state = {
+                protocol["name"]: protocol
+                for protocol in json.loads(intent_only.stdout)["protocols"]
+            }
+            self.assertEqual("ready", intent_state["survey"]["status"], intent_state)
+            self.assertEqual("waiting", intent_state["decompose"]["status"], intent_state)
+
+            write_workspace_artifact(
+                project,
+                "requirements",
+                "requirements-from-survey",
+                {
+                    "scope": "Ordinary planning route.",
+                    "functional_requirements": ["Requirements precede decomposition."],
+                },
+            )
+
+            with_requirements = subprocess.run(
+                [str(runa), "state", "--json"],
+                cwd=project,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(
+                with_requirements.returncode,
+                0,
+                f"stdout:\n{with_requirements.stdout}\nstderr:\n{with_requirements.stderr}",
+            )
+            requirements_state = {
+                protocol["name"]: protocol
+                for protocol in json.loads(with_requirements.stdout)["protocols"]
+            }
+            self.assertEqual("ready", requirements_state["decompose"]["status"], requirements_state)
+
     def test_acquired_work_unit_makes_take_the_next_ready_station(self) -> None:
         runa = runa_bin()
         runa_mcp = runa_mcp_bin(runa)
