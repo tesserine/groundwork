@@ -134,6 +134,8 @@ def _is_uri(instance: object) -> bool:
 def _artifact_contract_errors(artifact_type: str, artifact: dict[str, Any]) -> list[tuple[str, str]]:
     if artifact_type == "contract":
         return _contract_artifact_errors(artifact)
+    if artifact_type == "implementation-plan":
+        return _implementation_plan_artifact_errors(artifact)
     if artifact_type == "completion-evidence":
         return _completion_evidence_artifact_errors(artifact)
     return []
@@ -144,14 +146,18 @@ def _related_artifact_contract_errors(
     artifact: dict[str, Any],
     related_artifacts: dict[str, dict[str, Any]] | None,
 ) -> list[tuple[str, str]]:
-    if artifact_type != "completion-evidence" or related_artifacts is None:
+    if related_artifacts is None:
         return []
 
     contract = related_artifacts.get("contract")
     if contract is None:
         return []
 
-    return detect_contract_evidence_defects(contract, artifact)
+    if artifact_type == "completion-evidence":
+        return detect_contract_evidence_defects(contract, artifact)
+    if artifact_type in {"implementation-plan", "test-evidence"}:
+        return detect_contract_traceability_defects(contract, artifact_type, artifact)
+    return []
 
 
 def _contract_artifact_errors(artifact: dict[str, Any]) -> list[tuple[str, str]]:
@@ -164,6 +170,25 @@ def _contract_artifact_errors(artifact: dict[str, Any]) -> list[tuple[str, str]]
         if isinstance(criterion_id, str):
             if criterion_id in seen:
                 errors.append((f"criteria/{index}/id", f"duplicate criterion id {criterion_id!r}"))
+            seen.add(criterion_id)
+    return errors
+
+
+def _implementation_plan_artifact_errors(artifact: dict[str, Any]) -> list[tuple[str, str]]:
+    errors: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for index, mapping in enumerate(artifact.get("criterion_mapping", [])):
+        if not isinstance(mapping, dict):
+            continue
+        criterion_id = mapping.get("criterion_id")
+        if isinstance(criterion_id, str):
+            if criterion_id in seen:
+                errors.append(
+                    (
+                        f"criterion_mapping/{index}/criterion_id",
+                        f"duplicate criterion mapping {criterion_id!r}",
+                    )
+                )
             seen.add(criterion_id)
     return errors
 
@@ -206,6 +231,73 @@ def validate_contract_evidence(
     )
     if errors:
         raise ArtifactSchemaError(errors)
+
+
+def detect_contract_traceability_defects(
+    contract: dict[str, Any],
+    artifact_type: str,
+    artifact: dict[str, Any],
+) -> list[tuple[str, str]]:
+    """Return criterion-traceability defects joining a downstream artifact to its contract.
+
+    The same mechanism serves every dimension: entries key off contract
+    criteria by ``criterion_id``, an unknown criterion is rejected, and an
+    implementation plan covers every contract criterion with a mapping.
+    """
+    entry_keys = {
+        "implementation-plan": "criterion_mapping",
+        "test-evidence": "evidence",
+    }
+    if artifact_type not in entry_keys:
+        raise ValueError(f"no criterion traceability defined for artifact type {artifact_type!r}")
+    entry_key = entry_keys[artifact_type]
+
+    errors: list[tuple[str, str]] = []
+    contract_work_unit = contract.get("work_unit")
+    artifact_work_unit = artifact.get("work_unit")
+    if (
+        isinstance(contract_work_unit, str)
+        and isinstance(artifact_work_unit, str)
+        and contract_work_unit != artifact_work_unit
+    ):
+        errors.append(
+            (
+                "work_unit",
+                f"{artifact_type} work_unit "
+                f"{artifact_work_unit!r} does not match contract work_unit {contract_work_unit!r}",
+            )
+        )
+        return errors
+
+    declared_ids = {
+        criterion["id"]
+        for criterion in contract.get("criteria", [])
+        if isinstance(criterion, dict) and isinstance(criterion.get("id"), str)
+    }
+
+    referenced_ids: set[str] = set()
+    for index, entry in enumerate(artifact.get(entry_key, [])):
+        if not isinstance(entry, dict):
+            continue
+        criterion_id = entry.get("criterion_id")
+        if not isinstance(criterion_id, str):
+            continue
+        referenced_ids.add(criterion_id)
+        if criterion_id not in declared_ids:
+            errors.append(
+                (
+                    f"{entry_key}/{index}/criterion_id",
+                    f"unknown contract criterion {criterion_id!r}",
+                )
+            )
+
+    if artifact_type == "implementation-plan":
+        for criterion_id in sorted(declared_ids - referenced_ids):
+            errors.append(
+                (entry_key, f"contract criterion {criterion_id!r} has no plan mapping")
+            )
+
+    return errors
 
 
 def detect_contract_evidence_defects(

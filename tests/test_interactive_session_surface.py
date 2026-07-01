@@ -308,10 +308,10 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                         printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"contract","arguments":{{"instance_id":"contract-1","title":"Dimension criteria stay on the contract surface","criteria":[{{"id":"gate-form-behavior-artifacts","dimension":"behavior","acceptance_criterion":{json.dumps(criterion)},"statement":"Gate-form behavior artifacts stay schema-valid through the runtime MCP tool.","hollow_delivery":"The artifact validates only by fabricating a scenario-shaped contract.","check_kind":"executable","check":"Validate runtime artifacts through the MCP tool."}}]}}}}}}'
                         ;;
                       plan)
-                        printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"implementation-plan","arguments":{{"instance_id":"plan-1","behavior_form":"gate","summary":"Map gate-form behavior without scenarios.","design_decisions":[{{"decision":"Use gate-keyed mappings for documentation deliverables.","rationale":"Gate behavior is the behavior form the contract defines for documentation deliverables."}}],"affected_files":["schemas/contract.schema.json"],"behavior_mapping":[{{"name":"gate-form behavior artifacts stay schema-valid","criterion":{json.dumps(criterion)},"category":"structural","steps":["Validate the gate artifact.","Advance to implement on the produced artifact."]}}]}}}}}}'
+                        printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"implementation-plan","arguments":{{"instance_id":"plan-1","summary":"Map gate-checked behavior through the uniform criterion mapping.","design_decisions":[{{"decision":"Key the mapping by contract criterion id.","rationale":"The contract criterion is the single cross-stage traceability key for every dimension."}}],"affected_files":["schemas/contract.schema.json"],"criterion_mapping":[{{"criterion_id":"gate-form-behavior-artifacts","steps":["Validate the gate artifact.","Advance to implement on the produced artifact."]}}]}}}}}}'
                         ;;
                       implement)
-                        printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"test-evidence","arguments":{{"instance_id":"evidence-1","behavior_form":"gate","evidence":[{{"name":"gate-form behavior artifacts stay schema-valid","criterion":{json.dumps(criterion)},"category":"structural","result":"pass","command":"python -m unittest tests.test_artifact_schemas","output_summary":"Gate-form artifact fixtures validated."}}]}}}}}}'
+                        printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"test-evidence","arguments":{{"instance_id":"evidence-1","evidence":[{{"criterion_id":"gate-form-behavior-artifacts","result":"pass","command":"python -m unittest tests.test_artifact_schemas","output_summary":"Gate-checked artifact fixtures validated."}}]}}}}}}'
                         ;;
                       verify)
                         printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"completion-evidence","arguments":{{"instance_id":"completion-1","results":[{{"criterion_id":"gate-form-behavior-artifacts","result":"pass","evidence":{{"summary":"Gate-form runtime artifacts validated.","run":{{"command":"python -m unittest tests.test_artifact_schemas","result":"pass","output_summary":"Artifact fixtures validated."}}}}}}],"documentation":{{"updated":["schemas/README.md","CHANGELOG.md"],"verified_accurate":["protocols/take/PROTOCOL.md"],"follow_up_work_units":[]}}}}}}}}'
@@ -363,10 +363,9 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                     )
                     serialized = json.dumps(artifact)
                     self.assertEqual(artifact["work_unit"], work_unit_id)
+                    self.assertNotIn("behavior_form", artifact)
                     if artifact_type in {"implementation-plan", "test-evidence"}:
-                        self.assertEqual(artifact["behavior_form"], "gate")
-                    else:
-                        self.assertNotIn("behavior_form", artifact)
+                        self.assertIn('"criterion_id"', serialized)
                     self.assertNotIn('"scenarios"', serialized)
 
 

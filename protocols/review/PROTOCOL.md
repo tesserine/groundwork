@@ -6,8 +6,8 @@ description: >-
   through `change-approved` and blocking findings through
   `change-needs-revision`.
 metadata:
-  version: "2.2.0"
-  updated: "2026-06-20"
+  version: "2.3.0"
+  updated: "2026-07-02"
 ---
 
 # Review
@@ -21,9 +21,9 @@ exactly one typed outcome artifact.
 The protocol is not a forge operation. The `code-review` skill supplies the
 evaluation discipline; this protocol supplies the routing obligation.
 It consults the `contract` skill (`skills/contract/SKILL.md`) for the
-lifecycle, the behavior dimension's deliverable's behavior form, the
-documentation dimension's audience-outcome review, and the code-quality
-dimension's projected-universal findings.
+lifecycle, and judges every declared dimension through the same join:
+`contract.criteria[]` against `completion-evidence.results[]`, one
+performed result per criterion.
 
 ## Steps
 
@@ -37,15 +37,15 @@ dimension's projected-universal findings.
    multidimensional contract and completion evidence. The contract is the
    measure — a change is judged by whether every declared dimension's
    performed validation is delivered and proven, not by whether commands
-   passed. For the behavior dimension, review the performed validation in
-   the deliverable's behavior form: executable scenarios for a
-   runtime-behavior work-unit and documentation-deliverable gates for a
-   documentation-deliverable work-unit. In either case, review scenario or
-   gate coverage as the behavior dimension's performed validation. For the
-   documentation dimension, review the audience-outcome review. For the
-   code-quality dimension, review the code-quality findings and diff loci
-   from the projected-universals audit. Consult the `contract` skill for the
-   lifecycle and forms; this protocol judges them, it does not restate them.
+   passed. Join `contract.criteria[]` with `completion-evidence.results[]`
+   and judge each criterion by the evidence its `check_kind` warrants: run
+   or artifact evidence for executable criteria — scenario tests and
+   structural, coherence, and conformance gates among them — and reviewer
+   attestations with substantive findings for attested criteria, the
+   documentation dimension's audience-outcome findings and the code-quality
+   dimension's diff loci among them. The same join judges every dimension.
+   Consult the `contract` skill for the lifecycle; this protocol judges it,
+   it does not restate it.
 
 3. **Classify findings.** Each observation is `blocking` or `non-blocking`
    at the point of review. Blocking findings prevent approval. Non-blocking
@@ -63,12 +63,11 @@ dimension's projected-universal findings.
    produced artifact type; a review run that emits zero or two dispositions
    is invalid.
 
-   For a runtime-behavior work-unit, judge the scenario-keyed runtime close
-   path. For a documentation-deliverable work-unit, judge the gate-form
-   packaging through the existing proposal, completion evidence, and review
-   disposition context. The structural, coherence, and conformance coverage
-   is committed evidence and reviewable behavior evidence, alongside
-   documentation and code-quality validation-performed.
+   Judge the close path through the existing proposal, completion evidence,
+   and review disposition context: the per-criterion results in
+   `completion-evidence.results[]` are the committed, reviewable evidence
+   for every declared dimension — behavior, documentation, and code quality
+   in the same surface.
 
 ## The Independence of the Gate
 
@@ -104,8 +103,8 @@ reviewer is independent of the author is the invariant.
 - `workflow-contracts/review.toml` defines the C-2 review flow and its two
   disposition terminals.
 - `skills/code-review/SKILL.md` defines the evaluation discipline.
-- `contract` (skill): owns the lifecycle, dimensions, and behavior forms
-  this protocol consults while judging validation-performed.
+- `contract` (skill): owns the lifecycle and dimensions this protocol
+  consults while judging validation-performed.
 - `schemas/change-approved.schema.json` and
   `schemas/change-needs-revision.schema.json` define the typed disposition
   artifacts.

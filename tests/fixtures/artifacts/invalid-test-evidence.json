@@ -1,12 +1,11 @@
 {
-  "work_unit": "work-unit-178-test-fixtures",
-  "behavior_form": "scenario",
+  "work_unit": "work-unit-492-contract-machine",
   "evidence": [
     {
-      "scenario": "reject-missing-required-field",
+      "criterion_id": "behavior-api-validates-records",
       "result": "success",
-      "command": "pytest tests/test_ingestion.py::test_reject_missing_field -v",
-      "output_summary": "1 passed in 0.12s"
+      "command": "python -m unittest tests.test_ingestion.ValidRecordPassthroughTests",
+      "output_summary": "1 passed"
     }
   ]
 }

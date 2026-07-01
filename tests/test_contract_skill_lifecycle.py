@@ -114,8 +114,8 @@ outside content
         body = read(CONTRACT_SKILL)
         changelog = read(CHANGELOG)
 
-        self.assertIn('version: "2.6.0"', body)
-        self.assertIn('updated: "2026-07-01"', body)
+        self.assertIn('version: "2.7.0"', body)
+        self.assertIn('updated: "2026-07-02"', body)
         self.assertEqual(1, changelog.splitlines().count("## [Unreleased]"))
         self.assertIn("**Contract disposition default** (#472)", changelog)
         self.assertIn("contract 2.3.0->2.4.0", changelog)
@@ -125,6 +125,14 @@ outside content
         self.assertIn("contract 2.5.0->2.6.0", changelog)
         self.assertIn("take 3.4.0->3.5.0", changelog)
         self.assertIn("work-unit-craft 1.1.0->1.2.0", changelog)
+        self.assertIn("**Uniform pipeline carry** (#494)", changelog)
+        self.assertIn("contract 2.6.0->2.7.0", changelog)
+        self.assertIn("take 3.5.0->3.6.0", changelog)
+        self.assertIn("plan 2.4.0->2.5.0", changelog)
+        self.assertIn("implement 2.3.0->2.4.0", changelog)
+        self.assertIn("submit 3.2.0->3.3.0", changelog)
+        self.assertIn("review 2.2.0->2.3.0", changelog)
+        self.assertIn("land 3.2.0->3.3.0", changelog)
 
     def test_disposition_default_is_sibling_of_teeth_principle(self) -> None:
         body = read(CONTRACT_SKILL)
@@ -301,58 +309,70 @@ outside content
             with self.subTest(expected=expected):
                 self.assertIn(expected, corruption_modes)
 
-    def test_lifecycle_matrix_covers_every_dimension_stage_cell(self) -> None:
+    def test_lifecycle_is_stated_once_and_uniformly_for_every_dimension(self) -> None:
+        dimensions = normalized(top_section(read(CONTRACT_SKILL), "The dimensions"))
+
+        for expected in [
+            "one lifecycle for every dimension",
+            "typed criteria in `contract.criteria[]` at `take`",
+            "carried through `implement` by `criterion_id`",
+            "one result per criterion in `completion-evidence.results[]`",
+            "`check_kind`",
+            "`land` records the result from that uniform evidence surface",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, dimensions)
+
+    def test_dimension_rows_carry_inputs_and_apparatus_without_stage_variance(self) -> None:
         rows = lifecycle_rows(read(CONTRACT_SKILL))
         expected_cells = {
             "Behavior": [
                 "acceptance criteria",
-                "inputs to validation",
-                "validation defined",
-                "executable scenarios",
+                "scenarios",
                 "documentation-deliverable gates",
-                "carried through `implement`",
-                "validation performed",
-                "scenario or gate coverage",
-                "recorded at `land`",
+                '`check_kind: "executable"`',
             ],
             "Documentation": [
                 "recipient outcomes",
-                "inputs to validation",
-                "validation defined",
-                "documentation outcomes",
-                "carried through `implement`",
-                "validation performed",
-                "audience-outcome review",
-                "recorded at `land`",
+                "udience-outcome",
+                '`check_kind: "attested"`',
             ],
             "Code quality": [
                 "corpus pointers",
                 "stressed universals",
-                "inputs to validation",
-                "validation defined",
-                "reviewer-checkable projections",
-                "carried through `implement`",
-                "validation performed",
+                "projections",
                 "diff loci or findings",
-                "recorded at `land`",
+                '`check_kind: "attested"`',
             ],
         }
 
         self.assertEqual(set(expected_cells), set(rows))
+        stage_terms = re.compile(
+            r"inputs to validation|validation defined|validation performed|"
+            r"carried through|recorded at",
+            flags=re.IGNORECASE,
+        )
         for dimension, cells in expected_cells.items():
             with self.subTest(dimension=dimension):
                 row = rows[dimension]
                 for cell in cells:
                     self.assertIn(cell, row)
+                self.assertIsNone(
+                    stage_terms.search(row),
+                    "a dimension row re-encodes lifecycle stages",
+                )
 
     def test_stage_handoffs_have_one_receive_produce_home(self) -> None:
         handoffs = normalized(section(read(CONTRACT_SKILL), "Stage Handoffs"))
         expected_handoffs = [
             "`work-unit-craft`/`decompose` produces inputs to validation",
             "`take` consumes inputs to validation and produces validation defined",
+            "typed criteria in `contract.criteria[]`",
+            "`plan` consumes validation defined and maps every criterion",
             "`implement` consumes validation defined",
             "`verify` consumes validation defined and produces validation performed",
-            "`land` consumes validation performed",
+            "one result per criterion in `completion-evidence.results[]`",
+            "`land` consumes validation performed and records what shipped from the uniform evidence surface",
         ]
 
         for handoff in expected_handoffs:

@@ -5,7 +5,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 VERIFY_PROTOCOL = ROOT / "protocols" / "verify" / "PROTOCOL.md"
-CONTRACT_SKILL = ROOT / "skills" / "contract" / "SKILL.md"
 
 
 def read(path: Path) -> str:
@@ -36,18 +35,6 @@ def section(body: str, heading: str) -> str:
     if match is None:
         raise AssertionError(f"missing section: {heading}")
     return match.group("section")
-
-
-def lifecycle_rows(body: str) -> dict[str, str]:
-    rows = {}
-    for line in body.splitlines():
-        match = re.match(
-            r"\| \*\*(?P<dimension>Behavior|Documentation|Code quality)\*\* \| (?P<row>.+) \|$",
-            line,
-        )
-        if match:
-            rows[match.group("dimension")] = match.group("row")
-    return rows
 
 
 class VerifyProtocolGateCoverageTests(unittest.TestCase):

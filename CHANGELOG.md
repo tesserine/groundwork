@@ -55,6 +55,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Uniform pipeline carry** (#494). The scoped pipeline now carries the
+  uniform contract structure end to end, and the contract-dimension
+  conformance tests pin symmetry instead of the retired per-dimension
+  asymmetry. `implementation-plan` replaces `behavior_form` +
+  `behavior_mapping` with a uniform `criterion_mapping` keyed by contract
+  `criterion_id` (one mapping per criterion), and `test-evidence` replaces
+  `behavior_form` + scenario/gate entry variants with uniform entries keyed
+  by `criterion_id`. `tooling/artifact_schemas.py` gains
+  `detect_contract_traceability_defects` — the same criterion-join mechanism
+  for every dimension: unknown criteria are rejected in plan and per-cycle
+  evidence, and a plan must map every contract criterion.
+  `tests/test_pipeline_contract_symmetry.py` pins structural symmetry: each
+  dimension is defined in `contract.criteria[]` and evidenced in
+  `completion-evidence.results[]`, and a delivery that leaves any declared
+  dimension unevidenced fails the same check, behavior included. The
+  contract skill states one lifecycle for every dimension (per-dimension
+  rows now carry only inputs and usual checking apparatus), and the
+  pipeline protocols consume the uniform surface: `plan` and `implement`
+  deliver criterion-keyed artifacts, `submit`/`review`/`land` package,
+  judge, and record every declared dimension from
+  `completion-evidence.results[]`. The absence-as-virtue test assertions
+  are removed and inverted. contract 2.6.0->2.7.0, take 3.5.0->3.6.0,
+  plan 2.4.0->2.5.0, implement 2.3.0->2.4.0, submit 3.2.0->3.3.0,
+  review 2.2.0->2.3.0, land 3.2.0->3.3.0.
+
 - **Silent dimension doctrine** (#498). The contract authoring doctrine now
   states that every present dimension carries authored teeth-bearing criteria:
   density may be light, but pointer-covered or silent dimensions are not

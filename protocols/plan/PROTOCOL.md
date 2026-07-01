@@ -6,8 +6,8 @@ description: >-
   before implement. If you are about to start coding with unresolved design
   choices, plan first.
 metadata:
-  version: "2.4.0"
-  updated: "2026-06-20"
+  version: "2.5.0"
+  updated: "2026-07-02"
   origin: "Adapted from OpenAI Codex CLI (Apache-2.0). See LICENSE-UPSTREAM."
 ---
 
@@ -19,17 +19,19 @@ design choices: approach, interfaces, data flow, edge cases, and test
 strategy are all resolved or recorded as explicit assumptions.
 
 The plan serves the multidimensional contract. It consults the `contract`
-skill (`skills/contract/SKILL.md`) for the behavior lifecycle and the
+skill (`skills/contract/SKILL.md`) for the contract lifecycle and the
 dimensions the build must serve: the behavior dimension, the documentation
-dimension, and the code-quality dimension.
+dimension, and the code-quality dimension are declared as uniform typed
+criteria in `contract.criteria[]`.
 
-For behavior, the plan maps validation defined to implementation steps in
-the deliverable's behavior form: executable scenarios for a
-runtime-behavior work-unit, and structural, coherence, and conformance gates
-for a documentation-deliverable work-unit. The `contract` skill names those
-gate-form checks as documentation-deliverable gates. For documentation and
-code quality, the plan records how the design will satisfy the declared
-documentation outcomes and reviewer-checkable code-quality projections.
+The plan maps every contract criterion to implementation steps, keyed by
+`criterion_id`. Each criterion carries its own dimension, statement, and
+check on the contract artifact; the plan consults them there rather than
+restating them. A behavior criterion's check is commonly an executable
+scenario or a structural, coherence, or conformance gate; a documentation
+criterion's steps say how the declared documentation outcome will be met;
+a code-quality criterion's steps say how the reviewer-checkable projection
+will hold of the change. One mapping shape serves every dimension.
 
 ## Constraints
 
@@ -44,19 +46,19 @@ documentation outcomes and reviewer-checkable code-quality projections.
 
 ## Steps
 
-1. **Ground in the environment.** Read the contract and work-unit; consult
-   the `contract` skill's behavior lifecycle to identify the deliverable's
-   behavior form; read the declared documentation and code-quality
-   dimensions; search the entrypoints, configs, schemas, and existing
+1. **Ground in the environment.** Read the contract and work-unit; read
+   every declared criterion — its dimension, statement, hollow delivery,
+   `check_kind`, and check — from `contract.criteria[]`; search the entrypoints, configs, schemas, and existing
    implementations of similar behavior; trace the code paths the change
    will touch; note the patterns and utilities to reuse — and what remains
    unknown.
 
 2. **Resolve intent.** State the goal and success criteria from the
-   contract's declared dimensions. For the behavior dimension, name the
-   behavior items in the deliverable's behavior form — scenario or gate —
-   without converting documentation-deliverable gates into scenarios. Fix
-   in-scope and out-of-scope boundaries. Surface codebase constraints:
+   contract's declared criteria across every dimension. Name each criterion
+   by its `criterion_id` and take its check as the contract states it —
+   an executable scenario stays a scenario, a structural, coherence, or
+   conformance gate stays a gate; never convert one check into another.
+   Fix in-scope and out-of-scope boundaries. Surface codebase constraints:
    dependencies, API contracts, performance budgets, tests that must keep
    passing, documentation outcomes, and code-quality projections. For each
    remaining ambiguity: a discoverable fact is explored further; a genuine
@@ -72,23 +74,21 @@ documentation outcomes and reviewer-checkable code-quality projections.
    tradeoffs against the constraints when several are valid). Specify
    interfaces, signatures, and data flow. Decide handling for each edge case
    and failure mode.
-   Define the test strategy: which behavior items become which checks, what
+   Define the test strategy: which criteria become which checks, what
    must keep passing, what commands verify, and how documentation and
-   code-quality validation are carried. Then check: does any design choice
+   code-quality criteria are carried. Then check: does any design choice
    remain for the implementer? Resolve it or record the assumption.
 
 4. **Record the plan.** Title; a 1–3 sentence summary; key changes grouped
    by behavior or subsystem (paths only where ambiguity is dangerous); the
-   behavior-item-to-steps mapping in the deliverable's behavior form; the
-   test plan; the documentation and code-quality dimension coverage; every
-   assumption with its rationale. Compress — expand only where ambiguity
+   criterion-to-steps mapping covering every contract criterion; the
+   test plan; every assumption with its rationale. Compress — expand only where ambiguity
    would cause implementation mistakes.
 
 5. **Deliver the `implementation-plan`.**
-   Invoke the `implementation-plan` MCP tool in the deliverable's behavior
-   form. For a runtime-behavior work-unit, deliver scenario-keyed mappings.
-   For a documentation-deliverable work-unit, deliver gate-form mappings for
-   structural, coherence, and conformance gates. The object below is MCP
+   Invoke the `implementation-plan` MCP tool with one uniform
+   `criterion_mapping` keyed by `criterion_id` — one mapping per contract
+   criterion, the same shape for every dimension. The object below is MCP
    tool input, not artifact body.
    `instance_id` is a tool parameter that names the artifact instance; it is
    extracted before validating artifact content, becomes the workspace
@@ -96,34 +96,16 @@ documentation outcomes and reviewer-checkable code-quality projections.
    `work_unit` from session context; the agent does not supply `work_unit`.
    Do not write the workspace JSON file directly.
 
-   Scenario form:
-
    ```
    implementation-plan({
      instance_id: "<slug>",
-     behavior_form: "scenario",
      summary: "<what the plan accomplishes>",
      design_decisions: [{decision: "...", rationale: "..."}, ...],
      affected_files: ["..."],
-     behavior_mapping: [{scenario: "...", steps: ["..."]}, ...]
-   })
-   ```
-
-   Gate form:
-
-   ```
-   implementation-plan({
-     instance_id: "<slug>",
-     behavior_form: "gate",
-     summary: "<what the plan accomplishes>",
-     design_decisions: [{decision: "...", rationale: "..."}, ...],
-     affected_files: ["..."],
-     behavior_mapping: [{
-       name: "<gate name>",
-       criterion: "<acceptance criterion this maps to>",
-       category: "structural" | "coherence" | "conformance",
+     criterion_mapping: [{
+       criterion_id: "<contract criterion id>",
        steps: ["..."]
-     }]
+     }, ...]
    })
    ```
 
@@ -149,16 +131,16 @@ long. Multi-subsystem or interface-changing work earns the full convergence.
   targeted exploration is usually sufficient; decide and move.
 - `file-inventory-plan`: listing files to touch instead of behavioral
   changes. Files are detail; behavior is the contract.
-- `contract-detachment`: plan steps that map to no behavior item in the
-  deliverable's behavior form — scenario or gate — designing beside the
-  contract instead of from it.
+- `contract-detachment`: plan steps that map to no contract criterion, or
+  a declared criterion left with no mapping — designing beside the contract
+  instead of from it.
 
 ## Cross-References
 
-- `contract` (skill): owns the behavior lifecycle, including executable
-  scenarios for runtime behavior and structural, coherence, and conformance
-  gate validation for documentation-deliverable behavior, plus the
-  documentation and code-quality dimensions this plan serves.
+- `contract` (skill): owns the contract lifecycle — every dimension
+  declared as uniform typed criteria, with executable scenarios and
+  structural, coherence, and conformance gates as the behavior dimension's
+  usual checking apparatus.
 - `reckon` (skill): first-principles constraint framing. A decision-complete
   design is a generative act, so reckon fires before the plan converges —
   grounding the design in the navigational principles, not pattern-matching
@@ -168,6 +150,6 @@ long. Multi-subsystem or interface-changing work earns the full convergence.
 - `take` (protocol): produced validation defined in the contract dimensions
   this plan serves.
 - `implement` (protocol): executes this plan through RED-GREEN-REFACTOR over
-  each behavior item in the deliverable's behavior form.
+  each contract criterion the plan orders.
 - `research` (skill): external evidence when design decisions depend on
   facts outside the codebase.

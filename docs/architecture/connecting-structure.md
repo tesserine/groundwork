@@ -692,8 +692,8 @@ producing the full artifact.
 
 The MCP server can present pre-assembled data to reduce the agent's
 mechanical work. Verify's agent receives a pre-filled coverage matrix
-in the deliverable's behavior form — criteria × scenarios × test results,
-or criteria × gates × check results — and does judgment work: confirm,
+joining `contract.criteria[]` to performed results by `criterion_id` —
+the same matrix for every dimension — and does judgment work: confirm,
 amend, flag gaps, not data assembly.
 
 ### Observability from the start
@@ -1044,18 +1044,19 @@ affected-files list, to map the change to the documentation it touches. **What
 review needs:** the recorded design decisions, as context for judging the
 proposal.
 
-The plan bridges behavior (from the contract) to code (in implement). Without
+The plan bridges the contract (from take) to code (in implement). Without
 the plan, the agent implements without design — which is what the plan
-exists to prevent.
+exists to prevent. Mappings key off contract criteria by `criterion_id` —
+one mapping per criterion, the same shape for every dimension; a
+criterion's dimension, statement, and check live on the contract artifact.
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
 | work_unit | string (work-unit ref) | yes | Common envelope |
-| behavior_form | enum: scenario, gate | yes | Selects scenario or gate mappings |
 | summary | string | yes | What the plan accomplishes |
 | design_decisions | array of decision | yes (min 1) | Decisions with rationale |
 | affected_files | array of strings | yes (min 1) | Files or modules that get changed |
-| behavior_mapping | array of mapping | yes (min 1) | How scenarios or gates map to implementation steps |
+| criterion_mapping | array of mapping | yes (min 1) | How contract criteria map to implementation steps |
 
 **decision:**
 
@@ -1064,52 +1065,32 @@ exists to prevent.
 | decision | string | yes | What was decided |
 | rationale | string | yes | Why — traces to constraints or principles |
 
-**Scenario mapping:**
+**criterion mapping:**
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
-| scenario | string | yes | Scenario name from contract |
-| steps | array of strings | yes (min 1) | Implementation steps for this scenario |
-
-**Gate mapping:**
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| name | string | yes | Gate name from contract |
-| criterion | string | yes | Acceptance criterion this gate maps to |
-| category | enum: structural, coherence, conformance | yes | Gate category |
-| steps | array of strings | yes (min 1) | Implementation steps for this gate |
+| criterion_id | string | yes | Criterion id from the contract |
+| steps | array of strings | yes (min 1) | Implementation steps for this criterion |
 
 ### test-evidence
 
 **Consumer:** verify (requires).
-**What verify needs:** proof that each scenario or gate was checked and the
-result. Verify joins test-evidence with contract to roll up coverage
-at the acceptance-criterion level.
+**What verify needs:** proof that each executable criterion's check was run
+and the result. Verify joins test-evidence with the contract by
+`criterion_id` to roll up coverage at the criterion level — the same join
+for every dimension.
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
 | work_unit | string (work-unit ref) | yes | Common envelope |
-| behavior_form | enum: scenario, gate | yes | Selects scenario or gate evidence |
-| evidence | array of evidence-entry | yes (min 1) | Results per scenario or gate |
+| evidence | array of evidence-entry | yes (min 1) | Check results per contract criterion |
 
-**Scenario evidence-entry fields:**
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| scenario | string | yes | Scenario name from contract |
-| result | enum: pass, fail | yes | Test outcome |
-| command | string | yes | The command that was executed |
-| output_summary | string | yes | Summary of command output — proof the test ran |
-
-**Gate evidence-entry fields:**
+**Evidence-entry fields:**
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
-| name | string | yes | Gate name from contract |
-| criterion | string | yes | Acceptance criterion this gate covers |
-| category | enum: structural, coherence, conformance | yes | Gate category |
-| result | enum: pass, fail | yes | Gate outcome |
+| criterion_id | string | yes | Criterion id from the contract |
+| result | enum: pass, fail | yes | Check outcome |
 | command | string | yes | The command that was executed |
 | output_summary | string | yes | Summary of command output — proof the check ran |
 
