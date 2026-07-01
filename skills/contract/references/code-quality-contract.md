@@ -1,23 +1,24 @@
 # Code-Quality Contract
 
-The code-quality dimension of the contract. The behavioral dimension
-declares what the system does; the documentation dimension declares what the
-recipient can do; this declares what must hold of the change's **internal
-form**.
+The code-quality dimension of the uniform contract machine declares what
+must hold of the change's **internal form**.
 
 Its teeth come from the resolved **principles corpus**, not from an invented
 style rulebook: the universals that bear on a change, consulted from the
-corpus and projected onto the diff as reviewer-checkable items.
+corpus and projected onto the diff as reviewer-checkable criteria in
+`contract.criteria[]`. The usual checking apparatus is
+`check_kind: "attested"` with performed evidence recorded as reviewer
+findings in `completion-evidence.results[]`.
 
 ## Why the corpus, not a rulebook
 
 A separate code-quality rulebook would be a second home for invariants the
 corpus already owns — and a second home drifts from the first. So this
-dimension consults the corpus rather than restating it (consult, don't
+dimension consults the corpus rather than restating it (consult, do not
 model). The corpus owns each universal's content; this module owns only how
-a universal lands on a diff and how the projection is generated. When the
-two would disagree, the corpus is authoritative and the projection is what
-changes.
+a universal lands on a diff and how the projection is generated as typed
+criteria for the uniform surface. When the two would disagree, the corpus
+is authoritative and the projection is what changes.
 
 ## The recursive property
 
@@ -45,7 +46,8 @@ Signal**).
 The projection is generated, not hardcoded. When `work-unit-craft`/`decompose`
 supplies inputs or `take` defines validation, consult the resolved corpus
 (`~/.groundwork/principles/`), select the universals this change most
-stresses, and write each as a checklist item in one shape:
+stresses, and write each as a typed `contract.criteria[]` entry whose
+statement carries one shape:
 
 - the universal as a **question** asked of the diff,
 - the **failing tell** a careless change leaves, and
@@ -77,22 +79,27 @@ demand.
 
 ## Lifecycle
 
-`work-unit-craft`/`decompose` supplies corpus pointers and stressed universals as inputs to
-validation. `take` turns those inputs into validation defined: the subset of
-universals the change puts under real pressure, named from the resolved
-corpus, not a ritual recital. `verify` performs validation by auditing the
-diff against each projected item. A subset is legitimate; under-declaration
-is not. A change that touches a shared asset without naming the universal
-that governs single homes, adds an abstraction without the one that governs
-earning a place, or moves a public surface without the one that governs
-honest surfaces, has left its risk outside validation.
+`work-unit-craft`/`decompose` supplies corpus pointers and stressed
+universals as inputs to validation. `take` turns those inputs into
+validation defined: the subset of universals the change puts under real
+pressure, named from the resolved corpus, not a ritual recital, and emitted
+as typed criteria into the uniform contract surface. `verify` performs
+validation by auditing the diff against each projected criterion and
+recording a reviewer finding in the uniform evidence surface. A subset is
+legitimate; under-declaration is not. A change that touches a shared asset
+without naming the universal that governs single homes, adds an abstraction
+without the one that governs earning a place, or moves a public surface
+without the one that governs honest surfaces, has left its risk outside
+validation.
 
 ## Verifying the contract
 
 At `verify`, the reviewer audits the diff against each defined item and
 records, per item, the locus where it holds or the finding where it fails.
 The method is `protocols/verify/references/code-quality-review.md`. The
-review is the gate; a self-report of cleanliness is not the evidence.
+review is the gate; a self-report of cleanliness is not the evidence. The
+result is an attested `completion-evidence.results[]` entry for each
+declared code-quality criterion, not prose outside the artifact.
 
 ## How the projection grows
 

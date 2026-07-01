@@ -55,6 +55,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Uniform contract form** (#493). The `contract` skill now states the
+  invariant behind the #492 surfaces: every dimension uses the same
+  contract structure and the same performed-evidence obligation, while
+  checking apparatus varies only per criterion through `check_kind`
+  (`executable` or `attested`). Behavior is documented as one dimension
+  among N rather than the pipeline spine; documentation and code quality
+  now explicitly emit typed criteria into `contract.criteria[]`, and
+  attested judgment is recorded as findings in `completion-evidence.results[]`.
+  The contract skill moves from contract 2.4.0->2.5.0.
+
 - **One contract machine** (#492). The live `behavior-contract` artifact is
   renamed to `contract` and now carries dimension-agnostic `criteria[]` with
   criterion-level `check_kind`, `hollow_delivery`, and check descriptors.

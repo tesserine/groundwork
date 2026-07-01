@@ -33,8 +33,13 @@ contract declared for this change; those are what this audit decides.
    is friction on the corpus — record it so the code-quality projection can
    grow. The corpus is the bounded asset the spiral acts on.
 
-The outcome — per-universal disposition and any follow-ups — is recorded in
-the verify report alongside the documentation audit.
+The declared code-quality criterion's performed result is recorded in
+`completion-evidence.results[]` as attested evidence: reviewer identity plus
+the per-universal disposition and finding for each selected universal or
+projection. The verify report remains the review narrative, and the
+`documentation` section remains the document-impact index — updated
+documents, documents verified accurate, and follow-up work-units — not the
+evidence home for a declared code-quality criterion.
 
 ## Cross-references
 

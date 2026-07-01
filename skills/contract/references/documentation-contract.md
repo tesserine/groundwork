@@ -1,14 +1,16 @@
 # Documentation Contract
 
-The documentation dimension of the contract. Where the behavioral dimension
-declares what the system does, this declares what each **recipient** can do
-once the work lands. It serves **Transmission**: work completes when the
-recipient can act on it, not when the maker finishes — so the contract is
-written as outcomes the recipient reaches, and is satisfied only when they
-can reach them.
+The documentation dimension of the uniform contract machine declares what
+each **recipient** can do once the work lands. It serves **Transmission**:
+work completes when the recipient can act on it, not when the maker
+finishes — so the contract is written as outcomes the recipient reaches,
+and is satisfied only when they can reach them.
 
-The form is a checklist, not a test. The teeth principle decides the
-checklist's shape.
+This reference owns the documentation dimension's authoring discipline, not
+a separate contract structure. It consults `orient`'s audience taxonomy and
+emits typed documentation criteria into `contract.criteria[]`; the usual
+checking apparatus is `check_kind: "attested"` with performed evidence
+recorded as a reviewer finding in `completion-evidence.results[]`.
 
 ## The teeth of a documentation contract
 
@@ -25,19 +27,23 @@ outcome** — what the reader can now do — never as artifact existence.
 
 The check, run when documentation inputs are shaped, when validation is
 defined, and again when it is performed: *could a delivery that wrote
-nothing useful for this recipient still pass this item?* If yes, rewrite it
-as the recipient's outcome.
+nothing useful for this recipient still pass this criterion?* If yes,
+rewrite it as the recipient's outcome and keep the hollow delivery visible
+on the criterion.
 
 ## Lifecycle
 
-`work-unit-craft`/`decompose` supplies recipient outcomes as inputs to validation. `take`
-turns those inputs into validation defined: the pillars the change touches
-and the outcome each recipient must reach. `verify` performs validation by
-auditing whether those recipients can reach the outcomes. A subset is
-legitimate — a refactor with no user-visible effect carries no user pillar;
-a first public release carries all three. What is illegitimate is silence
-where the change clearly serves a recipient: a new user-facing capability
-with no user pillar is an under-declared contract, not a small one.
+`work-unit-craft`/`decompose` supplies recipient outcomes as inputs to
+validation. `take` turns those inputs into validation defined: typed
+criteria in the uniform contract surface naming the pillar, recipient
+outcome, hollow delivery, `check_kind`, and check descriptor. `verify`
+performs validation by auditing whether those recipients can reach the
+outcomes and recording the finding in the uniform evidence surface. A
+subset is legitimate — a refactor with no user-visible effect carries no
+user pillar; a first public release carries all three. What is illegitimate
+is silence where the change clearly serves a recipient: a new user-facing
+capability with no user pillar is an under-declared contract, not a small
+one.
 
 The audience taxonomy, artifact types, and writing stance are **not**
 restated here — they live in the `orient` skill's documentation discipline
@@ -115,10 +121,13 @@ Checklist:
 At `verify`, the documentation review audits the change against the defined
 contract: for each selected pillar, it confirms the recipient can now reach
 the defined outcome, and it keeps existing docs honest against drift. The
-method is `protocols/verify/references/documentation-review.md`; the outcome
-is recorded in the `documentation` section of `completion-evidence`.
-Verification is evidence, not assertion: the audit finds, per item, the
-place the outcome holds or the place it fails.
+method is `protocols/verify/references/documentation-review.md`; the
+criterion result is recorded in `completion-evidence.results[]` with an
+attestation carrying reviewer identity and finding. The legacy
+`documentation` summary in completion evidence remains the document-impact
+index, not the evidence home for a declared documentation criterion.
+Verification is evidence, not assertion: the audit finds, per criterion,
+the place the outcome holds or the place it fails.
 
 ## Single home
 
