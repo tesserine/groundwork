@@ -9,8 +9,8 @@ description: >-
   and the corruption modes that make records mis-steer the agents who
   read them.
 metadata:
-  version: "1.1.0"
-  updated: "2026-06-19"
+  version: "1.2.0"
+  updated: "2026-07-01"
   origin: >-
     Adapted from pentaxis93/with-claude
     _shared/methodology/issue-craft.md (internal), renamed and
@@ -58,20 +58,19 @@ The authoring pass must **consider every dimension**:
   These are the behavior input the later contract sharpens into executable
   checks.
 - **Documentation:** consult `orient`'s audience taxonomy and record any
-  recipient outcomes the work must make true. If no recipient needs a special
-  outcome beyond the general documentation contract, say nothing more.
+  recipient outcomes the work must make true. When documentation risk is
+  light, one simple recipient outcome is enough.
 - **Code quality:** point to the principles corpus and name any stressed
-  universals the work puts under unusual pressure. If the general code-quality
-  contract is enough, the corpus pointer is sufficient.
+  universals the work puts under unusual pressure. The code quality input can
+  be one projected universal when internal-form risk is light.
 
-This is a consideration prompt, **not a mandatory per-dimension body
-section**. The **general contract pointer** carries any dimension with no
-special input. Density is unequal; consideration is equal. A terse bug may
-carry only behavior criteria after the documentation and code quality
-dimensions were considered. A documentation-deliverable unit may carry dense
-recipient outcomes and only the general corpus pointer. In every case,
-silence is valid only after the dimension was considered and the general
-contract is enough.
+Every dimension the change has must leave an authored teeth-bearing input
+for the later contract; every dimension the change has is covered that way.
+The rule is that density may be light, but coverage is never zero: one sharp
+recipient outcome or one corpus projection can be enough, while silence
+cannot. Each input should make the hollow delivery visible enough that `take`
+can turn it into a criterion with a statement of done,
+`check_kind`, check descriptor, and result path.
 
 ## The Sovereignty Test
 

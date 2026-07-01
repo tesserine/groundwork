@@ -11,7 +11,7 @@ description: >-
   or completion claims must stay traceable to a defined contract instead of
   drifting toward implementation convenience.
 metadata:
-  version: "2.5.0"
+  version: "2.6.0"
   updated: "2026-07-01"
 ---
 
@@ -95,11 +95,17 @@ There is one contract machine. Every dimension a change demands is a
 first-class symmetric citizen in that machine: Behavior is one dimension
 among N, documentation and code quality carry the identical teeth
 obligation, and every dimension carries the same performed-evidence
-obligation. A subset of dimensions is legitimate the way a contract need
-not exercise every code path; what is illegitimate is a dimension present
-in lighter structure. The lifecycle is inputs to validation -> validation
-defined -> validation performed, with validation carried through
-`implement` and recorded at `land`.
+obligation: every dimension a change has carries at least one authored
+teeth-bearing criterion: statement of done, hollow delivery, `check_kind`,
+check descriptor, and later performed result. Density is situational; a
+lightly touched dimension may need one simple criterion, and simple criteria
+are legitimate, while a stressed dimension may need many. But coverage and
+teeth are not situational: coverage is never zero for a dimension the change
+has, and silent dimensions are not valid. The only honest form of less is fewer,
+simpler teeth-bearing criteria, never a dimension present with no criterion
+to fail. The lifecycle is inputs to validation -> validation defined ->
+validation performed, with validation carried through `implement` and
+recorded at `land`.
 
 | Dimension | Lifecycle |
 |---|---|
@@ -124,16 +130,17 @@ The stage boundary is part of the contract lifecycle:
 - `land` consumes validation performed and records what shipped, including
   explicit gaps if any remain.
 
-### Pointer-as-default
+### Density and Coverage
 
-`work-unit-craft`/`decompose` must consider every dimension, but consideration is not a
-mandatory per-dimension declaration. A dimension carrying no special input
-is still validated: its general contract remains the validation pointer.
-The rule is: density across dimensions is unequal; consideration is equal. A
-refactor may need detailed code-quality inputs and only the general
-documentation contract; a user-facing capability may need dense user
-documentation inputs and ordinary code-quality projection. Silence is valid
-only after the dimension was considered and the general contract is enough.
+`work-unit-craft`/`decompose` must consider every dimension and record
+inputs for every dimension the change has. The true density rule is that
+those inputs scale with the work: a refactor may need a single documentation
+criterion that existing workflows remain usable, while a user-facing
+capability may need dense user documentation outcomes and a light
+code-quality projection. The hollow-delivery discriminator governs both
+forms. A criterion is legitimate only when a hollow delivery fails it; a
+dimension with no criterion has nothing a hollow delivery can fail and is
+therefore uncovered.
 
 - **[Behavior dimension](#the-behavior-dimension)** — what the system
   does. Its common checking apparatus is BDD scenarios or
@@ -408,6 +415,13 @@ assertions, or empty pass/fail attestations. *Recognition:* the criterion
 names a topic but not the product state it creates, and no one can explain
 what a richer delivery would do differently: contract richness determines
 product richness; a thin contract produces a thin product.
+
+**Silent dimension.** A dimension the change has, left with no authored
+teeth-bearing criterion, is a design failure. *Recognition:* the surface
+points at a general rule or assumes ordinary discipline is enough, while a
+dimension the change has, left with no authored teeth-bearing criterion,
+names no statement of done, no hollow delivery, and no result path. A pointer
+has no teeth; an uncovered dimension hollows the contract.
 
 **Refine-default.** A defective branch keeps its branch by default, or a
 strictly-bounded-but-large correction is routed to an in-place fix even
