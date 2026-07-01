@@ -56,9 +56,10 @@ release tag or the merged full commit SHA. They do not pin a branch name or
 pre-merge ref.
 
 `intent.schema.json` is different: it is a vendored copy of the canonical
-intent contract maintained by `tesserine/commons`. Groundwork keeps the runtime
-copy here so runtime consumers still read schemas from groundwork, not from
-commons.
+intent contract maintained by `tesserine/commons`. Groundwork currently vendors
+intent spec `2.0.0` from `schemas/intent/v2/intent.schema.json`. Groundwork
+keeps the runtime copy here so runtime consumers still read schemas from
+groundwork, not from commons.
 
 The vendored intent schema carries provenance metadata identifying the
 canonical authority, the canonical schema and prose URLs, and the intent spec's
