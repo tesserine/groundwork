@@ -63,6 +63,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   covered by the same forbidden-pattern guard as contract, take, and
   work-unit-craft. contract 2.5.0->2.6.0, take 3.4.0->3.5.0,
   work-unit-craft 1.1.0->1.2.0.
+
+- **Cold-start acquisition surface reachability** (#499). `decompose`
+  remains the sole unscoped `work-unit` producer but no longer requires a
+  planning-phase `requirements` artifact as an entry precondition; the
+  `requirements` trigger still preserves ordinary survey → requirements →
+  decompose planning. Ticket-entry dry runs now reach the acquisition
+  surface and project `take`, while untargeted intent still waits for
+  requirements before decomposition.
+
 - **Uniform contract form** (#493). The `contract` skill now states the
   invariant behind the #492 surfaces: every dimension uses the same
   contract structure and the same performed-evidence obligation, while

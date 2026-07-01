@@ -135,6 +135,14 @@ methodology cannot skip this step." Accepts means "the methodology
 benefits from this context but the protocol can still do valid work
 without it."
 
+`decompose` is the planning-phase exception that keeps the distinction
+visible. Ordinary planning still reaches `decompose` through the
+`requirements` trigger, and `requirements` is accepted so the protocol
+receives the content it is decomposing. It is not a `requires` edge:
+cold-start ticket entry substitutes the trigger with the ticket reference,
+reaches the same `work-unit` output surface, and has no planning-phase
+requirements artifact yet.
+
 ## No Signals
 
 If artifacts are the sole state mechanism, then signals are a second
@@ -246,8 +254,7 @@ trigger = { type = "on_artifact", name = "intent" }
 
 [[protocols]]
 name = "decompose"
-requires = ["requirements"]
-accepts = ["research-record"]
+accepts = ["requirements", "research-record"]
 produces = ["work-unit"]
 may_produce = ["research-record"]
 trigger = { type = "on_artifact", name = "requirements" }
@@ -760,9 +767,11 @@ flow produces artifacts that runa tracks and threads by work-unit identity.
 
 ### decompose
 
-- **requires:** requirements. Cannot break work into work-units without
-  knowing what the work is.
-- **accepts:** research-record. Research may inform decomposition decisions.
+- **accepts:** requirements, research-record. Requirements is the ordinary
+  planning input decompose breaks into work-units, injected as context when
+  present; it is not a hard precondition, so cold-start ticket entry can reach
+  this surface with no requirements artifact yet. Research-record may inform
+  decomposition.
 - **trigger:** `on_artifact("requirements")`
 
 ### take
