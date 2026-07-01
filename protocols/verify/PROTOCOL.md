@@ -36,32 +36,28 @@ criteria are covered, and the documentation still tells the truth.
 
 ## Steps
 
-1. **Identify the gate.** From the contract and the work-unit's
-   acceptance criteria, name what proves completion: the full verification
-   command (test suite, build, linter as applicable) and the behavior
-   coverage that must hold. Consult the `contract` skill's behavior
-   lifecycle in `skills/contract/SKILL.md` to select the form:
-   scenario coverage for a runtime-behavior work-unit, gate coverage for a
-   documentation-deliverable work-unit. The gate form is consulted from the
-   contract; this protocol does not re-model the lifecycle.
+1. **Identify the gate.** Read `contract.criteria[]` and name what proves
+   each criterion complete: the fresh verification command, artifact
+   inspection, or reviewer attestation warranted by that criterion's
+   `check_kind`. The contract is the source of coverage; do not derive
+   scenario or gate lists outside the criterion records.
 
 2. **Run fresh.** Execute the full command. Read the entire output; check
    the exit code; count the failures. Output from any earlier run is stale
    the moment code changed.
 
-3. **Assess coverage.** Report behavior coverage in the form selected in
-   step 1. For a runtime-behavior work-unit, join criteria × scenarios ×
-   results: for every acceptance criterion, which scenarios cover it and do
-   their tests pass? For a documentation-deliverable work-unit, join
-   acceptance criteria × documentation-deliverable gates × results:
-   structural, coherence, and conformance gates each report pass or failure
-   and name which acceptance criteria they cover. This is gate coverage,
-   not fabricated scenario coverage. If verification surfaces a failure,
-   stop and invoke `debug` — root cause before fixes. A fix to this
-   work-unit's own increment applies `implement`'s cycle discipline
+3. **Assess criterion results.** Join contract criteria × performed
+   results. Contract criteria and performed results line up when every
+   `contract.criteria[].id` has exactly one
+   `completion-evidence.results[]` entry with a matching `criterion_id`,
+   and the evidence shape must match the criterion's `check_kind`.
+   Executable criteria are backed by run or artifact evidence; attested
+   criteria are backed by reviewer attestation. If verification surfaces a
+   failure, stop and invoke `debug` — root cause before fixes. A fix to
+   this work-unit's own increment applies `implement`'s cycle discipline
    (failing test first, minimal change), then the gate re-runs fresh from
-   step 2. Record honestly whatever the evidence shows — covered, partial,
-   or uncovered.
+   step 2. Record honestly whatever the evidence shows — pass or fail per
+   criterion, with no invented coverage rows.
 
 4. **Review the declared contracts.** Audit the change against each
    dimension the contract declared beyond the behavior coverage assessment.
@@ -120,8 +116,10 @@ criteria are covered, and the documentation still tells the truth.
    ```
 
    Runa validates the remaining artifact body fields against the
-   completion-evidence schema, persists the artifact, and records it in the
-   artifact store.
+   completion-evidence schema and the current contract's criteria before
+   persisting the artifact and recording it in the artifact store. Unknown
+   `criterion_id` values and missing contract criteria are rejected before
+   persistence.
 
 The evidence is honest, not aspirational: gaps and failures are recorded as
 gaps and failures. Review consumes this evidence and blocks on it — an
@@ -140,19 +138,18 @@ uncovered criterion shipped to review is a blocking finding, not a secret.
   confirm it. Evidence determines the claim, never the reverse.
 - `drift-tolerance`: documentation known stale but recorded as accurate, or
   deferred without a tracking work-unit.
-- `gate-as-scenario`: encoding a documentation-deliverable gate as a
-  scenario so the scenario-keyed evidence tool accepts it. Gate coverage is
-  the behavior form for that deliverable, not a scenario disguise.
+- `invented-coverage`: deriving scenario or gate coverage beside the
+  dimension-agnostic contract criteria instead of recording one performed
+  result per `contract.criteria[].id`.
 - `lifecycle-modeling`: re-encoding the behavior lifecycle in `verify`
-  instead of consulting the `contract` skill as the single home.
+  instead of consuming the contract criteria as the single coverage source.
 
 ## Cross-References
 
 - `implement` (protocol): owns per-cycle evidence; this protocol owns the
   aggregate gate.
-- `contract` (skill): owns the behavior lifecycle this protocol consults —
-  `verify` reports scenario or gate coverage according to that lifecycle,
-  not just command exit codes.
+- `contract` (skill): owns the criteria that define done; `verify` reports
+  performed results for those criteria, not just command exit codes.
 - `debug` (skill): fires on any failure surfaced here, before any fix.
 - `submit` (protocol): consumes this evidence — work is packaged for review
   only after the gate has run.

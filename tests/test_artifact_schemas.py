@@ -123,6 +123,35 @@ class ArtifactSchemaTests(unittest.TestCase):
             validate_contract_evidence(contract, wrong_kind)
         self.assertIn("results/1/evidence", context.exception.paths)
 
+    def test_validate_artifact_rejects_completion_evidence_not_matching_contract(self) -> None:
+        contract = load_artifact("contract", self.fixture("valid-contract.json"))
+        evidence = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))
+
+        unknown = json.loads(json.dumps(evidence))
+        unknown["results"][0]["criterion_id"] = "unknown-contract-criterion"
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("completion-evidence", unknown, related_artifacts={"contract": contract})
+        self.assertIn("results/0/criterion_id", context.exception.paths)
+
+        missing = json.loads(json.dumps(evidence))
+        missing["results"] = missing["results"][:-1]
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("completion-evidence", missing, related_artifacts={"contract": contract})
+        self.assertIn("results", context.exception.paths)
+
+    def test_completion_evidence_rejects_empty_documentation_entries(self) -> None:
+        evidence = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))
+
+        for field in ["updated", "verified_accurate", "follow_up_work_units"]:
+            with self.subTest(field=field):
+                invalid = json.loads(json.dumps(evidence))
+                invalid["documentation"][field] = [""]
+
+                with self.assertRaises(ArtifactSchemaError) as context:
+                    validate_artifact("completion-evidence", invalid)
+
+                self.assertIn(f"documentation/{field}/0", context.exception.paths)
+
     def test_detectability_mechanism_is_dimension_agnostic(self) -> None:
         contract = load_artifact("contract", self.fixture("valid-contract.json"))
         evidence = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))

@@ -48,6 +48,7 @@ def load_artifact(
     artifact_type: str,
     path: Path | str,
     registry: MechanicRegistry | None = None,
+    related_artifacts: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     artifact_path = Path(path)
     try:
@@ -55,7 +56,7 @@ def load_artifact(
     except json.JSONDecodeError as error:
         raise ArtifactSchemaError([("<json>", f"{artifact_path.name} is invalid JSON: {error}")]) from error
 
-    validate_artifact(artifact_type, artifact, registry=registry)
+    validate_artifact(artifact_type, artifact, registry=registry, related_artifacts=related_artifacts)
     return artifact
 
 
@@ -63,11 +64,14 @@ def validate_artifact(
     artifact_type: str,
     artifact: dict[str, Any],
     registry: MechanicRegistry | None = None,
+    related_artifacts: dict[str, dict[str, Any]] | None = None,
 ) -> None:
     errors: list[tuple[str, str]] = []
     errors.extend(_schema_errors(artifact_type, artifact))
     if not errors:
         errors.extend(_artifact_contract_errors(artifact_type, artifact))
+    if not errors:
+        errors.extend(_related_artifact_contract_errors(artifact_type, artifact, related_artifacts))
     if errors:
         raise ArtifactSchemaError(errors)
 
@@ -135,6 +139,21 @@ def _artifact_contract_errors(artifact_type: str, artifact: dict[str, Any]) -> l
     return []
 
 
+def _related_artifact_contract_errors(
+    artifact_type: str,
+    artifact: dict[str, Any],
+    related_artifacts: dict[str, dict[str, Any]] | None,
+) -> list[tuple[str, str]]:
+    if artifact_type != "completion-evidence" or related_artifacts is None:
+        return []
+
+    contract = related_artifacts.get("contract")
+    if contract is None:
+        return []
+
+    return detect_contract_evidence_defects(contract, artifact)
+
+
 def _contract_artifact_errors(artifact: dict[str, Any]) -> list[tuple[str, str]]:
     errors: list[tuple[str, str]] = []
     seen: set[str] = set()
@@ -178,7 +197,7 @@ def validate_contract_evidence(
 ) -> None:
     """Validate completion evidence against its contract artifact."""
     validate_artifact("contract", contract)
-    validate_artifact("completion-evidence", completion_evidence)
+    validate_artifact("completion-evidence", completion_evidence, related_artifacts={"contract": contract})
     errors = detect_contract_evidence_defects(
         contract,
         completion_evidence,
