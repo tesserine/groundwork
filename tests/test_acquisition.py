@@ -114,6 +114,35 @@ class MaterializeTicketTests(unittest.TestCase):
             payload["artifact"]["acceptance_criteria"],
         )
 
+    def test_materializer_excludes_trailing_prose_after_acceptance_list(self) -> None:
+        ticket = {
+            "handle": {"id": "ticket:criteria-prose", "display": "CRITERIA-PROSE"},
+            "title": "Trailing prose after criteria",
+            "body": (
+                "A ticket with prose after the criteria list.\n\n"
+                "## Acceptance criteria\n\n"
+                "- [ ] The contract payload uses criteria\n"
+                "- [ ] The workflow surfaces name the contract artifact\n"
+                "\n"
+                "This note explains migration context and is not a criterion.\n\n"
+                "## Notes\n\n"
+                "Operators should follow the current contract surface.\n"
+            ),
+            "state": "open",
+        }
+
+        result = materialize(json.dumps(ticket))
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(
+            [
+                "The contract payload uses criteria",
+                "The workflow surfaces name the contract artifact",
+            ],
+            payload["artifact"]["acceptance_criteria"],
+        )
+
     def test_materializer_accepts_valid_titles_that_do_not_slugify(self) -> None:
         ticket = {
             "handle": {"id": "ticket:stable-non-ascii-title", "display": "TRACK-I18N"},

@@ -584,15 +584,16 @@ agent inside a take session producing a contract calls:
 ```
 contract({
   instance_id: "work-unit-221",
-  behavior_form: "scenario",
   title: "User authentication",
-  scenarios: [
-    { name: "valid login",
-      criterion: "users can log in",
-      given: "a registered account",
-      when: "credentials are submitted",
-      then: "a session is established" }
-  ]
+  criteria: [{
+    id: "valid-login",
+    dimension: "behavior",
+    acceptance_criterion: "users can log in",
+    statement: "Given a registered account, when credentials are submitted, then a session is established.",
+    hollow_delivery: "Credentials are accepted but no session is established.",
+    check_kind: "executable",
+    check: "Run the authentication login behavior test."
+  }]
 })
 ```
 

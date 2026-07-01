@@ -58,8 +58,19 @@ def list_items(block: str) -> list[str]:
             current = [match.group("text").strip()]
             continue
 
-        if current and line.strip():
+        if not line.strip():
+            if current:
+                items.append(" ".join(current))
+                current = []
+            continue
+
+        if current and line[:1].isspace():
             current.append(line.strip())
+            continue
+
+        if current:
+            items.append(" ".join(current))
+            current = []
 
     if current:
         items.append(" ".join(current))
@@ -79,8 +90,19 @@ def checkbox_items(block: str) -> list[str]:
             current = [match.group("text").strip()]
             continue
 
-        if current and line.strip():
+        if not line.strip():
+            if current:
+                items.append(" ".join(current))
+                current = []
+            continue
+
+        if current and line[:1].isspace():
             current.append(line.strip())
+            continue
+
+        if current:
+            items.append(" ".join(current))
+            current = []
 
     if current:
         items.append(" ".join(current))
