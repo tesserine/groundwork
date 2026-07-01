@@ -52,7 +52,12 @@ The steps below keep the surrounding documentation honest against drift.
    change is incomplete until it is met or the gap is tracked as a follow-up
    work-unit.
 
-The outcome feeds the `documentation` section of `completion-evidence`.
+The declared documentation criterion's performed result is recorded in
+`completion-evidence.results[]` as attested evidence: reviewer identity plus
+the finding for each selected pillar or outcome. The `documentation` section
+remains the document-impact index — updated documents, documents verified
+accurate, and follow-up work-units — not the evidence home for a declared
+documentation criterion.
 
 ## Corruption Modes
 
