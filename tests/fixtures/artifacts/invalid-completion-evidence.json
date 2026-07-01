@@ -1,11 +1,17 @@
 {
-  "work_unit": "work-unit-178-test-fixtures",
-  "behavior_form": "scenario",
-  "criterion_coverage": [
+  "work_unit": "work-unit-492-contract-machine",
+  "results": [
     {
-      "criterion": "Records missing required fields are rejected with a 400 status",
-      "status": "passed",
-      "scenarios": ["reject-missing-required-field"]
+      "criterion_id": "behavior-api-validates-records",
+      "result": "pass",
+      "evidence": {
+        "summary": "A bare summary with no run, artifact, or attestation is not performed evidence."
+      }
     }
-  ]
+  ],
+  "documentation": {
+    "updated": [],
+    "verified_accurate": [],
+    "follow_up_work_units": []
+  }
 }

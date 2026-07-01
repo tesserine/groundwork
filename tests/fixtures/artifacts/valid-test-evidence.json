@@ -1,18 +1,17 @@
 {
-  "work_unit": "work-unit-178-test-fixtures",
-  "behavior_form": "scenario",
+  "work_unit": "work-unit-492-contract-machine",
   "evidence": [
     {
-      "scenario": "reject-missing-required-field",
+      "criterion_id": "behavior-api-validates-records",
       "result": "pass",
-      "command": "pytest tests/test_ingestion.py::test_reject_missing_field -v",
-      "output_summary": "1 passed in 0.12s — POST with missing 'id' returned 400"
+      "command": "python -m unittest tests.test_ingestion.ValidRecordPassthroughTests",
+      "output_summary": "1 passed — a valid record reached the pipeline with fields unchanged"
     },
     {
-      "scenario": "pass-valid-record",
+      "criterion_id": "code-quality-single-validation-path",
       "result": "fail",
-      "command": "pytest tests/test_ingestion.py::test_valid_record_passthrough -v",
-      "output_summary": "1 failed in 0.08s — record reached pipeline but was mutated by validation middleware"
+      "command": "python -m unittest tests.test_ingestion.SharedValidatorPathTests",
+      "output_summary": "1 failed — the endpoint bypassed the shared validator path"
     }
   ]
 }

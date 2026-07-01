@@ -2,20 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/implementation-plan.schema.json",
   "title": "Implementation Plan",
-  "description": "Validates the content of an implementation-plan artifact. Bridges behavior to code with design decisions and behavior-to-step mappings.",
+  "description": "Validates the content of an implementation-plan artifact. Bridges the contract to the change with design decisions and criterion-to-step mappings keyed by contract criterion id; each criterion's dimension, statement, and check live on the contract artifact.",
   "type": "object",
-  "required": ["work_unit", "behavior_form", "summary", "design_decisions", "affected_files", "behavior_mapping"],
+  "required": ["work_unit", "summary", "design_decisions", "affected_files", "criterion_mapping"],
   "additionalProperties": false,
   "properties": {
     "work_unit": {
       "type": "string",
       "description": "Common envelope — threads to work unit.",
       "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
-    },
-    "behavior_form": {
-      "type": "string",
-      "description": "Behavior form this plan carries forward.",
-      "enum": ["scenario", "gate"]
     },
     "summary": {
       "type": "string",
@@ -27,7 +22,22 @@
       "description": "Decisions with rationale.",
       "minItems": 1,
       "items": {
-        "$ref": "#/$defs/decision"
+        "type": "object",
+        "description": "A design decision with rationale.",
+        "required": ["decision", "rationale"],
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "type": "string",
+            "description": "What was decided.",
+            "minLength": 1
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Why — traces to constraints or principles.",
+            "minLength": 1
+          }
+        }
       }
     },
     "affected_files": {
@@ -38,105 +48,28 @@
         "type": "string"
       }
     },
-    "behavior_mapping": {
+    "criterion_mapping": {
       "type": "array",
-      "description": "How contract entries map to implementation steps.",
-      "minItems": 1
-    }
-  },
-  "if": {
-    "properties": {
-      "behavior_form": {
-        "const": "scenario"
-      }
-    },
-    "required": ["behavior_form"]
-  },
-  "then": {
-    "properties": {
-      "behavior_mapping": {
-        "items": {
-          "$ref": "#/$defs/scenario-mapping"
-        }
-      }
-    }
-  },
-  "else": {
-    "properties": {
-      "behavior_mapping": {
-        "items": {
-          "$ref": "#/$defs/gate-mapping"
-        }
-      }
-    }
-  },
-  "$defs": {
-    "decision": {
-      "type": "object",
-      "description": "A design decision with rationale.",
-      "required": ["decision", "rationale"],
-      "additionalProperties": false,
-      "properties": {
-        "decision": {
-          "type": "string",
-          "description": "What was decided.",
-          "minLength": 1
-        },
-        "rationale": {
-          "type": "string",
-          "description": "Why — traces to constraints or principles.",
-          "minLength": 1
-        }
-      }
-    },
-    "scenario-mapping": {
-      "type": "object",
-      "description": "Mapping from a contract scenario to implementation steps.",
-      "required": ["scenario", "steps"],
-      "additionalProperties": false,
-      "properties": {
-        "scenario": {
-          "type": "string",
-          "description": "Scenario name from contract.",
-          "minLength": 1
-        },
-        "steps": {
-          "type": "array",
-          "description": "Implementation steps for this scenario.",
-          "minItems": 1,
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "gate-mapping": {
-      "type": "object",
-      "description": "Mapping from a contract gate to implementation steps.",
-      "required": ["name", "criterion", "category", "steps"],
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Gate name from contract.",
-          "minLength": 1
-        },
-        "criterion": {
-          "type": "string",
-          "description": "Acceptance criterion this gate maps to.",
-          "minLength": 1
-        },
-        "category": {
-          "type": "string",
-          "description": "Gate category.",
-          "enum": ["structural", "coherence", "conformance"]
-        },
-        "steps": {
-          "type": "array",
-          "description": "Implementation steps for this gate.",
-          "minItems": 1,
-          "items": {
-            "type": "string"
+      "description": "How contract criteria map to implementation steps — one mapping per contract criterion, keyed by criterion id.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "description": "Mapping from a contract criterion to implementation steps.",
+        "required": ["criterion_id", "steps"],
+        "additionalProperties": false,
+        "properties": {
+          "criterion_id": {
+            "type": "string",
+            "description": "Criterion id from the contract artifact.",
+            "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
+          },
+          "steps": {
+            "type": "array",
+            "description": "Implementation steps for this criterion.",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
           }
         }
       }

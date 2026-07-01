@@ -1,6 +1,12 @@
 {
   "work_unit": "work-unit-492-contract-machine",
   "summary": "Add a JSON Schema validation middleware to the ingestion endpoint",
+  "design_decisions": [
+    {
+      "decision": "Use JSON Schema for record validation",
+      "rationale": "Schemas already exist for all record types"
+    }
+  ],
   "affected_files": [
     "src/ingestion/handler.py"
   ],
@@ -8,8 +14,13 @@
     {
       "criterion_id": "behavior-api-validates-records",
       "steps": [
-        "Extract record from request body",
         "Run JSON Schema validation"
+      ]
+    },
+    {
+      "criterion_id": "behavior-api-validates-records",
+      "steps": [
+        "Run JSON Schema validation again"
       ]
     }
   ]

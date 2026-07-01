@@ -38,10 +38,13 @@ def section(body: str, heading: str) -> str:
     return match.group("section")
 
 
-def lifecycle_rows(body: str) -> dict[str, str]:
+def apparatus_rows(body: str) -> dict[str, str]:
     rows = {}
     for line in body.splitlines():
-        match = re.match(r"\| \*\*(?P<dimension>Behavior|Documentation|Code quality)\*\* \| (?P<row>.+) \|$", line)
+        match = re.match(
+            r"\| \*\*(?P<dimension>Behavior|Documentation|Code quality)\*\* \| (?P<row>.+) \|$",
+            line,
+        )
         if match:
             rows[match.group("dimension")] = match.group("row")
     return rows
@@ -97,7 +100,7 @@ class TakeProtocolContractDimensionTests(unittest.TestCase):
         )
         self.assertIsNone(forbidden.search(authoring))
 
-    def test_take_consults_dimension_homes_without_reencoding_lifecycle_table(self) -> None:
+    def test_take_consults_dimension_homes_without_reencoding_apparatus_table(self) -> None:
         body = read(TAKE_PROTOCOL)
 
         for expected in [
@@ -110,28 +113,26 @@ class TakeProtocolContractDimensionTests(unittest.TestCase):
             with self.subTest(expected=expected):
                 self.assertIn(expected, body)
 
-        lifecycle_table = re.compile(
-            r"\| \*\*(?:Behavior|Documentation|Code quality)\*\* \| .*?"
-            r"(?:inputs to validation|validation defined|validation performed)",
-            flags=re.IGNORECASE,
+        dimension_row = re.compile(
+            r"\| \*\*(?:Behavior|Documentation|Code quality)\*\* \|",
         )
-        self.assertIsNone(lifecycle_table.search(body))
+        self.assertIsNone(dimension_row.search(body))
 
-    def test_named_forms_conform_to_contract_skill_lifecycle(self) -> None:
+    def test_named_apparatus_agrees_with_contract_skill(self) -> None:
         take_body = normalized(read(TAKE_PROTOCOL))
-        rows = lifecycle_rows(read(CONTRACT_SKILL))
+        rows = apparatus_rows(read(CONTRACT_SKILL))
 
         expected_forms = {
             "Behavior": ["executable scenarios", "documentation-deliverable gates"],
-            "Documentation": ["documentation outcomes"],
-            "Code quality": ["reviewer-checkable projections"],
+            "Documentation": ["udience-outcome"],
+            "Code quality": ["projections"],
         }
 
         self.assertEqual({"Behavior", "Documentation", "Code quality"}, set(rows))
         for dimension, forms in expected_forms.items():
             with self.subTest(dimension=dimension):
                 for form in forms:
-                    self.assertIn(form, rows[dimension])
+                    self.assertIn(form.lower(), rows[dimension].lower())
                     self.assertIn(form, take_body)
 
     def test_contract_delivery_declares_dimension_criteria(self) -> None:
@@ -153,19 +154,25 @@ class TakeProtocolContractDimensionTests(unittest.TestCase):
         self.assertNotIn("deferred", delivery)
         self.assertNotIn("behavior_form", delivery)
 
-    def test_documentation_deliverable_gates_thread_to_carry_through_without_scenarios(self) -> None:
+    def test_carry_through_leads_with_criterion_coverage_across_every_dimension(self) -> None:
         carry = normalized(step(read(TAKE_PROTOCOL), 6))
         carry_lower = carry.lower()
 
         for expected in [
-            "scenario coverage",
-            "gate coverage",
-            "documentation-deliverable",
+            "criterion coverage",
+            "every declared dimension",
+            "`criterion_id`",
+            "red-then-green",
+            "every executable criterion",
             "structural, coherence, and conformance",
             "do not encode gates as scenarios",
         ]:
             with self.subTest(expected=expected):
-                self.assertIn(expected, carry_lower)
+                self.assertIn(expected.lower(), carry_lower)
+
+        self.assertNotIn("behavior_form", carry)
+        self.assertNotIn("scenario coverage for runtime behavior", carry_lower)
+        self.assertNotIn("gate coverage for a documentation-deliverable", carry_lower)
 
     def test_existing_take_discipline_sections_and_corruption_modes_survive(self) -> None:
         body = read(TAKE_PROTOCOL)

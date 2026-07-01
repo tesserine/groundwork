@@ -5,8 +5,8 @@ description: >-
   out the work unit, and deliver the completion-record. The closing bookend
   of the scoped pipeline.
 metadata:
-  version: "3.2.0"
-  updated: "2026-06-20"
+  version: "3.3.0"
+  updated: "2026-07-02"
 ---
 
 # Land
@@ -18,9 +18,8 @@ that approval names, reflects the disposition, and records completion.
 
 Land closes the multidimensional contract. It consults the `contract` skill
 (`skills/contract/SKILL.md`) for the lifecycle and records validation
-performed for the behavior dimension in the deliverable's behavior form, the
-documentation dimension's audience-outcome review, and the code-quality
-dimension's projected-universal findings.
+performed for every declared dimension from the same uniform evidence
+surface: the per-criterion results in `completion-evidence.results[]`.
 
 The protocol is not a forge operation. It must not activate from a raw
 `change-proposal` — an unreviewed proposal is not a release gate — and
@@ -55,21 +54,19 @@ The protocol is not a forge operation. It must not activate from a raw
    collaboration surface records that the approval was acted on.
 
 4. **Close out.** Invoke `close-out`: the work unit's tracker record carries
-   its completion context — behavior coverage in scenario or gate form,
-   documentation outcomes, code-quality findings, gaps named, and the merge
-   reference.
+   its completion context — per-criterion coverage across every declared
+   dimension, gaps named, and the merge reference — derived from
+   `completion-evidence.results[]`.
 
 5. **Deliver the `completion-record`.**
-   Invoke the `completion-record` MCP tool through the existing schema
-   fields. For a runtime-behavior work-unit, the scenario-keyed runtime
-   close path records the behavior dimension in `criterion_summary`. For a
-   documentation-deliverable work-unit, gate-form behavior coverage is
-   recorded in `criterion_summary` and close-out context as committed
-   evidence. The documentation dimension is recorded in
-   `documentation_status`; the code-quality dimension is recorded as
-   committed evidence in the close-out context, using the diff loci and
-   findings from the projected-universals audit. Do not assert a field the
-   completion-record schema does not define.
+   Invoke the `completion-record` MCP tool. Every field derives from the
+   uniform evidence surface: `criterion_summary` summarizes the
+   per-criterion results in `completion-evidence.results[]` across every
+   declared dimension — behavior, documentation, and code quality alike;
+   `documentation_status` derives from the documentation dimension's
+   recorded results; the code-quality dimension's recorded findings and
+   diff loci enter the close-out context as committed evidence. Do not
+   assert a field the completion-record schema does not define.
 
    The object below is MCP tool input, not artifact body.
    `instance_id` is a tool parameter that names the artifact instance; it is
@@ -90,10 +87,10 @@ The protocol is not a forge operation. It must not activate from a raw
 
    Runa validates the remaining artifact body fields against the
    completion-record schema, persists the artifact, and records it in the
-   artifact store. The record distills the contract's closure: the
-   criterion summary and documentation status derive from the performed
-   validation in context, while code-quality validation remains committed
-   close-out evidence in the existing schema fields and context.
+   artifact store. The record distills the contract's closure: every
+   recorded dimension derives from the performed per-criterion results, by
+   the same derivation, with `completion-evidence.results[]` as the single
+   evidence surface.
 
 ## Failure Policy
 
@@ -125,11 +122,12 @@ The protocol is not a forge operation. It must not activate from a raw
   resolves before mapping it to the connector apply input.
 - `schemas/forge-capability/v1/forge-capability.schema.json` defines the
   `apply-approved-change-input` connector payload land must satisfy.
-- `schemas/completion-record.schema.json` defines the existing record fields:
-  behavior closes through `criterion_summary`, documentation through
-  `documentation_status`, and code quality remains close-out context and
-  committed evidence.
-- `contract` (skill): owns the lifecycle and behavior forms this protocol
-  consults while recording validation-performed.
+- `schemas/completion-record.schema.json` defines the record fields land
+  fills from the uniform evidence surface: `criterion_summary` carries
+  per-criterion coverage for every dimension, `documentation_status`
+  carries the documentation dimension's derived summary, and the
+  code-quality results enter close-out context as committed evidence.
+- `contract` (skill): owns the lifecycle this protocol consults while
+  recording validation-performed.
 - `take` (protocol): the opening bookend — the contract established there
   is what this record closes.

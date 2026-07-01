@@ -8,8 +8,8 @@ description: >-
   carries to land; until the runtime sequences the stations autonomously,
   take carries it. Trigger on: 'take', 'take work', 'start work-unit'.
 metadata:
-  version: "3.5.0"
-  updated: "2026-07-01"
+  version: "3.6.0"
+  updated: "2026-07-02"
 ---
 
 # Take — Contract-First Entry
@@ -134,26 +134,28 @@ proves it, or records it.
 
    The carry begins at `plan`, and the plan is where the work converges.
    The plan that serves this work is the `plan` protocol's contract-centered
-   design: the goal stated from the contract's behavior form, each scenario
-   or gate mapped to the steps that make it true, and the test strategy that
-   turns each into failing evidence before the change satisfies it. Where
-   the harness plans before it executes, *that design is the plan you
-   surface for approval* — not a narration of pipeline mechanics, which
-   station comes next or which command advances it. Lead with the contract:
-   scenario coverage for runtime behavior, gate coverage for a
-   documentation-deliverable, the absence of any gap through which a
+   design: the goal stated from the contract's criteria, each criterion
+   mapped by `criterion_id` to the steps that make it true, and the test
+   strategy that turns each executable criterion into failing evidence
+   before the change satisfies it. Where the harness plans before it
+   executes, *that design is the plan you surface for approval* — not a
+   narration of pipeline mechanics, which station comes next or which
+   command advances it. Lead with the contract: criterion coverage across
+   every declared dimension, the absence of any gap through which a
    delivery the contract accepts as done could still fail, and how each
-   scenario or structural, coherence, and conformance gate is driven
-   red-then-green. Do not encode gates as scenarios. Surface that, and
+   executable criterion is driven red-then-green through the check its
+   contract entry names — a scenario test or a structural, coherence, and
+   conformance gate. Do not encode gates as scenarios. Surface that, and
    accepting the plan is accepting the contracted work — full convergence at
    the planning surface.
 
    On acceptance, carry it forward yourself. You are already the agent:
    deliver the `implementation-plan` artifact through its output tool to
    advance `plan`, then drive the remaining stations directly — `implement`
-   (build it test-first; every scenario or gate has failing evidence before
-   its code or documentation change, `contract-after-code` forbidden),
-   `verify` (every scenario or gate green, the change sound), `submit`
+   (build it test-first; every executable criterion has failing evidence
+   before its code or documentation change, `contract-after-code`
+   forbidden), `verify` (every criterion evidenced, the change sound),
+   `submit`
    (deliver the change for review) — opening
    `runa-mcp` in session mode for the work-unit and, at each station,
    reading its context, doing the work, producing its artifact, advancing.
@@ -174,7 +176,7 @@ begins — the dose is proportional.
 ## Operating Principles
 
 - **The contract is the spine.** Every downstream artifact traces to the
-  behavior items named here. Vague scenarios or gates at entry become
+  criteria declared here by `criterion_id`. Vague criteria at entry become
   unanchored work at every later stage.
 - **Plan from the work-unit graph, not from memory.** Sessions end and
   context windows close; the work-unit graph and the artifact store are the
@@ -191,7 +193,7 @@ begins — the dose is proportional.
 - `contract-after-code`: deferring contract authoring to implementation —
   the defining failure this protocol exists to prevent. Done gets defined by
   what was built instead of the work-unit's intent.
-- `scope-creep`: behavior items that exceed the work-unit's boundaries. The
+- `scope-creep`: criteria that exceed the work-unit's boundaries. The
   contract covers the acceptance criteria — nearby work belongs in other
   work-units.
 - `criteria-parroting`: copying acceptance criteria verbatim as scenarios

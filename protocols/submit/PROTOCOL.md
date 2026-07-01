@@ -5,8 +5,8 @@ description: >-
   completion evidence exists, and re-fires from change-needs-revision;
   preserves immutable proposal version history.
 metadata:
-  version: "3.2.0"
-  updated: "2026-06-20"
+  version: "3.3.0"
+  updated: "2026-07-02"
 ---
 
 # Submit
@@ -18,9 +18,9 @@ findings.
 
 Submit packages the multidimensional contract for review. It consults the
 `contract` skill (`skills/contract/SKILL.md`) for the lifecycle and carries
-the performed validation from `verify`: the behavior dimension in the
-deliverable's behavior form, the documentation dimension's audience-outcome
-review, and the code-quality dimension's projected-universal findings.
+the performed validation from `verify`: one result per contract criterion
+in `completion-evidence.results[]`, the same uniform evidence surface for
+the behavior, documentation, and code-quality dimensions alike.
 
 The protocol is not a forge operation. It names the methodology obligation:
 collect the verified change, deliver it through the configured mechanics,
@@ -46,13 +46,13 @@ carries the connector-backed reference downstream.
 
 3. **Prepare the proposal.** Fix the branch, commit, and base that carry the
    change, and write a summary that names the declared dimensions the change
-   ships. The summary is the proposal's public claim; it derives from the
-   completion evidence, not from memory: behavior coverage in scenario or
-   gate form, documentation outcomes from the audience-outcome review, and
-   code-quality findings from the projected-universals audit. The
-   `contract` skill supplies the lifecycle and the behavior form; this
-   protocol packages the validation-performed, it does not restate the
-   lifecycle.
+   ships. The summary is the proposal's public claim; it derives from
+   `completion-evidence.results[]`, not from memory: per-criterion behavior
+   coverage, documentation outcomes from the documentation criteria's
+   recorded findings, and code-quality findings from the code-quality
+   criteria's recorded findings. The `contract` skill supplies the
+   lifecycle; this protocol packages the validation-performed, it does not
+   restate the lifecycle.
 
 4. **Deliver through the connector capability.** Initial delivery invokes the
    canonical `deliver-change-proposal` operation. Revision delivery prepares
@@ -62,13 +62,11 @@ carries the connector-backed reference downstream.
 
 5. **Deliver the `change-proposal`.**
    Invoke the `change-proposal` MCP tool through the existing
-   `change-proposal` schema. For a runtime-behavior work-unit, the proposal
-   summary carries scenario-keyed coverage. For a documentation-deliverable
-   work-unit, the same existing artifact carries gate-form behavior as
-   committed evidence in the summary and proposal context: structural,
-   coherence, and conformance coverage for the behavior dimension,
-   documentation outcomes, and code-quality findings. The object below is
-   MCP tool input, not artifact body. `instance_id` is a tool parameter that
+   `change-proposal` schema. The proposal summary carries per-criterion
+   coverage derived from `completion-evidence.results[]` for every declared
+   dimension — behavior, documentation, and code quality in the same form —
+   as committed evidence in the summary and proposal context. The object
+   below is MCP tool input, not artifact body. `instance_id` is a tool parameter that
    names the artifact instance; it is extracted before validating artifact
    content, becomes the workspace filename, and must not appear in the
    artifact body. Runa injects `work_unit` from session context; the agent
@@ -127,7 +125,7 @@ Review re-runs through its `on_change` trigger on the new version.
 - `schemas/change-proposal.schema.json` defines the proposal artifact.
 - `protocols/review/PROTOCOL.md` consumes the proposal and produces exactly
   one typed review disposition.
-- `contract` (skill): owns the lifecycle and behavior forms this protocol
-  consults while packaging validation-performed.
+- `contract` (skill): owns the lifecycle this protocol consults while
+  packaging validation-performed.
 - `verify` (protocol): supplies the completion evidence this gate requires
   across behavior, documentation, and code quality.

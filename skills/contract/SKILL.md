@@ -11,8 +11,8 @@ description: >-
   or completion claims must stay traceable to a defined contract instead of
   drifting toward implementation convenience.
 metadata:
-  version: "2.6.0"
-  updated: "2026-07-01"
+  version: "2.7.0"
+  updated: "2026-07-02"
 ---
 
 # Contract
@@ -104,14 +104,21 @@ teeth are not situational: coverage is never zero for a dimension the change
 has, and silent dimensions are not valid. The only honest form of less is fewer,
 simpler teeth-bearing criteria, never a dimension present with no criterion
 to fail. The lifecycle is inputs to validation -> validation defined ->
-validation performed, with validation carried through `implement` and
-recorded at `land`.
+validation performed, and it is one lifecycle for every dimension: inputs
+become validation defined as typed criteria in `contract.criteria[]` at
+`take`; validation is carried through `implement` by `criterion_id` — the
+plan's mappings and the per-cycle evidence key off it; `verify` produces
+validation performed as one result per criterion in
+`completion-evidence.results[]`, the evidence shaped by each criterion's
+`check_kind`; and `land` records the result from that uniform evidence
+surface. What varies per dimension is only its inputs and its usual
+checking apparatus:
 
-| Dimension | Lifecycle |
-|---|---|
-| **Behavior** | Work-unit acceptance criteria are inputs to validation; `take` produces validation defined as executable scenarios or documentation-deliverable gates; validation is carried through `implement`; `verify` produces validation performed as scenario or gate coverage; the result is recorded at `land`. |
-| **Documentation** | `work-unit-craft`/`decompose` recipient outcomes are inputs to validation; `take` produces validation defined as documentation outcomes; validation is carried through `implement`; `verify` produces validation performed as an audience-outcome review; the result is recorded at `land`. |
-| **Code quality** | `work-unit-craft`/`decompose` corpus pointers and stressed universals are inputs to validation; `take` produces validation defined as reviewer-checkable projections; validation is carried through `implement`; `verify` produces validation performed as diff loci or findings; the result is recorded at `land`. |
+| Dimension | Inputs to validation | Usual checking apparatus |
+|---|---|---|
+| **Behavior** | Work-unit acceptance criteria | Executable scenarios or documentation-deliverable gates, entering as `check_kind: "executable"` criteria |
+| **Documentation** | `work-unit-craft`/`decompose` recipient outcomes | Audience-outcome findings, entering as `check_kind: "attested"` criteria |
+| **Code quality** | `work-unit-craft`/`decompose` corpus pointers and stressed universals | Reviewer-checkable projections performed as diff loci or findings, entering as `check_kind: "attested"` criteria |
 
 ### Stage Handoffs
 
@@ -119,16 +126,19 @@ The stage boundary is part of the contract lifecycle:
 
 - `work-unit-craft`/`decompose` produces inputs to validation: the work-unit criteria,
   recipient outcomes, and corpus pointers each dimension must consider.
-- `take` consumes inputs to validation and produces validation defined: the
-  contract plus the documentation and code-quality outcomes the
-  change puts under verification.
+- `take` consumes inputs to validation and produces validation defined:
+  typed criteria in `contract.criteria[]` — every dimension in the same
+  surface.
+- `plan` consumes validation defined and maps every criterion to
+  implementation steps by `criterion_id`.
 - `implement` consumes validation defined and keeps the change traced to it:
-  tests, docs, and code-quality decisions name the scenario or dimension
-  they advance.
+  tests, docs, and code-quality decisions name the criterion they advance
+  by `criterion_id`.
 - `verify` consumes validation defined and produces validation performed:
-  scenario results, documentation review, and code-quality findings.
-- `land` consumes validation performed and records what shipped, including
-  explicit gaps if any remain.
+  one result per criterion in `completion-evidence.results[]`, shaped by
+  each criterion's `check_kind`.
+- `land` consumes validation performed and records what shipped from the
+  uniform evidence surface, including explicit gaps if any remain.
 
 ### Density and Coverage
 

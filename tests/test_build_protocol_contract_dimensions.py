@@ -39,102 +39,88 @@ def section(body: str, heading: str) -> str:
     return match.group("section")
 
 
-def lifecycle_rows(body: str) -> dict[str, str]:
-    rows = {}
-    for line in body.splitlines():
-        match = re.match(
-            r"\| \*\*(?P<dimension>Behavior|Documentation|Code quality)\*\* \| (?P<row>.+) \|$",
-            line,
-        )
-        if match:
-            rows[match.group("dimension")] = match.group("row")
-    return rows
-
-
 class BuildProtocolContractDimensionTests(unittest.TestCase):
-    def test_plan_maps_behavior_in_deliverable_form_and_serves_all_dimensions(self) -> None:
+    def test_plan_maps_every_contract_criterion_across_all_dimensions(self) -> None:
         body = normalized(read(PLAN_PROTOCOL))
 
         for expected in [
             "multidimensional contract",
             "behavior dimension",
-            "documentation dimension",
-            "code-quality dimension",
-            "runtime-behavior work-unit",
-            "executable scenarios",
-            "documentation-deliverable work-unit",
-            "structural, coherence, and conformance gates",
+            "documentation",
+            "code-quality",
+            "every contract criterion",
+            "`criterion_id`",
+            "`contract.criteria[]`",
             "`contract` skill",
+            "One mapping shape serves every dimension",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, body)
 
-    def test_implement_drives_behavior_items_check_first_in_deliverable_form(self) -> None:
+    def test_implement_drives_executable_criteria_check_first(self) -> None:
         cycle = normalized(section(read(IMPLEMENT_PROTOCOL), "Steps"))
 
         for expected in [
-            "behavior item",
-            "runtime-behavior work-unit",
+            "contract criterion",
+            "executable criterion",
+            "attested criterion",
             "scenario test",
-            "documentation-deliverable work-unit",
-            "structural, coherence, and conformance gate",
+            "structural, coherence,",
+            "conformance gate",
             "watch the check fail",
-            "all three declared dimensions",
+            "every declared dimension",
             "`contract` skill",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, cycle)
 
     def test_build_protocols_consult_contract_lifecycle_without_reencoding_it(self) -> None:
-        lifecycle_table = re.compile(
-            r"\| \*\*(?:Behavior|Documentation|Code quality)\*\* \| .*?"
-            r"(?:inputs to validation|validation defined|validation performed)",
-            flags=re.IGNORECASE,
+        dimension_row = re.compile(
+            r"\| \*\*(?:Behavior|Documentation|Code quality)\*\* \|",
         )
 
         for path in [PLAN_PROTOCOL, IMPLEMENT_PROTOCOL]:
             body = read(path)
             with self.subTest(path=path.relative_to(ROOT)):
-                self.assertIn("`contract` skill", body)
+                self.assertIn("`contract` skill", normalized(body))
                 self.assertIn("`skills/contract/SKILL.md`", body)
-                self.assertIn("behavior lifecycle", body)
-                self.assertIsNone(lifecycle_table.search(body))
+                self.assertIn("contract lifecycle", body)
+                self.assertIsNone(dimension_row.search(body))
 
-    def test_named_behavior_forms_agree_with_contract_skill_lifecycle(self) -> None:
-        behavior_row = lifecycle_rows(read(CONTRACT_SKILL))["Behavior"]
-        combined = normalized(read(PLAN_PROTOCOL) + "\n" + read(IMPLEMENT_PROTOCOL))
+    def test_named_apparatus_agrees_with_contract_skill(self) -> None:
+        skill_body = normalized(read(CONTRACT_SKILL)).lower()
+        combined = normalized(read(PLAN_PROTOCOL) + "\n" + read(IMPLEMENT_PROTOCOL)).lower()
 
         for expected in [
-            "executable scenarios",
-            "documentation-deliverable gates",
+            "executable scenario",
+            "conformance gate",
         ]:
             with self.subTest(expected=expected):
-                self.assertIn(expected, behavior_row)
+                self.assertIn(expected, skill_body)
                 self.assertIn(expected, combined)
 
-    def test_gate_form_runtime_artifact_delivery_uses_existing_mcp_tools(self) -> None:
+    def test_artifact_delivery_is_criterion_keyed_for_every_dimension(self) -> None:
         plan_delivery = normalized(step(read(PLAN_PROTOCOL), 5))
         implement_delivery = normalized(section(read(IMPLEMENT_PROTOCOL), "Deliver `test-evidence`"))
 
-        for delivery, artifact in [
-            (plan_delivery, "`implementation-plan` MCP tool"),
-            (implement_delivery, "`test-evidence` MCP tool"),
+        for delivery, artifact, mapping_key in [
+            (plan_delivery, "`implementation-plan` MCP tool", "criterion_mapping"),
+            (implement_delivery, "`test-evidence` MCP tool", "evidence"),
         ]:
             with self.subTest(artifact=artifact):
                 for expected in [
-                    "runtime-behavior work-unit",
-                    "scenario-keyed",
                     artifact,
-                    "documentation-deliverable work-unit",
-                    "gate-form",
-                    "behavior_form",
-                    "gate",
-                    "structural, coherence, and conformance",
+                    mapping_key,
+                    "criterion_id",
+                    "every dimension",
                 ]:
                     self.assertIn(expected, delivery)
                 self.assertNotIn("#454", delivery)
                 self.assertNotIn("deferred", delivery)
-                self.assertNotRegex(delivery, r"documentation-deliverable work-unit[^.]+scenario")
+                self.assertNotIn("behavior_form", delivery)
+
+        self.assertIn("one mapping per contract criterion", plan_delivery)
+        self.assertIn("each executable criterion's cycle", implement_delivery)
 
     def test_scenario_only_corruption_modes_and_cross_references_are_generalized(self) -> None:
         plan_body = read(PLAN_PROTOCOL)
@@ -145,32 +131,33 @@ class BuildProtocolContractDimensionTests(unittest.TestCase):
         cross_references = normalized(
             section(plan_body, "Cross-References") + "\n" + section(implement_body, "Cross-References")
         )
+        combined = corruption_modes + " " + cross_references
 
         for expected in [
-            "behavior item",
-            "deliverable's behavior form",
-            "scenario or gate",
-            "structural, coherence, and conformance gate",
+            "contract criterion",
+            "contract's criteria",
+            "criterion ordering",
         ]:
             with self.subTest(expected=expected):
-                self.assertIn(expected, corruption_modes + " " + cross_references)
+                self.assertIn(expected, combined)
 
         scenario_only_phrases = [
             r"map to no scenario",
             r"from named scenarios",
             r"each RED test corresponds to a named scenario",
             r"scenario ordering this protocol executes",
+            r"deliverable's behavior form",
         ]
         for phrase in scenario_only_phrases:
             with self.subTest(phrase=phrase):
-                self.assertNotRegex(corruption_modes + " " + cross_references, phrase)
+                self.assertNotRegex(combined, phrase)
 
     def test_reckon_invocation_iron_law_and_versions_survive(self) -> None:
         plan_body = read(PLAN_PROTOCOL)
         implement_body = read(IMPLEMENT_PROTOCOL)
 
-        self.assertIn("version: \"2.4.0\"", plan_body)
-        self.assertIn("version: \"2.3.0\"", implement_body)
+        self.assertIn("version: \"2.5.0\"", plan_body)
+        self.assertIn("version: \"2.4.0\"", implement_body)
         self.assertIn("the reckon skill is the move", plan_body)
         self.assertIn("the reckon skill is the move", implement_body)
         self.assertIn("NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST", implement_body)

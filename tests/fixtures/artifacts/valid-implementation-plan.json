@@ -1,6 +1,5 @@
 {
-  "work_unit": "work-unit-178-test-fixtures",
-  "behavior_form": "scenario",
+  "work_unit": "work-unit-492-contract-machine",
   "summary": "Add a JSON Schema validation middleware to the ingestion endpoint that checks records against the expected schema before forwarding to the pipeline",
   "design_decisions": [
     {
@@ -15,23 +14,28 @@
   "affected_files": [
     "src/ingestion/handler.py",
     "src/ingestion/validator.py",
-    "tests/test_ingestion.py"
+    "tests/test_ingestion.py",
+    "docs/api-reference.md"
   ],
-  "behavior_mapping": [
+  "criterion_mapping": [
     {
-      "scenario": "reject-missing-required-field",
+      "criterion_id": "behavior-api-validates-records",
       "steps": [
         "Extract record from request body",
         "Run JSON Schema validation",
-        "Return 400 with validation error details"
+        "Forward valid records to the processing pipeline unchanged"
       ]
     },
     {
-      "scenario": "pass-valid-record",
+      "criterion_id": "documentation-api-reference",
       "steps": [
-        "Extract record from request body",
-        "Run JSON Schema validation",
-        "Forward record to processing pipeline"
+        "Describe accepted records and validation failures in the API reference"
+      ]
+    },
+    {
+      "criterion_id": "code-quality-single-validation-path",
+      "steps": [
+        "Route the endpoint through the shared validator path"
       ]
     }
   ]
