@@ -119,7 +119,7 @@ test-evidence({
   instance_id: "<slug>",
   behavior_form: "scenario",
   evidence: [{
-    scenario: "<scenario name from behavior-contract>",
+    scenario: "<scenario name from contract>",
     result: "pass",
     command: "<verification command>",
     output_summary: "<proof the test ran>"
@@ -134,7 +134,7 @@ test-evidence({
   instance_id: "<slug>",
   behavior_form: "gate",
   evidence: [{
-    name: "<gate name from behavior-contract>",
+    name: "<gate name from contract>",
     criterion: "<acceptance criterion this gate covers>",
     category: "structural" | "coherence" | "conformance",
     result: "pass",

@@ -2,336 +2,116 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/completion-evidence.schema.json",
   "title": "Completion Evidence",
-  "description": "Validates the content of a completion-evidence artifact. Reports coverage at the acceptance-criterion level by joining work-unit criteria, behavior-contract entries, and test results, and records the documentation impact of the change.",
+  "description": "Validates the content of a completion-evidence artifact. Records performed evidence for every contract criterion in one dimension-agnostic result shape.",
   "type": "object",
-  "required": ["work_unit", "behavior_form", "criterion_coverage", "documentation"],
+  "required": ["work_unit", "results", "documentation"],
   "additionalProperties": false,
   "properties": {
     "work_unit": {
       "type": "string",
-      "description": "Common envelope — threads to work unit.",
+      "description": "Common envelope - threads to work unit.",
       "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
     },
-    "behavior_form": {
-      "type": "string",
-      "description": "Behavior form this completion evidence carries forward.",
-      "enum": ["scenario", "gate"]
-    },
-    "criterion_coverage": {
+    "results": {
       "type": "array",
-      "description": "Per-criterion coverage status.",
-      "minItems": 1
+      "description": "Per-contract-criterion evidence results.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["criterion_id", "result", "evidence"],
+        "additionalProperties": false,
+        "properties": {
+          "criterion_id": {
+            "type": "string",
+            "description": "Criterion id from the contract artifact.",
+            "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
+          },
+          "result": {
+            "type": "string",
+            "description": "Observed criterion result.",
+            "enum": ["pass", "fail"]
+          },
+          "evidence": {
+            "type": "object",
+            "description": "Performed evidence. Executable criteria use run or artifact evidence; attested criteria use reviewer attestation.",
+            "required": ["summary"],
+            "additionalProperties": false,
+            "anyOf": [
+              { "required": ["run"] },
+              { "required": ["artifact"] },
+              { "required": ["attestation"] }
+            ],
+            "properties": {
+              "summary": {
+                "type": "string",
+                "description": "Concise evidence summary.",
+                "minLength": 1
+              },
+              "run": {
+                "type": "object",
+                "description": "Executable run evidence.",
+                "required": ["command", "result", "output_summary"],
+                "additionalProperties": false,
+                "properties": {
+                  "command": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "result": {
+                    "type": "string",
+                    "enum": ["pass", "fail"]
+                  },
+                  "output_summary": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "artifact": {
+                "type": "object",
+                "description": "Artifact evidence produced or inspected by an executable check.",
+                "required": ["path", "description"],
+                "additionalProperties": false,
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "attestation": {
+                "type": "object",
+                "description": "Reviewer attestation evidence.",
+                "required": ["reviewer", "finding"],
+                "additionalProperties": false,
+                "properties": {
+                  "reviewer": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "finding": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "documentation": {
-      "$ref": "#/$defs/documentation-impact"
-    }
-  },
-  "if": {
-    "properties": {
-      "behavior_form": {
-        "const": "scenario"
-      }
-    },
-    "required": ["behavior_form"]
-  },
-  "then": {
-    "properties": {
-      "criterion_coverage": {
-        "items": {
-          "$ref": "#/$defs/scenario-coverage-entry"
-        }
-      }
-    }
-  },
-  "else": {
-    "properties": {
-      "criterion_coverage": {
-        "items": {
-          "$ref": "#/$defs/gate-coverage-entry"
-        }
-      }
-    }
-  },
-  "$defs": {
-    "scenario-coverage-entry": {
       "type": "object",
-      "description": "Coverage status for a single acceptance criterion.",
-      "required": ["criterion", "status"],
-      "additionalProperties": false,
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "enum": ["covered", "partial"]
-              }
-            },
-            "required": ["status"]
-          },
-          "then": {
-            "required": ["scenarios"],
-            "properties": {
-              "scenarios": {
-                "minItems": 1
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "covered"
-              }
-            },
-            "required": ["status"]
-          },
-          "then": {
-            "properties": {
-              "failures": {
-                "maxItems": 0
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "partial"
-              }
-            },
-            "required": ["status"]
-          },
-          "then": {
-            "required": ["failures"],
-            "properties": {
-              "failures": {
-                "minItems": 1
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "uncovered"
-              }
-            },
-            "required": ["status"]
-          },
-          "then": {
-            "properties": {
-              "scenarios": {
-                "maxItems": 0
-              },
-              "failures": {
-                "maxItems": 0
-              }
-            }
-          }
-        }
-      ],
-      "properties": {
-        "criterion": {
-          "type": "string",
-          "description": "Acceptance criterion from the work unit.",
-          "minLength": 1
-        },
-        "status": {
-          "type": "string",
-          "description": "Coverage status.",
-          "enum": ["covered", "partial", "uncovered"]
-        },
-        "scenarios": {
-          "type": "array",
-          "description": "Scenario names that cover this criterion.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "failures": {
-          "type": "array",
-          "description": "Scenario names that failed for this criterion.",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "gate-coverage-entry": {
-      "type": "object",
-      "description": "Gate coverage status for a single acceptance criterion.",
-      "required": ["criterion", "status"],
-      "additionalProperties": false,
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "enum": ["covered", "partial"]
-              }
-            },
-            "required": ["status"]
-          },
-          "then": {
-            "required": ["gates"],
-            "properties": {
-              "gates": {
-                "minItems": 1
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "covered"
-              }
-            },
-            "required": ["status"]
-          },
-          "then": {
-            "properties": {
-              "gates": {
-                "items": {
-                  "properties": {
-                    "result": {
-                      "const": "pass"
-                    }
-                  },
-                  "required": ["result"]
-                }
-              },
-              "failures": {
-                "maxItems": 0
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "partial"
-              }
-            },
-            "required": ["status"]
-          },
-          "then": {
-            "anyOf": [
-              {
-                "properties": {
-                  "gates": {
-                    "contains": {
-                      "properties": {
-                        "result": {
-                          "const": "fail"
-                        }
-                      },
-                      "required": ["result"]
-                    }
-                  }
-                }
-              },
-              {
-                "required": ["failures"],
-                "properties": {
-                  "failures": {
-                    "minItems": 1
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "uncovered"
-              }
-            },
-            "required": ["status"]
-          },
-          "then": {
-            "properties": {
-              "gates": {
-                "maxItems": 0
-              },
-              "failures": {
-                "maxItems": 0
-              }
-            }
-          }
-        }
-      ],
-      "properties": {
-        "criterion": {
-          "type": "string",
-          "description": "Acceptance criterion from the work unit.",
-          "minLength": 1
-        },
-        "status": {
-          "type": "string",
-          "description": "Coverage status.",
-          "enum": ["covered", "partial", "uncovered"]
-        },
-        "gates": {
-          "type": "array",
-          "description": "Gates that cover this criterion.",
-          "items": {
-            "$ref": "#/$defs/gate-result"
-          }
-        },
-        "failures": {
-          "type": "array",
-          "description": "Gate names that failed for this criterion.",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "gate-result": {
-      "type": "object",
-      "description": "A gate result included in criterion coverage.",
-      "required": ["name", "criterion", "category", "result"],
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Gate name.",
-          "minLength": 1
-        },
-        "criterion": {
-          "type": "string",
-          "description": "Acceptance criterion this gate covers.",
-          "minLength": 1
-        },
-        "category": {
-          "type": "string",
-          "description": "Gate category.",
-          "enum": ["structural", "coherence", "conformance"]
-        },
-        "result": {
-          "type": "string",
-          "description": "Gate result.",
-          "enum": ["pass", "fail"]
-        }
-      }
-    },
-    "documentation-impact": {
-      "type": "object",
-      "description": "Documentation impact of the change: what was updated, what was reviewed and confirmed accurate, and what deeper work was filed as follow-up.",
+      "description": "Documentation impact of the completed change.",
       "required": ["updated", "verified_accurate", "follow_up_work_units"],
       "additionalProperties": false,
       "properties": {
         "updated": {
           "type": "array",
-          "description": "Documentation files updated in this change. Empty if none.",
           "items": {
             "type": "string",
             "minLength": 1
@@ -339,7 +119,6 @@
         },
         "verified_accurate": {
           "type": "array",
-          "description": "Documentation reviewed and confirmed accurate without edits. Empty if none.",
           "items": {
             "type": "string",
             "minLength": 1
@@ -347,7 +126,6 @@
         },
         "follow_up_work_units": {
           "type": "array",
-          "description": "Work-units filed for documentation follow-up that exceeds this change. Empty if none.",
           "items": {
             "type": "string",
             "minLength": 1

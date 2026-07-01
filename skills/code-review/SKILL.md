@@ -14,7 +14,7 @@ metadata:
 
 Review establishes whether a proposed change is safe to advance. It is not a
 style pass and not a forge operation. The reviewer evaluates the change against
-the work unit, behavior contract, implementation plan, and verification
+the work unit, contract, implementation plan, and verification
 evidence, then classifies findings as blocking or non-blocking.
 
 ## Review Focus

@@ -127,7 +127,7 @@ class MethodologyFixture:
             """,
         )
         self.write(
-            "schemas/behavior-contract.schema.json",
+            "schemas/contract.schema.json",
             """
             {
               "type": "object",
@@ -149,7 +149,7 @@ class MethodologyFixture:
             name = "work-unit"
 
             [[artifact_types]]
-            name = "behavior-contract"
+            name = "contract"
 
             [[mechanics]]
             name = "read-artifact"
@@ -157,7 +157,7 @@ class MethodologyFixture:
             [[protocols]]
             name = "take"
             requires = ["work-unit"]
-            produces = ["behavior-contract"]
+            produces = ["contract"]
             scoped = true
             trigger = { type = "on_artifact", name = "work-unit" }
             """,
@@ -320,7 +320,7 @@ class SelfInstallTests(unittest.TestCase):
             name = "work-unit"
 
             [[artifact_types]]
-            name = "behavior-contract"
+            name = "contract"
 
             [[artifact_types]]
             name = "research-record"
@@ -329,21 +329,21 @@ class SelfInstallTests(unittest.TestCase):
             name = "read-artifact"
 
             [[outcome_types]]
-            name = "behavior-contract"
+            name = "contract"
 
             [[protocols]]
             name = "take"
             requires = ["work-unit"]
-            produces = ["behavior-contract"]
+            produces = ["contract"]
             scoped = true
             trigger = { type = "on_artifact", name = "work-unit" }
 
             [[protocols]]
             name = "plan"
-            requires = ["behavior-contract"]
+            requires = ["contract"]
             produces = ["research-record"]
             scoped = true
-            trigger = { type = "on_artifact", name = "behavior-contract" }
+            trigger = { type = "on_artifact", name = "contract" }
             """,
         )
         fixture.commit("add declared runtime entries")
@@ -579,13 +579,13 @@ class SelfInstallTests(unittest.TestCase):
 
     def test_missing_manifest_declared_schema_fails_before_target_mutation(self) -> None:
         fixture = self.add_fixture("missing-declared-schema")
-        fixture.remove("schemas/behavior-contract.schema.json")
+        fixture.remove("schemas/contract.schema.json")
         fixture.commit("drop declared schema")
         install = InstallRun(self, fixture.root)
 
         result = install.run_installer("install")
 
-        assert_failure_contains(self, result, "schemas/behavior-contract.schema.json")
+        assert_failure_contains(self, result, "schemas/contract.schema.json")
         for surface in [".claude", ".agents", ".groundwork"]:
             self.assertFalse((install.home / surface).exists(), f"{surface} must be untouched")
 

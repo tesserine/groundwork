@@ -48,7 +48,7 @@ Audience profiles:
   internals knowledge.
 - **Contributor**: needs architecture understanding and dev setup. Assumes
   programming competence but no project-specific knowledge.
-- **API consumer**: needs behavior contracts and integration guidance.
+- **API consumer**: needs contracts and integration guidance.
   Assumes domain competence.
 - **AI agent**: needs explicit file paths, concrete examples, and
   constraint-first organization. Assumes no persistent memory across

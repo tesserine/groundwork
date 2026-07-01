@@ -1,7 +1,7 @@
 name = "submit"
 purpose = "Deliver an initial or revised change proposal for review."
 session_role = "submission"
-preconditions = ["completion-evidence and behavior-contract exist"]
+preconditions = ["completion-evidence and contract exist"]
 start_node = "resolve-submission-round"
 failure_modes = [
   "no change proposal can be delivered",

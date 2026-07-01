@@ -51,34 +51,34 @@ def lifecycle_rows(body: str) -> dict[str, str]:
 
 
 class VerifyProtocolGateCoverageTests(unittest.TestCase):
-    def test_primary_coverage_assessment_reports_gate_coverage_for_documentation_deliverables(self) -> None:
+    def test_primary_coverage_assessment_reports_criterion_results(self) -> None:
         coverage = normalized(step(read(VERIFY_PROTOCOL), 3)).lower()
 
         for expected in [
-            "documentation-deliverable work-unit",
-            "gate coverage",
-            "structural",
-            "coherence",
-            "conformance",
-            "acceptance criteria",
+            "contract criteria",
+            "performed results",
+            "`contract.criteria[].id`",
+            "`completion-evidence.results[]",
+            "criterion_id",
+            "check_kind",
             "results",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, coverage)
 
-    def test_behavior_coverage_is_conditional_by_deliverable_type(self) -> None:
+    def test_gate_identification_consumes_contract_criteria(self) -> None:
         body = normalized(step(read(VERIFY_PROTOCOL), 1) + step(read(VERIFY_PROTOCOL), 3)).lower()
 
         for expected in [
-            "runtime-behavior work-unit",
-            "scenario coverage",
-            "documentation-deliverable work-unit",
-            "gate coverage",
-            "`contract` skill",
-            "behavior lifecycle",
+            "contract.criteria[]",
+            "criterion",
+            "check_kind",
+            "run or artifact evidence",
+            "reviewer attestation",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, body)
+        self.assertIn("do not derive scenario or gate lists", body)
 
     def test_documentation_and_code_quality_reviews_remain_present(self) -> None:
         review = normalized(step(read(VERIFY_PROTOCOL), 4))
@@ -96,12 +96,12 @@ class VerifyProtocolGateCoverageTests(unittest.TestCase):
                 self.assertIn(expected, review)
 
     def test_verify_consults_contract_lifecycle_without_reencoding_it(self) -> None:
-        body = read(VERIFY_PROTOCOL)
+        body = read(VERIFY_PROTOCOL).lower()
 
         for expected in [
-            "`contract` skill",
-            "behavior lifecycle",
-            "`skills/contract/SKILL.md`",
+            "`contract` (skill)",
+            "contract criteria",
+            "single coverage source",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, body)
@@ -113,37 +113,34 @@ class VerifyProtocolGateCoverageTests(unittest.TestCase):
         )
         self.assertIsNone(lifecycle_table.search(body))
 
-    def test_gate_keyed_completion_evidence_runtime_delivery_uses_existing_mcp_tool(self) -> None:
+    def test_completion_evidence_delivery_records_per_criterion_results(self) -> None:
         delivery = normalized(step(read(VERIFY_PROTOCOL), 5))
 
         for expected in [
-            "runtime-behavior work-unit",
-            "scenario-keyed",
             "`completion-evidence` MCP tool",
-            "documentation-deliverable work-unit",
-            "gate coverage",
-            "behavior_form",
-            "gate",
-            "structural, coherence, and conformance",
+            "one result per contract criterion",
+            "results",
+            "criterion_id",
+            "run",
+            "attestation",
+            "reviewer",
+            "bare pass is not evidence",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, delivery)
 
         self.assertNotIn("#454", delivery)
         self.assertNotIn("deferred", delivery)
-        self.assertNotRegex(delivery, r"documentation-deliverable work-unit[^.]+scenarios")
+        self.assertNotIn("criterion_coverage", delivery)
+        self.assertIn("current contract's criteria", delivery)
+        self.assertIn("rejected before persistence", delivery)
 
-    def test_named_gate_form_agrees_with_contract_skill_lifecycle(self) -> None:
+    def test_verify_no_longer_derives_old_behavior_form_coverage(self) -> None:
         verify_body = normalized(read(VERIFY_PROTOCOL))
-        behavior_row = lifecycle_rows(read(CONTRACT_SKILL))["Behavior"]
 
-        for expected in [
-            "documentation-deliverable gates",
-            "scenario or gate coverage",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, behavior_row)
-                self.assertIn(expected, verify_body)
+        self.assertNotIn("criteria × scenarios", verify_body)
+        self.assertNotIn("criteria × documentation-deliverable gates", verify_body)
+        self.assertNotIn("fabricated scenario coverage", verify_body)
 
 
 if __name__ == "__main__":

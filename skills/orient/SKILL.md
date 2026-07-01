@@ -55,11 +55,11 @@ created by `decompose`, or materialized from an existing forge ticket by the
 work-unit artifact, indistinguishable downstream, that `take` activates on.
 
 **The scoped pipeline (per work-unit).** Seven stations carry one selected
-work-unit to a landed change. The behavior contract is the spine: created
+work-unit to a landed change. The contract is the spine: created
 at entry, threaded unbroken to the close.
 
 1. **`take`** — contract-first entry: prepare the workspace, frame the
-   work, author the behavior contract that defines done.
+   work, author the contract that defines done.
 2. **`plan`** — converge on a decision-complete design that maps scenarios
    to implementation steps.
 3. **`implement`** — RED-GREEN-REFACTOR per scenario; no production code
@@ -93,7 +93,7 @@ These are not stations; they engage when their trigger fires, at any stage.
   trigger-gated discipline like the others here: first-principles reasoning on
   every generative act — planning and diagnosis included — the trigger is
   creation, not sequence position.
-- **`contract`** — the BDD discipline: authoring the behavior contract at
+- **`contract`** — the BDD discipline: authoring the contract at
   `take`, carrying traceability through every station after.
 - **`work-unit-craft`** — the discipline for authoring a work-unit's tracker
   record: outcomes over prescription, so the record does not mis-steer the

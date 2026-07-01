@@ -2,7 +2,7 @@
 name: take
 description: >-
   Contract-first entry of the scoped pipeline: receive an already-selected
-  work-unit, prepare the workspace, establish the behavior contract that
+  work-unit, prepare the workspace, establish the contract that
   defines done, and carry that contract through the pipeline to a submitted
   change. The contract produced here is the spine every downstream protocol
   carries to land; until the runtime sequences the stations autonomously,
@@ -21,8 +21,8 @@ skill (materialized from an existing forge ticket). Entry's real job is to
 stand on prepared ground and state, precisely and verifiably, what will be
 true when this work is done.
 
-That statement is the `behavior-contract`: development here is
-behavior-driven, and it begins at the door. The contract authored in this
+That statement is the `contract`: development here is
+contract-driven, and it begins at the door. The contract authored in this
 protocol threads unbroken through `plan`, `implement`, `verify`, `submit`,
 `review`, and `land` — every later stage either refines it, executes it,
 proves it, or records it.
@@ -91,59 +91,41 @@ proves it, or records it.
    consideration is equal. Silence is valid only after you can say the
    general contract is enough for that dimension.
 
-5. **Deliver the behavior spine.** Invoke the `behavior-contract` MCP tool
-   in the deliverable's behavior form. For a runtime-behavior work-unit,
-   deliver scenario form. For a documentation-deliverable work-unit, deliver
-   gate form: structural, coherence, and conformance gates that are realized
-   as committed structural, coherence, and conformance tests. The object
-   below is MCP tool input, not artifact body. The `behavior-contract` MCP
-   tool accepts both forms through `behavior_form`. `instance_id` is a tool
-   parameter that names the artifact instance; it is extracted before
-   validating artifact content, becomes the workspace filename, and must not
-   appear in the artifact body. Runa injects `work_unit` from session
-   context; the agent does not supply `work_unit`. Do not write the
-   workspace JSON file directly.
-
-   Scenario form:
+5. **Deliver the contract spine.** Invoke the `contract` MCP tool with
+   dimension-agnostic criteria. Each criterion declares the dimension it
+   serves, the work-unit acceptance criterion it refines, the statement that
+   defines done, the hollow delivery that would fail it, the `check_kind`
+   (`executable` or `attested`), and the check descriptor. The object below
+   is MCP tool input, not artifact body. `instance_id` is a tool parameter
+   that names the artifact instance; it is extracted before validating
+   artifact content, becomes the workspace filename, and must not appear in
+   the artifact body. Runa injects `work_unit` from session context; the
+   agent does not supply `work_unit`. Do not write the workspace JSON file
+   directly.
 
    ```
-   behavior-contract({
+   contract({
      instance_id: "<slug>",
-     behavior_form: "scenario",
      title: "<human-readable contract title>",
-     scenarios: [{
-       name: "<sentence-named scenario>",
-       criterion: "<acceptance criterion this refines>",
-       given: "<initial context>",
-       when: "<action or event>",
-       then: "<observable outcome>"
+     criteria: [{
+       id: "<stable criterion id>",
+       dimension: "behavior" | "documentation" | "code-quality" | "<other>",
+       acceptance_criterion: "<acceptance criterion this refines>",
+       statement: "<dimension-specific definition of done>",
+       hollow_delivery: "<plausible delivery that would fail this criterion>",
+       check_kind: "executable" | "attested",
+       check: "<check descriptor>"
      }]
    })
    ```
 
-   Gate form:
-
-   ```
-   behavior-contract({
-     instance_id: "<slug>",
-     behavior_form: "gate",
-     title: "<human-readable contract title>",
-     gates: [{
-       name: "<gate name>",
-       criterion: "<acceptance criterion this refines>",
-       category: "structural" | "coherence" | "conformance",
-       check: "<reviewer-checkable gate>"
-     }]
-   })
-   ```
-
-   Runa validates the remaining artifact body fields against the
-   behavior-contract schema, persists the artifact, and records it in the
-   artifact store. Where no runtime is present to accept the MCP tool — a
-   checkout that is not an initialized runa project — author the same
-   contract as a committed workspace artifact (the behavior-contract JSON,
-   or the work-unit issue if there is no workspace store) so the spine
-   exists and binds the test-first cycle either way.
+   Runa validates the remaining artifact body fields against the contract
+   schema, persists the artifact, and records it in the artifact store.
+   Where no runtime is present to accept the MCP tool — a checkout that is
+   not an initialized runa project — author the same contract as a committed
+   workspace artifact (the contract JSON, or the work-unit issue if there is
+   no workspace store) so the spine exists and binds the test-first cycle
+   either way.
 
 6. **Carry the contract through to a submitted change.** Take does not end
    at contract delivery. When the runtime sequences the pipeline
@@ -218,7 +200,7 @@ begins — the dose is proportional.
   loses workspace isolation and makes `submit` harder.
 - `state-lag`: the tracker not reflecting that this work-unit is in
   progress. Inaccurate state is planning debt for every other session.
-- `abandon-at-contract`: delivering the behavior contract and stopping —
+- `abandon-at-contract`: delivering the contract and stopping —
   handing the work to a runtime that is not sequencing it. The contract
   becomes a definition of done that nothing executes, and the stations are
   silently skipped. Until the runtime carries the work, take does.
@@ -248,7 +230,7 @@ begins — the dose is proportional.
   defined here, carrying it through every later stage. Its documentation and
   code-quality references own the audience-outcome checklist and projected
   universals forms.
-- `reckon` (skill): authoring the behavior contract is a generative act, so
+- `reckon` (skill): authoring the contract is a generative act, so
   reckon fires before the contract is set — grounding what "done" means in
   the navigational principles, not pattern-matching an adjacent work-unit.
   Per reckon's own trigger (every generative act, not a sequence position);

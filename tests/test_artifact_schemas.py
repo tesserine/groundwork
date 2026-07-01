@@ -4,8 +4,10 @@ from pathlib import Path
 
 from tooling.artifact_schemas import (
     ArtifactSchemaError,
+    detect_contract_evidence_defects,
     load_artifact,
     registry_from_manifest,
+    validate_contract_evidence,
     validate_artifact,
 )
 
@@ -47,128 +49,147 @@ class ArtifactSchemaTests(unittest.TestCase):
 
                 self.assertEqual({"id", "display"}, set(artifact["handle"]))
 
-    def test_behavior_artifacts_require_behavior_form(self) -> None:
-        fixtures = {
-            "behavior-contract": "valid-behavior-contract.json",
-            "implementation-plan": "valid-implementation-plan.json",
-            "test-evidence": "valid-test-evidence.json",
-            "completion-evidence": "valid-completion-evidence.json",
-        }
-
-        for artifact_type, fixture_name in fixtures.items():
-            with self.subTest(artifact_type=artifact_type):
-                artifact = load_artifact(artifact_type, self.fixture(fixture_name))
-                self.assertEqual("scenario", artifact["behavior_form"])
-                artifact.pop("behavior_form")
-
-                with self.assertRaises(ArtifactSchemaError) as context:
-                    validate_artifact(artifact_type, artifact)
-
-                self.assertIn("behavior_form", context.exception.paths)
-
-    def test_gate_form_behavior_artifacts_validate_without_scenarios(self) -> None:
-        fixtures = {
-            "behavior-contract": "valid-behavior-contract-gate.json",
-            "implementation-plan": "valid-implementation-plan-gate.json",
-            "test-evidence": "valid-test-evidence-gate.json",
-            "completion-evidence": "valid-completion-evidence-gate.json",
-        }
-
-        for artifact_type, fixture_name in fixtures.items():
-            with self.subTest(artifact_type=artifact_type):
-                artifact = load_artifact(artifact_type, self.fixture(fixture_name))
-                serialized = json.dumps(artifact)
-                self.assertEqual("gate", artifact["behavior_form"])
-                self.assertNotIn('"scenarios"', serialized)
-                self.assertNotIn('"scenario"', serialized)
-
-    def test_gate_form_behavior_artifacts_reject_scenario_shaped_payloads(self) -> None:
-        fixtures = {
-            "behavior-contract": "invalid-behavior-contract-gate-with-scenarios.json",
-            "implementation-plan": "invalid-implementation-plan-gate-with-scenario-mapping.json",
-            "test-evidence": "invalid-test-evidence-gate-with-scenario-evidence.json",
-            "completion-evidence": "invalid-completion-evidence-gate-with-scenarios.json",
-        }
-
-        for artifact_type, fixture_name in fixtures.items():
-            with self.subTest(artifact_type=artifact_type):
-                with self.assertRaises(ArtifactSchemaError):
-                    load_artifact(artifact_type, self.fixture(fixture_name))
-
-    def test_gate_form_completion_evidence_accepts_uncovered_criteria_without_gates(self) -> None:
-        artifact = load_artifact(
-            "completion-evidence",
-            self.fixture("valid-completion-evidence-gate-uncovered.json"),
+    def test_contract_criteria_require_dimension_hollow_delivery_and_check_kind(self) -> None:
+        artifact = load_artifact("contract", self.fixture("valid-contract.json"))
+        self.assertEqual(
+            {"behavior", "documentation", "code-quality"},
+            {criterion["dimension"] for criterion in artifact["criteria"]},
         )
 
-        self.assertEqual("gate", artifact["behavior_form"])
-        self.assertEqual("uncovered", artifact["criterion_coverage"][0]["status"])
-        self.assertNotIn("gates", artifact["criterion_coverage"][0])
+        for fixture_name, expected_path in [
+            ("invalid-contract.json", "criteria/0/hollow_delivery"),
+            ("invalid-contract-missing-check-kind.json", "criteria/0/check_kind"),
+            ("invalid-contract-dimension-check-kind.json", "<root>"),
+        ]:
+            with self.subTest(fixture=fixture_name):
+                with self.assertRaises(ArtifactSchemaError) as context:
+                    load_artifact("contract", self.fixture(fixture_name))
+                self.assertIn(expected_path, context.exception.paths)
 
-    def test_scenario_form_completion_evidence_accepts_uncovered_criteria_without_scenarios(self) -> None:
+    def test_contract_accepts_new_dimension_without_schema_change(self) -> None:
+        artifact = load_artifact("contract", self.fixture("valid-contract-fourth-dimension.json"))
+
+        self.assertEqual("release-notes", artifact["criteria"][0]["dimension"])
+
+    def test_completion_evidence_records_one_result_shape(self) -> None:
         artifact = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))
-        uncovered_entries = [
-            entry for entry in artifact["criterion_coverage"] if entry["status"] == "uncovered"
-        ]
 
-        self.assertGreaterEqual(len(uncovered_entries), 1)
-        self.assertNotIn("scenarios", uncovered_entries[0])
+        self.assertEqual(
+            {
+                "behavior-api-validates-records",
+                "documentation-api-reference",
+                "code-quality-single-validation-path",
+            },
+            {result["criterion_id"] for result in artifact["results"]},
+        )
+        self.assertNotIn("behavior_form", artifact)
+        self.assertNotIn("criterion_coverage", artifact)
 
-    def test_completion_evidence_requires_status_evidence_for_covered_or_partial_criteria(self) -> None:
-        fixtures = [
-            "invalid-completion-evidence-gate-covered-without-gates.json",
-            "invalid-completion-evidence-gate-partial-without-gates.json",
-            "invalid-completion-evidence-scenario-covered-without-scenarios.json",
-            "invalid-completion-evidence-scenario-partial-without-scenarios.json",
-        ]
+    def test_completion_evidence_rejects_attested_bare_pass(self) -> None:
+        with self.assertRaises(ArtifactSchemaError) as context:
+            load_artifact(
+                "completion-evidence",
+                self.fixture("invalid-completion-evidence-attested-bare-pass.json"),
+            )
 
-        for fixture_name in fixtures:
-            with self.subTest(fixture=fixture_name):
-                with self.assertRaises(ArtifactSchemaError):
-                    load_artifact("completion-evidence", self.fixture(fixture_name))
+        self.assertIn("results/0/evidence", context.exception.paths)
 
-    def test_completion_evidence_rejects_status_evidence_contradictions(self) -> None:
-        fixtures = [
-            "invalid-completion-evidence-gate-covered-with-failed-gate.json",
-            "invalid-completion-evidence-gate-covered-with-failures.json",
-            "invalid-completion-evidence-scenario-covered-with-failures.json",
-            "invalid-completion-evidence-gate-partial-without-failure-signal.json",
-            "invalid-completion-evidence-scenario-partial-without-failures.json",
-            "invalid-completion-evidence-gate-uncovered-with-gates.json",
-            "invalid-completion-evidence-gate-uncovered-with-failures.json",
-            "invalid-completion-evidence-scenario-uncovered-with-scenarios.json",
-            "invalid-completion-evidence-scenario-uncovered-with-failures.json",
-        ]
+    def test_completion_evidence_validates_against_contract_check_kind(self) -> None:
+        contract = load_artifact("contract", self.fixture("valid-contract.json"))
+        evidence = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))
 
-        for fixture_name in fixtures:
-            with self.subTest(fixture=fixture_name):
-                with self.assertRaises(ArtifactSchemaError):
-                    load_artifact("completion-evidence", self.fixture(fixture_name))
+        validate_contract_evidence(
+            contract,
+            evidence,
+            warranted_dimensions={"behavior", "documentation", "code-quality"},
+        )
 
-    def test_completion_evidence_accepts_coherent_status_evidence(self) -> None:
-        fixtures = [
-            "valid-completion-evidence.json",
-            "valid-completion-evidence-gate.json",
-            "valid-completion-evidence-gate-uncovered.json",
-        ]
+        missing = json.loads(json.dumps(evidence))
+        missing["results"] = missing["results"][:-1]
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_contract_evidence(contract, missing)
+        self.assertIn("results", context.exception.paths)
 
-        for fixture_name in fixtures:
-            with self.subTest(fixture=fixture_name):
-                artifact = load_artifact("completion-evidence", self.fixture(fixture_name))
-                partial_entries = [
-                    entry for entry in artifact["criterion_coverage"] if entry["status"] == "partial"
-                ]
-                for entry in partial_entries:
-                    if artifact["behavior_form"] == "scenario":
-                        self.assertGreaterEqual(len(entry.get("failures", [])), 1)
-                    else:
-                        has_failed_gate = any(gate["result"] == "fail" for gate in entry.get("gates", []))
-                        has_listed_failure = len(entry.get("failures", [])) >= 1
-                        self.assertTrue(has_failed_gate or has_listed_failure)
+        wrong_kind = json.loads(json.dumps(evidence))
+        wrong_kind["results"][1]["evidence"] = {
+            "summary": "A run cannot satisfy an attested criterion.",
+            "run": {
+                "command": "python -m unittest",
+                "result": "pass",
+                "output_summary": "tests passed",
+            },
+        }
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_contract_evidence(contract, wrong_kind)
+        self.assertIn("results/1/evidence", context.exception.paths)
+
+    def test_validate_artifact_rejects_completion_evidence_not_matching_contract(self) -> None:
+        contract = load_artifact("contract", self.fixture("valid-contract.json"))
+        evidence = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))
+
+        unknown = json.loads(json.dumps(evidence))
+        unknown["results"][0]["criterion_id"] = "unknown-contract-criterion"
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("completion-evidence", unknown, related_artifacts={"contract": contract})
+        self.assertIn("results/0/criterion_id", context.exception.paths)
+
+        missing = json.loads(json.dumps(evidence))
+        missing["results"] = missing["results"][:-1]
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("completion-evidence", missing, related_artifacts={"contract": contract})
+        self.assertIn("results", context.exception.paths)
+
+    def test_contract_evidence_rejects_mismatched_work_unit_even_when_criteria_overlap(self) -> None:
+        contract = load_artifact("contract", self.fixture("valid-contract.json"))
+        evidence = load_artifact(
+            "completion-evidence",
+            self.fixture("mismatched-work-unit-completion-evidence.json"),
+        )
+        self.assertEqual(
+            {criterion["id"] for criterion in contract["criteria"]},
+            {result["criterion_id"] for result in evidence["results"]},
+        )
+
+        defects = detect_contract_evidence_defects(contract, evidence)
+        self.assertIn("work_unit", {path for path, _message in defects})
+
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("completion-evidence", evidence, related_artifacts={"contract": contract})
+        self.assertIn("work_unit", context.exception.paths)
+
+    def test_completion_evidence_rejects_empty_documentation_entries(self) -> None:
+        evidence = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))
+
+        for field in ["updated", "verified_accurate", "follow_up_work_units"]:
+            with self.subTest(field=field):
+                invalid = json.loads(json.dumps(evidence))
+                invalid["documentation"][field] = [""]
+
+                with self.assertRaises(ArtifactSchemaError) as context:
+                    validate_artifact("completion-evidence", invalid)
+
+                self.assertIn(f"documentation/{field}/0", context.exception.paths)
+
+    def test_detectability_mechanism_is_dimension_agnostic(self) -> None:
+        contract = load_artifact("contract", self.fixture("valid-contract.json"))
+        evidence = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))
+
+        defects = detect_contract_evidence_defects(
+            contract,
+            evidence,
+            warranted_dimensions={"behavior", "release-notes"},
+            warranted_acceptance_criteria={
+                "code-quality": {"Validation remains centralized", "Public APIs stay typed"},
+            },
+        )
+
+        messages = " ".join(message for _path, message in defects)
+        self.assertIn("release-notes", messages)
+        self.assertIn("Public APIs stay typed", messages)
 
     def test_runtime_behavior_artifact_schemas_remain_mcp_advertisable(self) -> None:
         for schema_name in [
-            "behavior-contract.schema.json",
+            "contract.schema.json",
             "implementation-plan.schema.json",
             "test-evidence.schema.json",
             "completion-evidence.schema.json",

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/test-evidence.schema.json",
   "title": "Test Evidence",
-  "description": "Validates the content of a test-evidence artifact. Records test results against behavior-contract scenarios or gates.",
+  "description": "Validates the content of a test-evidence artifact. Records test results against contract scenarios or gates.",
   "type": "object",
   "required": ["work_unit", "behavior_form", "evidence"],
   "additionalProperties": false,
@@ -19,7 +19,7 @@
     },
     "evidence": {
       "type": "array",
-      "description": "Test result entries, each referencing a behavior-contract scenario or gate.",
+      "description": "Test result entries, each referencing a contract scenario or gate.",
       "minItems": 1
     }
   },
@@ -58,7 +58,7 @@
       "properties": {
         "scenario": {
           "type": "string",
-          "description": "The scenario name from the behavior contract.",
+          "description": "The scenario name from the contract.",
           "minLength": 1
         },
         "result": {
@@ -86,7 +86,7 @@
       "properties": {
         "name": {
           "type": "string",
-          "description": "Gate name from behavior contract.",
+          "description": "Gate name from the contract.",
           "minLength": 1
         },
         "criterion": {

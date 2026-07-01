@@ -128,25 +128,24 @@ class TakeProtocolContractDimensionTests(unittest.TestCase):
                     self.assertIn(form, rows[dimension])
                     self.assertIn(form, take_body)
 
-    def test_behavior_contract_delivery_supports_both_behavior_forms(self) -> None:
+    def test_contract_delivery_declares_dimension_criteria(self) -> None:
         delivery = normalized(step(read(TAKE_PROTOCOL), 5))
 
         for expected in [
-            "runtime-behavior work-unit",
-            "documentation-deliverable work-unit",
-            "`behavior-contract` MCP tool",
-            "behavior_form",
-            "scenario",
-            "gate",
-            "structural, coherence, and conformance",
-            "committed structural, coherence, and conformance tests",
+            "contract({",
+            "dimension-agnostic criteria",
+            "hollow_delivery",
+            "check_kind",
+            "executable",
+            "attested",
+            "criteria",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, delivery)
 
         self.assertNotIn("#454", delivery)
         self.assertNotIn("deferred", delivery)
-        self.assertNotRegex(delivery, r"documentation-deliverable work-unit[^.]+scenarios")
+        self.assertNotIn("behavior_form", delivery)
 
     def test_documentation_deliverable_gates_thread_to_carry_through_without_scenarios(self) -> None:
         carry = normalized(step(read(TAKE_PROTOCOL), 6))

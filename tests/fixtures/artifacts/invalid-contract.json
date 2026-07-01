@@ -1,0 +1,14 @@
+{
+  "work_unit": "work-unit-492-contract-machine",
+  "title": "Missing hollow delivery",
+  "criteria": [
+    {
+      "id": "behavior-api-validates-records",
+      "dimension": "behavior",
+      "acceptance_criterion": "Valid records pass through unchanged",
+      "statement": "The ingestion endpoint forwards a valid record without changing its fields.",
+      "check_kind": "executable",
+      "check": "Run the ingestion endpoint behavior test."
+    }
+  ]
+}

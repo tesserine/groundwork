@@ -1,0 +1,21 @@
+{
+  "work_unit": "work-unit-492-contract-machine",
+  "results": [
+    {
+      "criterion_id": "code-quality-single-validation-path",
+      "result": "pass",
+      "evidence": {
+        "summary": "Artifact inspection confirms the shared validator remains the single path.",
+        "artifact": {
+          "path": "src/ingestion/validation.py",
+          "description": "The endpoint uses the shared validator rather than a one-off check."
+        }
+      }
+    }
+  ],
+  "documentation": {
+    "updated": [],
+    "verified_accurate": ["schemas/completion-evidence.schema.json"],
+    "follow_up_work_units": []
+  }
+}

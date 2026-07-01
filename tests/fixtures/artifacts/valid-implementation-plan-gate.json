@@ -5,11 +5,11 @@
   "design_decisions": [
     {
       "decision": "Keep gate behavior on the existing artifact types.",
-      "rationale": "The behavior-contract surface is the single home for behavior validation across both forms."
+      "rationale": "The contract surface is the single home for behavior validation across both forms."
     }
   ],
   "affected_files": [
-    "schemas/behavior-contract.schema.json",
+    "schemas/contract.schema.json",
     "schemas/implementation-plan.schema.json",
     "schemas/test-evidence.schema.json",
     "schemas/completion-evidence.schema.json"

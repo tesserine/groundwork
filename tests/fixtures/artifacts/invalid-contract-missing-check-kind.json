@@ -1,0 +1,14 @@
+{
+  "work_unit": "work-unit-492-contract-machine",
+  "title": "Missing check kind",
+  "criteria": [
+    {
+      "id": "behavior-api-validates-records",
+      "dimension": "behavior",
+      "acceptance_criterion": "Valid records pass through unchanged",
+      "statement": "The ingestion endpoint forwards a valid record without changing its fields.",
+      "hollow_delivery": "The endpoint accepts the request but silently drops or rewrites a field.",
+      "check": "Run the ingestion endpoint behavior test."
+    }
+  ]
+}

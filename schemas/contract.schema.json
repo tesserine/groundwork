@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/contract.schema.json",
+  "title": "Contract",
+  "description": "Validates the content of a contract artifact. Defines dimension-agnostic criteria that make done executable or attested without privileging behavior as the pipeline spine.",
+  "type": "object",
+  "required": ["work_unit", "title", "criteria"],
+  "additionalProperties": false,
+  "properties": {
+    "work_unit": {
+      "type": "string",
+      "description": "Common envelope - threads to work unit.",
+      "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-readable title for the contract.",
+      "minLength": 1
+    },
+    "criteria": {
+      "type": "array",
+      "description": "Dimension-agnostic contract criteria.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "dimension",
+          "acceptance_criterion",
+          "statement",
+          "hollow_delivery",
+          "check_kind",
+          "check"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable criterion identifier used by completion evidence.",
+            "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
+          },
+          "dimension": {
+            "type": "string",
+            "description": "Open dimension name, such as behavior, documentation, or code-quality.",
+            "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
+          },
+          "acceptance_criterion": {
+            "type": "string",
+            "description": "Work-unit acceptance criterion this contract criterion refines.",
+            "minLength": 1
+          },
+          "statement": {
+            "type": "string",
+            "description": "Concrete definition of done for this dimension and criterion.",
+            "minLength": 1
+          },
+          "hollow_delivery": {
+            "type": "string",
+            "description": "A delivery that would appear plausible but fail this criterion.",
+            "minLength": 1
+          },
+          "check_kind": {
+            "type": "string",
+            "description": "How this criterion is verified.",
+            "enum": ["executable", "attested"]
+          },
+          "check": {
+            "type": "string",
+            "description": "Descriptor for the check that verifies this criterion.",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

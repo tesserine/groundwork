@@ -1,7 +1,7 @@
 name = "verify"
-purpose = "Confirm completion evidence satisfies the behavior contract."
+purpose = "Confirm completion evidence satisfies the contract."
 session_role = "verification gate"
-preconditions = ["behavior contract and test evidence exist"]
+preconditions = ["contract and test evidence exist"]
 start_node = "inspect-evidence"
 failure_modes = ["test evidence is incomplete"]
 corruption_modes = ["evidence-before-assertion loss"]

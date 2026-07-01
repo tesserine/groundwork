@@ -40,13 +40,12 @@ forge ticket (the "start on ticket #N" path). Either way take activates on a
 work-unit artifact.
 
 **The scoped pipeline** takes one work-unit and carries it through to a merged
-increment: take prepares the workspace and writes the behavior contract as
-Given/When/Then scenarios — the spine threaded through every later stage →
-plan converges on a decision-complete design → implement executes through
-RED-GREEN-REFACTOR → verify gates completion with evidence and documentation
-review → submit delivers an immutable change-proposal version → review emits
-exactly one typed disposition → land applies the approved version and closes
-the loop.
+increment: take prepares the workspace and writes the dimension-agnostic
+contract — the spine threaded through every later stage → plan converges on a
+decision-complete design → implement executes through RED-GREEN-REFACTOR →
+verify gates completion with performed evidence and documentation review →
+submit delivers an immutable change-proposal version → review emits exactly
+one typed disposition → land applies the approved version and closes the loop.
 
 Each protocol produces an artifact that the next protocol requires.
 → [`docs/architecture/connecting-structure.md`](docs/architecture/connecting-structure.md)
@@ -260,11 +259,11 @@ define interfaces and decisions, not scripts to follow.
 
 ### How work is executed
 
-**Behavior is the thread.** The behavior contract written at take — the entry —
-traces through every subsequent stage. Plans link design decisions to behavior
-scenarios. Tests verify named scenarios. Verification cites behavior-level
-evidence. Review judges against the contract. Landing records what coverage
-shipped.
+**The contract is the thread.** The contract written at take — the entry —
+traces through every subsequent stage. Plans link design decisions to declared
+criteria. Implementation produces evidence. Verification records each
+criterion result in one performed-evidence shape. Review judges against the
+contract. Landing records what shipped.
 → [`protocols/take/PROTOCOL.md`](protocols/take/PROTOCOL.md),
 [`skills/contract/SKILL.md`](skills/contract/SKILL.md)
 

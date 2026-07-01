@@ -82,6 +82,67 @@ class MaterializeTicketTests(unittest.TestCase):
             json.loads(second_result.stdout)["instance_id"],
         )
 
+    def test_materializer_preserves_wrapped_acceptance_criteria(self) -> None:
+        ticket = {
+            "handle": {"id": "ticket:wrapped-criteria", "display": "WRAPPED"},
+            "title": "Wrapped criteria",
+            "body": (
+                "A ticket with wrapped markdown list items.\n\n"
+                "## Acceptance criteria\n\n"
+                "1. A single contract surface admits criteria for any dimension. Each criterion\n"
+                "   declares dimension, acceptance criterion, statement, hollow delivery, and\n"
+                "   check descriptor.\n"
+                "2. The performed evidence surface records every criterion result in one\n"
+                "   shape.\n"
+            ),
+            "state": "open",
+        }
+
+        result = materialize(json.dumps(ticket))
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(
+            [
+                (
+                    "A single contract surface admits criteria for any dimension. Each criterion "
+                    "declares dimension, acceptance criterion, statement, hollow delivery, and "
+                    "check descriptor."
+                ),
+                "The performed evidence surface records every criterion result in one shape.",
+            ],
+            payload["artifact"]["acceptance_criteria"],
+        )
+
+    def test_materializer_excludes_trailing_prose_after_acceptance_list(self) -> None:
+        ticket = {
+            "handle": {"id": "ticket:criteria-prose", "display": "CRITERIA-PROSE"},
+            "title": "Trailing prose after criteria",
+            "body": (
+                "A ticket with prose after the criteria list.\n\n"
+                "## Acceptance criteria\n\n"
+                "- [ ] The contract payload uses criteria\n"
+                "- [ ] The workflow surfaces name the contract artifact\n"
+                "\n"
+                "This note explains migration context and is not a criterion.\n\n"
+                "## Notes\n\n"
+                "Operators should follow the current contract surface.\n"
+            ),
+            "state": "open",
+        }
+
+        result = materialize(json.dumps(ticket))
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(
+            [
+                "The contract payload uses criteria",
+                "The workflow surfaces name the contract artifact",
+            ],
+            payload["artifact"]["acceptance_criteria"],
+        )
+
     def test_materializer_accepts_valid_titles_that_do_not_slugify(self) -> None:
         ticket = {
             "handle": {"id": "ticket:stable-non-ascii-title", "display": "TRACK-I18N"},

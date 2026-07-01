@@ -29,7 +29,7 @@ The steps below keep the surrounding documentation honest against drift.
 2. **Map changes to documentation.** For each changed file:
    - README — if setup, usage, or public API is affected
    - ARCHITECTURE doc — if module boundaries, data flow, or structure changed
-   - API reference — if public signatures, types, or behavior contracts changed
+   - API reference — if public signatures, types, or contracts changed
    - Inline doc comments — if function behavior changed
    - CHANGELOG — for any user-visible or API-visible change
    - ADRs — if the change implements or reverses a recorded decision

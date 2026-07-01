@@ -45,7 +45,7 @@ emits the durable artifact plus continuity — and they share even a protocol
 domains is the loudest signal that it is core, not delivery.
 
 What differs is purely domain: the artifact types (`work-unit`,
-`behavior-contract`, `implementation-plan` vs. `brief`, `beat`, `dispatch`,
+`contract`, `implementation-plan` vs. `brief`, `beat`, `dispatch`,
 `draft`), the pipeline steps (`take → … → land` vs. `survey → … → publish`), and
 the forge mechanics.
 
