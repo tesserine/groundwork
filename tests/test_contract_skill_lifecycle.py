@@ -108,11 +108,13 @@ outside content
         body = read(CONTRACT_SKILL)
         changelog = read(CHANGELOG)
 
-        self.assertIn('version: "2.4.0"', body)
-        self.assertIn('updated: "2026-06-24"', body)
+        self.assertIn('version: "2.5.0"', body)
+        self.assertIn('updated: "2026-07-01"', body)
         self.assertEqual(1, changelog.splitlines().count("## [Unreleased]"))
         self.assertIn("**Contract disposition default** (#472)", changelog)
         self.assertIn("contract 2.3.0->2.4.0", changelog)
+        self.assertIn("**Uniform contract form** (#493)", changelog)
+        self.assertIn("contract 2.4.0->2.5.0", changelog)
 
     def test_disposition_default_is_sibling_of_teeth_principle(self) -> None:
         body = read(CONTRACT_SKILL)
@@ -125,6 +127,98 @@ outside content
         self.assertLess(teeth_index, disposition_index)
         self.assertLess(disposition_index, dimensions_index)
         self.assertNotIn("## The dimensions", body[teeth_index:disposition_index])
+
+    def test_teeth_principle_distinguishes_uniform_structure_from_checking_apparatus(self) -> None:
+        teeth = normalized(top_section(read(CONTRACT_SKILL), "The teeth principle"))
+
+        for expected in [
+            "same contract structure",
+            "same evidence obligation",
+            "checking apparatus may vary per criterion",
+            "`check_kind`",
+            "executable",
+            "attested",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, teeth)
+
+        forbidden = re.compile(
+            r"form of the check fits the dimension|"
+            r"forcing one form .* onto every dimension is the mistake|"
+            r"documentation earns them through a checklist|"
+            r"code quality earns them through corpus principles",
+            flags=re.IGNORECASE,
+        )
+        self.assertIsNone(forbidden.search(teeth))
+
+    def test_dimensions_are_first_class_citizens_of_one_machine(self) -> None:
+        dimensions = normalized(top_section(read(CONTRACT_SKILL), "The dimensions"))
+
+        for expected in [
+            "first-class symmetric citizen",
+            "one contract machine",
+            "Behavior is one dimension among N",
+            "documentation and code quality carry the identical teeth obligation",
+            "same performed-evidence obligation",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, dimensions)
+
+        forbidden = re.compile(
+            r"behavior is always present|declared as the change warrants|"
+            r"the most developed dimension|behavior is the unit of progress|"
+            r"completion is behavior coverage",
+            flags=re.IGNORECASE,
+        )
+        self.assertIsNone(forbidden.search(read(CONTRACT_SKILL)))
+
+    def test_attested_judgment_is_recorded_inside_the_uniform_evidence_surface(self) -> None:
+        body = normalized(read(CONTRACT_SKILL))
+
+        for expected in [
+            "every criterion in every dimension names the hollow delivery",
+            "attested criteria",
+            "`completion-evidence.results[]`",
+            "reviewer identity",
+            "finding",
+            "free-form reviewer prose outside the artifact is not evidence",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, body)
+
+        self.assertNotIn("reviewed, looks fine", body.lower())
+
+    def test_contract_richness_is_load_bearing(self) -> None:
+        body = normalized(read(CONTRACT_SKILL))
+        corruption_modes = normalized(top_section(read(CONTRACT_SKILL), "Corruption Modes"))
+
+        for expected in [
+            "contract richness determines product richness",
+            "thin labels",
+            "generic checklist assertions",
+            "empty pass/fail attestations",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, body)
+
+        self.assertIn("**Thin contract.**", corruption_modes)
+        self.assertIn("contract richness", corruption_modes)
+
+    def test_dimension_references_emit_typed_criteria_into_the_uniform_surface(self) -> None:
+        body = normalized(read(CONTRACT_SKILL))
+        documentation = normalized(read(ROOT / "skills" / "contract" / "references" / "documentation-contract.md"))
+        code_quality = normalized(read(ROOT / "skills" / "contract" / "references" / "code-quality-contract.md"))
+
+        for text, expected in [
+            (body, "typed criteria into the uniform surface"),
+            (documentation, "`contract.criteria[]`"),
+            (documentation, "`check_kind: \"attested\"`"),
+            (code_quality, "`contract.criteria[]`"),
+            (code_quality, "`check_kind: \"attested\"`"),
+            (code_quality, "consult, do not model"),
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, text)
 
     def test_disposition_default_defines_regenerate_as_the_review_default(self) -> None:
         disposition = normalized(top_section(read(CONTRACT_SKILL), "The disposition default"))

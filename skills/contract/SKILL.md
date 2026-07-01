@@ -11,8 +11,8 @@ description: >-
   or completion claims must stay traceable to a defined contract instead of
   drifting toward implementation convenience.
 metadata:
-  version: "2.4.0"
-  updated: "2026-06-24"
+  version: "2.5.0"
+  updated: "2026-07-01"
 ---
 
 # Contract
@@ -21,8 +21,9 @@ A contract is the executable definition of done. It is **Contract-First**
 given concrete form — declare the seam, build to it, verify against it,
 keep the declaration the single home of the seam's truth — applied not to
 one aspect of a change but to every aspect that must hold when the work
-lands. A contract has dimensions; each declares what done means for one
-aspect, in the form that gives that aspect teeth.
+lands. A contract has dimensions, but every dimension enters the same
+surface: typed criteria in one structure, performed evidence in one
+structure, and only the criterion-level checking apparatus varying.
 
 This skill is the home of the contract across its dimensions. It declares
 the lifecycle as the single home for the contract surface: work-unit
@@ -43,13 +44,17 @@ decides nothing. Of every criterion, in every dimension, ask: *could a
 stub — a canned return, an absent doc, a rename that changes nothing — pass
 this?* If yes, it is hollow; sharpen it until a hollow delivery fails.
 
-The teeth principle is universal; the **form** of the check fits the
-dimension. Behavior earns teeth through executable scenarios a stub fails.
-Documentation earns them through a checklist of audience outcomes a
-doc-less delivery fails. Code quality earns them through corpus principles
-projected onto the change, each a locus a careless change fails. Forcing
-one form — a test — onto every dimension is the mistake; the constant is
-the failing-hollow-delivery test, not the apparatus that runs it.
+The teeth principle is universal because the contract has the **same
+contract structure** and the **same evidence obligation** for every
+dimension: every criterion in every dimension names the hollow delivery
+that would fail it, declares a statement of done, selects a criterion-level
+`check_kind`, and receives one performed result in
+`completion-evidence.results[]`. The checking apparatus may vary per
+criterion: `check_kind: "executable"` uses run or artifact evidence, and
+attested criteria with `check_kind: "attested"` use reviewer attestation
+with reviewer identity and a substantive finding. Apparatus variance is not
+structural variance; free-form reviewer prose outside the artifact is not
+evidence.
 
 ## The disposition default
 
@@ -86,11 +91,14 @@ after the defect is known to be a contract defect.
 
 ## The dimensions
 
-A contract declares the dimensions the work demands — behavior is always
-present; documentation and code quality are declared as the change
-warrants, and a subset is legitimate the way a contract need not
-exercise every code path. The lifecycle is inputs to validation ->
-validation defined -> validation performed, with validation carried through
+There is one contract machine. Every dimension a change demands is a
+first-class symmetric citizen in that machine: Behavior is one dimension
+among N, documentation and code quality carry the identical teeth
+obligation, and every dimension carries the same performed-evidence
+obligation. A subset of dimensions is legitimate the way a contract need
+not exercise every code path; what is illegitimate is a dimension present
+in lighter structure. The lifecycle is inputs to validation -> validation
+defined -> validation performed, with validation carried through
 `implement` and recorded at `land`.
 
 | Dimension | Lifecycle |
@@ -127,28 +135,29 @@ documentation contract; a user-facing capability may need dense user
 documentation inputs and ordinary code-quality projection. Silence is valid
 only after the dimension was considered and the general contract is enough.
 
-- **[Behavioral dimension](#the-behavioral-dimension)** — what the system
-  does. The most developed dimension and the worked exemplar below; its
-  form is BDD.
+- **[Behavior dimension](#the-behavior-dimension)** — what the system
+  does. Its common checking apparatus is BDD scenarios or
+  documentation-deliverable gates, emitted as typed criteria into the
+  uniform surface.
 - **[Documentation dimension](references/documentation-contract.md)** —
-  what each recipient can do once the work lands. Three sub-modules — user,
-  developer, discovery — each a checklist of audience outcomes.
+  what each recipient can do once the work lands. It consults `orient`'s
+  audience taxonomy and emits typed criteria into the uniform surface.
 - **[Code-quality dimension](references/code-quality-contract.md)** — what
-  must hold of the change's internal form: the relevant principles-corpus
-  universals projected onto the diff.
+  must hold of the change's internal form. It consults the principles corpus
+  and emits typed criteria into the uniform surface.
 
 New dimensions join here as they earn their place; satisfying the teeth
 principle and the inputs-defined-performed lifecycle is what makes a
 dimension one.
 
-## The behavioral dimension
+## The behavior dimension
 
-What the system does, specified once and traced everywhere. This is the
-contract's most developed dimension and the worked example of a dimension
-with teeth — the stub test below is the behavioral instance of the teeth
-principle above. Behavior is specified once, then everything traces to it:
-plans link decisions to scenarios, tests prove named scenarios,
-verification reports scenario-level coverage, landing records what coverage
+What the system does, specified once as criteria in the same contract
+surface every other dimension uses. BDD scenarios and
+documentation-deliverable gates are the behavior dimension's usual checking
+apparatus; they are not a privileged contract structure. Plans link
+decisions to the behavior criteria, tests or gates prove the named criteria,
+verification records performed results, and landing records what evidence
 shipped.
 
 Reference: [Dan North, Introducing BDD](https://dannorth.net/introducing-bdd/).
@@ -271,15 +280,16 @@ sections fails internal coherence.
 
 ### Carrying the Contract
 
-- **Implementation maps to behavior.** Every implementation increment names
-  the scenario it advances. Each RED test corresponds to a named scenario.
-  Work that cannot be traced to a scenario is unanchored — scope creep or a
-  missing specification; resolve which before proceeding.
-- **Behavior is the unit of progress.** Execution order follows behavior
-  gaps, not code adjacency. Work advances by proving another scenario.
-- **Completion is behavior coverage.** "All tests pass" is incomplete unless
-  it names which scenarios those tests prove and which criteria those
-  scenarios cover. Report coverage, not command output.
+- **Implementation maps to criteria.** Every implementation increment names
+  the contract criterion it advances. Each RED test or gate corresponds to
+  a named criterion. Work that cannot be traced to a criterion is unanchored
+  — scope creep or a missing specification; resolve which before proceeding.
+- **Contract criteria are the unit of progress.** Execution order follows
+  criteria gaps, not code adjacency. Work advances by proving another
+  criterion.
+- **Completion is criterion evidence.** "All tests pass" is incomplete
+  unless it names which contract criteria those tests prove. Report
+  performed results, not command output.
 
 #### When an existing test fails after a change
 
@@ -302,12 +312,14 @@ maker finishes. So the documentation contract declares, per recipient, the
 outcome that recipient must reach — and is satisfied only when they can
 reach it.
 
-Its teeth are a checklist, not a test, and the teeth principle decides the
-checklist's shape: an item has teeth only if a doc-less or hollow-doc
-delivery fails it. The tell is phrasing each item as an **audience
-outcome** — what the reader can now do — not artifact existence. "A new
-user completes the primary task from the README alone" fails a doc-less
-delivery; "a README exists" passes anything.
+Its common checking apparatus is an audience-outcome review, usually
+recorded as `check_kind: "attested"` criteria in `contract.criteria[]` and
+performed as reviewer findings in `completion-evidence.results[]`. The
+teeth principle still decides each criterion's substance: an item has teeth
+only if a doc-less or hollow-doc delivery fails it. The tell is phrasing
+each item as an **audience outcome** — what the reader can now do — not
+artifact existence. "A new user completes the primary task from the README
+alone" fails a doc-less delivery; "a README exists" passes anything.
 
 Three sub-modules, one per recipient: **user**, **developer**, and
 **discovery & marketing** — the last being the reader who does not yet know
@@ -324,14 +336,15 @@ verify checks — no layer restates another.
 
 ## The code-quality dimension
 
-Behavior says what the system does; documentation says what the recipient
-can do; the code-quality dimension declares what must hold of the change's
-internal form. Its teeth come not from an invented style rulebook but from
-the **principles corpus**: the universals that bear on this change,
-projected onto the diff as reviewer-checkable items. The corpus is the one
-home of quality invariants; the dimension consults it rather than
-re-deriving a second, divergent rulebook that would drift from it (consult,
-don't model).
+The code-quality dimension declares what must hold of the change's internal
+form. Its teeth come not from an invented style rulebook but from the
+**principles corpus**: the universals that bear on this change, projected
+onto the diff as reviewer-checkable criteria. Those criteria enter
+`contract.criteria[]`, commonly with `check_kind: "attested"`, and their
+performed evidence is a reviewer finding in `completion-evidence.results[]`.
+The corpus is the one home of quality invariants; the dimension consults it
+rather than re-deriving a second, divergent rulebook that would drift from
+it (consult, don't model).
 
 The projection is what makes the contract synergistic and recursive.
 Because the same universals that govern the whole system decide each change,
@@ -376,8 +389,8 @@ implementation are indistinguishable under it.
 behaviors. *Recognition:* runners configured, assertion libraries compared,
 no behavior specified yet.
 
-The modes above name the behavioral dimension's failures; two corruptions
-threaten any dimension:
+The modes above name behavior-apparatus failures; these corruptions threaten
+any dimension:
 
 **Hollow dimension.** A dimension whose criteria a hollow delivery passes —
 a checklist of artifact-existence items, a code-quality line that says
@@ -388,6 +401,13 @@ hollow delivery that would fail it.
 instead of consulting it — a code-quality rulebook paraphrasing the corpus,
 a documentation checklist re-listing the audience taxonomy `orient` already
 owns. *Recognition:* two homes for one truth, kept in agreement by hand.
+
+**Thin contract.** Contract criteria are present but too thin to shape a
+rich delivery: thin labels instead of statements, generic checklist
+assertions, or empty pass/fail attestations. *Recognition:* the criterion
+names a topic but not the product state it creates, and no one can explain
+what a richer delivery would do differently: contract richness determines
+product richness; a thin contract produces a thin product.
 
 **Refine-default.** A defective branch keeps its branch by default, or a
 strictly-bounded-but-large correction is routed to an in-place fix even
@@ -402,9 +422,10 @@ declared dimension proves qualification-to-remain.
   the method.
 - **Specification, not verification.** The contract's primary value is
   stating what the system does; catching regressions is the byproduct.
-- **Teeth before form.** The constant across dimensions is that a hollow
-  delivery fails a criterion; the form of the check is chosen to fit the
-  aspect, never the aspect bent to fit one form.
+- **Teeth before apparatus.** The constant across dimensions is that a
+  hollow delivery fails a criterion in the same contract structure; the
+  checking apparatus is chosen per criterion through `check_kind`, never by
+  giving a dimension a different structure.
 - **Each dimension consults its single home.** Behavior traces to
   scenarios, documentation to `orient`'s audience taxonomy, code quality to
   the principles corpus. A dimension that keeps its own editable copy of its
