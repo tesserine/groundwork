@@ -55,6 +55,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Silent dimension doctrine** (#498). The contract authoring doctrine now
+  states that every present dimension carries authored teeth-bearing criteria:
+  density may be light, but pointer-covered or silent dimensions are not
+  valid. The hollow-delivery discriminator applies to both filler criteria and
+  dimensions with no criterion to fail, and the decompose authoring protocol is
+  covered by the same forbidden-pattern guard as contract, take, and
+  work-unit-craft. contract 2.5.0->2.6.0, take 3.4.0->3.5.0,
+  work-unit-craft 1.1.0->1.2.0.
 - **Uniform contract form** (#493). The `contract` skill now states the
   invariant behind the #492 surfaces: every dimension uses the same
   contract structure and the same performed-evidence obligation, while

@@ -11,6 +11,12 @@ CONTRACT_SURFACE = [
     ROOT / "skills" / "contract" / "references" / "documentation-contract.md",
     ROOT / "skills" / "contract" / "references" / "code-quality-contract.md",
 ]
+AUTHORING_DOCTRINE_SURFACE = [
+    CONTRACT_SKILL,
+    ROOT / "protocols" / "take" / "PROTOCOL.md",
+    ROOT / "protocols" / "decompose" / "PROTOCOL.md",
+    ROOT / "skills" / "work-unit-craft" / "SKILL.md",
+]
 INSTRUCTION_FILES = [
     *sorted((ROOT / "protocols").glob("*/PROTOCOL.md")),
     *sorted((ROOT / "protocols").glob("*/references/*.md")),
@@ -108,13 +114,17 @@ outside content
         body = read(CONTRACT_SKILL)
         changelog = read(CHANGELOG)
 
-        self.assertIn('version: "2.5.0"', body)
+        self.assertIn('version: "2.6.0"', body)
         self.assertIn('updated: "2026-07-01"', body)
         self.assertEqual(1, changelog.splitlines().count("## [Unreleased]"))
         self.assertIn("**Contract disposition default** (#472)", changelog)
         self.assertIn("contract 2.3.0->2.4.0", changelog)
         self.assertIn("**Uniform contract form** (#493)", changelog)
         self.assertIn("contract 2.4.0->2.5.0", changelog)
+        self.assertIn("**Silent dimension doctrine** (#498)", changelog)
+        self.assertIn("contract 2.5.0->2.6.0", changelog)
+        self.assertIn("take 3.4.0->3.5.0", changelog)
+        self.assertIn("work-unit-craft 1.1.0->1.2.0", changelog)
 
     def test_disposition_default_is_sibling_of_teeth_principle(self) -> None:
         body = read(CONTRACT_SKILL)
@@ -160,6 +170,9 @@ outside content
             "Behavior is one dimension among N",
             "documentation and code quality carry the identical teeth obligation",
             "same performed-evidence obligation",
+            "every dimension a change has carries at least one authored teeth-bearing criterion",
+            "coverage is never zero",
+            "fewer, simpler teeth-bearing criteria",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, dimensions)
@@ -167,7 +180,7 @@ outside content
         forbidden = re.compile(
             r"behavior is always present|declared as the change warrants|"
             r"the most developed dimension|behavior is the unit of progress|"
-            r"completion is behavior coverage",
+            r"completion is behavior coverage|need not exercise every code path",
             flags=re.IGNORECASE,
         )
         self.assertIsNone(forbidden.search(read(CONTRACT_SKILL)))
@@ -392,14 +405,49 @@ outside content
             with self.subTest(path=path.relative_to(ROOT)):
                 self.assertIsNone(forbidden.search(read(path)))
 
-    def test_pointer_as_default_distinguishes_consideration_from_dense_inputs(self) -> None:
-        pointer = normalized(section(read(CONTRACT_SKILL), "Pointer-as-default"))
+    def test_density_rule_distinguishes_simple_criteria_from_zero_coverage(self) -> None:
+        dimensions = normalized(top_section(read(CONTRACT_SKILL), "The dimensions"))
 
-        self.assertRegex(pointer, r"consider every dimension")
-        self.assertRegex(pointer, r"not a mandatory per-dimension declaration")
-        self.assertRegex(pointer, r"general contract remains the validation pointer")
-        self.assertRegex(pointer, r"density across dimensions is unequal; consideration is equal")
-        self.assertNotRegex(pointer, r"no special input[^.]+not validated")
+        for expected in [
+            "Density is situational",
+            "coverage and teeth are not situational",
+            "never zero for a dimension the change has",
+            "simple criteria are legitimate",
+            "silent dimensions are not",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, dimensions)
+
+        self.assertNotIn("Pointer-as-default", read(CONTRACT_SKILL))
+
+    def test_authoring_surfaces_reject_pointer_and_silence_doctrine(self) -> None:
+        forbidden = re.compile(
+            r"Pointer-as-default|"
+            r"general contract pointer|"
+            r"general contract remains the validation pointer|"
+            r"silence is valid|"
+            r"not a mandatory per-dimension (?:declaration|body section|block)|"
+            r"dimension with no special input (?:uses|remains covered by)|"
+            r"no special input uses its general contract|"
+            r"need not exercise every code path",
+            flags=re.IGNORECASE,
+        )
+
+        for path in AUTHORING_DOCTRINE_SURFACE:
+            with self.subTest(path=path.relative_to(ROOT)):
+                self.assertIsNone(forbidden.search(read(path)))
+
+    def test_silent_dimension_corruption_mode_is_named(self) -> None:
+        corruption_modes = normalized(top_section(read(CONTRACT_SKILL), "Corruption Modes"))
+
+        for expected in [
+            "**Silent dimension.**",
+            "a dimension the change has, left with no authored teeth-bearing criterion",
+            "pointer has no teeth",
+            "uncovered dimension hollows the contract",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, corruption_modes)
 
     def test_documentation_deliverable_gates_define_behavior_teeth(self) -> None:
         gates = normalized(section(read(CONTRACT_SKILL), "Documentation-deliverable behavior gates"))

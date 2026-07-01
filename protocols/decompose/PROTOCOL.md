@@ -70,10 +70,12 @@ inputs point to the principles corpus and name stressed universals when the
 work puts any under special pressure. The `contract` skill owns the lifecycle
 these inputs enter; decompose consults it and does not restate it.
 
-Considering a dimension does not require a dedicated body section. A dimension
-with no special input remains covered by the general contract pointer. The
-record is incomplete only when the author skipped the consideration pass or
-hid special inputs the implementer needs.
+The authoring pass must consider every dimension and leave authored
+teeth-bearing inputs for every dimension the change has. Density may be
+light: one recipient outcome or one projected universal can be enough when a
+dimension is lightly touched. Coverage is never zero. A record is incomplete
+when a present dimension has no input a hollow delivery could fail, or when
+it hides inputs the implementer needs.
 
 ### Dependencies
 
