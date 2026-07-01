@@ -1,0 +1,44 @@
+{
+  "work_unit": "work-unit-other-scope",
+  "results": [
+    {
+      "criterion_id": "behavior-api-validates-records",
+      "result": "pass",
+      "evidence": {
+        "summary": "Behavior test passed for valid record forwarding.",
+        "run": {
+          "command": "python -m unittest tests.test_ingestion",
+          "result": "pass",
+          "output_summary": "valid record forwarding test passed"
+        }
+      }
+    },
+    {
+      "criterion_id": "documentation-api-reference",
+      "result": "pass",
+      "evidence": {
+        "summary": "Reviewer confirmed the API reference matches the delivered behavior.",
+        "attestation": {
+          "reviewer": "core",
+          "finding": "The API reference describes accepted records and validation failures."
+        }
+      }
+    },
+    {
+      "criterion_id": "code-quality-single-validation-path",
+      "result": "pass",
+      "evidence": {
+        "summary": "The shared validation path remains the only endpoint validation path.",
+        "artifact": {
+          "path": "src/ingestion/validation.py",
+          "description": "The endpoint delegates to the shared validator."
+        }
+      }
+    }
+  ],
+  "documentation": {
+    "updated": ["README.md"],
+    "verified_accurate": ["docs/api-reference.md"],
+    "follow_up_work_units": []
+  }
+}

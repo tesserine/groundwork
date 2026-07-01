@@ -139,6 +139,24 @@ class ArtifactSchemaTests(unittest.TestCase):
             validate_artifact("completion-evidence", missing, related_artifacts={"contract": contract})
         self.assertIn("results", context.exception.paths)
 
+    def test_contract_evidence_rejects_mismatched_work_unit_even_when_criteria_overlap(self) -> None:
+        contract = load_artifact("contract", self.fixture("valid-contract.json"))
+        evidence = load_artifact(
+            "completion-evidence",
+            self.fixture("mismatched-work-unit-completion-evidence.json"),
+        )
+        self.assertEqual(
+            {criterion["id"] for criterion in contract["criteria"]},
+            {result["criterion_id"] for result in evidence["results"]},
+        )
+
+        defects = detect_contract_evidence_defects(contract, evidence)
+        self.assertIn("work_unit", {path for path, _message in defects})
+
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("completion-evidence", evidence, related_artifacts={"contract": contract})
+        self.assertIn("work_unit", context.exception.paths)
+
     def test_completion_evidence_rejects_empty_documentation_entries(self) -> None:
         evidence = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))
 

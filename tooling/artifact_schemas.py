@@ -217,6 +217,21 @@ def detect_contract_evidence_defects(
 ) -> list[tuple[str, str]]:
     """Return generic contract/evidence defects without dimension-specific logic."""
     errors: list[tuple[str, str]] = []
+    contract_work_unit = contract.get("work_unit")
+    evidence_work_unit = completion_evidence.get("work_unit")
+    work_unit_mismatch = (
+        isinstance(contract_work_unit, str)
+        and isinstance(evidence_work_unit, str)
+        and contract_work_unit != evidence_work_unit
+    )
+    if work_unit_mismatch:
+        errors.append(
+            (
+                "work_unit",
+                "completion evidence work_unit "
+                f"{evidence_work_unit!r} does not match contract work_unit {contract_work_unit!r}",
+            )
+        )
     criteria = [
         criterion
         for criterion in contract.get("criteria", [])
@@ -246,6 +261,9 @@ def detect_contract_evidence_defects(
                     f"dimension {dimension!r} does not declare warranted criterion {acceptance_criterion!r}",
                 )
             )
+
+    if work_unit_mismatch:
+        return errors
 
     result_ids: set[str] = set()
     for index, result in enumerate(completion_evidence.get("results", [])):
