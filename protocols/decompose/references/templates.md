@@ -1,6 +1,6 @@
-# Issue Templates
+# Work-Unit Templates
 
-Concrete templates for each issue type. Copy and fill in the sections.
+Concrete templates for each work-unit type. Copy and fill in the sections.
 All templates use GitHub-flavored markdown.
 
 ## Table of Contents

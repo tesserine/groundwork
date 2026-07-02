@@ -174,6 +174,25 @@ class WorkUnitCraftSkillTests(unittest.TestCase):
             with self.subTest(expected=expected):
                 self.assertIn(expected, corruption_modes)
 
+    def test_decompose_is_titled_as_itself_and_consults_the_craft_home(self) -> None:
+        body = read_decompose_protocol()
+
+        self.assertRegex(body, r"(?m)^# Decompose$")
+        self.assertIn("skills/work-unit-craft/SKILL.md", body)
+
+    def test_decompose_corruption_modes_are_protocol_level(self) -> None:
+        body = read_decompose_protocol()
+        corruption_modes = normalized(section(body, "Corruption Modes"))
+
+        self.assertIn("`work-unit-craft`", corruption_modes)
+        for expected in [
+            "`kitchen-sink-epic`",
+            "`graph-omission`",
+            "`refinement-as-first-delivery`",
+        ]:
+            with self.subTest(expected=expected):
+                self.assertIn(expected, corruption_modes)
+
     def test_decompose_procedures_apply_the_contract_input_pass(self) -> None:
         body = read_decompose_protocol()
         create_work_unit = normalized(
