@@ -48,8 +48,8 @@ The work-unit artifact bridges two phases, both declared in
 
 - **Planning phase** (unscoped): intent → survey → requirements →
   decompose → work-unit. External input enters as an intent artifact —
-  the one artifact type no protocol produces — survey turns intent into
-  requirements, and decompose breaks requirements into work-unit
+  the one type nothing inside the system produces — survey turns intent
+  into requirements, and decompose breaks requirements into work-unit
   artifacts.
 - **Scoped pipeline**: take → plan → implement → verify → submit →
   review → land. Take picks up a work-unit whose dependencies are
