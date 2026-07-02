@@ -1,18 +1,26 @@
 ---
 name: decompose
 description: >-
-  Transfer problem understanding across context boundaries through well-formed
-  work-units. Produce `work-unit` artifacts: creating, decomposing, refining,
-  and triaging. Close-state review happens here; the close itself is performed
-  by `land`.
+  The work-unit protocol. Produce `work-unit` artifacts: create, refine, and
+  triage work-units, decompose epics into them, and deliver each through the
+  `work-unit` MCP tool with its connector ticket handle. Close-state review
+  happens here; the close itself is performed by `land`. The authoring craft
+  lives in the `work-unit-craft` skill; this protocol consults it.
+metadata:
+  version: "1.1.0"
+  updated: "2026-07-02"
 ---
 
-# Work-Unit Craft
+# Decompose
 
-A work-unit transfers problem understanding across a context boundary — from the
-person who sees the problem to the agent who will solve it. The agent has no
-access to your context, your codebase familiarity, or your unstated assumptions.
-Everything it needs must be in the work-unit.
+`decompose` is the pipeline's work-unit surface. It creates, refines, and
+triages `work-unit` artifacts, decomposes epics into them, and reviews
+close-state before `land` seals the close. The authoring craft those moves
+apply — outcomes over prescription, the sovereignty test, contract inputs,
+body-vs-comment authority, and the corruption modes that make records
+mis-steer implementing agents — lives in the
+[`work-unit-craft` skill](../../skills/work-unit-craft/SKILL.md); this
+protocol consults that home and owns only its own moves.
 
 `decompose` is also Groundwork's acquisition surface: it is the sole unscoped
 producer of the `work-unit` artifact. Ordinary planning reaches this protocol
@@ -29,20 +37,6 @@ For the work-unit state model and dependency graph format, see
 For first-principles constraint verification before framing work-units, use
 `reckon`.
 
-## The Central Discipline
-
-**Work-units describe what must be true, not how to get there.**
-
-A work-unit that says "Replace X with Y" has already made the design decision. If
-that decision is wrong, the implementing agent will faithfully execute the wrong
-solution — and the further the prescription travels through decomposition,
-planning, and implementation, the harder it is to catch. The work-unit author's job
-is to describe the problem and the desired end state. The implementer's job is
-to find the path.
-
-This is not a stylistic preference. It is the structural defense against the
-most common failure mode in work-unit-driven development.
-
 ## Guidelines
 
 ### Scope and sizing
@@ -55,43 +49,6 @@ completion ambiguous. When you notice scope creeping across boundaries, split.
 agent session — from reading context through passing verification. Oversized
 work-units cause context loss mid-execution; undersized work-units create coordination
 overhead that exceeds the work itself.
-
-### Acceptance criteria
-
-**Criteria describe outcomes, not activities.** "Refactor the parser" is an
-activity — it passes when someone did something, not when something is true.
-"Parser returns typed errors for malformed input" is an outcome — it passes when
-a specific observable behavior exists. Every criterion should be verifiable by
-running a command or inspecting an artifact.
-
-**Include testing and documentation expectations.** If the change needs tests,
-say what kind (unit, integration, behavior). If it affects user-facing behavior,
-include documentation updates as criteria. Making these explicit prevents the
-implementer from treating them as optional.
-
-### Contract inputs
-
-Every work-unit authoring pass records contract inputs across the dimensions
-the `work-unit-craft` skill names: behavior, documentation, and code quality.
-Behavior inputs are the positive acceptance criteria. Documentation inputs are
-recipient outcomes, using `orient` for the audience taxonomy. Code quality
-inputs point to the principles corpus and name stressed universals when the
-work puts any under special pressure. The `contract` skill owns the lifecycle
-these inputs enter; decompose consults it and does not restate it.
-
-The authoring pass must consider every dimension and leave authored
-teeth-bearing inputs for every dimension the change has. Density may be
-light: one recipient outcome or one projected universal can be enough when a
-dimension is lightly touched. Coverage is never zero. A record is incomplete
-when a present dimension has no input a hollow delivery could fail, or when
-it hides inputs the implementer needs.
-
-### Dependencies
-
-**Explicit and hard only.** Dependencies name other work-units that represent
-true blockers — work that literally cannot proceed without the dependency being
-complete. Preferred ordering is not a dependency. Soft dependencies create
-false bottlenecks that serialize work unnecessarily.
 
 ### Epics and decomposition
 
@@ -117,16 +74,6 @@ Capability-epic release identity belongs to the commons release authority:
 ADR-0011, ADR-0012, ADR-0014, and `ECOSYSTEM-RELEASE.md`. Decompose requires
 the terminal ecosystem-release step, but does not define the manifest schema,
 version choice, verification, or publication procedure.
-
-### The work-unit as contract
-
-**Must stand alone without external context.** A work-unit is a contract, not a
-conversation. The implementer may be a different agent, in a different session,
-with no access to the discussion that produced the work-unit. Summary states what
-and why. Scope names concrete files or modules. Criteria are binary pass/fail.
-Task work-units reference their parent epic or milestone so the work has context
-in the work-unit graph. If the work-unit requires reading a Slack thread or "seeing
-the earlier discussion" to understand, it is incomplete.
 
 ## Procedures
 
@@ -201,8 +148,8 @@ A well-bounded task has:
 4. Re-apply the contract input pass from `work-unit-craft`, preserving any
    behavior, documentation, and code quality inputs that remain true and adding
    any missing special inputs.
-5. Re-verify the central discipline — does any criterion or scope statement
-   prescribe an implementation approach?
+5. Re-verify `work-unit-craft`'s central discipline — does any criterion or
+   scope statement prescribe an implementation approach?
 
 ### triage-work-units
 
@@ -225,12 +172,11 @@ owns the pre-close review; `land` owns the seal.
 
 ### deliver-work-unit
 
-Tracker operations in the procedures above — searching existing work-units,
-labels, stale-age review, and parent-epic checklist updates — remain required
-for `decompose`'s current forge-tracker-coupled workflow. Delivering the
-`work-unit` artifact through runa's MCP tool does not replace those tracker
-surfaces. Full runa-native `decompose` — where work-units live as runa
-artifacts with tracker as an optional sync target — is separate future work.
+Delivery is two coupled surfaces. The tracker operations the procedures above
+perform — searching existing work-units, labels, stale-age review, and
+parent-epic checklist updates — act on the planning home; the `work-unit` MCP
+tool call below persists the execution-scoped artifact that carries the
+connector handle back to it.
 
 Deliver each `work-unit` artifact by invoking the `work-unit` MCP tool once
 per delivered artifact. Every work-unit is tracker-backed. For a newly created
@@ -317,34 +263,13 @@ values, not tracker shorthand such as `#123`, `123`, `work-unit-123`, or
 
 ## Corruption Modes
 
-- `implicit-how`: implementation prescription leaks into scope or criteria.
-  The work-unit says "use library X" or "replace A with B" instead of describing
-  the required end state.
-  *Recognition: read scope and criteria aloud — if they name tools, patterns,
-  or implementation steps rather than observable outcomes, prescription has
-  leaked in.*
-
-- `activity-criteria`: criteria describe activities ("refactor", "clean up",
-  "investigate") rather than outcomes. They pass when someone did something,
-  not when something is true.
-  *Recognition: ask "can I verify this by running a command or inspecting an
-  artifact?" If no, it is an activity.*
-
-- `dependency-blindness`: blockers exist but are not surfaced. The implementer
-  discovers mid-session that prerequisite work is incomplete.
-  *Recognition: before filing, ask "what must already be true for this work
-  to start?" If the answer references unfinished work, that is a dependency.*
+The authoring corruption modes live in `work-unit-craft`; the modes below are
+decompose's own — epic, graph, and delivery misuse.
 
 - `kitchen-sink-epic`: an epic that accumulates loosely related work until it
   is too large to reason about or track. No clear deliverable boundary.
   *Recognition: if you cannot state the epic's done condition in one sentence,
   it is too broad.*
-
-- `premature-work-units`: filing detailed task work-units for work that depends on
-  unresolved design decisions. The work-units will need rewriting when the
-  decisions land.
-  *Recognition: if the work-unit's scope would change based on an open question,
-  the question must be answered first (spike work-unit).*
 
 - `graph-omission`: an epic with 4+ tasks has no dependency graph or layered
   execution order, forcing implementers to discover sequencing by reading
@@ -352,8 +277,19 @@ values, not tracker shorthand such as `#123`, `123`, `work-unit-123`, or
   *Recognition: if someone asked "what can I work on right now?" and you
   cannot answer without reading all task bodies, the graph is missing.*
 
+- `refinement-as-first-delivery`: a refinement is delivered as if it were a
+  first delivery — `create-ticket` invoked, a fresh `instance_id` minted, or
+  `handle` re-derived for an already-delivered work-unit. The tracker gains a
+  second ticket for the same work, or the artifact store gains a duplicate
+  whose inbound `dependencies` still point at the stale instance.
+  *Recognition: before delivering, ask "does a delivered artifact for this
+  work-unit already exist?" If yes, the delivery is a refinement — reuse its
+  `instance_id` and carry its `handle` through unchanged.*
+
 ## Cross-References
 
+- `work-unit-craft` (skill): the authoring craft every procedure applies —
+  the single home of record discipline and its corruption modes.
 - `reckon`: first-principles constraint verification before work-unit framing,
   refinement, and epic decomposition.
 - `acquire` (skill): the mirror of this protocol's create path — decompose

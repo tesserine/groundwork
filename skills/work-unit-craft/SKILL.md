@@ -9,8 +9,8 @@ description: >-
   and the corruption modes that make records mis-steer the agents who
   read them.
 metadata:
-  version: "1.2.0"
-  updated: "2026-07-01"
+  version: "1.3.0"
+  updated: "2026-07-02"
   origin: >-
     Adapted from pentaxis93/with-claude
     _shared/methodology/issue-craft.md (internal), renamed and
@@ -398,7 +398,12 @@ to start?" If the answer references unfinished work, that is a dependency.
 - **Declared contract conformance:** when work conforms to an existing
   contract, consult the declared contract, derive criteria from its
   declarations, and verify positively against the declaration.
-- **Dependencies:** Work-unit references that represent true blockers.
+- **Dependencies:** Work-unit references that represent true blockers — work
+  that cannot start until the dependency is complete. Preferred ordering is
+  not a dependency; soft dependencies serialize independent work into false
+  bottlenecks.
+- **Parent linkage:** Task work-units reference their parent epic or
+  milestone so the record sits in the work-unit graph.
 
 ## What Does Not Belong in a Record
 

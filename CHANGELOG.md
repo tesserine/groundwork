@@ -108,6 +108,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **One craft home** (#506). The work-unit authoring craft lives only in
+  `skills/work-unit-craft/SKILL.md`; `protocols/decompose/PROTOCOL.md` is the
+  decompose protocol — titled as itself, owning its own moves (procedures,
+  epic decomposition, delivery, triggers) and a protocol-level corruption-mode
+  set (`kitchen-sink-epic`, `graph-omission`, and the new
+  `refinement-as-first-delivery`, distilled from the delivery rules), and
+  consulting the skill by link for the craft it no longer restates. The
+  skill's What Belongs absorbs the two atoms the deleted guidelines carried
+  (hard-only dependencies; parent linkage). §deliver-work-unit and acquire's
+  placement state the present architecture in positive form — the two coupled
+  delivery surfaces, and the two sessions that host acquisition — with the
+  runtime-pending fork retired. The templates reference is titled for the
+  work-unit vocabulary. `tests/test_work_unit_craft_skill.py` pins the
+  corrected boundary: the protocol's title, its consult link, and its
+  protocol-level mode set. decompose 1.0.0->1.1.0, work-unit-craft
+  1.2.0->1.3.0, acquire 1.0.0->1.0.1.
+
 - **Uniform pipeline carry** (#494). The scoped pipeline now carries the
   uniform contract structure end to end, and the contract-dimension
   conformance tests pin symmetry instead of the retired per-dimension

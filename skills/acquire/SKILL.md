@@ -8,8 +8,8 @@ description: >-
   of decompose's create path: decompose creates the ticket it delivers;
   acquire adopts the ticket it is given, and creates no ticket.
 metadata:
-  version: "1.0.0"
-  updated: "2026-06-11"
+  version: "1.0.1"
+  updated: "2026-07-02"
 ---
 
 # Acquire
@@ -30,10 +30,9 @@ is indistinguishable downstream from a decomposed one: same `handle`, same
 
 This is a skill, not a protocol, because it runs when there is no artifact
 state for a trigger to fire on. It belongs to whatever surface hosts a
-work-unit delivery: today, a `decompose`-scoped session (the `work-unit`
-MCP tool is served there); under the cold-start runtime entrypoint
-([tesserine/runa#188](https://github.com/tesserine/runa/issues/188)), the
-session that entrypoint opens.
+work-unit delivery: a `decompose`-scoped session, where the `work-unit` MCP
+tool is served, and the promised-entry session a targeted intent opens at
+cold start.
 
 ## Steps
 
