@@ -323,6 +323,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Take closes at its capstone — the session surface advances the
+  pipeline** (#505). ADR-0008's second consequence applied to `take`: Step
+  6's carry-through instructed the agent to drive `plan` → `implement` →
+  `verify` → `submit` itself and encoded runtime wiring state ("`runa go
+  --work-unit` … not yet wired") that runa HEAD falsifies — session-mode
+  `go` is wired with a one-tick contract, and the installed interactive
+  handoff atop the same file already says the opposite. The step also
+  restated `plan`'s contract-centered design beside its home. The step and
+  its three modes (`abandon-at-contract`, `delegate-to-unwired-runtime`,
+  `mechanics-as-plan`) are gone: the final step delivers the `contract` and
+  states the seam — the session surface computes the next ready station
+  from artifact state and advances the work to it, per runa's
+  session-surface contract and the manifest's trigger declarations — with
+  the no-runtime fallback retained as the methodology's own. Plan-shape
+  discipline stays at `plan` (`contract-detachment`, `file-inventory-plan`,
+  and the schema-enforced `criterion_mapping`). The corrected boundary is
+  pinned: the take gates assert the five-step capstone close, the seam
+  terms, and the corruption-mode set by equality, and a new protocol-wide
+  gate in `tests/test_protocol_artifact_delivery_docs.py` holds every
+  protocol's prose free of runtime-wiring-state claims (take 3.7.0).
+
 - **Dependency-graph notation conflict resolved.** `templates.md` mandated
   ASCII art while the decompose protocol and `work-unit-model.md` mandated
   Mermaid `graph TD` plus a layered text summary. The Mermaid + layered
