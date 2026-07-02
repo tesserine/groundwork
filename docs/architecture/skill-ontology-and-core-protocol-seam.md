@@ -3,7 +3,7 @@
 ## Audience and Purpose
 
 This note is for the agents and contributors who will draw the core/protocol
-seam — the ADR-0007 task of epic
+seam — the seam-ADR task of epic
 [#466](https://github.com/tesserine/groundwork/issues/466) — and run the
 per-asset audit that seam rests on. It is the conceptual foundation that work
 consumes: the domain model of *skill* the factoring is built on, the typing it
@@ -17,7 +17,7 @@ stage whose output that decision requires.
 
 ## Status
 
-Design note, not an ADR — it precedes and feeds ADR-0007. **Provisional in the
+Design note, not an ADR — it precedes and feeds the seam ADR. **Provisional in the
 strongest sense.** It is the crystallization of a two-domain reckoning
 (groundwork × gazette): a first sketch, deliberately coarse, that sharpens as
 domains accumulate. Where the ontology proves a stable cross-methodology
@@ -285,7 +285,7 @@ settleable by argument; it is settleable by construction.
 ## The audit: the convergence experiment, and the next move
 
 The per-asset audit is, in one pass, three things: the core/delivery
-**assignment**, the **grounding** ADR-0007 rests on, and the **experiment** that
+**assignment**, the **grounding** the seam ADR rests on, and the **experiment** that
 tests the correspondence above. It:
 
 1. reads every skill and protocol body at current head;

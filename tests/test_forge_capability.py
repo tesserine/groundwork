@@ -190,7 +190,7 @@ class ForgeCapabilityTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
 
         self.assertIn(
-            "| handle | connector-backed ticket handle | yes | Connector-issued tracker identity every work-unit carries |",
+            "schema requires the connector-issued `{ id, display }` handle",
             connecting_structure,
         )
         self.assertIn("Every work-unit is tracker-backed.", connecting_structure)

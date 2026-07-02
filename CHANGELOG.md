@@ -108,6 +108,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Prose is projection: the architecture document carries rationale only —
+  structural renderings live in their substrate homes** (#507, enacting
+  ADR-0008 consequence 3). `docs/architecture/connecting-structure.md` is
+  rewritten as a present-tense rationale document: the design reasoning the
+  substrate cannot carry — ground constraints, the two-phase topology and
+  its specification scales, contract-first entry, the `requires`/`accepts`
+  design rule, the standing single-producer rule, the runtime layering and
+  authoring-surface authority, the `may_produce` bridge, the agent/MCP
+  interface reasoning, and the schema design principles including the
+  connector handle seam — with every structural fact consulted by link
+  from `manifest.toml`, `schemas/`, and `workflow-contracts/`. The
+  hand-maintained manifest copy, per-protocol edge tables, per-type prose
+  schema renderings, and redesign-history section are retired; the
+  managed-set invariant is now a standing gate,
+  `tests/test_architecture_prose_conformance.py`, which walks every
+  markdown file under `docs/` and fails on any `[[protocols]]` or
+  `[[artifact_types]]` rendering. The two ADR-0002-rollout step notes
+  carry historical banners, the seam note's forward reference names the
+  seam ADR without asserting a number, and the inbound referrers (README,
+  orient 4.1.1, `docs/authoring/skills.md`, the forge-capability
+  coherence test) are brought true against the rationale-only shape.
+
 - **One craft home** (#506). The work-unit authoring craft lives only in
   `skills/work-unit-craft/SKILL.md`; `protocols/decompose/PROTOCOL.md` is the
   decompose protocol — titled as itself, owning its own moves (procedures,
