@@ -1,21 +1,20 @@
-# Groundwork Connecting Structure Design
+# Groundwork Connecting Structure
 
-This document records the design of groundwork's connecting structure —
-the artifacts, manifest edges, and schemas that link protocols and skills
-into a coherent topology. It is built incrementally during the design
-session and captures decisions as they are reached.
+This document carries the design rationale for groundwork's connecting
+structure — why the artifacts, manifest edges, and schemas that link
+protocols and skills are shaped the way they are. The structure itself
+lives in its enforced homes: [`manifest.toml`](../../manifest.toml)
+holds the artifact types, protocol declarations, edges, and triggers;
+[`schemas/`](../../schemas/) holds every artifact shape
+([`schemas/README.md`](../../schemas/README.md) maps them);
+[`workflow-contracts/`](../../workflow-contracts/) holds the C-2
+workflow mechanics. `tooling/conformance.py` validates those homes, and
+this document consults them by link for every structural fact
+([ADR-0008](decisions/0008-prose-is-projection.md), consequence 3).
 
-## Current Forge Connector Model
+## Ground Constraints
 
-Groundwork's forge work is supplied by the connector-owned Forge Capability
-v1.1.0 contract. Work-unit and change-proposal artifacts carry the
-connector-issued `{ id, display }` handle, and workflow contracts reference
-the eight canonical capability operations as operation names surfaced by
-runa's connector MCP tools.
-
-## Settled Constraints
-
-These survived prior reckoning sessions and are ground for this design.
+These constraints are ground for the design.
 
 1. **Runa's function.** Event-driven cognitive runtime. Monitors artifact
    state, validates against schemas, computes dependency graph, enforces
@@ -34,376 +33,148 @@ These survived prior reckoning sessions and are ground for this design.
    are related. Manifest edges stay type-level; instance-level linking
    lives in artifact content.
 
-5. **Two populations.** Protocols are runa-managed (declared in manifest,
-   triggered by artifact state, enforced by runa). Skills are agent-managed
-   (invoked by agent judgment, not declared in manifest).
+5. **Two populations.** Protocols are runa-managed (declared in the
+   manifest, triggered by artifact state, enforced by runa). Skills are
+   agent-managed (invoked by agent judgment, not declared in the
+   manifest).
 
 6. **The liberation insight.** Runa imposing one law — the methodology
    topology — liberates the agent from its own many-law cognitive chaos.
 
-## The Forward Flow
+## The Topology: Two Phases, Two Specification Scales
 
-The full flow for a single work-unit is:
+The work-unit artifact bridges two phases, both declared in
+[`manifest.toml`](../../manifest.toml):
 
-```
-take → plan → implement → verify → submit → review → land
-```
+- **Planning phase** (unscoped): intent → survey → requirements →
+  decompose → work-unit. External input enters as an intent artifact —
+  the one artifact type no protocol produces — survey turns intent into
+  requirements, and decompose breaks requirements into work-unit
+  artifacts.
+- **Scoped pipeline**: take → plan → implement → verify → submit →
+  review → land. Take picks up a work-unit whose dependencies are
+  satisfied, authors the contract, and the forward flow produces
+  artifacts that runa tracks and threads by work-unit identity. The
+  pipeline-shape decision is
+  [ADR-0007](decisions/0007-dimension-agnostic-contract-machine.md).
 
-Survey and decompose precede take when project-level planning is needed.
-Survey produces requirements; decompose breaks requirements into work-unit
-artifacts. Take picks up a work-unit and starts the scoped pipeline.
+The two phases carry two specification scales. **requirements** declares
+what needs doing at any scope — a new tool, a feature, a migration —
+and is the project-level specification. The **contract** declares how a
+single work-unit is validated, criterion by criterion, and is the
+implementation-level specification. Decompose bridges the scales: it
+consumes requirements and produces the work-units that take picks up.
 
-Take is contract-first: its capstone is the contract, the spine
-threaded through every downstream protocol. Documentation review lives
-inside verify — documentation ships with the code it explains, and the
+The contract is the spine of the scoped pipeline: authored at entry,
+required by every judgment station, and the surface every downstream
+artifact traces to. Documentation review lives inside verify —
+documentation ships with the change it explains, and the
 completion-evidence artifact records both criterion coverage and
 documentation impact.
 
-## Output Artifact Analysis
+**The topology is pure graph.** Because artifacts are the sole state
+mechanism (constraint 2), every link between protocols is an artifact
+and every trigger is `on_artifact`, `on_change`, `on_invalid`, or a
+composition of these. External events enter the system as artifacts —
+an intent landing in the workspace — never as signals, so the manifest
+carries no signal primitive.
 
-### Protocols that produce artifacts for runa
+**Work-unit-scoped evaluation.** The manifest declares type-level edges;
+runa evaluates triggers per work-unit at runtime, partitioning the
+workspace by each scoped artifact's `work_unit` content (constraint 4).
+When several work-units are active, a protocol's trigger fires for a
+specific work-unit's artifact, not every instance in the workspace.
+Planning-phase artifacts predate work-unit identity and are scoped
+through trigger evaluation against specific instances instead — see
+*Common envelope* below for the schema side of this split.
 
-| Protocol  | Produces | Purpose of capstone |
-|-----------|----------|---------------------|
-| survey    | requirements | Declaration of what needs doing, at any scope |
-| decompose | work-unit | Work-units decomposed from requirements |
-| take      | contract | Contract-first entry: the executable definition of done that threads every downstream artifact |
-| plan      | implementation-plan | Design decisions informing execution |
-| implement | test-evidence | Proof of correct implementation — results mapped to scenarios or gates |
-| verify    | completion-evidence | Criterion coverage plus documentation impact |
-| submit    | change-proposal | Forge-neutral proposal ready for review |
-| review    | change-approved or change-needs-revision | Typed review disposition |
-| land      | completion-record | Final state: coverage, gaps, merge ref |
+## The Entry: Contract-First Take
 
-Every protocol either produces a direct capstone artifact or, for review, a
-required-choice disposition artifact. No protocol is disconnected from the
-artifact graph.
-
-### Artifact types entering from outside
-
-| Artifact type | Origin | Purpose |
-|---------------|--------|---------|
-| intent | External: change request, question, bug report, feature idea | Enters the system and triggers survey |
-
-### Take — contract-first entry
-
-In work-unit-first entry, selection is no longer take's job: the work-unit
-is already the entry, and runa activates take on it. What entry truly is —
+In work-unit-first entry, selection is not take's job: the work-unit is
+already the entry, and runa activates take on it. What entry truly is —
 once selection is gone — is the place where done gets defined. Take
 prepares the workspace, frames the work, and authors the contract.
 
-The contract is the root of the scoped artifact chain and the
-spine of the pipeline. A separate threading artifact (the former `claim`)
-is not needed: work-unit identity is runtime-enforced (runa injects
-`work_unit` into every scoped artifact and validates canonical ids), so the
-entry's capstone can be the contract itself.
+The contract is the root of the scoped artifact chain. No separate
+threading artifact is needed: work-unit identity is runtime-enforced —
+runa injects `work_unit` into every scoped artifact and validates
+canonical ids — so the entry's capstone is the contract itself.
 
-The `work-unit` artifact take activates on arrives one of two ways: created
-by `decompose`, or materialized from an existing forge ticket by the
-`acquire` skill. Acquisition is skill-side intake — the mirror of
-decompose's create path — and reaches runa's store through decompose's own
-`work-unit` output tool, the same way the `research` skill's output reaches
-the store through a protocol's `may_produce` tool (see *Skill-Produced
-Artifacts*). It creates no ticket, derives the artifact one-way from the
-ticket (ticket = planning home, artifact = execution snapshot, `handle` =
-back-link), and uses decompose's tracker-backed `instance_id` convention, so
-acquired and decomposed work-units are indistinguishable downstream. The
-manifest producer of `work-unit` therefore remains `decompose` alone; the
-single-producer rule is unaffected.
+The `work-unit` artifact take activates on arrives one of two ways:
+created by `decompose`, or materialized from an existing forge ticket by
+the [`acquire`](../../skills/acquire/SKILL.md) skill. Acquisition is
+skill-side intake — the mirror of decompose's create path — and reaches
+runa's store through decompose's own `work-unit` output tool, the same
+way the `research` skill's output reaches the store through a protocol's
+`may_produce` tool (see *the `may_produce` bridge* below). It creates no
+ticket, derives the artifact one-way from the ticket (ticket = planning
+home, artifact = execution snapshot, `handle` = back-link), and uses
+decompose's tracker-backed `instance_id` convention, so acquired and
+decomposed work-units are indistinguishable downstream. The manifest
+producer of `work-unit` remains `decompose` alone; the single-producer
+rule below is unaffected.
 
-## Input Edge Principle
+## Edge Design: `requires` vs `accepts`
 
-Runa's interface contract defines two input edge types:
+Runa's interface defines two input edge types — `requires` blocks a
+protocol until the artifact exists and validates; `accepts` injects the
+artifact when present and proceeds without it otherwise (see
+[runa's interface contract](https://github.com/tesserine/runa/blob/main/docs/interface-contract.md)
+for the enforcement semantics). The design rule for choosing between
+them:
 
-- **requires** — artifact must exist and validate before the protocol
-  executes. Runa blocks execution without it.
-- **accepts** — artifact consumed if available. Protocol operates with
-  or without it.
+> An input is `requires` when the protocol cannot produce a structurally
+> valid capstone without it, or when the work-unit thread would break
+> without it. An input is `accepts` when the capstone can be valid but
+> would be better informed by the context.
 
-**The design principle:** an input is `requires` when the protocol cannot
-produce a structurally valid capstone without it, or when the work-unit
-thread would break without it. An input is `accepts` when the capstone
-can be valid but would be better informed by the context.
+Requires edges form the structural backbone of the topology — the chain
+that must be unbroken for a work-unit to flow. Accepts edges provide
+contextual enrichment — cross-cutting artifacts that improve quality but
+whose absence does not break the chain. The per-protocol assignments
+live in [`manifest.toml`](../../manifest.toml); each protocol's
+`PROTOCOL.md` carries the operational meaning of its own inputs.
 
-Requires edges form the **structural backbone** of the topology — the
-chain that must be unbroken for the work-unit to flow. Accepts edges
-provide **contextual enrichment** — cross-cutting artifacts that improve
-quality but whose absence doesn't break the chain.
-
-**Runa's enforcement semantics:** requires means "runa enforces that the
-methodology cannot skip this step." Accepts means "the methodology
-benefits from this context but the protocol can still do valid work
-without it."
-
-`decompose` is the planning-phase exception that keeps the distinction
-visible. Ordinary planning still reaches `decompose` through the
+`decompose` is the planning-phase application of the rule that keeps
+the distinction visible: ordinary planning reaches decompose through the
 `requirements` trigger, and `requirements` is accepted so the protocol
-receives the content it is decomposing. It is not a `requires` edge:
-cold-start ticket entry substitutes the trigger with the ticket reference,
-reaches the same `work-unit` output surface, and has no planning-phase
-requirements artifact yet.
+receives the content it is decomposing — not required, because
+cold-start ticket entry substitutes the trigger with the ticket
+reference, reaches the same `work-unit` output surface, and has no
+planning-phase requirements artifact yet.
 
-## No Signals
+## Standing Design Rules
 
-If artifacts are the sole state mechanism, then signals are a second
-channel. Every protocol triggers on artifact state. External events
-enter the system as artifacts (an intent landing in the workspace),
-not as signals. The topology is pure graph.
+These rules govern the topology as a whole. The manifest instantiates
+them; this document is their named home as design rationale.
 
-This eliminates the `on_signal` trigger primitive from groundwork's
-manifest entirely. Every trigger is `on_artifact`, `on_change`,
-`on_invalid`, or a composition of these.
+- **Single producer.** Every artifact type has exactly one producer — a
+  protocol's `produces` declaration, a required-choice output group, or
+  a source outside the protocol graph. `intent` is the external entry
+  (no protocol produces it); `research-record` is skill-produced,
+  reaching the store through `may_produce`; review's two disposition
+  types are the members of its required-choice group. One producer per
+  type means unambiguous provenance for runa's trigger and injection
+  resolution. Current assignments:
+  [`manifest.toml`](../../manifest.toml).
 
-## The Full Artifact Chain
+- **Acyclic backbone.** The requires graph is a DAG from intent through
+  completion-record. Every artifact type has a consumer except
+  `completion-record`, the terminal archival artifact.
 
-With no signals, every link between protocols is an artifact.
-The complete chain across both phases:
+- **Typed dispositions.** Review produces exactly one of two outcome
+  artifact types through a required-choice group; the artifact type is
+  the disposition ([ADR-0003](decisions/0003-disposition-as-artifact-type.md)).
+  Land gates on the typed approval; the revision loop routes
+  `change-needs-revision` back through submit, and review re-runs on the
+  changed proposal version.
 
-```
-intent → requirements → work-unit → contract
-→ implementation-plan → test-evidence → completion-evidence
-→ change-proposal → change-approved → completion-record
-```
-
-The revision loop is `change-needs-revision → submit → change-proposal`;
-review re-runs on the changed proposal version.
-
-Cross-cutting: research-record feeds in via accepts edges where needed.
-Research-record may optionally be scoped to a work-unit when the research
-is specific to a work-unit.
-
-## Work-Unit-Scoped Evaluation
-
-The manifest declares type-level edges. Runa evaluates triggers per work
-unit at runtime, using the `work_unit` field to partition the workspace.
-
-When multiple work-units are active simultaneously, plan triggering on
-`on_artifact("contract")` fires for a specific work-unit's
-contract — not every contract in the workspace. The
-manifest doesn't express this scoping. Runa computes it from artifact
-content.
-
-Planning-phase artifacts (intent, requirements, work-unit) predate work-unit
-identity and are not partitioned this way. Research-record is always
-scoped by topic; optionally scoped by work-unit when research is
-specific to a work-unit.
-
-## Consolidated Manifest
-
-This is the target `manifest.toml` derived from all decisions in this
-document.
-
-```toml
-# Groundwork Methodology Manifest
-#
-# runa reads this file to understand the groundwork methodology.
-# Topology emerges from the graph of requires/produces relationships.
-
-name = "groundwork"
-
-# --- Artifact Types ---
-
-[[artifact_types]]
-name = "intent"
-
-[[artifact_types]]
-name = "requirements"
-
-[[artifact_types]]
-name = "work-unit"
-
-[[artifact_types]]
-name = "contract"
-
-[[artifact_types]]
-name = "implementation-plan"
-
-[[artifact_types]]
-name = "test-evidence"
-
-[[artifact_types]]
-name = "completion-evidence"
-
-[[artifact_types]]
-name = "change-proposal"
-
-[[artifact_types]]
-name = "change-approved"
-
-[[artifact_types]]
-name = "change-needs-revision"
-
-[[artifact_types]]
-name = "completion-record"
-
-[[artifact_types]]
-name = "research-record"
-
-# --- Protocols ---
-#
-# Planning phase (unscoped): survey → decompose
-# Scoped pipeline: take → plan → implement → verify → submit → review → land
-
-[[protocols]]
-name = "survey"
-requires = ["intent"]
-accepts = ["research-record"]
-produces = ["requirements"]
-may_produce = ["research-record"]
-trigger = { type = "on_artifact", name = "intent" }
-
-[[protocols]]
-name = "decompose"
-accepts = ["requirements", "research-record"]
-produces = ["work-unit"]
-may_produce = ["research-record"]
-trigger = { type = "on_artifact", name = "requirements" }
-
-[[protocols]]
-name = "take"
-scoped = true
-requires = ["work-unit"]
-accepts = ["research-record"]
-produces = ["contract"]
-may_produce = ["research-record"]
-trigger = { type = "on_artifact", name = "work-unit" }
-
-[[protocols]]
-name = "plan"
-scoped = true
-requires = ["contract"]
-accepts = ["work-unit", "research-record"]
-produces = ["implementation-plan"]
-may_produce = ["research-record"]
-trigger = { type = "on_artifact", name = "contract" }
-
-[[protocols]]
-name = "implement"
-scoped = true
-requires = ["contract", "implementation-plan"]
-accepts = []
-produces = ["test-evidence"]
-may_produce = []
-trigger = { type = "on_artifact", name = "implementation-plan" }
-
-[[protocols]]
-name = "verify"
-scoped = true
-requires = ["contract", "test-evidence", "work-unit"]
-accepts = ["implementation-plan"]
-produces = ["completion-evidence"]
-may_produce = []
-trigger = { type = "on_artifact", name = "test-evidence" }
-
-[[protocols]]
-name = "submit"
-scoped = true
-requires = ["completion-evidence", "contract"]
-accepts = ["change-proposal", "change-needs-revision"]
-produces = ["change-proposal"]
-may_produce = []
-trigger = { type = "any_of", conditions = [
-  { type = "on_artifact", name = "completion-evidence" },
-  { type = "on_artifact", name = "change-needs-revision" },
-] }
-
-[[protocols]]
-name = "review"
-scoped = true
-requires = ["change-proposal", "contract"]
-accepts = ["work-unit", "implementation-plan", "completion-evidence"]
-produces = []
-may_produce = []
-trigger = { type = "on_change", name = "change-proposal" }
-
-[[protocols.required_output_choices]]
-name = "review-disposition"
-members = ["change-approved", "change-needs-revision"]
-
-[[protocols]]
-name = "land"
-scoped = true
-requires = ["change-approved", "change-proposal"]
-accepts = ["contract", "completion-evidence", "work-unit"]
-produces = ["completion-record"]
-may_produce = []
-trigger = { type = "on_artifact", name = "change-approved" }
-```
-
-### Changes from the nine-protocol topology (2026-06 redesign)
-
-**Protocols merged:**
-- `specify` merged into `take` — the entry is contract-first; the
-  contract is authored where work begins.
-- `document` merged into `verify` — documentation accuracy is completion
-  evidence; the review method lives in
-  `protocols/verify/references/documentation-review.md`.
-
-**Artifact types removed:**
-- `claim` — invented to give take a capstone; superseded by the contract
-  as the entry's capstone, with work-unit identity runtime-enforced.
-- `documentation-record` — folded into `completion-evidence.documentation`.
-
-**Edge changes:**
-- The contract is required by every judgment station (plan,
-  implement, verify, submit, review) and accepted by land. The spine is
-  unbroken from entry to close.
-- review now requires the contract and accepts work-unit,
-  implementation-plan, and completion-evidence — the reviewer judges
-  against the contract and evidence, not the diff alone.
-- submit triggers on completion-evidence (or change-needs-revision for
-  revision rounds).
-
-### Synthesis Verification
-
-**Single producer rule.** Every artifact type has exactly one producer
-(protocol or external source). No ambiguity for runa.
-
-| Artifact type | Producer |
-|---------------|----------|
-| intent | external |
-| requirements | survey |
-| work-unit | decompose (the `acquire` skill also delivers through decompose's tool; see *Take — contract-first entry*) |
-| contract | take |
-| implementation-plan | plan |
-| test-evidence | implement |
-| completion-evidence | verify |
-| change-proposal | submit |
-| change-approved | review |
-| change-needs-revision | review |
-| completion-record | land |
-| research-record | research skill (via `may_produce`; see below) |
-
-**Every type consumed.** All artifact types have at least one consumer
-except completion-record, which is the terminal archival artifact.
-
-**Trigger consistency.** Each protocol's trigger is the artifact state that
-unblocks that protocol. Most triggers are a single artifact; submit uses a
-composite trigger for initial delivery and revision, review uses `on_change` for
-new proposal versions, and land gates on the typed approval outcome.
-
-**Research-record is the sole skill-produced artifact in the protocol
-graph.** No protocol declares it in `produces`, because no protocol's
-completion depends on a research-record existing. Four protocols
-declare it in `may_produce` so that, when an agent's research skill
-emits one mid-session, runa exposes a tool to validate and persist it.
-See "Runtime Layers" and "Skill-Produced Artifacts and the `may_produce`
-Bridge" below for the full mechanism. Research-record may carry
-`work_unit` when the research is specific to a work-unit; when it does,
-runa can scope it to the relevant work-unit's context. When `work_unit`
-is absent, the research is cross-cutting. This is the two-population
-principle in action: skills produce artifacts that runa validates
-but doesn't trigger on.
-
-**No cycles.** The requires graph is a DAG. Verified by walking the
-full chain from intent through completion-record.
-
-**Most-referenced artifacts.** contract is required by five
-protocols (plan, implement, verify, submit, review) and accepted by land —
-it is the spine of the scoped pipeline. work-unit is required by take and
-verify and accepted by plan, review, and land. The behavioral spec and the
-acceptance criteria it traces to are the central artifacts of the scoped
-pipeline.
+- **Skill emissions cross through protocols.** `research-record` is the
+  sole skill-produced artifact type in the graph: no protocol's
+  completion depends on one existing, so no protocol `produces` it, and
+  the protocols whose sessions may emit one declare it in `may_produce`.
+  This is the two-population principle (constraint 5) in action: skills
+  produce artifacts that runa validates but never triggers on.
 
 ## Runtime Layers
 
@@ -417,248 +188,196 @@ methodology content — agentd knows only that a given profile uses
 methodology X, not what that methodology contains.
 
 **Harness** (claude code, codex, and similar). Runs the agent loop,
-mediates tool calls, and — critically for this document —
-**loads and invokes skills**. Skills live at the harness layer
-operationally: they are markdown files the harness reads into the
-agent's context on activation, and the harness is what decides, based
-on the agent's judgment and the harness's own activation rules, when
-to invoke them. Runa does not see skills; they are not part of runa's
-contract.
+mediates tool calls, and — critically for this document — **loads and
+invokes skills**. Skills live at the harness layer operationally: they
+are markdown files the harness reads into the agent's context on
+activation, and the harness decides, based on the agent's judgment and
+the harness's own activation rules, when to invoke them. Runa does not
+see skills; they are not part of runa's contract.
 
 **Runa.** The cognitive runtime. Its interface to groundwork is three
-primitives only: artifact types, protocol declarations, and trigger
-conditions. Runa orchestrates protocols, validates artifacts against
-their schemas, and injects context when a protocol activates. It
-derives all workflow state from artifacts on disk. Runa does not know
-about skills, does not know about the harness, and does not participate
-in agent cognition.
+primitives: artifact types, protocol declarations, and trigger
+conditions (see
+[runa's interface contract](https://github.com/tesserine/runa/blob/main/docs/interface-contract.md)).
+Runa orchestrates protocols, validates artifacts against their schemas,
+and injects context when a protocol activates. It derives all workflow
+state from artifacts on disk. Runa does not know about skills, does not
+know about the harness, and does not participate in agent cognition.
 
 **Groundwork.** The methodology content itself: protocols (runa-managed,
 declared in the manifest), skills (not declared in the manifest),
-schemas (what runa validates against), and the manifest that wires
-the topology. This repository.
+schemas (what runa validates against), and the manifest that wires the
+topology. This repository.
 
-The important boundary for the rest of this document: **skills and
-runa are disjoint worlds** — runa never sees a skill, and a skill has
-no direct channel to runa. Anything a skill produces that needs to
-enter runa's validated artifact store must cross through an active
-protocol session. The next section describes the specific mechanism.
+The important boundary for the rest of this document: **skills and runa
+are disjoint worlds** — runa never sees a skill, and a skill has no
+direct channel to runa. Anything a skill produces that needs to enter
+runa's validated artifact store must cross through an active protocol
+session. *The `may_produce` bridge* below describes the mechanism.
 
 ### Authoring surfaces and authority
 
 The four layers imply a single authoritative place for each kind of
 declaration:
 
-- `manifest.toml` is the sole contract surface for runa-managed
-  protocol declarations: `requires`, `accepts`, `produces`,
-  `may_produce`, and `trigger`.
-- Skill frontmatter is a harness-and-reader surface, not a runa
-  surface. The harness uses identifying fields such as `name` and
-  `description`; optional `metadata` remains for human-oriented
-  context such as version or attribution.
+- [`manifest.toml`](../../manifest.toml) is the sole contract surface
+  for runa-managed protocol declarations: `requires`, `accepts`,
+  `produces`, `may_produce`, and `trigger`. Manifest-shaped fields
+  appear there and nowhere else.
+- Skill frontmatter is a harness-and-reader surface, not a runa surface.
+  The harness uses identifying fields such as `name` and `description`;
+  optional `metadata` remains for human-oriented context such as version
+  or attribution.
 - Protocol frontmatter is reader-facing only. Runa reads the
   `PROTOCOL.md` file as instructions text; it does not parse mirrored
   contract declarations from the markdown header.
 
-Duplicating manifest-shaped fields into skill or protocol frontmatter
-creates a second unsynchronized surface. The repository already saw
-this drift: after `manifest.toml` added
-`may_produce = ["research-record"]` to four protocols, those
-protocols' markdown frontmatter still said `may_produce: []`.
-Removing the duplicate fields eliminates that inconsistency class
-rather than asking future authors to maintain two declarations by
-hand.
+A second editable rendering of a manifest-shaped field is a second
+unsynchronized surface: nothing holds it true, so it drifts from the
+authoritative one. Keeping the declaration in one home eliminates the
+inconsistency class rather than asking authors to maintain two
+declarations by hand.
 
 For the skill-frontmatter convention in follow-direct form, see
 [`docs/authoring/skills.md`](../authoring/skills.md).
 
 ## Skill-Produced Artifacts and the `may_produce` Bridge
 
-A skill can be loaded by the harness only during an agent session,
-which always runs under some active runa protocol. The harness
-invokes the skill, the agent does the skill's cognitive work, and the
-skill may cognitively produce an artifact-shaped output — a
-research-record in the concrete case. For that output to enter runa's
-validated artifact store, the active protocol must declare the
-artifact type in its `may_produce` field. Runa's interface contract
-then guarantees that each declared output artifact is exposed as an
-MCP tool during the protocol session.
+A skill can be loaded by the harness only during an agent session, which
+always runs under some active runa protocol. The harness invokes the
+skill, the agent does the skill's cognitive work, and the skill may
+cognitively produce an artifact-shaped output — a research-record in the
+concrete case. For that output to enter runa's validated artifact store,
+the active protocol must declare the artifact type in its `may_produce`
+field. Runa's interface contract then guarantees that each declared
+output artifact is exposed as an MCP tool during the protocol session.
 
 This is the bridge:
 
 - `produces`: the artifact a protocol's completion depends on. Runa
-  requires it before the protocol ends; the session's MCP server
-  exposes a tool for it.
+  requires it before the protocol ends; the session's MCP server exposes
+  a tool for it.
 - `may_produce`: an artifact a protocol may optionally emit during
-  execution, typically by a skill invoked inside the session. Runa
-  does not require it; the session's MCP server exposes a tool for it.
+  execution, typically by a skill invoked inside the session. Runa does
+  not require it; the session's MCP server exposes a tool for it.
 
 At the interface level, the two fields are symmetric: one tool per
 declared output artifact, named after the type, with the artifact's
 schema as the tool's input schema. The distinction is semantic:
-`produces` is the protocol's capstone, `may_produce` is the
-protocol's sanctioned side-emission surface. (See
+`produces` is the protocol's capstone, `may_produce` is the protocol's
+sanctioned side-emission surface. (See
 [runa's interface contract](https://github.com/tesserine/runa/blob/main/docs/interface-contract.md)
-for the derivation rules runa's MCP server applies to artifact
-schemas when generating tool input schemas.)
+for the derivation rules runa's MCP server applies to artifact schemas
+when generating tool input schemas.)
+
+This document is the named home of the bridge's design rationale; the
+manifest holds each protocol's actual `may_produce` wiring.
 
 ### `accepts` and `may_produce` as independent declarations
 
-`accepts` and `may_produce` are two independent declarations that
-answer two different questions:
+`accepts` and `may_produce` are two independent declarations that answer
+two different questions:
 
-- `accepts` answers: "if a valid instance of this artifact exists when
-  I activate, inject it into my context."
+- `accepts` answers: "if a valid instance of this artifact exists when I
+  activate, inject it into my context."
 - `may_produce` answers: "during my session, the agent may need to
   produce a fresh instance of this — expose an MCP tool for it."
 
 For any protocol/artifact pair, the two decisions are made separately.
 All four combinations are legitimate:
 
-- **Neither.** The protocol neither reads the artifact on activation
-  nor writes a fresh instance during its session.
-- **`accepts` only.** The protocol reads an existing instance as
-  context but does not produce new instances — a read-only consumer.
+- **Neither.** The protocol neither reads the artifact on activation nor
+  writes a fresh instance during its session.
+- **`accepts` only.** The protocol reads an existing instance as context
+  but does not produce new instances — a read-only consumer.
 - **`may_produce` only.** The protocol writes a fresh instance during
   its session but does not read prior instances into its activation
   context — a protocol-internal emission.
-- **Both.** The protocol reads prior instances and may also emit
-  fresh ones.
+- **Both.** The protocol reads prior instances and may also emit fresh
+  ones.
 
 Each protocol/artifact pair is a separate judgment by the methodology
-author. There is no mirroring rule between the two fields; a future
-reader verifies the wiring by checking each declaration against the
-protocol's actual needs, not against the other field.
-
-In the current manifest, research-record falls into the "both" case
-for survey, decompose, take, and plan, and into "neither" for the
-other five.
+author. There is no mirroring rule between the two fields; a reader
+verifies the wiring by checking each declaration in
+[`manifest.toml`](../../manifest.toml) against the protocol's actual
+needs, not against the other field.
 
 ### Authoring a new skill-produced artifact
 
 For a methodology author wiring a new skill whose output should be
 persisted through runa:
 
-1. Declare the artifact type in `[[artifact_types]]` and define its
-   schema in `schemas/`.
+1. Declare the artifact type in the manifest's artifact-type table and
+   define its schema in [`schemas/`](../../schemas/).
 2. For each protocol, judge separately whether prior instances of the
    artifact should enrich its activation context. Add the artifact to
    that protocol's `accepts` if yes.
-3. For each protocol, judge separately whether the agent could
-   plausibly need to produce a fresh instance of the artifact during
-   that protocol's session. Add the artifact to that protocol's
-   `may_produce` if yes. This decision is independent of step 2.
+3. For each protocol, judge separately whether the agent could plausibly
+   need to produce a fresh instance of the artifact during that
+   protocol's session. Add the artifact to that protocol's `may_produce`
+   if yes. This decision is independent of step 2.
 4. Keep any skill frontmatter limited to harness/reader identification
-   fields. The runa-facing declaration lives only in `manifest.toml`;
-   do not mirror `accepts`, `produces`, `may_produce`, or `trigger`
-   into the skill file.
+   fields. The runa-facing declaration lives only in `manifest.toml`; do
+   not mirror `accepts`, `produces`, `may_produce`, or `trigger` into
+   the skill file.
 
 ## Agent Interface
 
-Two interfaces connect the agent to the artifact system. Both are
-owned by runa. The agent touches neither directly.
+Two interfaces connect the agent to the artifact system. Both are owned
+by runa. The agent touches neither directly.
 
-### Input: Context injection as prompt
+**Input: context injection as prompt.** Runa constructs a prompt with
+all context pre-integrated. The agent reads natural language, not JSON.
+The contract, implementation-plan, and research-records are already
+woven into the context window. The agent does not parse artifacts or
+know about schemas.
 
-Runa constructs a prompt with all context pre-integrated. The agent
-reads natural language, not JSON. The contract, implementation-
-plan, research-records are already woven into the context window.
-The agent doesn't parse artifacts or know about schemas.
-
-### Output: MCP tools for artifact production
-
-Runa's MCP server exposes one MCP tool per declared output artifact
-for the active protocol — the union of `produces` and `may_produce`,
-subject to runa's tool-generation rules. Each tool is derived from
-the artifact type:
-
-- **Name:** the artifact type name (e.g., `contract`,
-  `research-record`).
-- **Description:** runa's MCP server supplies a default description
-  naming the artifact type.
-- **Input schema:** the artifact's JSON Schema with `work_unit`
-  removed from `properties` and `required`, plus a required
-  `instance_id` string that names the artifact file.
-
-Not every artifact type is eligible for tool exposure — see
-[runa's interface contract](https://github.com/tesserine/runa/blob/main/docs/interface-contract.md)
-for the eligibility rules and how unscoped sessions interact with
-`work_unit`-bearing schemas.
-
-The agent calls one of these tools by its type name. Concretely, an
-agent inside a take session producing a contract calls:
-
-```
-contract({
-  instance_id: "work-unit-221",
-  title: "User authentication",
-  criteria: [{
-    id: "valid-login",
-    dimension: "behavior",
-    acceptance_criterion: "users can log in",
-    statement: "Given a registered account, when credentials are submitted, then a session is established.",
-    hollow_delivery: "Credentials are accepted but no session is established.",
-    check_kind: "executable",
-    check: "Run the authentication login behavior test."
-  }]
-})
-```
+**Output: MCP tools for artifact production.** Runa's MCP server exposes
+one MCP tool per declared output artifact for the active protocol — the
+union of `produces` and `may_produce`, subject to runa's tool-generation
+rules. Each tool is named after the artifact type, and its input schema
+derives from the artifact's JSON Schema. The design intent of that
+derivation: everything runa can supply from session context is
+server-supplied — the agent never writes `work_unit` for a scoped
+artifact — and the one thing only the agent can name, the instance, is
+agent-supplied as `instance_id`. Everything else is cognitive output:
+the agent supplies it and runa validates it.
+[Runa's interface contract](https://github.com/tesserine/runa/blob/main/docs/interface-contract.md)
+owns the derivation rules, the eligibility rules, and how unscoped
+sessions interact with `work_unit`-bearing schemas. Each producing
+protocol's `PROTOCOL.md` carries its own delivery-call form, gate-bound
+to the owning schema (ADR-0008, consequence 1) — the take protocol's
+contract delivery is the worked example.
 
 The MCP server validates the payload, writes the artifact to the
 workspace under the chosen `instance_id`, and records it in runa's
-store. The agent never constructs filenames, writes to disk, or
-supplies `work_unit` for scoped artifacts.
+store. The agent never constructs filenames, writes to disk, or supplies
+`work_unit` for scoped artifacts.
 
-### Schema vs tool interface
-
-The artifact schema and the MCP tool input schema are related but
-not identical. The artifact schema is the full structure on disk —
-what runa validates and tracks. The tool input schema is that schema
-with one subtraction and one addition:
-
-- **Server-supplied — `work_unit`.** Stripped from the tool's input
-  schema. When the artifact schema mentions `work_unit`, runa's MCP
-  server supplies it from the session context. The agent never
-  supplies it.
-- **Agent-supplied — `instance_id`.** Added to the tool's input
-  schema as a required string. Names the artifact instance; becomes
-  the filename `{type_name}/{instance_id}.json`. Not part of the
-  artifact's on-disk content.
-
-Everything else is cognitive output: the agent supplies it and runa
-validates it. The same mechanism applies to skill-produced artifacts
-— they reach runa's validated store through the active protocol's
-`may_produce` (see *Skill-Produced Artifacts and the `may_produce`
-Bridge* above). For a research-record produced during a scoped
-protocol session, runa's MCP server supplies `work_unit` the same
-way. Because `research-record.work_unit` is optional in the schema,
-the artifact also writes cleanly from an unscoped session.
-
-### The liberation insight at the interface level
-
-The agent never touches the artifact system. Runa owns both input
-(context injection) and output (MCP validation and placement). The
-agent is liberated from infrastructure — free to do its cognitive
-work without fighting JSON Schema internals, file placement
-conventions, or state management.
+**The liberation insight at the interface level.** The agent never
+touches the artifact system. Runa owns both input (context injection)
+and output (MCP validation and placement). The agent is liberated from
+infrastructure — free to do its cognitive work without fighting JSON
+Schema internals, file placement conventions, or state management.
 
 ## The MCP Server as Methodology Interface
 
-*The subsections below extend the interface pattern above. The
-inference of `work_unit` from execution context is today's behavior
-(see "Schema vs tool interface"). The simplifications it enables —
-`deliver(content)`, structured queries, cross-reference validation,
-progressive authoring — are design directions, not current behavior.*
+*The subsections below extend the interface pattern above. The inference
+of `work_unit` from execution context is present behavior. The
+simplifications it enables — `deliver(content)`, structured queries,
+cross-reference validation, progressive authoring — are design
+directions, not current behavior.*
 
 The MCP server is not just an artifact I/O layer. It is the agent's
 entire interface to the methodology. The agent doesn't know about runa,
-manifests, schemas, work-units, artifact types, or the topology. It
-has tools. The tools guide the work. The shape of the tools IS the
+manifests, schemas, work-units, artifact types, or the topology. It has
+tools. The tools guide the work. The shape of the tools IS the
 methodology.
 
 ### The agent knows nothing about infrastructure
 
 The MCP server can infer from execution context:
+
 - **work_unit** — which work-unit is being worked
 - **protocol** — which protocol is executing
 - **artifact type** — what this protocol produces
@@ -670,16 +389,16 @@ This means the agent's tool interface can be as simple as
 ### Structured queries replace context parsing
 
 Instead of the agent parsing injected context, the MCP server exposes
-query tools: what are my acceptance criteria, what behavior entries exist,
-what checks passed. Structured queries against the artifact store, returned
-in natural language or structured data.
+query tools: what are my acceptance criteria, what behavior entries
+exist, what checks passed. Structured queries against the artifact
+store, returned in natural language or structured data.
 
 ### Cross-reference validation at write time
 
 When the agent references an acceptance criterion in a scenario or gate,
-the MCP server verifies it exists in the work-unit artifact. Not just schema
-validation — semantic validation. The traceability thread is enforced
-mechanically.
+the MCP server verifies it exists in the work-unit artifact. Not just
+schema validation — semantic validation. The traceability thread is
+enforced mechanically.
 
 ### Progressive authoring
 
@@ -692,7 +411,7 @@ producing the full artifact.
 
 The MCP server can present pre-assembled data to reduce the agent's
 mechanical work. Verify's agent receives a pre-filled coverage matrix
-joining `contract.criteria[]` to performed results by `criterion_id` —
+joining the contract's criteria to performed results by `criterion_id` —
 the same matrix for every dimension — and does judgment work: confirm,
 amend, flag gaps, not data assembly.
 
@@ -701,18 +420,18 @@ amend, flag gaps, not data assembly.
 Every tool call is a structured event. The MCP server sits at the
 chokepoint between agent and system. This enables:
 
-- **Telemetry** — which agent, which protocol, which work-unit, what
-  was produced, when, whether it validated. Without the agent doing
-  anything extra.
+- **Telemetry** — which agent, which protocol, which work-unit, what was
+  produced, when, whether it validated. Without the agent doing anything
+  extra.
 - **Cost tracking** — tool calls correlated with LLM calls. Cost per
   contract, cost per work-unit implementation, cost per acceptance
   criterion. Measured, not estimated.
 - **Anomaly detection** — the server sees patterns across many work
-  units. An implement protocol completing in two minutes when the
-  median is forty is a signal. A contract with one behavior entry
-  for eight acceptance criteria is a signal.
-- **Replay and audit** — the full sequence of tool calls for a work
-  unit is a structured trace. Debugging agent behavior means reading
+  units. An implement protocol completing in two minutes when the median
+  is forty is a signal. A contract with one behavior entry for eight
+  acceptance criteria is a signal.
+- **Replay and audit** — the full sequence of tool calls for a work unit
+  is a structured trace. Debugging agent behavior means reading
   structured logs, not sifting through conversations.
 - **Resource governance** — token budgets, time limits, policy
   enforcement at the tool level.
@@ -720,128 +439,89 @@ chokepoint between agent and system. This enables:
 ### Architecture summary
 
 The CLI and artifact store are the skeleton. The MCP server is the
-nervous system — the live interface where agents meet methodology.
-The topology, schemas, and edges designed in this document give the
-MCP server its shape. The liberation insight taken to its conclusion:
-the one law isn't visible to the agent as a law. It is the shape of
-the available tools.
+nervous system — the live interface where agents meet methodology. The
+topology, schemas, and edges whose rationale this document carries give
+the MCP server its shape. The liberation insight taken to its
+conclusion: the one law isn't visible to the agent as a law. It is the
+shape of the available tools.
 
-## Two Levels of Specification
+## Schema Design Principles
 
-The topology has two specification artifacts at different scales:
+The artifact shapes live in [`schemas/`](../../schemas/), validated by
+`tooling/conformance.py` and mapped by
+[`schemas/README.md`](../../schemas/README.md). The principles that
+shape them:
 
-- **requirements** (produced by survey) — declares what needs doing at
-  any scope: a new tool, a feature, a system change, a migration.
-  Consumed by decompose, which breaks it into work-units.
-  This is the project-level specification.
+### Consumer-backward
 
-- **contract** (produced by take, the scoped-pipeline entry) —
-  declares how a single work-unit should be validated: Given/When/Then
-  scenarios for executable behavior, or gates for documentation-deliverable
-  behavior. This is the implementation-level specification.
+Each schema is designed from the consuming protocol's need: what must be
+in the injected context for the consumer to produce its own capstone?
+Not from a guess about what the producer might write. The manifest's
+edges name each type's consumers; each consuming protocol's
+`PROTOCOL.md` carries what it does with the input.
 
-Decompose bridges the two levels. It consumes requirements and produces
-work-unit artifacts — the work-units that take picks up.
+### Common envelope
 
-## Two Phases
+Scoped-pipeline artifacts carry a `work_unit` field — the work-unit
+reference that threads them together. Runa uses it to scope context
+injection: when plan activates, it receives the contract for this
+work-unit, not every contract in the workspace. Planning-phase artifacts
+predate work-unit identity and do not carry the field; runa scopes them
+through trigger evaluation against specific artifact instances. Which
+schemas carry the field is visible in the schemas themselves.
 
-The work-unit artifact bridges two phases:
+Everything else runa needs is available from outside artifact content:
+artifact type from directory structure, producing protocol from manifest
+declarations, modification timestamps from filesystem state, content
+hashes from the store. The common envelope is minimal by design.
 
-**Planning phase:** intent → survey → requirements → decompose → work-unit.
-External input enters as an intent artifact, survey produces requirements,
-decompose breaks requirements into work-unit artifacts.
+### Metadata elimination
 
-**Scoped pipeline:** work-unit → take → plan → implement → verify →
-submit → review → land. Take picks up a work-unit artifact whose
-dependencies are satisfied, authors the contract, and the forward
-flow produces artifacts that runa tracks and threads by work-unit identity.
+Artifact content carries no field whose value runa can derive from its
+own state. Producing protocol, timestamps, and content hashes are runa's
+to know; a `produced_by` or `date` field in an artifact duplicates what
+the runtime already tracks, and by sufficiency has no place in a schema.
 
-## Input Edges — Protocol by Protocol
+### The traceability thread
 
-### survey
+Acceptance criteria on the work-unit are the high-level "done"
+statements. Contract criteria are their precise refinement, dimension by
+dimension. The thread runs the full length of the execution chain:
+work-unit acceptance criteria → contract criteria that trace to them →
+test-evidence results that trace to criteria → completion-evidence
+coverage rolled up at the acceptance-criterion level. Two schema
+consequences carry the design: each contract criterion names the
+acceptance criterion it refines, and completion-evidence reports
+coverage at the acceptance-criterion level — so verify can answer "are
+all acceptance criteria covered?" The exact fields live in
+[`schemas/`](../../schemas/).
 
-- **requires:** intent. The external input that prompted the work.
-  Survey cannot produce requirements without knowing the operator's intent.
-- **accepts:** research-record. Prior research may inform requirements.
-- **trigger:** `on_artifact("intent")`
+### Context injection is not transitive
 
-### decompose
+Runa injects a protocol's declared requires and accepts instances. It
+does not inject transitive dependencies. If a protocol needs the
+work-unit content (to read acceptance criteria), it declares the
+work-unit artifact in its own edges — the `work_unit` reference carried
+by every scoped artifact identifies the work-unit but does not carry its
+content.
 
-- **accepts:** requirements, research-record. Requirements is the ordinary
-  planning input decompose breaks into work-units, injected as context when
-  present; it is not a hard precondition, so cold-start ticket entry can reach
-  this surface with no requirements artifact yet. Research-record may inform
-  decomposition.
-- **trigger:** `on_artifact("requirements")`
+### The connector handle seam
 
-### take
-
-- **requires:** work-unit. A work-unit whose dependencies are satisfied —
-  it supplies the acceptance criteria the contract refines.
-- **accepts:** research-record. Contract authoring may need external
-  evidence.
-- **produces:** contract — the contract-first capstone.
-- **trigger:** `on_artifact("work-unit")`
-
-### plan
-
-- **requires:** contract. Cannot design an implementation
-  without knowing what behavior is being implemented.
-- **accepts:** work-unit (scope boundaries), research-record (design
-  evidence).
-- **trigger:** `on_artifact("contract")`
-
-### implement
-
-- **requires:** contract, implementation-plan. The behavior
-  entries define the checks (authored at take): scenarios for executable
-  behavior, gates for documentation-deliverable behavior. The plan provides
-  the design approach. Implement drives each scenario or gate through the
-  same RED-GREEN-REFACTOR discipline: establish the failing check, make the
-  smallest change that passes it, refactor.
-- **accepts:** nothing currently identified.
-- **trigger:** `on_artifact("implementation-plan")`
-
-### verify
-
-- **requires:** contract, test-evidence, work-unit. Verify checks
-  behavior coverage against the contract using test-evidence results.
-  The work-unit is required because verify must detect acceptance criteria
-  that have no scenario or gate coverage — gaps that only the original
-  criteria list reveals. Verify reports coverage in the deliverable's
-  behavior form.
-- **accepts:** implementation-plan. The affected-files list helps map the
-  change to the documentation it touches.
-- **trigger:** `on_artifact("test-evidence")`
-
-### submit
-
-- **requires:** completion-evidence, contract. Cannot submit
-  unverified work, and the proposal summary is the contract's public
-  claim.
-- **accepts:** change-proposal, change-needs-revision. Revision rounds see the
-  prior proposal and the review disposition that requested changes.
-- **produces:** change-proposal.
-- **trigger:** `any_of(on_artifact("completion-evidence"), on_artifact("change-needs-revision"))`
-
-### review
-
-- **requires:** change-proposal, contract. The reviewer judges the
-  proposal against the contract, not the diff alone.
-- **accepts:** work-unit (scope honesty), implementation-plan (design
-  context), completion-evidence (evidence quality).
-- **produces:** exactly one required-choice outcome: change-approved or
-  change-needs-revision.
-- **trigger:** `on_change("change-proposal")`
-
-### land
-
-- **requires:** change-approved, change-proposal. Cannot land without typed
-  approval and the proposal detail approved by review.
-- **accepts:** contract, completion-evidence, work-unit. Context
-  for the completion record. Completion-evidence already carries
-  criterion-level coverage, so work-unit is enrichment not structural.
-- **trigger:** `on_artifact("change-approved")`
+The `work-unit.handle` field is the schema-as-contract seam between
+groundwork and runa. Every work-unit is tracker-backed. The work-unit
+schema requires the connector-issued `{ id, display }` handle, and
+groundwork treats it as opaque: schema validity and conformance are
+checked against the vendored Forge Capability handle definition, while
+identity comparisons derive from `id` equality rather than provider
+coordinates or display text. The vendored schema at
+[`schemas/forge-capability/v1/forge-capability.schema.json`](../../schemas/forge-capability/v1/forge-capability.schema.json)
+is the single home for the handle definition and the canonical
+capability operations; groundwork artifact schemas carry self-contained
+copies so runa can validate artifacts directly, and conformance fails
+when those copies drift from the vendored `#/$defs/handle` definition.
+The [decompose delivery rules](../../protocols/decompose/PROTOCOL.md)
+create the tracker ticket before first work-unit delivery and carry the
+returned connector handle exactly once.
 
 ## Where Documentation Discipline Lives
 
@@ -849,354 +529,8 @@ Documentation review is part of verification: verify's
 documentation-impact step maps the change to affected documents,
 classifies drift, updates in the same change, and records the outcome in
 `completion-evidence.documentation`. The always-on documentation-writing
-stance (audience, artifact choice, depth) is carried by the `orient` skill
-(`skills/orient/references/documentation.md`); inline documentation is
-written alongside code during implement's GREEN and REFACTOR phases.
-
-## Schema Design Principles
-
-### Consumer-backward
-
-Each schema is designed from the consuming protocol's need: what must be
-in the injected context for the consumer to produce its own capstone?
-Not from a guess about what the producer might write.
-
-### Common envelope
-
-**Scoped-pipeline artifacts** (contract through completion-record)
-carry a `work_unit` field — the work-unit reference that threads them
-together. Runa
-uses this to scope context injection: when plan activates, it delivers
-the contract for this work-unit, not every contract in
-the workspace.
-
-**Planning-phase artifacts** (intent, requirements, work-unit) do not carry
-`work_unit`. They predate work-unit identity. Runa scopes them through
-trigger evaluation against specific artifact instances.
-
-Everything else runa needs is already available from outside artifact
-content: artifact type from directory structure, producing protocol from
-manifest declarations, modification timestamps from filesystem state,
-content hashes from the store. The common envelope is minimal by design.
-
-## Per-Type Schemas
-
-Designed consumer-backward: what does the consuming protocol need in its
-injected context to produce its own capstone?
-
-### intent
-
-**Consumer:** survey.
-**What survey needs:** understand what's being asked, orient to the domain.
-
-The intent artifact is the entry point to the system — a door, not a document.
-Lightweight enough that creating one isn't burdensome, structured enough that
-survey has something to work from.
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| statement | string | yes | What the operator intends to accomplish |
-| source | string | yes | Where this came from (operator, user report, automated detection) |
-| target | string | no | Optional opaque locator for what the intent is aimed at |
-
-### requirements
-
-**Consumer:** decompose.
-**What decompose needs:** understand the full scope, identify natural seams
-for breaking work into work-units, respect constraints and
-dependencies when drawing boundaries.
-
-This is a software requirements specification. Its structure follows
-standard SRS practice because that structure exists precisely to support
-decomposition.
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| scope | string | yes | Purpose and boundaries of the work |
-| functional_requirements | array of strings | yes | What the system should do — discrete items |
-| non_functional_requirements | array of strings | no | Performance, security, etc. |
-| constraints | array of strings | no | Technical and business boundaries |
-| assumptions | array of strings | no | What is taken as given |
-| dependencies | array of strings | no | External dependencies affecting decomposition |
-
-### work-unit
-
-**Consumers:** take, verify (requires); plan, review, land (accepts).
-**What take needs:** the work to frame and the acceptance criteria the
-contract refines — what to do, how to know it's done, and whether it's
-ready to start. **What verify needs:** the criteria list, to detect
-acceptance criteria with no scenario or gate coverage. The accepting
-consumers read scope boundaries (plan, review) and closure context (land).
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| title | string | yes | What this work-unit is |
-| description | string | yes | What needs doing |
-| acceptance_criteria | array of strings | yes | Discrete, verifiable conditions for "done" |
-| handle | connector-backed ticket handle | yes | Connector-issued tracker identity every work-unit carries |
-| scope | array of strings | no | In-scope boundaries for the session frame |
-| out_of_scope | array of strings | no | Explicit nearby exclusions |
-| dependencies | array of work-unit refs | no | Work-units that must be complete before this starts, referenced by `instance_id` |
-
-Every work-unit is tracker-backed. New work-units create the forge ticket
-before first delivery, use a stable `instance_id` derived from the connector
-handle's `id`, and populate `handle` exactly once from the identity returned by
-the connector capability `create-ticket` operation. Refinements carry the
-existing `handle` through unchanged. Dependency references use delivered
-work-unit `instance_id` values, not tracker shorthand.
-
-The body remains unpartitioned and does not carry a top-level `work_unit` field
-or forge-specific identity outside `handle`. Groundwork treats the handle as an
-opaque connector-issued `{ id, display }` object: schema validity and
-conformance are checked against the vendored Forge Capability handle
-definition, while identity comparisons derive from `id` equality rather than
-provider coordinates or display text.
-
-### Connector Handle Seam
-
-The `work-unit.handle` field is the schema-as-contract seam between Groundwork
-and runa. The vendored Forge Capability schema is the single home for the
-handle definition. Groundwork artifact schemas carry self-contained copies so
-runa can validate artifacts directly, and conformance fails when those copies
-drift from the vendored `#/$defs/handle` definition. The decompose delivery
-rules create the tracker ticket before first work-unit delivery and carry the
-returned connector handle exactly once.
-
-### Traceability Thread
-
-Acceptance criteria on the work-unit are the high-level "done" statements.
-Behavior-contract entries are the precise behavioral refinement of
-those criteria: scenarios for executable Given/When/Then behavior, or gates
-for documentation-deliverable behavior. The traceability thread runs the full
-length of the execution chain:
-
-```
-work-unit (acceptance_criteria)
-  → contract (scenarios or gates trace to acceptance criteria)
-    → test-evidence (results trace to scenarios or gates)
-      → completion-evidence (coverage at acceptance-criterion level,
-        plus documentation impact)
-```
-
-Schema implications:
-- contract scenarios and gates carry a reference to which
-  acceptance criterion they refine
-- completion-evidence reports coverage at the acceptance-criterion
-  level, not just the scenario or gate level — so verify can answer "are all
-  acceptance criteria covered?"
-
-### Context Injection Is Not Transitive
-
-Runa injects a protocol's declared requires and accepts instances. It
-does not inject transitive dependencies. If a protocol needs the work-unit
-content (to read acceptance criteria), it must declare the work-unit
-artifact in its own edges — the `work_unit` reference carried by every
-scoped artifact identifies the work-unit but does not carry its content.
-
-### contract
-
-**Producer:** take — the contract-first entry.
-**Consumers:** plan, implement, verify, submit, review (requires); land
-(accepts).
-**What consumers need:** dimension-agnostic criteria that trace to acceptance
-criteria and declare how each dimension is checked.
-
-Each criterion carries an `acceptance_criterion` reference for traceability,
-and the common `work_unit` field threads it to the work-unit.
-
-The existing `metadata` block (produced_by, date) is eliminated.
-Runa knows the producing protocol from the manifest. It tracks
-timestamps from filesystem state. The metadata duplicated what runa
-already knows. By sufficiency, it has no place in the schema.
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| work_unit | string (work-unit ref) | yes | Common envelope — threads to work-unit |
-| title | string | yes | Human-readable title for the contract |
-| criteria | array of criterion | yes (min 1) | Dimension-agnostic contract criteria |
-
-**Criterion fields:**
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| id | string | yes | Stable id referenced by completion evidence |
-| dimension | string | yes | Open dimension name |
-| acceptance_criterion | string | yes | Which acceptance criterion this refines |
-| statement | string | yes | Definition of done for this dimension |
-| hollow_delivery | string | yes | Plausible delivery that would fail this criterion |
-| check_kind | enum: executable, attested | yes | Whether evidence is performed by run/artifact or reviewer attestation |
-| check | string | yes | Concrete check descriptor |
-
-### Metadata Elimination Principle
-
-Runa tracks producing protocol (from manifest), modification timestamps
-(from filesystem), and content hashes (from store). Schemas should not
-duplicate what runa already knows. Any field whose value runa can derive
-from its own state does not belong in artifact content. This eliminates
-`produced_by`, `date`, and similar metadata from all schemas.
-
-### implementation-plan
-
-**Consumers:** implement (requires); verify, review (accepts).
-**What implement needs:** the design approach — what to change, how, and which
-behavior entries map to which implementation steps. **What verify needs:** the
-affected-files list, to map the change to the documentation it touches. **What
-review needs:** the recorded design decisions, as context for judging the
-proposal.
-
-The plan bridges the contract (from take) to code (in implement). Without
-the plan, the agent implements without design — which is what the plan
-exists to prevent. Mappings key off contract criteria by `criterion_id` —
-one mapping per criterion, the same shape for every dimension; a
-criterion's dimension, statement, and check live on the contract artifact.
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| work_unit | string (work-unit ref) | yes | Common envelope |
-| summary | string | yes | What the plan accomplishes |
-| design_decisions | array of decision | yes (min 1) | Decisions with rationale |
-| affected_files | array of strings | yes (min 1) | Files or modules that get changed |
-| criterion_mapping | array of mapping | yes (min 1) | How contract criteria map to implementation steps |
-
-**decision:**
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| decision | string | yes | What was decided |
-| rationale | string | yes | Why — traces to constraints or principles |
-
-**criterion mapping:**
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| criterion_id | string | yes | Criterion id from the contract |
-| steps | array of strings | yes (min 1) | Implementation steps for this criterion |
-
-### test-evidence
-
-**Consumer:** verify (requires).
-**What verify needs:** proof that each executable criterion's check was run
-and the result. Verify joins test-evidence with the contract by
-`criterion_id` to roll up coverage at the criterion level — the same join
-for every dimension.
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| work_unit | string (work-unit ref) | yes | Common envelope |
-| evidence | array of evidence-entry | yes (min 1) | Check results per contract criterion |
-
-**Evidence-entry fields:**
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| criterion_id | string | yes | Criterion id from the contract |
-| result | enum: pass, fail | yes | Check outcome |
-| command | string | yes | The command that was executed |
-| output_summary | string | yes | Summary of command output — proof the check ran |
-
-### completion-evidence
-
-**Consumers:** submit (requires), review (accepts), land (accepts).
-**What submit needs:** proof that work is verified before packaging. What
-review needs: the evidence-quality basis for judgment. What land needs:
-coverage context for the final record.
-
-Verify produces this by recording one result per contract criterion and by
-reviewing the documentation impact of the change. Executable criteria record
-run or artifact evidence. Attested criteria record reviewer identity and
-finding; a bare pass is not evidence.
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| work_unit | string (work-unit ref) | yes | Common envelope |
-| results | array of result-entry | yes (min 1) | Per-contract-criterion performed evidence |
-| documentation | object | yes | Documentation impact: `updated`, `verified_accurate`, `follow_up_work_units` |
-
-**Result-entry fields:**
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| criterion_id | string | yes | Contract criterion id |
-| result | enum: pass, fail | yes | Observed result |
-| evidence | object | yes | Run/artifact evidence or reviewer attestation, plus summary |
-
-### change-proposal
-
-**Consumers:** review (requires), land (requires), submit (accepts for revision).
-**What review needs:** the proposed change version and the handle where the
-change can be inspected. **What land needs:** the approved proposal's apply
-detail. Land resolves it by matching `work_unit` and `version` against the
-approval's `work_unit` and `against_version`.
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| work_unit | string (work-unit ref) | yes | Common envelope |
-| branch | string | yes | Proposal branch or carrier branch |
-| commit | string | yes | Head commit or stable revision |
-| base | string | yes | Target base revision |
-| summary | string | yes | Human-readable proposal summary |
-| version | integer | yes | Immutable review-round version for the work-unit |
-| handle | object | yes | Connector `{id,display}` inspection/apply handle |
-
-### change-approved / change-needs-revision
-
-**Consumers:** land consumes change-approved; submit consumes
-change-needs-revision.
-**What successors need:** the review disposition and reviewed proposal version.
-The artifact type is the disposition, and `against_version` identifies the
-proposal version reviewed within the named work unit.
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| work_unit | string (work-unit ref) | yes | Common envelope |
-| against_version | integer | yes | Reviewed change-proposal version |
-| reviewer | string | yes | Reviewer identity |
-| reviewed_at | string | yes | Review timestamp |
-| findings | array | yes | Classified review findings |
-
-### completion-record
-
-**Consumer:** none (terminal artifact — archival record).
-**What it captures:** the final state of the work-unit. This is a summary
-artifact — the structured enforcement lives upstream in completion-evidence.
-The record distills the conclusion.
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| work_unit | string (work-unit ref) | yes | Common envelope |
-| criterion_summary | string | yes | How acceptance criteria were met |
-| gaps | array of strings | yes | Known gaps or deferred work (empty if none) |
-| merge_reference | string | yes | Merge commit SHA or PR URL |
-| documentation_status | string | yes | Summary of documentation coverage |
-
-### research-record
-
-**Consumers:** take (accepts), plan (accepts), survey (accepts),
-decompose (accepts).
-**What consumers need:** research findings and their sources, scoped
-by topic. May serve multiple work-units when cross-cutting, or be
-scoped to a specific work-unit via the optional `work_unit` field.
-
-Research-record is always scoped by topic. It optionally carries
-`work_unit` when the research is specific to a work-unit — for example,
-researching a particular library for a particular implementation task.
-When `work_unit` is absent, the research is cross-cutting and available
-to any protocol that accepts it. It belongs to neither the planning nor
-execution phase exclusively — it enriches both.
-
-The existing `date` field is eliminated by the metadata elimination
-principle. Runa tracks timestamps from filesystem state.
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| topic | string | yes | What was researched (kebab-case slug) |
-| work_unit | string | no | Optional work-unit reference — scopes research to a work-unit |
-| findings | array of strings | yes (min 1) | Key findings |
-| sources | array of source | yes (min 1) | Sources consulted |
-
-**Source fields:**
-
-| Field | Type | Required | Purpose |
-|-------|------|----------|---------|
-| url | string (URI) | yes | Source URL |
-| title | string | no | Source title |
+stance (audience, artifact choice, depth) is carried by the `orient`
+skill
+([`skills/orient/references/documentation.md`](../../skills/orient/references/documentation.md));
+inline documentation is written alongside code during implement's GREEN
+and REFACTOR phases.

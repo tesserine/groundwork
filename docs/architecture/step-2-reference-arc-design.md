@@ -1,5 +1,12 @@
 # Step 2 Reference Arc Design
 
+> **Historical note.** This is a design record from the ADR-0002
+> methodology-sovereignty rollout, retained as history. It does not
+> describe the present system; the substrate homes and the ADR register
+> do. Where a consumer cites a decision recorded here, the citation is
+> to the reasoning, and the in-file Revision Note names what has been
+> superseded.
+
 ## Audience and Purpose
 
 This note is for agents and contributors authoring Step 2 of ADR-0002's

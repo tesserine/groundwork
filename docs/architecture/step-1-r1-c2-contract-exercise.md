@@ -1,5 +1,11 @@
 # Step 1 R1 C-2 Contract Exercise
 
+> **Historical note.** This is a session record from the ADR-0002
+> methodology-sovereignty rollout, retained as history. It does not
+> describe the present system; for that, read
+> [`connecting-structure.md`](connecting-structure.md) and the substrate
+> homes it links.
+
 ## Audience and Purpose
 
 This note is for agents and contributors preparing Step 2 of ADR-0002's

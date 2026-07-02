@@ -6,8 +6,8 @@ description: >-
   documentation-writing guidance. Activates the full skill system as one
   connected methodology and carries the always-on documentation discipline.
 metadata:
-  version: "4.1.0"
-  updated: "2026-06-17"
+  version: "4.1.1"
+  updated: "2026-07-02"
 ---
 
 # Orient
@@ -152,6 +152,7 @@ These are not stations; they engage when their trigger fires, at any stage.
 - **Documentation drift.** Claiming completion without checking whether the
   change affects documentation, or deferring known drift untracked.
 
-For the connecting structure — artifacts, manifest edges, schemas, and
-protocol topology — see
+For the connecting structure's design rationale — with the topology
+itself in the substrate homes it links (`manifest.toml`, `schemas/`,
+`workflow-contracts/`) — see
 [connecting-structure.md](../../docs/architecture/connecting-structure.md).

@@ -131,8 +131,7 @@ at all — runa never sees a skill — so mirroring contract-shaped fields
 into skill frontmatter creates a second surface that drifts from the
 authoritative one. (See
 [`docs/architecture/connecting-structure.md`](../architecture/connecting-structure.md#authoring-surfaces-and-authority)
-for the full reasoning, including the historical drift case that
-motivated removing these fields.)
+for the full reasoning.)
 
 ## Cross-references
 
