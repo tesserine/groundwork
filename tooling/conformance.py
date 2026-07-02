@@ -403,7 +403,7 @@ def _manifest_capability_contract_errors(root: Path) -> list[tuple[str, str]]:
 
     metadata = schema.get("x-tesserine-canonical")
     if metadata != {"version": CAPABILITY_VERSION, "schema_url": CAPABILITY_PROVENANCE_URL}:
-        errors.append(("schemas/forge-capability/v1/forge-capability.schema.json", "vendored forge capability provenance is not immutable v1.1.0"))
+        errors.append(("schemas/forge-capability/v1/forge-capability.schema.json", f"vendored forge capability provenance is not immutable v{CAPABILITY_VERSION}"))
     if schema.get("properties", {}).get("handle_schema", {}).get("const") != "#/$defs/handle":
         errors.append(("schemas/forge-capability/v1/forge-capability.schema.json", "forge capability handle_schema must point at #/$defs/handle"))
     if len(forge_operation_names(schema)) != 8:

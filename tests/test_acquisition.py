@@ -89,6 +89,33 @@ class MaterializeTicketTests(unittest.TestCase):
         )
         self.assertRegex(payload["instance_id"], r"^work-unit-[0-9a-f]{64}$")
 
+    def test_comment_log_leaves_the_materialized_artifact_unchanged(self) -> None:
+        bare = {
+            "handle": {"id": "ticket:log-bearing", "display": "TRACK-LOG"},
+            "title": "task(entry): resume a unit carrying a live review record",
+            "body": TICKET_BODY,
+            "state": "open",
+        }
+        with_log = {
+            **bare,
+            "comments": [
+                {"body": "**Freshen pass — 2026-07-02** grounded at head; freshen-in-place."},
+                {
+                    "body": "Review round 2: required correction — rename the gate before resume.",
+                    "author": "operator",
+                    "created_at": "2026-07-02T10:53:26Z",
+                },
+            ],
+        }
+
+        bare_result = materialize(json.dumps(bare))
+        log_result = materialize(json.dumps(with_log))
+
+        self.assertEqual(0, bare_result.returncode, bare_result.stderr)
+        self.assertEqual(0, log_result.returncode, log_result.stderr)
+        self.assertEqual(bare_result.stdout, log_result.stdout)
+        self.assertNotIn("comments", json.loads(log_result.stdout)["artifact"])
+
     def test_materializer_identity_uses_handle_id_not_display(self) -> None:
         first = {
             "handle": {"id": "ticket:stable-identity", "display": "First display"},

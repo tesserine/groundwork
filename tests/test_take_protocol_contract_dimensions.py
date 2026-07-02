@@ -204,6 +204,7 @@ class TakeProtocolContractDimensionTests(unittest.TestCase):
                 "contract-after-code",
                 "scope-creep",
                 "criteria-parroting",
+                "stale-directive-followership",
                 "skip-preparation",
                 "state-lag",
                 "dimension-declaration-only",
