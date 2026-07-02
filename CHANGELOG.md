@@ -8,6 +8,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Prose is projection: protocol artifact prose is conformance-gated to the
+  owning schema** (#504). ADR-0008 ratifies the invariant — the manifest,
+  the artifact schemas, and the workflow contracts are the single home of
+  every structural fact; prose consults the home, is a gate-bound rendering
+  of it, or carries judgment only — with each consequence traced to its
+  enforcing file. `tooling/protocol_prose.py` is the gate: for every
+  manifest protocol it verifies that each field the `PROTOCOL.md` attributes
+  to an artifact (delivery-call block keys at any depth, backticked `###`
+  field headings) exists in the owning schema, modulo the documented
+  `instance_id`/`work_unit` envelope, by consulting the live schema files —
+  a schema change flips the check unedited, the tooth
+  `tests/test_protocol_prose_conformance.py` pins alongside the live-tree
+  gate, a parse-coverage floor for every producer, and a standing-red
+  fixture. Run against the pre-fix tree, the gate failed on exactly the
+  survey protocol's nine phantom `requirements` fields; survey's
+  §Requirements Structure now derives from `schemas/requirements.schema.json`
+  — the six real fields carry the section's forces/resists discipline, and
+  the Procedures own the inquiry whose judgment they carry (survey 1.1.0).
+
 - **Code quality is a first-class inhabitant of the contract machine**
   (#485). Structurally-checkable projections gain a real executable check:
   `tooling/import_direction.py` ships as the reference fitness function

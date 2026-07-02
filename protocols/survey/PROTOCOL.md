@@ -8,8 +8,8 @@ description: >-
   of inheriting the backlog, the current architecture, or a familiar project
   pattern.
 metadata:
-  version: "1.0.0"
-  updated: "2026-03-17"
+  version: "1.1.0"
+  updated: "2026-07-02"
 ---
 
 # Survey
@@ -54,82 +54,71 @@ completion of every step at maximum depth.
 
 ## Requirements Structure
 
-The `requirements` artifact must make the cognitive work legible. Each field
-exists for two reasons: it forces specific thinking, and it blocks a specific
-failure mode.
+The `requirements` artifact is defined by its schema:
+`schemas/requirements.schema.json` is the single home of its fields, and this
+section derives from it — a reader of the section and the schema sees one
+artifact. Each field must make the cognitive work legible: it carries a
+specific judgment out of the inquiry, and it blocks a specific failure mode.
 
-### `surveyed-territory`
+### `scope`
 
-What area was examined, what boundaries define it, and what was intentionally
-left outside this survey.
+Purpose and boundaries of the work: the territory examined and the bounded
+exigence chosen within it, with what falls outside stated as a boundary.
 
-This forces the agent to name the actual territory instead of speaking about
-"the project" in the abstract. It resists scope sprawl, scope timidity, and
-the false authority that comes from making claims about areas that were never
-actually examined.
+This forces the survey to name the actual territory and commit to one body of
+work inside it. It resists scope sprawl, scope timidity, false authority over
+areas never examined, and the "fix everything" survey that never chooses.
 
-### `descriptive-state`
+### `functional_requirements`
 
-Observed facts about what exists now: code, docs, work-units, workflows,
-architecture, operator signals, and evidence gathered from the territory.
+What the system should do — discrete items, each a normative need derived from
+the territory's purpose rather than from its current implementation.
 
-This forces observation before prescription. It resists fantasy, premature
-design, and project-type pattern matching by making the agent state what is
-actually present before deciding what is needed.
+This forces translation from assessment into decomposable behaviors. It
+resists purely descriptive reporting that never crosses into an actionable
+body of work.
 
-### `normative-needs`
+### `non_functional_requirements`
 
-What must be true that is not yet true, derived from the territory's purpose,
-audience, or constraints rather than from its current implementation.
+The qualities the work must hold — performance, security, reliability, and
+their kin — stated as needs, not as descriptions of current behavior.
 
-This forces the descriptive-normative split. It resists treating the current
-architecture, backlog, or coding style as the definition of correctness.
+This forces qualities to be derived from purpose and audience. It resists
+treating whatever the system currently exhibits as the definition of adequate.
 
-### `chosen-exigence`
+### `constraints`
 
-The one body of work that should move forward now.
+Technical and business boundaries the work must respect: the real ones —
+physics, contract, mandate, platform.
 
-This forces commitment. It resists both "fix everything" sprawl and timid
-surface work by requiring a single real need, not a bag of observations.
+This forces the split between genuine boundaries and inherited convention. It
+resists precedent-as-constraint and the architecture legitimism that smuggles
+the current structure in as a requirement.
 
-### `priority-reasoning`
+### `assumptions`
 
-Why the chosen exigence outranks other plausible directions right now.
+What is taken as given: the load-bearing beliefs the survey did not verify,
+stated where `decompose` can see them.
 
-This forces comparative judgment rather than instinct. It resists anchoring on
-the existing backlog, first-seen problem, or most familiar solution shape.
+This forces epistemic honesty about the unverified. It resists bluffing past
+missing evidence and building silently on unknowns — a material uncertainty
+either becomes an explicit assumption here or sends the survey back to
+`research`.
 
-### `rejected-alternatives`
+### `dependencies`
 
-Plausible frames, fixes, or work bodies that were considered and rejected, with
-reasons for rejection.
+External dependencies affecting decomposition: what outside the territory the
+work waits on or touches.
 
-This forces dissent against the most tempting wrong answers. It resists
-backlog anchoring, familiar-template projection, and the silent assumption that
-the first plausible frame must be the right one.
+This forces the outward edges to be named before units are cut. It resists
+work-unit graphs that discover their blockers at execution time.
 
-### `recommended-work`
-
-The bounded work package that `decompose` should turn into executable work-units.
-
-This forces translation from assessment into action. It resists purely
-descriptive reporting that never crosses into an actionable body of work.
-
-### `out-of-scope-or-deferred`
-
-Work noticed during survey that should not be taken forward in this assessment,
-with reasons for exclusion or deferral.
-
-This forces boundary discipline. It resists "while we're here" expansion and
-keeps the assessment honest about what it is not trying to solve.
-
-### `unknowns-or-research-needs`
-
-Material uncertainties that still affect confidence, plus any evidence that
-must still be gathered.
-
-This forces epistemic honesty. It resists bluffing past missing evidence and
-tells `decompose` where additional grounding or research may still be needed.
+The inquiry that fills these fields — orienting to the territory, separating
+descriptive state from normative need, surfacing and rejecting distorting
+frames, choosing a bounded exigence — is owned by the Procedures below. The
+fields carry that inquiry's judgment; they do not replace it, and a
+schema-valid artifact produced without the inquiry is artifact theater (see
+Corruption Modes).
 
 ## Procedures
 
