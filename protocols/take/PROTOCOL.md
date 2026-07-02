@@ -2,13 +2,12 @@
 name: take
 description: >-
   Contract-first entry of the scoped pipeline: receive an already-selected
-  work-unit, prepare the workspace, establish the contract that
-  defines done, and carry that contract through the pipeline to a submitted
-  change. The contract produced here is the spine every downstream protocol
-  carries to land; until the runtime sequences the stations autonomously,
-  take carries it. Trigger on: 'take', 'take work', 'start work-unit'.
+  work-unit, prepare the workspace, and establish the contract that
+  defines done. The contract produced here is the spine every downstream
+  protocol carries to land; the session surface advances the pipeline from
+  it. Trigger on: 'take', 'take work', 'start work-unit'.
 metadata:
-  version: "3.6.0"
+  version: "3.7.0"
   updated: "2026-07-02"
 ---
 
@@ -121,50 +120,16 @@ proves it, or records it.
 
    Runa validates the remaining artifact body fields against the contract
    schema, persists the artifact, and records it in the artifact store.
-   Where no runtime is present to accept the MCP tool — a checkout that is
-   not an initialized runa project — author the same contract as a committed
-   workspace artifact (the contract JSON, or the work-unit issue if there is
-   no workspace store) so the spine exists and binds the test-first cycle
-   either way.
 
-6. **Carry the contract through to a submitted change.** Take does not end
-   at contract delivery. When the runtime sequences the pipeline
-   autonomously, it advances the work station to station; until then, take
-   carries it — that bridging is take's job at the door.
-
-   The carry begins at `plan`, and the plan is where the work converges.
-   The plan that serves this work is the `plan` protocol's contract-centered
-   design: the goal stated from the contract's criteria, each criterion
-   mapped by `criterion_id` to the steps that make it true, and the test
-   strategy that turns each executable criterion into failing evidence
-   before the change satisfies it. Where the harness plans before it
-   executes, *that design is the plan you surface for approval* — not a
-   narration of pipeline mechanics, which station comes next or which
-   command advances it. Lead with the contract: criterion coverage across
-   every declared dimension, the absence of any gap through which a
-   delivery the contract accepts as done could still fail, and how each
-   executable criterion is driven red-then-green through the check its
-   contract entry names — a scenario test or a structural, coherence, and
-   conformance gate. Do not encode gates as scenarios. Surface that, and
-   accepting the plan is accepting the contracted work — full convergence at
-   the planning surface.
-
-   On acceptance, carry it forward yourself. You are already the agent:
-   deliver the `implementation-plan` artifact through its output tool to
-   advance `plan`, then drive the remaining stations directly — `implement`
-   (build it test-first; every executable criterion has failing evidence
-   before its code or documentation change, `contract-after-code`
-   forbidden), `verify` (every criterion evidenced, the change sound),
-   `submit`
-   (deliver the change for review) — opening
-   `runa-mcp` in session mode for the work-unit and, at each station,
-   reading its context, doing the work, producing its artifact, advancing.
-   Do not hand the carry-through to `runa go --work-unit`: that spawns a
-   separate agent that is not yet wired, and the work stalls; until it is
-   wired, you drive the session directly. Do not stop at a boundary waiting
-   to be carried. Review and land — the independent-judgment gate and the
-   governance close — follow once every scenario or gate is green and verify
-   passes.
+   Delivering the contract is take completing: the session surface computes
+   the next ready station from artifact state and advances the work to it —
+   the seam runa's session-surface contract
+   (`docs/session-surface-contract.md` in the runa repository) and the
+   manifest's trigger declarations own. Where no runtime is present
+   to accept the MCP tool — a checkout that is not an initialized runa
+   project — author the same contract as a committed workspace artifact (the
+   contract JSON, or the work-unit issue if there is no workspace store) so
+   the spine exists and binds the test-first cycle either way.
 
 ## Scale
 
@@ -202,20 +167,6 @@ begins — the dose is proportional.
   loses workspace isolation and makes `submit` harder.
 - `state-lag`: the tracker not reflecting that this work-unit is in
   progress. Inaccurate state is planning debt for every other session.
-- `abandon-at-contract`: delivering the contract and stopping —
-  handing the work to a runtime that is not sequencing it. The contract
-  becomes a definition of done that nothing executes, and the stations are
-  silently skipped. Until the runtime carries the work, take does.
-- `mechanics-as-plan`: surfacing a narration of pipeline mechanics — which
-  station is next, which command advances it — as the plan, instead of
-  running `plan` to produce the contract-centered design. Nothing
-  contract-shaped is put up to accept, only a procedure to run; the
-  convergence is lost.
-- `delegate-to-unwired-runtime`: handing the carry-through to `runa go
-  --work-unit` (the autonomous agent-spawn) while it is not yet wired,
-  instead of driving the session yourself. The work stalls at a spawned
-  agent that never advances — a quieter `abandon-at-contract`. Until that
-  path is wired, you are the driver.
 - `dimension-declaration-only`: naming documentation or code-quality
   dimensions without defining the validation each must satisfy. The
   contract has labels but no teeth.

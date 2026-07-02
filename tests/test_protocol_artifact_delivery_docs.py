@@ -45,6 +45,25 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
                 with self.subTest(path=path.relative_to(ROOT), phrase=phrase):
                     self.assertNotIn(phrase, body)
 
+    def test_protocol_prose_carries_no_runtime_wiring_state(self) -> None:
+        """ADR-0008 consequence 2: a protocol states the methodology's own
+        seam and stops; which runtime commands are wired, configured, or
+        pending belongs to the runtime's own repository and tracker."""
+        forbidden = [
+            "not yet wired",
+            "until it is wired",
+            "until the runtime",
+            "`runa go",
+            "spawns a separate agent",
+            "you drive the session",
+        ]
+
+        for protocol in manifest_protocols():
+            body = normalized_protocol(protocol["name"])
+            for phrase in forbidden:
+                with self.subTest(protocol=protocol["name"], phrase=phrase):
+                    self.assertNotIn(phrase, body)
+
     def test_all_artifact_producing_protocols_explain_mcp_tool_input_boundary(self) -> None:
         producers = [protocol for protocol in manifest_protocols() if protocol["produces"]]
 

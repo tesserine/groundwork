@@ -154,25 +154,34 @@ class TakeProtocolContractDimensionTests(unittest.TestCase):
         self.assertNotIn("deferred", delivery)
         self.assertNotIn("behavior_form", delivery)
 
-    def test_carry_through_leads_with_criterion_coverage_across_every_dimension(self) -> None:
-        carry = normalized(step(read(TAKE_PROTOCOL), 6))
-        carry_lower = carry.lower()
+    def test_take_ends_at_the_capstone_and_states_the_session_surface_seam(self) -> None:
+        body = read(TAKE_PROTOCOL)
+        steps = section(body, "Steps")
 
+        self.assertIsNone(
+            re.search(r"^6\. \*\*", steps, flags=re.MULTILINE),
+            "take carries a step past the capstone",
+        )
+
+        delivery = normalized(step(body, 5))
         for expected in [
-            "criterion coverage",
-            "every declared dimension",
-            "`criterion_id`",
-            "red-then-green",
-            "every executable criterion",
-            "structural, coherence, and conformance",
-            "do not encode gates as scenarios",
+            "Delivering the contract is take completing",
+            "session surface computes the next ready station from artifact state",
+            "advances the work to it",
+            "Where no runtime is present",
         ]:
             with self.subTest(expected=expected):
-                self.assertIn(expected.lower(), carry_lower)
+                self.assertIn(expected, delivery)
 
-        self.assertNotIn("behavior_form", carry)
-        self.assertNotIn("scenario coverage for runtime behavior", carry_lower)
-        self.assertNotIn("gate coverage for a documentation-deliverable", carry_lower)
+        body_lower = normalized(body).lower()
+        for phrase in [
+            "carry the contract through",
+            "carry it forward yourself",
+            "drive the remaining stations",
+            "do not stop at a boundary",
+        ]:
+            with self.subTest(phrase=phrase):
+                self.assertNotIn(phrase, body_lower)
 
     def test_existing_take_discipline_sections_and_corruption_modes_survive(self) -> None:
         body = read(TAKE_PROTOCOL)
@@ -188,19 +197,21 @@ class TakeProtocolContractDimensionTests(unittest.TestCase):
             with self.subTest(heading=heading):
                 self.assertIn(f"## {heading}", body)
 
-        corruption_modes = normalized(section(body, "Corruption Modes"))
-        for mode in [
-            "contract-after-code",
-            "scope-creep",
-            "criteria-parroting",
-            "skip-preparation",
-            "state-lag",
-            "abandon-at-contract",
-            "mechanics-as-plan",
-            "delegate-to-unwired-runtime",
-        ]:
-            with self.subTest(mode=mode):
-                self.assertIn(mode, corruption_modes)
+        corruption_modes = section(body, "Corruption Modes")
+        named_modes = re.findall(r"^- `([a-z-]+)`", corruption_modes, flags=re.MULTILINE)
+        self.assertEqual(
+            [
+                "contract-after-code",
+                "scope-creep",
+                "criteria-parroting",
+                "skip-preparation",
+                "state-lag",
+                "dimension-declaration-only",
+                "gate-as-scenario",
+                "lifecycle-modeling",
+            ],
+            named_modes,
+        )
 
 
 if __name__ == "__main__":
