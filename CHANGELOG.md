@@ -8,6 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Code quality is a first-class inhabitant of the contract machine**
+  (#485). Structurally-checkable projections gain a real executable check:
+  `tooling/import_direction.py` ships as the reference fitness function
+  (stdlib-only layer-edge checker), a seeded cross-layer import fails it,
+  and groundwork's own tree answers to it with the `tooling → tests` edge
+  forbidden. A projection exemplar pair inhabits both check kinds — one
+  executable import-direction criterion evidenced by a recorded run, two
+  attested judgment projections whose universals resolve verbatim in the
+  embedded principles corpus (consult, don't model) with per-universal
+  reviewer findings — and a hollow exemplar shows the generic "code
+  quality is reviewed" criterion failing the same shared
+  warranted-acceptance-criteria check every dimension answers to. The
+  canonical exemplar's code-quality criterion is now honestly executable:
+  its check names an automated fitness test and its evidence is a run.
+  `tests/test_code_quality_dimension.py` pins the seeded red, the corpus
+  consultation, the hollow tooth (same detector, same message shape as
+  sibling dimensions), and evidence-shape parity; the code-quality-contract
+  and code-quality-review references teach the apparatus per projection
+  shape and name the stressed-universals → warranted-set wiring.
+
 - **Documentation is a first-class inhabitant of the contract machine**
   (#495). The pipeline's canonical exemplar now models the documentation
   dimension as an audience outcome — an API consumer acting from the

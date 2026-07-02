@@ -5,10 +5,14 @@ must hold of the change's **internal form**.
 
 Its teeth come from the resolved **principles corpus**, not from an invented
 style rulebook: the universals that bear on a change, consulted from the
-corpus and projected onto the diff as reviewer-checkable criteria in
-`contract.criteria[]`. The usual checking apparatus is
-`check_kind: "attested"` with performed evidence recorded as reviewer
-findings in `completion-evidence.results[]`.
+corpus and projected onto the diff as typed criteria in
+`contract.criteria[]`. The checking apparatus follows the projection's
+shape: a **structurally-checkable** projection — dependency direction,
+layering, coupling, import direction — is `check_kind: "executable"`, its
+check an automated fitness function whose run is recorded in
+`completion-evidence.results[]`; a **judgment-shaped** projection is
+`check_kind: "attested"`, its performed evidence a reviewer finding in the
+same surface.
 
 ## Why the corpus, not a rulebook
 
@@ -40,6 +44,22 @@ not. The review of each item finds one of two things: the **locus** in the
 diff where the universal holds, or the **place** it fails. A finding is
 evidence; "looks fine" is not (**Verifiable Completion**, **Honest
 Signal**).
+
+## Structurally-checkable projections are executable
+
+Where a projection's failing tell is a structural fact of the tree — a
+forbidden layer edge, an import direction, a dependency cycle — the
+criterion is typed `executable` and its check is a **fitness function**: an
+automated check that a seeded violating change fails and whose run (or
+produced artifact) is the recorded evidence. `tooling/import_direction.py`
+is the shipped reference implementation: it fails a module in one layer
+that imports from a forbidden layer, groundwork's own tree answers to it
+(the `tooling → tests` edge is forbidden), and
+`tests/test_code_quality_dimension.py` proves the seeded violation goes
+red. A structural invariant left as an attested item asks a reviewer to
+eyeball what a run can decide; a manual inspection wearing
+`check_kind: "executable"` is a lying surface. Type each projection by
+what its check actually is.
 
 ## Projecting the corpus
 
@@ -90,7 +110,14 @@ legitimate; under-declaration is not. A change that touches a shared asset
 without naming the universal that governs single homes, adds an abstraction
 without the one that governs earning a place, or moves a public surface
 without the one that governs honest surfaces, has left its risk outside
-validation.
+validation. Mechanically, the stressed universals selected for a change
+enter the warranted acceptance-criteria set the shared contract/evidence
+detector checks — the same under-declaration flag every dimension answers
+to. The exemplar fixtures under `tests/fixtures/artifacts/` model both
+sides: the projection pair that inhabits both check kinds and passes that
+gate, and the generic "code quality is reviewed" form it catches
+(`tests/test_code_quality_dimension.py` pins the pair, and pins each
+attested exemplar universal to the resolved corpus by name).
 
 ## Verifying the contract
 

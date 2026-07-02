@@ -27,7 +27,7 @@
       "statement": "Record validation continues through the shared validator path.",
       "hollow_delivery": "A second validator is added for this endpoint only.",
       "check_kind": "executable",
-      "check": "Inspect tests and code paths for one validation entry."
+      "check": "Automated check: the validation-entry fitness test asserts exactly one module imports the shared validator (tests/test_validation_entry.py)."
     }
   ]
 }

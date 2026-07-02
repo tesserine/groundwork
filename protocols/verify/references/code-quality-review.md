@@ -11,8 +11,13 @@ review is the gate; a self-report of cleanliness is not the evidence
 
 ## Method
 
-Begin from the declared contract. List the universals the code-quality
-contract declared for this change; those are what this audit decides.
+Begin from the declared contract, splitting its code-quality criteria by
+`check_kind`. An **executable** criterion — a structural projection whose
+check is a fitness function — is verified by running its declared check
+and recording the run in `completion-evidence.results[]`; the reference
+implementation for layer edges is `tooling/import_direction.py`. The
+audit below is the **attested** criteria's method. List the universals
+those declared for this change; they are what the audit decides.
 
 1. **Read the diff as the substrate.** Audit the committed change, not the
    author's account of it. For each declared universal, the universal's full
@@ -34,9 +39,10 @@ contract declared for this change; those are what this audit decides.
    grow. The corpus is the bounded asset the spiral acts on.
 
 The declared code-quality criterion's performed result is recorded in
-`completion-evidence.results[]` as attested evidence: reviewer identity plus
-the per-universal disposition and finding for each selected universal or
-projection. The verify report remains the review narrative, and the
+`completion-evidence.results[]` shaped by its `check_kind`: run (or
+produced-artifact) evidence for an executable projection; for an attested
+one, reviewer identity plus the per-universal disposition and finding for
+each selected universal or projection. The verify report remains the review narrative, and the
 `documentation` section remains the document-impact index — updated
 documents, documents verified accurate, and follow-up work-units — not the
 evidence home for a declared code-quality criterion.

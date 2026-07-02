@@ -1,0 +1,21 @@
+{
+  "work_unit": "work-unit-485-hollow-refactor",
+  "results": [
+    {
+      "criterion_id": "code-quality-generic-review",
+      "result": "pass",
+      "evidence": {
+        "summary": "Reviewer marked code quality as reviewed.",
+        "attestation": {
+          "reviewer": "core",
+          "finding": "Code quality reviewed."
+        }
+      }
+    }
+  ],
+  "documentation": {
+    "updated": [],
+    "verified_accurate": [],
+    "follow_up_work_units": []
+  }
+}

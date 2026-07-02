@@ -1,0 +1,33 @@
+{
+  "work_unit": "work-unit-485-code-quality-projections",
+  "title": "Code-quality projections inhabit both check kinds",
+  "criteria": [
+    {
+      "id": "code-quality-layer-import-direction",
+      "dimension": "code-quality",
+      "acceptance_criterion": "Source layers keep their import direction",
+      "statement": "Every import under src/ resolves within the source layers; the src-to-tests edge stays absent under the import-direction fitness function.",
+      "hollow_delivery": "A module under src/ imports a helper from tests/ and the change lands green.",
+      "check_kind": "executable",
+      "check": "Run `python -m tooling.import_direction --root . --forbid src:tests`; the run reports zero violations."
+    },
+    {
+      "id": "code-quality-earns-its-place",
+      "dimension": "code-quality",
+      "acceptance_criterion": "Keep it as simple as the need allows",
+      "statement": "Asked of the diff: does every element added or kept trace to a need this change verifies? It holds when the constraint each new element serves is nameable at its locus.",
+      "hollow_delivery": "A defensive abstraction, speculative parameter, or compatibility shim lands with no constraint that demands it.",
+      "check_kind": "attested",
+      "check": "Reviewer audits the diff against the universal, recording the locus where it holds or the finding where it fails."
+    },
+    {
+      "id": "code-quality-fail-loudly",
+      "dimension": "code-quality",
+      "acceptance_criterion": "Fail loudly, early, and exactly once",
+      "statement": "Asked of the diff: does each failure path the change adds surface its error where it occurs, named, exactly once? It holds when every new failure path has a loud, pointable locus.",
+      "hollow_delivery": "A fallback introduced by the change silently masks an error and downstream code builds on the false success.",
+      "check_kind": "attested",
+      "check": "Reviewer traces each failure path the diff adds, recording its loud locus or the silent spot where it fails."
+    }
+  ]
+}
