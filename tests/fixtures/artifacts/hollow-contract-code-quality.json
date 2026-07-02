@@ -1,0 +1,15 @@
+{
+  "work_unit": "work-unit-485-hollow-refactor",
+  "title": "Refactor with a generic code-quality criterion",
+  "criteria": [
+    {
+      "id": "code-quality-generic-review",
+      "dimension": "code-quality",
+      "acceptance_criterion": "Code quality is reviewed",
+      "statement": "The code was reviewed for quality.",
+      "hollow_delivery": "The reviewer marks code quality as reviewed while no universal was checked against the diff.",
+      "check_kind": "attested",
+      "check": "Reviewer notes code quality as reviewed."
+    }
+  ]
+}

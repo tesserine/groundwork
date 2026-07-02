@@ -5,10 +5,10 @@
       "criterion_id": "code-quality-single-validation-path",
       "result": "pass",
       "evidence": {
-        "summary": "Artifact inspection confirms the shared validator remains the single path.",
+        "summary": "The validation-entry fitness test emitted its entry-point report.",
         "artifact": {
-          "path": "src/ingestion/validation.py",
-          "description": "The endpoint uses the shared validator rather than a one-off check."
+          "path": "reports/validation-entry.txt",
+          "description": "Entry-point report produced by the validation-entry fitness test, listing the one importer of the shared validator."
         }
       }
     }

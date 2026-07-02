@@ -1,0 +1,44 @@
+{
+  "work_unit": "work-unit-485-code-quality-projections",
+  "results": [
+    {
+      "criterion_id": "code-quality-layer-import-direction",
+      "result": "pass",
+      "evidence": {
+        "summary": "The import-direction fitness function reports the src-to-tests edge absent.",
+        "run": {
+          "command": "python -m tooling.import_direction --root . --forbid src:tests",
+          "result": "pass",
+          "output_summary": "0 violations; the src layer imports only source layers"
+        }
+      }
+    },
+    {
+      "criterion_id": "code-quality-earns-its-place",
+      "result": "pass",
+      "evidence": {
+        "summary": "Reviewer audited each added element against the universal.",
+        "attestation": {
+          "reviewer": "core",
+          "finding": "Each of the three added elements names its constraint: the retry parameter serves the flaky-upstream requirement at src/ingestion/client.py:41; the two helpers are consumed at their call sites; the diff carries no speculative surface."
+        }
+      }
+    },
+    {
+      "criterion_id": "code-quality-fail-loudly",
+      "result": "pass",
+      "evidence": {
+        "summary": "Reviewer traced both failure paths the change adds.",
+        "attestation": {
+          "reviewer": "core",
+          "finding": "Both new failure paths raise a named error at their origin: the malformed-record path at src/ingestion/parser.py:23 and the upstream-timeout path at src/ingestion/client.py:57; neither is masked by a fallback."
+        }
+      }
+    }
+  ],
+  "documentation": {
+    "updated": [],
+    "verified_accurate": ["docs/architecture/layers.md"],
+    "follow_up_work_units": []
+  }
+}

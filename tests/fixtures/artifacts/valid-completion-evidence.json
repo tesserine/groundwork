@@ -28,10 +28,11 @@
       "criterion_id": "code-quality-single-validation-path",
       "result": "pass",
       "evidence": {
-        "summary": "The shared validation path remains the only endpoint validation path.",
-        "artifact": {
-          "path": "src/ingestion/validation.py",
-          "description": "The endpoint delegates to the shared validator."
+        "summary": "The validation-entry fitness test confirms the shared validator is the single entry.",
+        "run": {
+          "command": "python -m unittest tests.test_validation_entry",
+          "result": "pass",
+          "output_summary": "one importer of the shared validator; single entry confirmed"
         }
       }
     }
