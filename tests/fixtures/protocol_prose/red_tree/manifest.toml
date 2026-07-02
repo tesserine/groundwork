@@ -1,0 +1,15 @@
+# Minimal manifest for the protocol-prose red fixture. The schemas are the
+# live repository schemas, supplied by the test via `schemas_dir` — the
+# fixture keeps no second editable copy of any schema.
+name = "protocol-prose-red-fixture"
+
+[[artifact_types]]
+name = "requirements"
+
+[[protocols]]
+name = "survey"
+produces = ["requirements"]
+
+[[protocols]]
+name = "silent"
+produces = []
