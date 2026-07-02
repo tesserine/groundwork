@@ -8,10 +8,10 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 CAPABILITY_SCHEMA = ROOT / "schemas" / "forge-capability" / "v1" / "forge-capability.schema.json"
-CAPABILITY_VERSION = "1.1.0"
+CAPABILITY_VERSION = "1.2.0"
 CAPABILITY_PROVENANCE_URL = (
     "https://raw.githubusercontent.com/tesserine/commons/"
-    "6924159fc4ff58745f0e2c68ed16849ffd9b4086/"
+    "b229fb1a840c27ced31d582b40d766f4f441dcf6/"
     "schemas/forge-capability/v1/forge-capability.schema.json"
 )
 

@@ -6,6 +6,7 @@ from pathlib import Path
 from jsonschema import Draft202012Validator
 
 from tooling.artifact_schemas import ArtifactSchemaError, validate_artifact
+from tooling.forge_capability import CAPABILITY_PROVENANCE_URL, CAPABILITY_VERSION
 from tooling.conformance import run_conformance
 from tooling.workflow_contracts import workflow_registry_from_manifest
 
@@ -13,11 +14,6 @@ from tooling.workflow_contracts import workflow_registry_from_manifest
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMAS = ROOT / "schemas"
 VENDORED_SCHEMA = SCHEMAS / "forge-capability" / "v1" / "forge-capability.schema.json"
-PROVENANCE_URL = (
-    "https://raw.githubusercontent.com/tesserine/commons/"
-    "6924159fc4ff58745f0e2c68ed16849ffd9b4086/"
-    "schemas/forge-capability/v1/forge-capability.schema.json"
-)
 EXPECTED_OPERATIONS = {
     "read-ticket",
     "create-ticket",
@@ -47,12 +43,12 @@ class ForgeCapabilityTests(unittest.TestCase):
         schema = vendored_schema()
 
         self.assertEqual("forge", schema["properties"]["capability"]["const"])
-        self.assertEqual("1.1.0", schema["properties"]["version"]["const"])
+        self.assertEqual(CAPABILITY_VERSION, schema["properties"]["version"]["const"])
         self.assertEqual("#/$defs/handle", schema["properties"]["handle_schema"]["const"])
         self.assertEqual(
             {
-                "version": "1.1.0",
-                "schema_url": PROVENANCE_URL,
+                "version": CAPABILITY_VERSION,
+                "schema_url": CAPABILITY_PROVENANCE_URL,
             },
             schema["x-tesserine-canonical"],
         )
@@ -224,6 +220,36 @@ class ForgeCapabilityTests(unittest.TestCase):
             "state": "open",
         }
         Draft202012Validator(schema).evolve(schema=ticket_snapshot).validate(snapshot)
+        snapshot["comments"] = [
+            {"body": "Freshen record."},
+            {
+                "body": "Review round 2: required correction.",
+                "author": "operator",
+                "created_at": "2026-07-02T10:53:26Z",
+            },
+        ]
+        Draft202012Validator(schema).evolve(schema=ticket_snapshot).validate(snapshot)
+
+    def test_entry_surfaces_ground_on_the_whole_ticket(self) -> None:
+        acquire = (ROOT / "skills" / "acquire" / "SKILL.md").read_text(encoding="utf-8")
+        take = (ROOT / "protocols" / "take" / "PROTOCOL.md").read_text(encoding="utf-8")
+
+        for token in [
+            "`comments`",
+            "entry context",
+            "never persisted into the artifact",
+            "`log-blindness`",
+        ]:
+            with self.subTest(surface="acquire", token=token):
+                self.assertIn(token, acquire)
+
+        for token in [
+            "comment log",
+            "newest review directives at the submitted head",
+            "`stale-directive-followership`",
+        ]:
+            with self.subTest(surface="take", token=token):
+                self.assertIn(token, take)
 
 
 if __name__ == "__main__":

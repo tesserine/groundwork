@@ -8,7 +8,7 @@ description: >-
   of decompose's create path: decompose creates the ticket it delivers;
   acquire adopts the ticket it is given, and creates no ticket.
 metadata:
-  version: "1.0.1"
+  version: "1.1.0"
   updated: "2026-07-02"
 ---
 
@@ -44,8 +44,13 @@ cold start.
    ```
 
    The deployment-selected connector owns provider coordinates and
-   credentials. Groundwork receives `{handle, title, body, state}`, where
-   `handle` is the connector-issued `{ id, display }` identity.
+   credentials. Groundwork receives the whole ticket:
+   `{handle, title, body, state}` plus, per forge-capability `1.2.0`, an
+   optional ordered `comments` log — `handle` is the connector-issued
+   `{ id, display }` identity. The body is the work-unit's spec; the
+   comment log is its running record — review state, dispositions, and
+   directives. Surface the log to the session as entry context so the
+   session grounds on the whole ticket, not the spec alone.
 
 2. **Materialize the artifact body.** Pipe the read-ticket output through
    the materializer:
@@ -59,7 +64,10 @@ cold start.
    It derives the work-unit body — `title`, `description`, and
    `acceptance_criteria` from the ticket content, `handle` carried through
    verbatim — and the `instance_id` (`work-unit-<sha256(handle.id)>`). The
-   derivation never invents content (see step 3).
+   derivation never invents content (see step 3). The artifact
+   materializes from the ticket body alone: the comment log is read as
+   entry context, never persisted into the artifact — the ticket remains
+   the planning home, and the artifact carries the spec.
 
 3. **Surface gaps; never invent.** When the ticket does not map cleanly onto
    the required schema fields — no extractable acceptance criteria, an empty
@@ -98,6 +106,10 @@ cold start.
 
 ## Corruption Modes
 
+- `log-blindness`: handing off to `take` with the ticket's comment log
+  unread and unsurfaced. The snapshot carries the running record so the
+  session grounds on the whole ticket; an entry that reads the spec alone
+  executes blind to its own live corrections.
 - `ticket-creation`: calling `create-ticket` during acquisition. Acquisition
   adopts an existing ticket; creating one is `decompose`'s path, and doing
   both makes a second ticket for the same work.
@@ -117,4 +129,5 @@ cold start.
 - `take` (protocol): proceeds on the acquired artifact through its existing
   contract; owns tracker claiming.
 - `read-ticket` (connector capability operation): emits
-  `{handle, title, body, state}` for the selected connector.
+  `{handle, title, body, state}` and, per forge-capability `1.2.0`, the
+  optional ordered `comments` log for the selected connector.

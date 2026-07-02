@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Entry grounds on the whole ticket** (#516). Forge-capability re-vendored
+  at `1.2.0` (immutable pin `b229fb1`): the `read-ticket` snapshot carries an
+  optional ordered `comments` log. `acquire` (v1.1.0) reads the ticket whole
+  and surfaces the log as entry context, with the one-way discipline extended
+  — the artifact materializes from the body; the log is read, never persisted
+  (`log-blindness` names the entry failure). `take`'s Frame step (v3.8.0)
+  gains the review-state grounding discipline: the body is the spec, the log
+  is the running record, and on a resume the newest review directives at the
+  submitted head govern (`stale-directive-followership` names the framing
+  failure). Gated by the re-pinned drift test, a materializer identity test
+  (artifact provably unchanged by the log's presence, log never persisted),
+  a vendored-snapshot admission check, and entry-surface prose tokens.
+
 - **Prose is projection: protocol artifact prose is conformance-gated to the
   owning schema** (#504). ADR-0008 ratifies the invariant — the manifest,
   the artifact schemas, and the workflow contracts are the single home of
