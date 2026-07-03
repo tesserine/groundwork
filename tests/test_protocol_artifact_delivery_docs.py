@@ -10,6 +10,8 @@ from tooling.prose_conformance import (
     delivery_call_block,
     markdown_section,
     manifest_protocols as authoritative_manifest_protocols,
+    protocol_runtime_wiring_violations,
+    public_docs_interactive_adapter_bypass_violations,
 )
 
 
@@ -46,6 +48,7 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
         self.assertIn("groundwork-install:interactive-session-surface-handoff begin", handoff)
         self.assertIn("next-protocol-context", handoff)
         self.assertIn("validated by runa", handoff)
+        self.assertEqual({}, public_docs_interactive_adapter_bypass_violations(ROOT))
 
     def test_protocol_prose_carries_no_runtime_wiring_state(self) -> None:
         """ADR-0008 consequence 2: a protocol states the methodology's own
@@ -55,7 +58,7 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
         for protocol in authoritative_manifest_protocols(ROOT):
             body = protocol_text(protocol["name"])
             with self.subTest(protocol=protocol["name"]):
-                self.assertNotIn("groundwork-install:interactive-session-surface-handoff", body)
+                self.assertEqual([], protocol_runtime_wiring_violations(body))
                 if protocol.get("produces"):
                     self.assertIn(
                         protocol["produces"][0],
@@ -94,6 +97,7 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
         for boundary in delivery_boundaries(ROOT):
             with self.subTest(protocol=boundary.protocol):
                 self.assertTrue(boundary.passed)
+                self.assertTrue(boundary.explains_work_unit_injection_contract)
 
     def test_artifact_validation_sentences_name_post_extraction_body_scope(self) -> None:
         for protocol in authoritative_manifest_protocols(ROOT):
@@ -113,6 +117,10 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
                     protocol.get("scoped") is True,
                     "work_unit" in schema.get("required", []),
                 )
+                boundary = {
+                    boundary.protocol: boundary for boundary in delivery_boundaries(ROOT)
+                }[protocol["name"]]
+                self.assertTrue(boundary.explains_post_extraction_validation_scope)
 
     def test_decompose_delivery_docs_preserve_ticket_backed_work_unit_identity_rules(self) -> None:
         schema = artifact_schema(ROOT, "work-unit")

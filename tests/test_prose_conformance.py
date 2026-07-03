@@ -94,6 +94,132 @@ class ProseConformanceHelperTests(unittest.TestCase):
         self.assertTrue(boundary.passed)
         self.assertFalse(boundary.explains_mcp_tool_input_boundary)
 
+    def test_scoped_work_unit_injection_clause_removal_flips_semantic_result(self) -> None:
+        helper = prose_conformance()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tree = Path(tmp) / "tree"
+            shutil.copytree(ROOT / "protocols", tree / "protocols")
+            shutil.copytree(ROOT / "schemas", tree / "schemas")
+            (tree / "manifest.toml").write_text(
+                (ROOT / "manifest.toml").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+            take = tree / "protocols" / "take" / "PROTOCOL.md"
+            body, substitutions = re.subn(
+                r"Runa injects `work_unit` from session context; the\s+"
+                r"agent does not supply `work_unit`[.]",
+                "The schema carries work-unit identity.",
+                take.read_text(encoding="utf-8"),
+                count=1,
+            )
+            self.assertEqual(1, substitutions)
+            take.write_text(body, encoding="utf-8")
+
+            boundary = [
+                boundary
+                for boundary in helper.delivery_boundaries(tree)
+                if boundary.protocol == "take"
+            ][0]
+
+        self.assertTrue(boundary.passed)
+        self.assertFalse(boundary.explains_work_unit_injection_contract)
+
+    def test_unscoped_work_unit_non_injection_clause_removal_flips_semantic_result(self) -> None:
+        helper = prose_conformance()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tree = Path(tmp) / "tree"
+            shutil.copytree(ROOT / "protocols", tree / "protocols")
+            shutil.copytree(ROOT / "schemas", tree / "schemas")
+            (tree / "manifest.toml").write_text(
+                (ROOT / "manifest.toml").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+            survey = tree / "protocols" / "survey" / "PROTOCOL.md"
+            body, substitutions = re.subn(
+                r"This planning-phase artifact is unscoped; runa\s+"
+                r"does not inject `work_unit`[.]",
+                "This planning-phase artifact is unscoped.",
+                survey.read_text(encoding="utf-8"),
+                count=1,
+            )
+            self.assertEqual(1, substitutions)
+            survey.write_text(body, encoding="utf-8")
+
+            boundary = [
+                boundary
+                for boundary in helper.delivery_boundaries(tree)
+                if boundary.protocol == "survey"
+            ][0]
+
+        self.assertTrue(boundary.passed)
+        self.assertFalse(boundary.explains_work_unit_injection_contract)
+
+    def test_validation_scope_clause_removal_flips_semantic_result(self) -> None:
+        helper = prose_conformance()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tree = Path(tmp) / "tree"
+            shutil.copytree(ROOT / "protocols", tree / "protocols")
+            shutil.copytree(ROOT / "schemas", tree / "schemas")
+            (tree / "manifest.toml").write_text(
+                (ROOT / "manifest.toml").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+            take = tree / "protocols" / "take" / "PROTOCOL.md"
+            body, substitutions = re.subn(
+                r"Runa validates the remaining artifact body fields against the contract\s+"
+                r"schema, persists the artifact, and records it in the artifact store[.]",
+                "Runa validates the contract schema and records the artifact.",
+                take.read_text(encoding="utf-8"),
+                count=1,
+            )
+            self.assertEqual(1, substitutions)
+            take.write_text(body, encoding="utf-8")
+
+            boundary = [
+                boundary
+                for boundary in helper.delivery_boundaries(tree)
+                if boundary.protocol == "take"
+            ][0]
+
+        self.assertTrue(boundary.passed)
+        self.assertFalse(boundary.explains_post_extraction_validation_scope)
+
+    def test_protocol_runtime_wiring_insertion_flips_absence_result(self) -> None:
+        helper = prose_conformance()
+
+        self.assertEqual([], helper.protocol_runtime_wiring_violations("Deliver the artifact."))
+        violations = helper.protocol_runtime_wiring_violations(
+            "After delivery, runa go will spawn the next tick with RUNA_WORKSPACE set."
+        )
+
+        self.assertIn("runa go command", violations)
+        self.assertIn("RUNA environment atom", violations)
+
+    def test_public_docs_bypass_insertion_flips_absence_result(self) -> None:
+        helper = prose_conformance()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tree = Path(tmp) / "tree"
+            (tree / "scripts").mkdir(parents=True)
+            (tree / "README.md").write_text(
+                (ROOT / "README.md").read_text(encoding="utf-8")
+                + "\nPresent that artifact body to the human.\n",
+                encoding="utf-8",
+            )
+            (tree / "scripts" / "interactive-session-surface-handoff.md").write_text(
+                (ROOT / "scripts" / "interactive-session-surface-handoff.md").read_text(
+                    encoding="utf-8"
+                ),
+                encoding="utf-8",
+            )
+
+            violations = helper.public_docs_interactive_adapter_bypass_violations(tree)
+
+        self.assertEqual({"README.md": ["human artifact handoff bypass"]}, violations)
+
     def test_frontmatter_metadata_changes_are_read_from_the_skill(self) -> None:
         helper = prose_conformance()
 
