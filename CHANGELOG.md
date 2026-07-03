@@ -336,6 +336,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Prose-is-projection residue: a rename landing-gap, a stale migration
+  reference, internal duplication, and two witness-mark examples.** Found
+  during a principle-derived renewal audit verified against live HEAD and
+  every issue it touches. `workflow-contracts/verify.toml` still said
+  "behavior contract" in its `purpose` and `assess-completion` node — a
+  landing gap from the #492/#496 contract-artifact rename that touched
+  every other surface; corrected to the dimension-agnostic "contract" every
+  other surface already uses. `docs/architecture/connecting-structure.md`'s
+  "design directions, not current behavior" disclaimer (#507) named 4 of
+  its 6 forward-looking MCP-interface subsections; extended to name all 6
+  — pre-population and observability were equally speculative and equally
+  unnamed. `skills/contract/SKILL.md` stated consuming-protocol migration
+  "proceeds unit by unit across epic #443" as still in progress; #443
+  closed (task B landed via PR #455), so the claim is restated in positive
+  present form — migration is complete (contract 2.7.0->2.7.1). The same
+  skill's lifecycle recap and density/coverage rule were each stated
+  twice, non-adjacently, within `## The dimensions`; consolidated into
+  their one detailed home (`### Stage Handoffs`, `### Density and
+  Coverage`) with no content lost.
+  `skills/work-unit-craft/SKILL.md` carried two "Learned in the field"
+  narrative examples (`stale-comment-direction`, `what-invention`), each
+  redundant with adjacent present-tense Recognition text already stating
+  the same mechanism; removed — the recognition function survives in the
+  text that was already there (work-unit-craft 1.3.0->1.3.1).
+  `tests/test_contract_skill_lifecycle.py` co-migrated: the guard
+  forbidding a present-tense migration claim is retired now that the claim
+  it forbade is true, and the version/changelog pin follows the new bump.
+  `protocols/take/PROTOCOL.md` step 4's own, larger contract-doctrine
+  duplication was diagnosed in the same audit but is deliberately left
+  unlanded here — three of its own protocol-level test assertions would
+  need to change, and that overlaps epics #477/#479's owned scope; filed
+  separately for coordinated sequencing.
+
 - **Take closes at its capstone — the session surface advances the
   pipeline** (#505). ADR-0008's second consequence applied to `take`: Step
   6's carry-through instructed the agent to drive `plan` → `implement` →

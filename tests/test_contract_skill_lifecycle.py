@@ -114,8 +114,8 @@ outside content
         body = read(CONTRACT_SKILL)
         changelog = read(CHANGELOG)
 
-        self.assertIn('version: "2.7.0"', body)
-        self.assertIn('updated: "2026-07-02"', body)
+        self.assertIn('version: "2.7.1"', body)
+        self.assertIn('updated: "2026-07-03"', body)
         self.assertEqual(1, changelog.splitlines().count("## [Unreleased]"))
         self.assertIn("**Contract disposition default** (#472)", changelog)
         self.assertIn("contract 2.3.0->2.4.0", changelog)
@@ -127,6 +127,8 @@ outside content
         self.assertIn("work-unit-craft 1.1.0->1.2.0", changelog)
         self.assertIn("**Uniform pipeline carry** (#494)", changelog)
         self.assertIn("contract 2.6.0->2.7.0", changelog)
+        self.assertIn("contract 2.7.0->2.7.1", changelog)
+        self.assertIn("work-unit-craft 1.3.0->1.3.1", changelog)
         self.assertIn("take 3.5.0->3.6.0", changelog)
         self.assertIn("plan 2.4.0->2.5.0", changelog)
         self.assertIn("implement 2.3.0->2.4.0", changelog)
@@ -403,16 +405,8 @@ outside content
         intro = normalized(body.split("## The teeth principle", maxsplit=1)[0])
 
         self.assertIn("declares the lifecycle as the single home for the contract surface", intro)
-        self.assertIn("migration proceeds unit by unit across epic #443", intro)
-        present_tense_protocol_claim = re.compile(
-            r"(?:per-stage|consuming) protocols (?:now |already )?consult this home|"
-            r"protocols consult this home|instead of keeping their own lifecycle statement",
-            flags=re.IGNORECASE,
-        )
-        self.assertNotRegex(
-            intro,
-            present_tense_protocol_claim,
-        )
+        self.assertIn("Consuming protocol migration is complete", intro)
+        self.assertIn("epic #443 landed every downstream unit", intro)
 
     def test_contract_surface_replaces_entry_only_framing_everywhere(self) -> None:
         forbidden = re.compile(
