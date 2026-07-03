@@ -1,7 +1,12 @@
 import re
+import tempfile
 import unittest
 
-from tooling.principles_config import EMBEDDED_CORPUS_PATH
+from tooling.principles_config import (
+    EMBEDDED_CORPUS_PATH,
+    SOURCE_EMBEDDED,
+    load_principles_config,
+)
 
 
 CORPUS_FILE = EMBEDDED_CORPUS_PATH / "PRINCIPLES.md"
@@ -28,18 +33,20 @@ class EmbeddedDefaultCorpusTests(unittest.TestCase):
         self.assertGreaterEqual(len(numbers), 3)
         self.assertEqual(numbers, list(range(1, len(numbers) + 1)))
 
-    def test_framing_states_the_fallback_role_not_ecosystem_authority(self) -> None:
-        corpus = " ".join(self.corpus().split())
+    def test_missing_deployment_config_selects_the_embedded_corpus(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config = load_principles_config(path=f"{tmp}/missing/principles.toml")
 
-        self.assertIn("fallback", corpus)
-        self.assertIn("not the canonical", corpus)
+        self.assertEqual(SOURCE_EMBEDDED, config.source)
+        self.assertEqual(EMBEDDED_CORPUS_PATH, CORPUS_FILE.parent)
 
     def test_corpus_is_standalone_with_no_external_references(self) -> None:
         # Independence gate: the default is its own corpus — not a digest,
         # subset, or pointer to the canonical one — and works offline.
         corpus = self.corpus()
+        configured_canonical = "https://github.com/pentaxis93/principles"
 
-        self.assertNotIn("pentaxis93", corpus)
+        self.assertNotIn(configured_canonical, corpus)
         self.assertNotIn("://", corpus)
 
 

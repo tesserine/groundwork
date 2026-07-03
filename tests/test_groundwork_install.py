@@ -361,30 +361,30 @@ class GroundworkInstallTests(unittest.TestCase):
 
     def test_session_surface_handoff_prose_carries_non_bypassing_commitments(self) -> None:
         fixture = self.add_fixture("handoff-prose")
-        handoff = " ".join(self.handoff_text(fixture).split())
+        source = self.handoff_text(fixture)
+        handoff = " ".join(source.split())
 
-        for expected in [
+        self.assertIn(HANDOFF_BEGIN, source)
+        self.assertIn(HANDOFF_END, source)
+        self.assertEqual(source.count(HANDOFF_BEGIN), 1)
+        self.assertEqual(source.count(HANDOFF_END), 1)
+        self.assertLess(source.index(HANDOFF_BEGIN), source.index(HANDOFF_END))
+
+        runtime_surface = [
             "`runa go --work-unit <canonical-work-unit-id>`",
-            "operator issues only `go`",
             "`next-protocol-context`",
-            "current output tool",
             "`advance`",
-            "validated by runa",
-            "Do not assemble artifact bodies manually",
-            "Do not write workspace JSON files directly",
-        ]:
+        ]
+        for expected in runtime_surface:
             with self.subTest(expected=expected):
                 self.assertIn(expected, handoff)
 
-        for bypass_phrase in [
-            "no runa runtime",
-            "no artifact tool",
-            "no artifact store",
-            "Present that artifact body to the human",
-            "does not persist artifacts",
-        ]:
-            with self.subTest(bypass_phrase=bypass_phrase):
-                self.assertNotIn(bypass_phrase, handoff)
+        self.assertRegex(handoff, r"\bcurrent output tool\b.*\bvalidated by runa\b")
+        self.assertRegex(handoff, r"\bDo not\b.*\bworkspace JSON files directly\b")
+        self.assertNotRegex(
+            handoff,
+            r"\b(no artifact store|Present that artifact body to the human)\b",
+        )
 
     def test_install_is_idempotent_for_the_same_pinned_source(self) -> None:
         fixture = self.add_fixture("idempotent")

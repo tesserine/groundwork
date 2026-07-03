@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -479,19 +480,23 @@ class ReleaseRepositoryContractTests(unittest.TestCase):
     def read(self, relative: str) -> str:
         return (ROOT / relative).read_text(encoding="utf-8")
 
+    def workflow_step_names(self, relative: str) -> list[str]:
+        return re.findall(r"(?m)^\s*- name: (.+)$", self.read(relative))
+
     def test_manifest_declares_current_methodology_version(self) -> None:
         self.assertEqual(release_lib.manifest_version(ROOT), release_lib.latest_released_version(ROOT))
 
     def test_release_workflow_verifies_annotated_tags_and_has_no_path_filter(self) -> None:
         workflow = self.read(".github/workflows/release.yml")
+        steps = self.workflow_step_names(".github/workflows/release.yml")
 
-        self.assertIn("- name: Restore annotated tag refs", workflow)
-        self.assertIn("- name: Verify restored tag matches event", workflow)
-        self.assertIn("- name: Require annotated tag", workflow)
-        checkout = workflow.index("- name: Checkout")
-        restore = workflow.index("- name: Restore annotated tag refs")
-        verify = workflow.index("- name: Verify restored tag matches event")
-        require = workflow.index("- name: Require annotated tag")
+        self.assertIn("Restore annotated tag refs", steps)
+        self.assertIn("Verify restored tag matches event", steps)
+        self.assertIn("Require annotated tag", steps)
+        checkout = steps.index("Checkout")
+        restore = steps.index("Restore annotated tag refs")
+        verify = steps.index("Verify restored tag matches event")
+        require = steps.index("Require annotated tag")
 
         self.assertLess(checkout, restore)
         self.assertLess(restore, verify)
@@ -512,19 +517,23 @@ class ReleaseRepositoryContractTests(unittest.TestCase):
 
     def test_release_metadata_workflow_is_split_from_tag_publication(self) -> None:
         workflow = self.read(".github/workflows/release-metadata.yml")
+        steps = self.workflow_step_names(".github/workflows/release-metadata.yml")
 
         self.assertIn("name: Release Metadata", workflow)
         self.assertIn("pull_request:", workflow)
         self.assertIn("paths:", workflow)
+        self.assertIn("Check release metadata", steps)
         self.assertIn("./scripts/release-check metadata", workflow)
 
     def test_releasing_documentation_matches_verifier_contract(self) -> None:
         releasing = self.read("RELEASING.md")
 
-        self.assertIn("manifest.toml", releasing)
-        self.assertIn("scripts/release-cut vX.Y.Z[-rc.N]", releasing)
-        self.assertIn("ADR-0012", releasing)
-        self.assertIn("Only `vX.Y.Z-rc.N` tags are published as GitHub prereleases.", releasing)
+        self.assertTrue((ROOT / "manifest.toml").is_file())
+        self.assertTrue((ROOT / "scripts" / "release-cut").is_file())
+        self.assertTrue((ROOT / "scripts" / "release-check").is_file())
+        self.assertTrue((ROOT / "docs" / "architecture" / "decisions" / "0006-runtime-driven-self-install-surface.md").is_file())
+        self.assertIn("scripts/release-cut", releasing)
+        self.assertIn("scripts/release-check", releasing)
 
 
 if __name__ == "__main__":

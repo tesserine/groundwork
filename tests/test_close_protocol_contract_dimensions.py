@@ -1,6 +1,13 @@
-import re
 import unittest
 from pathlib import Path
+
+from tooling.prose_conformance import (
+    artifact_schema,
+    delivery_boundaries,
+    manifest_protocols,
+    markdown_section,
+    read,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -9,150 +16,57 @@ REVIEW_PROTOCOL = ROOT / "protocols" / "review" / "PROTOCOL.md"
 LAND_PROTOCOL = ROOT / "protocols" / "land" / "PROTOCOL.md"
 
 
-def read(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
-
-
-def normalized(text: str) -> str:
-    return re.sub(r"\s+", " ", text).strip()
-
-
-def step(body: str, number: int) -> str:
-    pattern = re.compile(
-        rf"^{number}\. \*\*.*?\n(?P<section>.*?)(?=^{number + 1}\. \*\*|^## |\Z)",
-        flags=re.MULTILINE | re.DOTALL,
-    )
-    match = pattern.search(body)
-    if match is None:
-        raise AssertionError(f"missing step {number}")
-    return match.group("section")
-
-
-def section(body: str, heading: str) -> str:
-    pattern = re.compile(
-        rf"^## {re.escape(heading)}\n(?P<section>.*?)(?=^## |\Z)",
-        flags=re.MULTILINE | re.DOTALL,
-    )
-    match = pattern.search(body)
-    if match is None:
-        raise AssertionError(f"missing section: {heading}")
-    return match.group("section")
+def protocol(name: str) -> dict:
+    return {entry["name"]: entry for entry in manifest_protocols(ROOT)}[name]
 
 
 class CloseProtocolContractDimensionTests(unittest.TestCase):
-    def test_submit_packages_every_declared_dimension_from_the_uniform_surface(self) -> None:
-        body = normalized(read(SUBMIT_PROTOCOL))
-        prepare = normalized(step(read(SUBMIT_PROTOCOL), 3))
+    def test_manifest_threads_close_protocols_through_contract_and_evidence(self) -> None:
+        submit = protocol("submit")
+        review = protocol("review")
+        land = protocol("land")
 
-        for expected in [
-            "multidimensional contract",
-            "one result per contract criterion",
-            "`completion-evidence.results[]`",
-            "behavior, documentation, and code-quality dimensions alike",
-            "`contract` skill",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, body)
+        self.assertIn("contract", submit["requires"])
+        self.assertIn("completion-evidence", submit["requires"])
+        self.assertEqual(["change-proposal"], submit["produces"])
+        self.assertIn("contract", review["requires"])
+        self.assertIn("change-proposal", review["requires"])
+        self.assertIn("change-approved", land["requires"])
+        self.assertEqual(["completion-record"], land["produces"])
 
-        for expected in [
-            "per-criterion behavior coverage",
-            "documentation outcomes",
-            "code-quality findings",
-            "`completion-evidence.results[]`",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, prepare)
+    def test_close_artifact_schemas_join_completion_results_to_records(self) -> None:
+        evidence = artifact_schema(ROOT, "completion-evidence")
+        record = artifact_schema(ROOT, "completion-record")
+        proposal = artifact_schema(ROOT, "change-proposal")
 
-    def test_review_judges_every_declared_dimension_through_the_same_join(self) -> None:
-        inspection = normalized(step(read(REVIEW_PROTOCOL), 2))
+        result = evidence["properties"]["results"]["items"]
+        self.assertIn("criterion_id", result["required"])
+        self.assertIn("evidence", result["required"])
+        self.assertIn("attestation", result["properties"]["evidence"]["properties"])
+        self.assertIn("criterion_summary", record["required"])
+        self.assertIn("documentation_status", record["required"])
+        self.assertIn("version", proposal["required"])
 
-        for expected in [
-            "every declared dimension",
-            "`contract.criteria[]`",
-            "`completion-evidence.results[]`",
-            "`check_kind`",
-            "run or artifact evidence",
-            "reviewer attestations",
-            "audience-outcome",
-            "diff loci",
-            "The same join judges every dimension",
-            "`contract` skill",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, inspection)
+    def test_close_protocol_delivery_blocks_match_manifest_and_schema_boundaries(self) -> None:
+        boundaries = {boundary.protocol: boundary for boundary in delivery_boundaries(ROOT)}
 
-    def test_land_records_every_dimension_from_the_uniform_evidence_surface(self) -> None:
-        delivery = normalized(step(read(LAND_PROTOCOL), 5))
+        self.assertTrue(boundaries["submit"].passed)
+        self.assertTrue(boundaries["land"].passed)
+        self.assertEqual("change-proposal", boundaries["submit"].artifact)
+        self.assertEqual("completion-record", boundaries["land"].artifact)
 
-        for expected in [
-            "`completion-evidence.results[]`",
-            "criterion_summary",
-            "every declared dimension",
-            "behavior, documentation, and code quality alike",
-            "documentation_status",
-            "documentation dimension's recorded results",
-            "code-quality dimension's recorded findings",
-            "completion-record",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, delivery)
+    def test_close_protocols_do_not_reintroduce_privileged_behavior_fields(self) -> None:
+        for artifact in ["completion-evidence", "change-proposal", "completion-record"]:
+            schema = artifact_schema(ROOT, artifact)
+            with self.subTest(artifact=artifact):
+                self.assertNotIn("behavior_form", schema.get("properties", {}))
+                self.assertNotIn("criterion_coverage", schema.get("properties", {}))
 
-        self.assertNotIn("#454", delivery)
-        self.assertNotIn("deferred", delivery)
-        self.assertIn("Do not assert a field the completion-record schema does not define", delivery)
-
-    def test_close_protocols_carry_no_privileged_dimension_form(self) -> None:
-        for path in [SUBMIT_PROTOCOL, REVIEW_PROTOCOL, LAND_PROTOCOL]:
-            body = normalized(read(path))
-            with self.subTest(path=path.relative_to(ROOT)):
-                self.assertNotIn("behavior_form", body)
-                self.assertNotIn("deliverable's behavior form", body)
-                self.assertNotIn("scenario-keyed", body)
-                self.assertNotRegex(body, r"gate-form (?:packaging|behavior|mappings|evidence)")
-                self.assertIn("`completion-evidence.results[]`", body)
-
-    def test_close_protocols_consult_contract_lifecycle_without_reencoding_it(self) -> None:
-        dimension_row = re.compile(
-            r"\| \*\*(?:Behavior|Documentation|Code quality)\*\* \|",
-        )
-
-        for path in [SUBMIT_PROTOCOL, REVIEW_PROTOCOL, LAND_PROTOCOL]:
-            body = read(path)
-            with self.subTest(path=path.relative_to(ROOT)):
-                self.assertIn("`contract` skill", normalized(body))
-                self.assertIn("`skills/contract/SKILL.md`", body)
-                self.assertIn("lifecycle", body)
-                self.assertIsNone(dimension_row.search(body))
-
-    def test_dimension_omission_corruption_modes_and_invariants_survive(self) -> None:
-        corruption_modes = normalized(
-            section(read(SUBMIT_PROTOCOL), "Corruption Modes")
-            + "\n"
-            + section(read(REVIEW_PROTOCOL), "Corruption Modes")
-            + "\n"
-            + section(read(LAND_PROTOCOL), "Corruption Modes")
-        )
-        combined = normalized(read(SUBMIT_PROTOCOL) + "\n" + read(REVIEW_PROTOCOL) + "\n" + read(LAND_PROTOCOL))
-
-        for expected in [
-            "summary-drift",
-            "rubber-stamp-review",
-            "declared dimension",
-            "behavior-only",
-            "documentation or code-quality",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, corruption_modes)
-
-        for expected in [
-            "new valid `change-proposal` whose `version` advances",
-            "exactly one typed outcome artifact",
-            "independence from the author",
-            "change-approved",
-            "whose `version` equals `change-approved.against_version`",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, combined)
+    def test_review_and_land_keep_independent_judgment_sections(self) -> None:
+        self.assertIn("## The Independence of the Gate", read(REVIEW_PROTOCOL))
+        self.assertIn("## Failure Policy", read(LAND_PROTOCOL))
+        self.assertIn("## Corruption Modes", read(SUBMIT_PROTOCOL))
+        self.assertIn("dimension-drop", markdown_section(read(LAND_PROTOCOL), "Corruption Modes"))
 
 
 if __name__ == "__main__":

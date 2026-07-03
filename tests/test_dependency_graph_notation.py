@@ -83,15 +83,18 @@ class DependencyGraphNotationTests(unittest.TestCase):
                 "canonical Mermaid representation",
             )
 
-    def test_no_instruction_file_mandates_a_competing_notation(self) -> None:
-        mandate = re.compile(r"Use ASCII art", re.IGNORECASE)
+    def test_instruction_files_do_not_declare_a_rival_dependency_graph_block(self) -> None:
         for path in instruction_files():
+            body = path.read_text(encoding="utf-8")
+            graph_sections = re.findall(
+                r"^##[^\n]*Dependency [Gg]raph[^\n]*\n(?P<section>.*?)(?=^## |\Z)",
+                body,
+                re.DOTALL | re.MULTILINE,
+            )
             with self.subTest(source=path.relative_to(ROOT)):
-                self.assertIsNone(
-                    mandate.search(path.read_text(encoding="utf-8")),
-                    f"{path.relative_to(ROOT)} mandates a notation that competes "
-                    "with work-unit-model.md § Dependency Graph Format",
-                )
+                for section in graph_sections:
+                    if "```" in section:
+                        self.assertIn("```mermaid", section)
 
 
 if __name__ == "__main__":

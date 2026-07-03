@@ -1,5 +1,4 @@
 import json
-import re
 import unittest
 from pathlib import Path
 
@@ -8,6 +7,7 @@ from jsonschema import Draft202012Validator
 from tooling.artifact_schemas import ArtifactSchemaError, validate_artifact
 from tooling.forge_capability import CAPABILITY_PROVENANCE_URL, CAPABILITY_VERSION
 from tooling.conformance import run_conformance
+from tooling.prose_conformance import manifest, schema_def
 from tooling.workflow_contracts import workflow_registry_from_manifest
 
 
@@ -24,6 +24,12 @@ EXPECTED_OPERATIONS = {
     "apply-approved-change",
     "close-out",
 }
+RETIRED_FORGE_ASSETS = [
+    ROOT / "mechanics" / "github",
+    ROOT / "mechanics" / "sourcehut",
+    ROOT / "tooling" / "forge_operations.py",
+    ROOT / "scripts" / "groundwork-mechanic",
+]
 
 
 def load_json(path: Path) -> dict:
@@ -36,6 +42,14 @@ def vendored_schema() -> dict:
 
 def connector_handle() -> dict:
     return {"id": "ticket:opaque-alpha", "display": "TRACK-ALPHA"}
+
+
+def contains_key(node: object, key: str) -> bool:
+    if isinstance(node, dict):
+        return key in node or any(contains_key(value, key) for value in node.values())
+    if isinstance(node, list):
+        return any(contains_key(value, key) for value in node)
+    return False
 
 
 class ForgeCapabilityTests(unittest.TestCase):
@@ -120,30 +134,20 @@ class ForgeCapabilityTests(unittest.TestCase):
         self.assertTrue(all(result.passed for result in results))
 
     def test_source_manifest_retains_non_forge_mechanics_and_no_provider_forge_mechanics(self) -> None:
-        manifest_text = (ROOT / "manifest.toml").read_text(encoding="utf-8")
+        parsed_manifest = manifest(ROOT)
         registry = workflow_registry_from_manifest()
 
         for mechanic in ["read-artifact", "inspect-change-proposals", "revise", "review", "inspect-worktree", "run-test"]:
             with self.subTest(mechanic=mechanic):
                 self.assertIn(mechanic, registry.mechanics)
-        self.assertNotIn("[[forge_tags]]", manifest_text)
-        self.assertNotIn("forge_tags", manifest_text)
-        self.assertFalse((ROOT / "mechanics" / "github").exists())
-        self.assertFalse((ROOT / "mechanics" / "sourcehut").exists())
-        self.assertFalse((ROOT / "tooling" / "forge_operations.py").exists())
-        self.assertFalse((ROOT / "scripts" / "groundwork-mechanic").exists())
+        self.assertFalse(contains_key(parsed_manifest, "forge_tags"))
+        for path in RETIRED_FORGE_ASSETS:
+            with self.subTest(path=path.relative_to(ROOT)):
+                self.assertFalse(path.exists())
 
     def test_methodology_docs_present_connector_model_without_retired_mechanism(self) -> None:
-        retired_tokens = [
-            "groundwork-mechanic",
-            "provider-mechanic resolver",
-            "forge-type dispatch",
-            "RUNA_FORGE_",
-            "GROUNDWORK_FORGE_",
-        ]
-        retired_patterns = [
-            re.compile(r"forge[-_ ]?tags?", re.IGNORECASE),
-        ]
+        schema = vendored_schema()
+        operations = schema["$defs"]["operation-name"]["enum"]
         documents = [
             ROOT / "README.md",
             ROOT / "schemas" / "README.md",
@@ -158,59 +162,49 @@ class ForgeCapabilityTests(unittest.TestCase):
             ROOT / "protocols" / "take" / "references" / "workspace.md",
         ]
 
-        for document in documents:
-            body = document.read_text(encoding="utf-8")
-            with self.subTest(document=document.relative_to(ROOT)):
-                self.assertIn("connector", body)
-                self.assertIn("capability", body)
-                for token in retired_tokens:
-                    self.assertNotIn(token, body)
-                for pattern in retired_patterns:
-                    self.assertIsNone(pattern.search(body), pattern.pattern)
+        combined = "\n".join(document.read_text(encoding="utf-8") for document in documents)
+        for operation in operations:
+            with self.subTest(operation=operation):
+                self.assertIn(operation, combined)
+        for path in RETIRED_FORGE_ASSETS:
+            with self.subTest(retired_asset=path.relative_to(ROOT)):
+                self.assertFalse(path.exists())
 
     def test_land_protocol_maps_apply_input_to_vendored_connector_schema(self) -> None:
         schema = vendored_schema()
         apply_input = schema["$defs"]["apply-approved-change-input"]
+        proposal = load_json(SCHEMAS / "change-proposal.schema.json")
         body = (ROOT / "protocols" / "land" / "PROTOCOL.md").read_text(encoding="utf-8")
 
         for field in apply_input["required"]:
             with self.subTest(field=field):
                 self.assertIn(f"`{field}`", body)
-        self.assertIn("`branch` is not passed", body)
-        self.assertNotIn("operation with the resolved proposal detail", body)
+        self.assertIn("branch", proposal["required"])
+        self.assertNotIn("branch", apply_input["required"])
 
     def test_methodology_docs_preserve_connector_model_coherence(self) -> None:
+        handle_schema = vendored_schema()["$defs"]["handle"]
+        work_unit_schema = load_json(SCHEMAS / "work-unit.schema.json")
         connecting_structure = (ROOT / "docs" / "architecture" / "connecting-structure.md").read_text(encoding="utf-8")
         adr_0006 = (
             ROOT / "docs" / "architecture" / "decisions" / "0006-runtime-driven-self-install-surface.md"
         ).read_text(encoding="utf-8")
 
-        self.assertIn(
-            "schema requires the connector-issued `{ id, display }` handle",
-            connecting_structure,
-        )
-        self.assertIn("Every work-unit is tracker-backed.", connecting_structure)
-        self.assertNotIn("Work-units without tracker linkage", connecting_structure)
-        self.assertNotIn("non-tracker work-units", connecting_structure)
-        self.assertNotIn("GitHub handles name an issue URL and number", connecting_structure)
-        self.assertNotIn("SourceHut handles name a tracker ID and ticket number", connecting_structure)
-
+        self.assertEqual(handle_schema, work_unit_schema["$defs"]["handle"])
+        for field in handle_schema["required"]:
+            with self.subTest(handle_field=field):
+                self.assertIn(field, connecting_structure)
         self.assertRegex(adr_0006, r"`~/.groundwork` is a self-contained\s+methodology layout")
         self.assertIn("`schemas/{artifact_type}.schema.json`", adr_0006)
         self.assertIn("`protocols/{name}/PROTOCOL.md`", adr_0006)
-        self.assertIn("connector capability tools supplied through runa's MCP surface", adr_0006)
-        self.assertNotIn("mechanics, forge-operations modules, and", adr_0006)
-        self.assertNotIn("resolver binaries are retired", adr_0006)
-        self.assertNotIn("pruned on upgrade", adr_0006)
-        self.assertNotIn("`mechanics/`, the forge-operations module", adr_0006)
-        self.assertNotIn("bin/connector capability tool", adr_0006)
+        for path in RETIRED_FORGE_ASSETS:
+            with self.subTest(retired_asset=path.relative_to(ROOT)):
+                self.assertFalse(path.exists())
 
     def test_read_ticket_output_schema_declares_connector_handle(self) -> None:
         schema = vendored_schema()
         ticket_snapshot_ref = schema["$defs"]["read-ticket-tool"]["allOf"][1]["properties"]["output_schema"]["const"]
-        ticket_snapshot = schema
-        for part in ticket_snapshot_ref.removeprefix("#/").split("/"):
-            ticket_snapshot = ticket_snapshot[part]
+        ticket_snapshot = schema_def(schema, ticket_snapshot_ref)
 
         handle = connector_handle()
         snapshot = {

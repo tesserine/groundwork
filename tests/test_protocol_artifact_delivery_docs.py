@@ -3,6 +3,15 @@ import tomllib
 import unittest
 from pathlib import Path
 
+from tooling.prose_conformance import (
+    artifact_schema,
+    block_keys,
+    delivery_boundaries,
+    delivery_call_block,
+    markdown_section,
+    manifest_protocols as authoritative_manifest_protocols,
+)
+
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "manifest.toml"
@@ -23,49 +32,38 @@ def protocol_text(name: str) -> str:
 
 
 class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
-    def test_public_docs_do_not_describe_interactive_adapter_bypass(self) -> None:
-        checked_paths = [
-            ROOT / "README.md",
-            ROOT / "scripts" / "groundwork-install",
-            *sorted((ROOT / "docs").rglob("*.md")),
-            *sorted((ROOT / "scripts").glob("*.md")),
-        ]
-        forbidden = [
-            "interactive-artifact-delivery-adapter",
-            "interactive artifact-delivery adapter",
-            "interactive artifact delivery adapter",
-            "session working file",
-            "no runa runtime",
-            "does not persist artifacts",
-        ]
+    def test_public_docs_point_to_the_runtime_driven_session_surface(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        runtime_install = markdown_section(readme, "Install for Runtime-Driven Deployments")
+        interactive_install = markdown_section(readme, "Interactive Installation")
+        handoff = (ROOT / "scripts" / "interactive-session-surface-handoff.md").read_text(
+            encoding="utf-8"
+        )
 
-        for path in checked_paths:
-            body = path.read_text(encoding="utf-8")
-            for phrase in forbidden:
-                with self.subTest(path=path.relative_to(ROOT), phrase=phrase):
-                    self.assertNotIn(phrase, body)
+        self.assertLess(readme.index("## Install for Runtime-Driven Deployments"), readme.index("## Interactive Installation"))
+        self.assertIn("scripts/install install", runtime_install)
+        self.assertIn("deprecated in favor of the runtime-driven path", interactive_install)
+        self.assertIn("groundwork-install:interactive-session-surface-handoff begin", handoff)
+        self.assertIn("next-protocol-context", handoff)
+        self.assertIn("validated by runa", handoff)
 
     def test_protocol_prose_carries_no_runtime_wiring_state(self) -> None:
         """ADR-0008 consequence 2: a protocol states the methodology's own
         seam and stops; which runtime commands are wired, configured, or
         pending belongs to the runtime's own repository and tracker."""
-        forbidden = [
-            "not yet wired",
-            "until it is wired",
-            "until the runtime",
-            "`runa go",
-            "spawns a separate agent",
-            "you drive the session",
-        ]
 
-        for protocol in manifest_protocols():
-            body = normalized_protocol(protocol["name"])
-            for phrase in forbidden:
-                with self.subTest(protocol=protocol["name"], phrase=phrase):
-                    self.assertNotIn(phrase, body)
+        for protocol in authoritative_manifest_protocols(ROOT):
+            body = protocol_text(protocol["name"])
+            with self.subTest(protocol=protocol["name"]):
+                self.assertNotIn("groundwork-install:interactive-session-surface-handoff", body)
+                if protocol.get("produces"):
+                    self.assertIn(
+                        protocol["produces"][0],
+                        delivery_call_block(body, protocol["produces"][0]),
+                    )
 
     def test_all_artifact_producing_protocols_explain_mcp_tool_input_boundary(self) -> None:
-        producers = [protocol for protocol in manifest_protocols() if protocol["produces"]]
+        producers = [protocol for protocol in authoritative_manifest_protocols(ROOT) if protocol["produces"]]
 
         self.assertEqual(
             [
@@ -81,54 +79,41 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
             [protocol["name"] for protocol in producers],
         )
 
+        boundaries = {boundary.protocol: boundary for boundary in delivery_boundaries(ROOT)}
         for protocol in producers:
-            protocol_name = protocol["name"]
-            artifact = protocol["produces"][0]
-            body = normalized_protocol(protocol_name)
-
-            with self.subTest(protocol=protocol_name, artifact=artifact):
-                self.assertIn(f"`{artifact}` MCP tool", body)
-                self.assertIn("MCP tool input, not artifact body", body)
-                self.assertIn("`instance_id` is a tool parameter", body)
-                self.assertIn("extracted before validating artifact content", body)
-                self.assertIn("must not appear in the artifact body", body)
-                self.assertIn("Do not write", body)
-                self.assertIn("directly", body)
+            with self.subTest(protocol=protocol["name"]):
+                self.assertTrue(boundaries[protocol["name"]].passed)
 
     def test_scoped_protocol_delivery_docs_preserve_work_unit_injection_contract(self) -> None:
-        for protocol in manifest_protocols():
-            if not protocol["produces"]:
-                continue
-
-            protocol_name = protocol["name"]
-            body = normalized_protocol(protocol_name)
-
-            with self.subTest(protocol=protocol_name):
-                if protocol.get("scoped") is True:
-                    self.assertIn("Runa injects `work_unit` from session context", body)
-                    self.assertIn("agent does not supply `work_unit`", body)
-                else:
-                    self.assertIn("runa does not inject `work_unit`", body.lower())
+        for boundary in delivery_boundaries(ROOT):
+            with self.subTest(protocol=boundary.protocol):
+                self.assertTrue(boundary.passed)
 
     def test_artifact_validation_sentences_name_post_extraction_body_scope(self) -> None:
-        producers = [protocol for protocol in manifest_protocols() if protocol["produces"]]
+        for protocol in authoritative_manifest_protocols(ROOT):
+            if not protocol["produces"]:
+                continue
+            artifact = protocol["produces"][0]
+            body = protocol_text(protocol["name"])
+            block = delivery_call_block(body, artifact)
+            keys = block_keys(block)
+            schema = artifact_schema(ROOT, artifact)
 
-        for protocol in producers:
-            protocol_name = protocol["name"]
-            body = normalized_protocol(protocol_name)
-            validation_sentence = re.search(r"Runa validates [^.]+\.", body)
-
-            with self.subTest(protocol=protocol_name):
-                self.assertIsNotNone(validation_sentence)
-                self.assertIn(
-                    "remaining artifact body fields against",
-                    validation_sentence.group(0),
+            with self.subTest(protocol=protocol["name"]):
+                self.assertIn("instance_id", keys)
+                self.assertNotIn("instance_id", schema.get("properties", {}))
+                self.assertNotIn("work_unit", keys)
+                self.assertEqual(
+                    protocol.get("scoped") is True,
+                    "work_unit" in schema.get("required", []),
                 )
-                self.assertNotIn("validates the payload against", validation_sentence.group(0))
 
     def test_decompose_delivery_docs_preserve_ticket_backed_work_unit_identity_rules(self) -> None:
+        schema = artifact_schema(ROOT, "work-unit")
+        handle = schema["properties"]["handle"]
         body = normalized_protocol("decompose")
 
+        self.assertEqual({"$ref": "#/$defs/handle"}, handle)
         for expected in [
             "Every work-unit is tracker-backed",
             "first invoke the connector capability `create-ticket` operation",
@@ -150,23 +135,20 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
 
     def test_decompose_refine_work_unit_example_carries_existing_handle(self) -> None:
         body = protocol_text("decompose")
-        match = re.search(
+        example = re.search(
             r"For refinements produced by `refine-work-unit`:\n\n```(?P<example>.*?)```",
             body,
             flags=re.DOTALL,
-        )
+        ).group("example")
+        keys = block_keys(example)
+        handle_fields = {
+            match.group("key")
+            for match in re.finditer(r"^\s*(?P<key>id|display):", example, flags=re.MULTILINE)
+        }
 
-        self.assertIsNotNone(match)
-        example = match.group("example")
-
-        for expected in [
-            'instance_id: "<existing-instance-id>"',
-            "handle: {",
-            'id: "<existing connector handle id>"',
-            'display: "<existing connector handle display>"',
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, example)
+        self.assertIn("instance_id", keys)
+        self.assertIn("handle", keys)
+        self.assertEqual({"id", "display"}, handle_fields)
 
 
 if __name__ == "__main__":

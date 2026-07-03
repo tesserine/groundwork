@@ -102,15 +102,18 @@ class GroundworkSkillOntologyRow1AuditTests(unittest.TestCase):
                     r"gazette|another domain|non-code",
                 )
 
-    def test_protocol_reduction_covers_every_protocol_and_states_aggregate_finding(self) -> None:
+    def test_protocol_reduction_covers_every_protocol_and_computes_aggregate_finding(self) -> None:
         rows = table_rows(
             "Protocol Reduction Test",
             ["Protocol", "Universal Candidate", "Reduction", "Reason"],
         )
         self.assertEqual(protocol_names(), {row["Protocol"] for row in rows})
-        body = section_body("Protocol Reduction Test")
-        self.assertIn("100% of cases", body)
-        self.assertRegex(body.lower(), r"row-1 answer.*no")
+        self.assertIn("no", {row["Reduction"].lower() for row in rows})
+        self.assertNotEqual(
+            {"yes"},
+            {row["Reduction"].lower() for row in rows},
+            "the table, not aggregate prose, decides whether every protocol reduces",
+        )
 
     def test_domain_specific_skills_declare_projection_edges(self) -> None:
         row_entries = table_rows(

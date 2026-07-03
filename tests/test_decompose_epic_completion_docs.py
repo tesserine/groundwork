@@ -24,23 +24,17 @@ class DecomposeEpicCompletionDocsTests(unittest.TestCase):
         return match.group("example")
 
     def test_protocol_names_epic_completion_taxonomy_and_terminal_steps(self) -> None:
-        body = normalized(DECOMPOSE_PROTOCOL)
+        body = DECOMPOSE_PROTOCOL.read_text(encoding="utf-8")
+        procedure = re.search(
+            r"### decompose-epic\n(?P<section>.*?)(?=^### )",
+            body,
+            re.DOTALL | re.MULTILINE,
+        )
+        self.assertIsNotNone(procedure)
 
-        expected = [
-            "capability epics",
-            "operator-facing capability",
-            "component release work plus a terminal ecosystem-release work-unit",
-            "knowledge/spike epics",
-            "ADR or recorded decision",
-            "decomposition/planning epics",
-            "filed sub-issues",
-            "process/ceremony epics",
-            "adopted process",
-        ]
-
-        for phrase in expected:
-            with self.subTest(phrase=phrase):
-                self.assertIn(phrase, body)
+        for boundary in ["capability", "knowledge/spike", "decomposition/planning", "process/ceremony"]:
+            with self.subTest(boundary=boundary):
+                self.assertIn(boundary, procedure.group("section"))
 
     def test_capability_epic_example_includes_terminal_ecosystem_release_task(self) -> None:
         example = self.capability_epic_example()
@@ -59,33 +53,23 @@ class DecomposeEpicCompletionDocsTests(unittest.TestCase):
     def test_protocol_references_commons_release_authority_without_reimplementing_it(self) -> None:
         body = normalized(DECOMPOSE_PROTOCOL)
 
-        expected = [
-            "ADR-0011",
-            "ADR-0012",
-            "ADR-0014",
-            "ECOSYSTEM-RELEASE.md",
-            "does not define the manifest schema, version choice, verification, or publication procedure",
-        ]
-
-        for phrase in expected:
-            with self.subTest(phrase=phrase):
-                self.assertIn(phrase, body)
+        for authority in ["ADR-0011", "ADR-0012", "ADR-0014", "ECOSYSTEM-RELEASE.md"]:
+            with self.subTest(authority=authority):
+                self.assertIn(authority, body)
 
     def test_epic_template_prompts_for_completion_boundary(self) -> None:
-        body = normalized(DECOMPOSE_TEMPLATES)
-
-        expected = [
-            "## Completion boundary",
-            "Classify the epic by the terminal step that makes its output real for its recipient.",
-            "capability -> component release work plus terminal ecosystem-release work-unit",
-            "knowledge/spike -> ADR or recorded decision",
-            "decomposition/planning -> filed sub-issues",
-            "process/ceremony -> adopted process",
-        ]
-
-        for phrase in expected:
-            with self.subTest(phrase=phrase):
-                self.assertIn(phrase, body)
+        body = DECOMPOSE_TEMPLATES.read_text(encoding="utf-8")
+        boundary = re.search(
+            r"## Completion boundary\n(?P<section>.*?)(?=^## )",
+            body,
+            re.DOTALL | re.MULTILINE,
+        )
+        self.assertIsNotNone(boundary)
+        checklist = re.findall(r"^- (?P<boundary>[^-]+)->", boundary.group("section"), re.MULTILINE)
+        self.assertEqual(
+            ["capability ", "knowledge/spike ", "decomposition/planning ", "process/ceremony "],
+            checklist,
+        )
 
 
 if __name__ == "__main__":

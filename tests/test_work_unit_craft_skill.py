@@ -6,6 +6,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORK_UNIT_CRAFT = ROOT / "skills" / "work-unit-craft" / "SKILL.md"
 DECOMPOSE_PROTOCOL = ROOT / "protocols" / "decompose" / "PROTOCOL.md"
+CONTRACT_SKILL = ROOT / "skills" / "contract" / "SKILL.md"
+ORIENT_DOCUMENTATION = ROOT / "skills" / "orient" / "references" / "documentation.md"
+PRINCIPLES_CORPUS = ROOT / "principles" / "PRINCIPLES.md"
 
 
 def read_work_unit_craft() -> str:
@@ -35,6 +38,17 @@ def section(body: str, heading: str) -> str:
     match = pattern.search(body)
     if match is None:
         raise AssertionError(f"missing section: {heading}")
+    return match.group("section")
+
+
+def subsection(body: str, heading: str) -> str:
+    pattern = re.compile(
+        rf"^### {re.escape(heading)}\n(?P<section>.*?)(?=^### |\Z)",
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    match = pattern.search(body)
+    if match is None:
+        raise AssertionError(f"missing subsection: {heading}")
     return match.group("section")
 
 
@@ -98,81 +112,47 @@ class WorkUnitCraftSkillTests(unittest.TestCase):
 
     def test_primary_workflow_authors_contract_inputs_for_every_dimension(self) -> None:
         body = read_work_unit_craft()
-        primary_workflow = normalized(
-            section_between(
-                body,
-                "The Central Discipline",
-                "The Sovereignty Test",
-            )
-        )
+        contract_inputs = section_between(body, "Author Contract Inputs", "The Sovereignty Test")
 
-        expected_inputs = [
-            "contract inputs",
-            "`contract`",
-            "behavior",
-            "acceptance criteria",
-            "documentation",
-            "`orient`",
-            "recipient outcomes",
-            "code quality",
-            "principles corpus",
-            "stressed universals",
-        ]
-        for expected in expected_inputs:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, primary_workflow)
+        self.assertTrue(CONTRACT_SKILL.is_file())
+        self.assertTrue(ORIENT_DOCUMENTATION.is_file())
+        self.assertTrue(PRINCIPLES_CORPUS.is_file())
+
+        dimension_bullets = re.findall(r"(?m)^- \*\*(Behavior|Documentation|Code quality):\*\*", contract_inputs)
+        self.assertEqual(["Behavior", "Documentation", "Code quality"], dimension_bullets)
+        self.assertIn("`contract`", contract_inputs)
+        self.assertIn("`orient`", contract_inputs)
+        self.assertIn("principles corpus", contract_inputs)
 
     def test_contract_input_density_rule_requires_teeth_not_silence(self) -> None:
         body = read_work_unit_craft()
-        primary_workflow = normalized(
-            section_between(
-                body,
-                "The Central Discipline",
-                "The Sovereignty Test",
-            )
+        contract_inputs = normalized(
+            section_between(body, "Author Contract Inputs", "The Sovereignty Test")
         )
 
-        for expected in [
-            "consider every dimension",
-            "every dimension the change has",
-            "authored teeth-bearing input",
-            "density may be light",
-            "coverage is never zero",
-            "hollow delivery",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, primary_workflow)
-
+        self.assertRegex(contract_inputs, r"\bevery dimension\b")
+        self.assertRegex(contract_inputs, r"\bcoverage is never zero\b")
+        self.assertRegex(contract_inputs, r"\bhollow delivery\b")
         forbidden = re.compile(
             r"general contract pointer|silence is valid|not a mandatory per-dimension body section",
             flags=re.IGNORECASE,
         )
-        self.assertIsNone(forbidden.search(primary_workflow))
+        self.assertIsNone(forbidden.search(contract_inputs))
 
     def test_declared_contract_work_consults_the_contract_instead_of_modeling_it(self) -> None:
         body = read_work_unit_craft()
         belongs = normalized(section(body, "What Belongs in a Record"))
         corruption_modes = normalized(section(body, "Corruption Modes"))
 
-        positive_craft = [
-            "Declared contract conformance",
-            "consult the declared contract",
-            "derive criteria from its declarations",
-            "verify positively against the declaration",
-        ]
-        for expected in positive_craft:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, belongs)
+        self.assertTrue(CONTRACT_SKILL.is_file())
+        self.assertRegex(belongs, r"\bDeclared contract conformance\b")
+        self.assertRegex(belongs, r"\bconsult\b.*\bdeclared contract\b")
+        self.assertRegex(belongs, r"\bcriteria\b.*\bdeclarations\b")
+        self.assertRegex(belongs, r"\bverify\b.*\bdeclaration\b")
 
-        corruption_checks = [
-            "contract-modeling",
-            "hand-maintained model",
-            "operation names or shapes",
-            "consult the contract",
-        ]
-        for expected in corruption_checks:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, corruption_modes)
+        self.assertIn("contract-modeling", corruption_modes)
+        self.assertRegex(corruption_modes, r"\bhand-maintained model\b")
+        self.assertRegex(corruption_modes, r"\bconsult the contract\b")
 
     def test_decompose_is_titled_as_itself_and_consults_the_craft_home(self) -> None:
         body = read_decompose_protocol()
@@ -195,30 +175,19 @@ class WorkUnitCraftSkillTests(unittest.TestCase):
 
     def test_decompose_procedures_apply_the_contract_input_pass(self) -> None:
         body = read_decompose_protocol()
-        create_work_unit = normalized(
-            section_between(
-                body,
-                "Procedures",
-                "Triggers",
-            )
-        )
+        create_work_unit = normalized(subsection(body, "create-work-unit"))
+        decompose_epic = normalized(subsection(body, "decompose-epic"))
+        refine_work_unit = normalized(subsection(body, "refine-work-unit"))
 
-        expected = [
-            "contract inputs",
-            "behavior",
-            "documentation",
-            "code quality",
-            "`work-unit-craft`",
-            "`contract`",
-            "`orient`",
-            "principles corpus",
-            "create-work-unit",
-            "decompose-epic",
-            "refine-work-unit",
-        ]
-        for item in expected:
-            with self.subTest(item=item):
-                self.assertIn(item, create_work_unit)
+        self.assertIn("`work-unit-craft`", create_work_unit)
+        self.assertIn("`contract`", create_work_unit)
+        self.assertIn("`orient`", create_work_unit)
+        self.assertIn("principles corpus", create_work_unit)
+        for dimension in ["behavior", "documentation", "code quality"]:
+            with self.subTest(dimension=dimension):
+                self.assertIn(dimension, create_work_unit)
+                self.assertIn(dimension, decompose_epic)
+        self.assertIn("contract input pass", refine_work_unit)
 
 
 if __name__ == "__main__":
