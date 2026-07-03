@@ -17,6 +17,8 @@ tree, so a new document enters the gate the moment it exists.
 import unittest
 from pathlib import Path
 
+from tooling.prose_conformance import managed_docs_markdown_files
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
@@ -25,7 +27,7 @@ MANAGED_SET_TABLES = ("[[protocols]]", "[[artifact_types]]")
 
 
 def docs_markdown_files() -> list[Path]:
-    return sorted(DOCS.rglob("*.md"))
+    return managed_docs_markdown_files(ROOT)
 
 
 class ArchitectureProseConformanceTests(unittest.TestCase):

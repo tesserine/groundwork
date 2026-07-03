@@ -339,6 +339,33 @@ PUBLIC_DOCS_BYPASS_PATTERNS: tuple[tuple[str, str], ...] = (
 )
 
 
+def managed_docs_markdown_files(root: Path) -> list[Path]:
+    docs = root / "docs"
+    if not docs.is_dir():
+        return []
+    return sorted(docs.rglob("*.md"))
+
+
+def managed_public_document_paths(root: Path) -> list[Path]:
+    scripts = root / "scripts"
+    paths = [
+        root / "README.md",
+        *managed_docs_markdown_files(root),
+    ]
+    if scripts.is_dir():
+        paths.extend(sorted(scripts.glob("*.md")))
+        paths.append(scripts / "groundwork-install")
+
+    documents: list[Path] = []
+    seen: set[Path] = set()
+    for path in paths:
+        if path in seen or not path.is_file():
+            continue
+        seen.add(path)
+        documents.append(path)
+    return documents
+
+
 def forbidden_pattern_hits(body: str, patterns: tuple[tuple[str, str], ...]) -> list[str]:
     return [
         name
@@ -352,13 +379,9 @@ def protocol_runtime_wiring_violations(body: str) -> list[str]:
 
 
 def public_docs_interactive_adapter_bypass_violations(root: Path) -> dict[str, list[str]]:
-    documents = [
-        root / "README.md",
-        root / "scripts" / "interactive-session-surface-handoff.md",
-    ]
     return {
         str(path.relative_to(root)): hits
-        for path in documents
+        for path in managed_public_document_paths(root)
         if (hits := forbidden_pattern_hits(read(path), PUBLIC_DOCS_BYPASS_PATTERNS))
     }
 

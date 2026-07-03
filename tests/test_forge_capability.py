@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 import tempfile
 import unittest
@@ -26,10 +27,11 @@ EXPECTED_OPERATIONS = {
     "apply-approved-change",
     "close-out",
 }
-RETIRED_FORGE_IDENTIFIERS = [
-    "forge_tags",
-    "RUNA_FORGE_",
-    "groundwork-mechanic",
+RETIRED_FORGE_IDENTIFIER_PATTERNS = [
+    ("forge_tags", r"\bforge[_ -]?tags\b"),
+    ("RUNA_FORGE_", r"\bRUNA_FORGE_[A-Z0-9_]*\b"),
+    ("GROUNDWORK_FORGE_", r"\bGROUNDWORK_FORGE_[A-Z0-9_]*\b"),
+    ("groundwork-mechanic", r"\bgroundwork-mechanic\b"),
 ]
 RETIRED_FORGE_ASSETS = [
     ROOT / "mechanics" / "github",
@@ -95,8 +97,8 @@ def connector_model_violations(root: Path) -> list[str]:
             violations.append(f"connecting-structure omits handle field {field}")
     for document in documents:
         body = document.read_text(encoding="utf-8")
-        for identifier in RETIRED_FORGE_IDENTIFIERS:
-            if identifier in body:
+        for identifier, pattern in RETIRED_FORGE_IDENTIFIER_PATTERNS:
+            if re.search(pattern, body, flags=re.IGNORECASE):
                 relative = document.relative_to(root)
                 violations.append(f"{relative} contains retired identifier {identifier}")
     return violations
@@ -213,12 +215,12 @@ class ForgeCapabilityTests(unittest.TestCase):
                 self.assertIn(operation, combined)
         for document in CONNECTOR_MODEL_DOCUMENTS:
             body = document.read_text(encoding="utf-8")
-            for identifier in RETIRED_FORGE_IDENTIFIERS:
+            for identifier, pattern in RETIRED_FORGE_IDENTIFIER_PATTERNS:
                 with self.subTest(
                     document=document.relative_to(ROOT),
                     identifier=identifier,
                 ):
-                    self.assertNotIn(identifier, body)
+                    self.assertIsNone(re.search(pattern, body, flags=re.IGNORECASE))
         for path in RETIRED_FORGE_ASSETS:
             with self.subTest(retired_asset=path.relative_to(ROOT)):
                 self.assertFalse(path.exists())
@@ -231,7 +233,7 @@ class ForgeCapabilityTests(unittest.TestCase):
             readme = tree / "README.md"
             readme.write_text(
                 readme.read_text(encoding="utf-8")
-                + "\nLegacy examples may use forge_tags in old deployments.\n",
+                + "\nLegacy examples may use forge-tags in old deployments.\n",
                 encoding="utf-8",
             )
 

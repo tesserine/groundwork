@@ -203,9 +203,16 @@ class ProseConformanceHelperTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
             tree = Path(tmp) / "tree"
+            (tree / "docs" / "architecture").mkdir(parents=True)
             (tree / "scripts").mkdir(parents=True)
             (tree / "README.md").write_text(
-                (ROOT / "README.md").read_text(encoding="utf-8")
+                (ROOT / "README.md").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+            (tree / "docs" / "architecture" / "connecting-structure.md").write_text(
+                (ROOT / "docs" / "architecture" / "connecting-structure.md").read_text(
+                    encoding="utf-8"
+                )
                 + "\nPresent that artifact body to the human.\n",
                 encoding="utf-8",
             )
@@ -218,7 +225,10 @@ class ProseConformanceHelperTests(unittest.TestCase):
 
             violations = helper.public_docs_interactive_adapter_bypass_violations(tree)
 
-        self.assertEqual({"README.md": ["human artifact handoff bypass"]}, violations)
+        self.assertEqual(
+            {"docs/architecture/connecting-structure.md": ["human artifact handoff bypass"]},
+            violations,
+        )
 
     def test_frontmatter_metadata_changes_are_read_from_the_skill(self) -> None:
         helper = prose_conformance()
