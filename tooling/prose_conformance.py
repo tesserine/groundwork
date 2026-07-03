@@ -97,6 +97,14 @@ def markdown_table_rows(section: str) -> list[dict[str, str]]:
     return rows
 
 
+def contract_dimension_rows(root: Path) -> dict[str, dict[str, str]]:
+    skill = read(root / "skills" / "contract" / "SKILL.md")
+    return {
+        row["Dimension"]: row
+        for row in markdown_table_rows(markdown_section(skill, "The dimensions"))
+    }
+
+
 def frontmatter(body: str) -> dict[str, object]:
     if not body.startswith("---\n"):
         raise AssertionError("missing frontmatter")
@@ -137,6 +145,20 @@ def delivery_call_block(body: str, artifact: str) -> str:
     return match.group("block")
 
 
+def delivery_explanation_text(body: str, artifact: str) -> str:
+    block = delivery_call_block(body, artifact)
+    block_index = body.index(block)
+    prefix = body[:block_index]
+    start = 0
+    for match in re.finditer(
+        r"^(?:#{1,6} .+|\d+[.] \*\*.+)$",
+        prefix,
+        flags=re.MULTILINE,
+    ):
+        start = match.start()
+    return prefix[start:]
+
+
 def block_keys(block: str) -> set[str]:
     return {
         match.group("key")
@@ -157,6 +179,9 @@ class DeliveryBoundary:
     call_has_instance_id: bool
     call_has_work_unit: bool
     instance_id_in_schema: bool
+    explanation_names_instance_id: bool
+    explanation_names_tool_input: bool
+    explanation_distinguishes_artifact_body: bool
 
     @property
     def passed(self) -> bool:
@@ -165,6 +190,14 @@ class DeliveryBoundary:
             and not self.call_has_work_unit
             and not self.instance_id_in_schema
             and self.schema_requires_work_unit == self.scoped
+        )
+
+    @property
+    def explains_mcp_tool_input_boundary(self) -> bool:
+        return (
+            self.explanation_names_instance_id
+            and self.explanation_names_tool_input
+            and self.explanation_distinguishes_artifact_body
         )
 
 
@@ -177,8 +210,13 @@ def delivery_boundaries(root: Path) -> list[DeliveryBoundary]:
         artifact = produces[0]
         body = read(root / "protocols" / protocol["name"] / "PROTOCOL.md")
         block = delivery_call_block(body, artifact)
+        explanation = delivery_explanation_text(body, artifact)
         keys = block_keys(block)
         schema = artifact_schema(root, artifact)
+        explanation_sentences = re.split(
+            r"(?<=[.!?])\s+|\n+",
+            normalized(explanation),
+        )
         boundaries.append(
             DeliveryBoundary(
                 protocol=protocol["name"],
@@ -188,6 +226,29 @@ def delivery_boundaries(root: Path) -> list[DeliveryBoundary]:
                 call_has_instance_id="instance_id" in keys,
                 call_has_work_unit="work_unit" in keys,
                 instance_id_in_schema="instance_id" in schema_property_names(schema),
+                explanation_names_instance_id=any(
+                    "instance_id" in sentence
+                    for sentence in explanation_sentences
+                ),
+                explanation_names_tool_input=any(
+                    "instance_id" in sentence
+                    and re.search(r"\b(?:MCP|tool)\b", sentence, flags=re.IGNORECASE)
+                    and re.search(
+                        r"\b(?:input|parameter)\b",
+                        sentence,
+                        flags=re.IGNORECASE,
+                    )
+                    for sentence in explanation_sentences
+                ),
+                explanation_distinguishes_artifact_body=any(
+                    "artifact body" in sentence
+                    and re.search(
+                        r"\b(?:not|must not|before validating|remaining)\b",
+                        sentence,
+                        flags=re.IGNORECASE,
+                    )
+                    for sentence in explanation_sentences
+                ),
             )
         )
     return boundaries

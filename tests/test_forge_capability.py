@@ -24,6 +24,11 @@ EXPECTED_OPERATIONS = {
     "apply-approved-change",
     "close-out",
 }
+RETIRED_FORGE_IDENTIFIERS = [
+    "forge_tags",
+    "RUNA_FORGE_",
+    "groundwork-mechanic",
+]
 RETIRED_FORGE_ASSETS = [
     ROOT / "mechanics" / "github",
     ROOT / "mechanics" / "sourcehut",
@@ -166,6 +171,14 @@ class ForgeCapabilityTests(unittest.TestCase):
         for operation in operations:
             with self.subTest(operation=operation):
                 self.assertIn(operation, combined)
+        for document in documents:
+            body = document.read_text(encoding="utf-8")
+            for identifier in RETIRED_FORGE_IDENTIFIERS:
+                with self.subTest(
+                    document=document.relative_to(ROOT),
+                    identifier=identifier,
+                ):
+                    self.assertNotIn(identifier, body)
         for path in RETIRED_FORGE_ASSETS:
             with self.subTest(retired_asset=path.relative_to(ROOT)):
                 self.assertFalse(path.exists())

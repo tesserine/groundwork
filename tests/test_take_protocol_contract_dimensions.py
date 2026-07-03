@@ -1,13 +1,14 @@
 import re
+import tempfile
 import unittest
 from pathlib import Path
 
 from tooling.prose_conformance import (
     artifact_schema,
+    contract_dimension_rows,
     delivery_boundaries,
     manifest_protocols,
     markdown_section,
-    markdown_table_rows,
     read,
 )
 
@@ -15,6 +16,11 @@ from tooling.prose_conformance import (
 ROOT = Path(__file__).resolve().parents[1]
 TAKE_PROTOCOL = ROOT / "protocols" / "take" / "PROTOCOL.md"
 CONTRACT_SKILL = ROOT / "skills" / "contract" / "SKILL.md"
+EXPECTED_CONTRACT_DIMENSIONS = {
+    "**Behavior**",
+    "**Documentation**",
+    "**Code quality**",
+}
 
 
 def protocol(name: str) -> dict:
@@ -49,12 +55,9 @@ class TakeProtocolContractDimensionTests(unittest.TestCase):
 
     def test_take_consults_contract_dimension_authorities(self) -> None:
         body = read(TAKE_PROTOCOL)
-        rows = {
-            row["Dimension"]: row
-            for row in markdown_table_rows(markdown_section(read(CONTRACT_SKILL), "The dimensions"))
-        }
+        rows = contract_dimension_rows(ROOT)
 
-        self.assertEqual({"**Behavior**", "**Documentation**", "**Code quality**"}, set(rows))
+        self.assertEqual(EXPECTED_CONTRACT_DIMENSIONS, set(rows))
         for relative in [
             "skills/contract/references/documentation-contract.md",
             "skills/contract/references/code-quality-contract.md",
@@ -62,6 +65,28 @@ class TakeProtocolContractDimensionTests(unittest.TestCase):
             with self.subTest(relative=relative):
                 self.assertTrue((ROOT / relative).is_file())
                 self.assertIn(relative, body)
+
+    def test_contract_dimension_gate_flips_when_skill_table_changes(self) -> None:
+        self.assertEqual(EXPECTED_CONTRACT_DIMENSIONS, set(contract_dimension_rows(ROOT)))
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tree = Path(tmp) / "tree"
+            skill = tree / "skills" / "contract" / "SKILL.md"
+            skill.parent.mkdir(parents=True)
+            body = read(CONTRACT_SKILL).replace(
+                "| **Documentation** | `work-unit-craft`/`decompose` recipient outcomes |",
+                "| **Release notes** | `work-unit-craft`/`decompose` recipient outcomes |",
+                1,
+            )
+            skill.write_text(body, encoding="utf-8")
+
+            mutated_dimensions = set(contract_dimension_rows(tree))
+
+        self.assertNotEqual(EXPECTED_CONTRACT_DIMENSIONS, mutated_dimensions)
+        self.assertEqual(
+            {"**Behavior**", "**Release notes**", "**Code quality**"},
+            mutated_dimensions,
+        )
 
     def test_take_ends_at_contract_capstone_with_named_corruption_modes(self) -> None:
         steps = markdown_section(read(TAKE_PROTOCOL), "Steps")

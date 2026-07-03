@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 import tempfile
 import unittest
@@ -59,6 +60,39 @@ class ProseConformanceHelperTests(unittest.TestCase):
         self.assertFalse(take.passed)
         self.assertFalse(take.scoped)
         self.assertTrue(take.schema_requires_work_unit)
+
+    def test_delivery_boundary_explanation_removal_flips_semantic_result(self) -> None:
+        helper = prose_conformance()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tree = Path(tmp) / "tree"
+            shutil.copytree(ROOT / "protocols", tree / "protocols")
+            shutil.copytree(ROOT / "schemas", tree / "schemas")
+            (tree / "manifest.toml").write_text(
+                (ROOT / "manifest.toml").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+            take = tree / "protocols" / "take" / "PROTOCOL.md"
+            body, substitutions = re.subn(
+                r"The object below\s+is MCP tool input, not artifact body[.]\s+"
+                r"`instance_id` is a tool parameter\s+that names the artifact instance;.*?"
+                r"must not appear in\s+the artifact body[.]\s*",
+                "",
+                take.read_text(encoding="utf-8"),
+                count=1,
+                flags=re.DOTALL,
+            )
+            self.assertEqual(1, substitutions)
+            take.write_text(body, encoding="utf-8")
+
+            boundary = [
+                boundary
+                for boundary in helper.delivery_boundaries(tree)
+                if boundary.protocol == "take"
+            ][0]
+
+        self.assertTrue(boundary.passed)
+        self.assertFalse(boundary.explains_mcp_tool_input_boundary)
 
     def test_frontmatter_metadata_changes_are_read_from_the_skill(self) -> None:
         helper = prose_conformance()

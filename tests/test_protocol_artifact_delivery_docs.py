@@ -83,6 +83,12 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
         for protocol in producers:
             with self.subTest(protocol=protocol["name"]):
                 self.assertTrue(boundaries[protocol["name"]].passed)
+                self.assertTrue(boundaries[protocol["name"]].explanation_names_instance_id)
+                self.assertTrue(boundaries[protocol["name"]].explanation_names_tool_input)
+                self.assertTrue(
+                    boundaries[protocol["name"]].explanation_distinguishes_artifact_body
+                )
+                self.assertTrue(boundaries[protocol["name"]].explains_mcp_tool_input_boundary)
 
     def test_scoped_protocol_delivery_docs_preserve_work_unit_injection_contract(self) -> None:
         for boundary in delivery_boundaries(ROOT):
