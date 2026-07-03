@@ -58,23 +58,22 @@ Groundwork scoped pipeline.
 
 ## Protocol Reduction Test
 
-Row-1 answer to "holds for 100% of cases?": No. Most protocols expose a
-single cognitive band under a typed shell, but `review` currently wraps the
-domain-specific `code-review` projection rather than an extracted universal
-quality-review skill, and `take` carries temporary runtime-bridging work in
-addition to contract-first entry.
+Row-1 answer to "holds for 100% of cases?": No. Each protocol exposes a
+cognitive band through a Groundwork-specific typed shell, but none reduces
+fully to the universal candidate because each row keeps domain wrapper
+obligations in the protocol boundary.
 
 | Protocol | Universal Candidate | Reduction | Reason |
 |---|---|---|---|
-| decompose | work-unit-craft | yes | The protocol body is the work-unit-craft discipline plus delivery of `work-unit` artifacts and tracker identity. |
-| implement | test-driven-implementation | yes | The cognitive band is RED-GREEN-REFACTOR; the shell binds it to implementation-plan input and `test-evidence` output. |
-| land | governance-closure | yes | The cognitive band is approved-version closure; forge apply, disposition reflection, and `completion-record` delivery are the domain wrapper. |
-| plan | decision-complete-planning | yes | The cognitive band is convergence before mutation; the wrapper maps gates or scenarios to an `implementation-plan`. |
+| decompose | work-unit-craft | no | The protocol body uses the work-unit-craft discipline, but delivery of `work-unit` artifacts and tracker identity remains in the protocol shell. |
+| implement | test-driven-implementation | no | The cognitive band is RED-GREEN-REFACTOR, but the shell binds it to implementation-plan input and `test-evidence` output. |
+| land | governance-closure | no | The cognitive band is approved-version closure, but forge apply, disposition reflection, and `completion-record` delivery remain the domain wrapper. |
+| plan | decision-complete-planning | no | The cognitive band is convergence before mutation, but the wrapper maps Groundwork gates or scenarios to an `implementation-plan`. |
 | review | quality-review | no | The protocol depends on `code-review`, a software projection. The universal quality-review parent is predicted but not yet extracted. |
-| submit | proposal-submission | yes | The cognitive band is packaging verified work for review; forge delivery and `change-proposal` shape are wrapper concerns. |
-| survey | disciplined-inquiry | yes | The cognitive band is separating descriptive state from normative need; the wrapper turns `intent` into `requirements`. |
+| submit | proposal-submission | no | The cognitive band is packaging verified work for review, but forge delivery and `change-proposal` shape are wrapper concerns. |
+| survey | disciplined-inquiry | no | The cognitive band is separating descriptive state from normative need, but the wrapper turns `intent` into `requirements`. |
 | take | contract-first-entry | no | The core band is contract-first entry, but the current body also owns workspace preparation, tracker claiming, and temporary carry-through to later stations. |
-| verify | evidence-gate | yes | The cognitive band is evidence before completion claims; the wrapper records Groundwork gate or scenario coverage in `completion-evidence`. |
+| verify | evidence-gate | no | The cognitive band is evidence before completion claims, but the wrapper records Groundwork gate or scenario coverage in `completion-evidence`. |
 
 ## Projection Seams
 

@@ -23,10 +23,35 @@ def normalized(text: str) -> str:
 
 def semantic_sentences(text: str) -> list[str]:
     sentences: list[str] = []
-    for sentence in re.split(r"(?<=[.!?])\s+|\n+", text):
-        sentence = normalized(sentence)
-        if sentence:
-            sentences.append(sentence)
+    paragraphs: list[str] = []
+    current: list[str] = []
+
+    def flush_current() -> None:
+        paragraph = normalized(" ".join(current))
+        if paragraph:
+            paragraphs.append(paragraph)
+        current.clear()
+
+    for line in text.splitlines():
+        if not line.strip():
+            flush_current()
+            continue
+
+        list_item = re.match(r"^\s*(?:[-*+]|\d+[.)])\s+(?P<body>.*)$", line)
+        if list_item is not None:
+            flush_current()
+            current.append(list_item.group("body"))
+            continue
+
+        current.append(line.strip())
+
+    flush_current()
+
+    for paragraph in paragraphs:
+        for sentence in re.split(r"(?<=[.!?])\s+", paragraph):
+            sentence = normalized(sentence)
+            if sentence:
+                sentences.append(sentence)
     return sentences
 
 

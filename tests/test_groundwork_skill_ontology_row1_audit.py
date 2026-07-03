@@ -35,8 +35,7 @@ def audit_text() -> str:
     return AUDIT.read_text(encoding="utf-8")
 
 
-def section_body(heading: str) -> str:
-    body = audit_text()
+def section_body_from_text(body: str, heading: str) -> str:
     match = re.search(
         rf"^## {re.escape(heading)}\n(?P<body>.*?)(?=^## |\Z)",
         body,
@@ -47,9 +46,15 @@ def section_body(heading: str) -> str:
     return match.group("body")
 
 
-def table_rows(section: str, required_columns: list[str]) -> list[dict[str, str]]:
-    body = section_body(section)
-    lines = [line.strip() for line in body.splitlines() if line.strip().startswith("|")]
+def section_body(heading: str) -> str:
+    return section_body_from_text(audit_text(), heading)
+
+
+def table_rows_from_text(
+    body: str, section: str, required_columns: list[str]
+) -> list[dict[str, str]]:
+    section_text = section_body_from_text(body, section)
+    lines = [line.strip() for line in section_text.splitlines() if line.strip().startswith("|")]
     if len(lines) < 3:
         raise AssertionError(f"{section} must contain a markdown table")
 
@@ -65,6 +70,14 @@ def table_rows(section: str, required_columns: list[str]) -> list[dict[str, str]
             raise AssertionError(f"{section} row has {len(cells)} cells, expected {len(header)}: {line}")
         rows.append(dict(zip(header, cells)))
     return rows
+
+
+def table_rows(section: str, required_columns: list[str]) -> list[dict[str, str]]:
+    return table_rows_from_text(audit_text(), section, required_columns)
+
+
+def reduction_values(rows: list[dict[str, str]]) -> set[str]:
+    return {row["Reduction"].lower() for row in rows}
 
 
 class GroundworkSkillOntologyRow1AuditTests(unittest.TestCase):
@@ -108,12 +121,27 @@ class GroundworkSkillOntologyRow1AuditTests(unittest.TestCase):
             ["Protocol", "Universal Candidate", "Reduction", "Reason"],
         )
         self.assertEqual(protocol_names(), {row["Protocol"] for row in rows})
-        self.assertIn("no", {row["Reduction"].lower() for row in rows})
-        self.assertNotEqual(
-            {"yes"},
-            {row["Reduction"].lower() for row in rows},
+        self.assertEqual(
+            {"no"},
+            reduction_values(rows),
             "the table, not aggregate prose, decides whether every protocol reduces",
         )
+
+    def test_protocol_reduction_single_yes_row_flips_aggregate_result(self) -> None:
+        body = audit_text()
+        body = body.replace(
+            "| decompose | work-unit-craft | no |",
+            "| decompose | work-unit-craft | yes |",
+            1,
+        )
+        rows = table_rows_from_text(
+            body,
+            "Protocol Reduction Test",
+            ["Protocol", "Universal Candidate", "Reduction", "Reason"],
+        )
+
+        self.assertIn("yes", reduction_values(rows))
+        self.assertNotEqual({"no"}, reduction_values(rows))
 
     def test_domain_specific_skills_declare_projection_edges(self) -> None:
         row_entries = table_rows(

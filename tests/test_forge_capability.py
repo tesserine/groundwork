@@ -10,7 +10,7 @@ from jsonschema import Draft202012Validator
 from tooling.artifact_schemas import ArtifactSchemaError, validate_artifact
 from tooling.forge_capability import CAPABILITY_PROVENANCE_URL, CAPABILITY_VERSION
 from tooling.conformance import run_conformance
-from tooling.prose_conformance import entry_surface_coherence, manifest, schema_def
+from tooling.prose_conformance import entry_surface_coherence, manifest, numbered_step, schema_def
 from tooling.workflow_contracts import workflow_registry_from_manifest
 
 
@@ -110,6 +110,39 @@ def copy_connector_model_fixture(target: Path) -> None:
         destination = target / document.relative_to(ROOT)
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(document, destination)
+
+
+def land_apply_approved_change_input_keys(body: str) -> set[str]:
+    step = numbered_step(body, 2)
+    marker = "`apply-approved-change-input` schema:"
+    if marker not in step:
+        raise AssertionError("land apply step omits apply-approved-change input mapping")
+
+    mapping_lines: list[str] = []
+    for line in step.split(marker, 1)[1].splitlines():
+        if not mapping_lines:
+            if line.startswith("   - "):
+                mapping_lines.append(line)
+            continue
+        if line.startswith("   - ") or line.startswith("     "):
+            mapping_lines.append(line)
+            continue
+        if not line.strip():
+            break
+        break
+
+    if not mapping_lines:
+        raise AssertionError("land apply step omits apply-approved-change input fields")
+
+    return {
+        match.group("key")
+        for line in mapping_lines
+        if (match := re.match(r"\s*-\s+`(?P<key>[A-Za-z_][A-Za-z0-9_-]*)`:", line))
+    }
+
+
+def land_apply_approved_change_input_omits_branch(body: str) -> bool:
+    return "branch" not in land_apply_approved_change_input_keys(body)
 
 
 class ForgeCapabilityTests(unittest.TestCase):
@@ -246,12 +279,25 @@ class ForgeCapabilityTests(unittest.TestCase):
         apply_input = schema["$defs"]["apply-approved-change-input"]
         proposal = load_json(SCHEMAS / "change-proposal.schema.json")
         body = (ROOT / "protocols" / "land" / "PROTOCOL.md").read_text(encoding="utf-8")
+        apply_mapping_keys = land_apply_approved_change_input_keys(body)
 
         for field in apply_input["required"]:
             with self.subTest(field=field):
-                self.assertIn(f"`{field}`", body)
+                self.assertIn(field, apply_mapping_keys)
         self.assertIn("branch", proposal["required"])
         self.assertNotIn("branch", apply_input["required"])
+        self.assertTrue(land_apply_approved_change_input_omits_branch(body))
+
+    def test_land_protocol_branch_input_insertion_flips_prose_gate(self) -> None:
+        body = (ROOT / "protocols" / "land" / "PROTOCOL.md").read_text(encoding="utf-8")
+        body = body.replace(
+            "   - `base`: the resolved `change-proposal.base`",
+            "   - `base`: the resolved `change-proposal.base`\n"
+            "   - `branch`: the resolved `change-proposal.branch`",
+            1,
+        )
+
+        self.assertFalse(land_apply_approved_change_input_omits_branch(body))
 
     def test_methodology_docs_preserve_connector_model_coherence(self) -> None:
         handle_schema = vendored_schema()["$defs"]["handle"]

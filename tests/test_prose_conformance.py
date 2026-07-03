@@ -31,6 +31,19 @@ class ProseConformanceHelperTests(unittest.TestCase):
             )
         )
 
+    def test_semantic_clause_matches_across_hard_wrapped_lines(self) -> None:
+        helper = prose_conformance()
+        fixture = "Do not write\nworkspace JSON files directly."
+
+        self.assertTrue(
+            helper.has_semantic_clause(
+                fixture,
+                r"\bDo not\b",
+                r"\bwrite\b",
+                r"\bworkspace JSON files directly\b",
+            )
+        )
+
     def test_delivery_boundary_reads_manifest_and_schema_authorities(self) -> None:
         helper = prose_conformance()
 
