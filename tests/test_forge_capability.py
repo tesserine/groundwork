@@ -322,10 +322,10 @@ class ForgeCapabilityTests(unittest.TestCase):
             shutil.copytree(ROOT / "protocols" / "take", tree / "protocols" / "take")
             acquire = tree / "skills" / "acquire" / "SKILL.md"
             body = acquire.read_text(encoding="utf-8")
-            clause = "the comment log is read as\n   entry context, never persisted into the artifact"
+            clause = "The comment log is read as entry context, never persisted into the artifact"
             self.assertIn(clause, body)
             acquire.write_text(
-                body.replace(clause, "the comment log is read as\n   background", 1),
+                body.replace(clause, "The comment log is read as background", 1),
                 encoding="utf-8",
             )
 

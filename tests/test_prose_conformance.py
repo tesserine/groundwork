@@ -18,6 +18,19 @@ def prose_conformance():
 
 
 class ProseConformanceHelperTests(unittest.TestCase):
+    def test_semantic_clause_does_not_match_across_bullet_lines(self) -> None:
+        helper = prose_conformance()
+        fixture = "- Do not\n- write workspace JSON files directly."
+
+        self.assertFalse(
+            helper.has_semantic_clause(
+                fixture,
+                r"\bDo not\b",
+                r"\bwrite\b",
+                r"\bworkspace JSON files directly\b",
+            )
+        )
+
     def test_delivery_boundary_reads_manifest_and_schema_authorities(self) -> None:
         helper = prose_conformance()
 

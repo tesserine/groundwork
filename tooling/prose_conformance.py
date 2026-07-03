@@ -22,11 +22,12 @@ def normalized(text: str) -> str:
 
 
 def semantic_sentences(text: str) -> list[str]:
-    return [
-        sentence.strip()
-        for sentence in re.split(r"(?<=[.!?])\s+|\n+", normalized(text))
-        if sentence.strip()
-    ]
+    sentences: list[str] = []
+    for sentence in re.split(r"(?<=[.!?])\s+|\n+", text):
+        sentence = normalized(sentence)
+        if sentence:
+            sentences.append(sentence)
+    return sentences
 
 
 def has_semantic_clause(text: str, *patterns: str) -> bool:

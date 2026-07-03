@@ -66,12 +66,12 @@ carries the connector-backed reference downstream.
    coverage derived from `completion-evidence.results[]` for every declared
    dimension — behavior, documentation, and code quality in the same form —
    as committed evidence in the summary and proposal context. The object
-   below is MCP tool input, not artifact body. `instance_id` is a tool parameter that
-   names the artifact instance; it is extracted before validating artifact
-   content, becomes the workspace filename, and must not appear in the
-   artifact body. Runa injects `work_unit` from session context; the agent
-   does not supply `work_unit`. Do not write the workspace JSON file
-   directly:
+   below is MCP tool input, not artifact body.
+   `instance_id` is a tool parameter.
+   It names the artifact instance and becomes the workspace filename.
+   It must not appear in the artifact body.
+   Runa injects `work_unit` from session context; the agent does not supply `work_unit`.
+   Do not write the workspace JSON file directly:
 
    ```
    change-proposal({

@@ -15,7 +15,8 @@ records `contract` through the current output tool; the operator does not call
 
 Artifacts produced in interactive mode are validated by runa, persisted in the
 runa workspace, and threaded downstream by the same graph rules used in
-autonomous mode. Do not assemble artifact bodies manually. Do not write
-workspace JSON files directly. Do not add a separate human approval gate; typed
-disposition artifacts remain the lifecycle authority.
+autonomous mode. Do not assemble artifact bodies manually.
+Do not write workspace JSON files directly.
+Do not add a separate human approval gate; typed disposition artifacts remain
+the lifecycle authority.
 <!-- groundwork-install:interactive-session-surface-handoff end -->

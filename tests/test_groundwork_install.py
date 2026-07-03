@@ -385,8 +385,8 @@ class GroundworkInstallTests(unittest.TestCase):
         fixture.write(
             HANDOFF_RELATIVE_PATH,
             source.replace(
-                "Do not write\nworkspace JSON files directly.",
-                "Write\nworkspace JSON files directly.",
+                "Do not write workspace JSON files directly.",
+                "Write workspace JSON files directly.",
                 1,
             ),
         )
