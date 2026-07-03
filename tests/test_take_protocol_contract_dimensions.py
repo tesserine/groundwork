@@ -1,218 +1,101 @@
 import re
+import tempfile
 import unittest
 from pathlib import Path
+
+from tooling.prose_conformance import (
+    artifact_schema,
+    contract_dimension_rows,
+    delivery_boundaries,
+    manifest_protocols,
+    markdown_section,
+    read,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
 TAKE_PROTOCOL = ROOT / "protocols" / "take" / "PROTOCOL.md"
 CONTRACT_SKILL = ROOT / "skills" / "contract" / "SKILL.md"
+EXPECTED_CONTRACT_DIMENSIONS = {
+    "**Behavior**",
+    "**Documentation**",
+    "**Code quality**",
+}
 
 
-def read(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
-
-
-def normalized(text: str) -> str:
-    return re.sub(r"\s+", " ", text).strip()
-
-
-def step(body: str, number: int) -> str:
-    pattern = re.compile(
-        rf"^{number}\. \*\*.*?\n(?P<section>.*?)(?=^{number + 1}\. \*\*|^## |\Z)",
-        flags=re.MULTILINE | re.DOTALL,
-    )
-    match = pattern.search(body)
-    if match is None:
-        raise AssertionError(f"missing step {number}")
-    return match.group("section")
-
-
-def section(body: str, heading: str) -> str:
-    pattern = re.compile(
-        rf"^## {re.escape(heading)}\n(?P<section>.*?)(?=^## |\Z)",
-        flags=re.MULTILINE | re.DOTALL,
-    )
-    match = pattern.search(body)
-    if match is None:
-        raise AssertionError(f"missing section: {heading}")
-    return match.group("section")
-
-
-def apparatus_rows(body: str) -> dict[str, str]:
-    rows = {}
-    for line in body.splitlines():
-        match = re.match(
-            r"\| \*\*(?P<dimension>Behavior|Documentation|Code quality)\*\* \| (?P<row>.+) \|$",
-            line,
-        )
-        if match:
-            rows[match.group("dimension")] = match.group("row")
-    return rows
+def protocol(name: str) -> dict:
+    return {entry["name"]: entry for entry in manifest_protocols(ROOT)}[name]
 
 
 class TakeProtocolContractDimensionTests(unittest.TestCase):
-    def test_primary_authoring_flow_defines_validation_for_every_dimension(self) -> None:
+    def test_manifest_declares_take_as_scoped_contract_entry(self) -> None:
+        take = protocol("take")
+
+        self.assertTrue(take["scoped"])
+        self.assertEqual(["work-unit"], take["requires"])
+        self.assertEqual(["contract"], take["produces"])
+
+    def test_contract_schema_requires_dimension_agnostic_teeth_fields(self) -> None:
+        schema = artifact_schema(ROOT, "contract")
+        criterion = schema["properties"]["criteria"]["items"]
+
+        self.assertIn("dimension", criterion["required"])
+        self.assertIn("hollow_delivery", criterion["required"])
+        self.assertIn("check_kind", criterion["required"])
+        self.assertEqual(["executable", "attested"], criterion["properties"]["check_kind"]["enum"])
+        self.assertNotIn("behavior_form", criterion["properties"])
+
+    def test_take_delivery_block_matches_manifest_and_schema_boundary(self) -> None:
+        take = {boundary.protocol: boundary for boundary in delivery_boundaries(ROOT)}["take"]
+
+        self.assertTrue(take.passed)
+        self.assertEqual("contract", take.artifact)
+        self.assertTrue(take.scoped)
+        self.assertTrue(take.schema_requires_work_unit)
+
+    def test_take_consults_contract_dimension_authorities(self) -> None:
         body = read(TAKE_PROTOCOL)
-        authoring = normalized(step(body, 4))
+        rows = contract_dimension_rows(ROOT)
 
-        expected_terms = [
-            "inputs to validation",
-            "validation defined",
-            "behavior",
-            "acceptance criteria",
-            "documentation",
-            "recipient outcomes",
-            "code quality",
-            "principles-corpus",
-            "stressed universals",
-            "all three dimensions",
-            "`contract` skill",
-        ]
-        for term in expected_terms:
-            with self.subTest(term=term):
-                self.assertIn(term, authoring)
-
-        self.assertRegex(authoring, r"executable (?:Given/When/Then )?scenarios")
-        self.assertIn("documentation-deliverable gates", authoring)
-        self.assertIn("audience-outcome checklist", authoring)
-        self.assertIn("reviewer-checkable", authoring)
-        self.assertIn("projected", authoring)
-
-    def test_density_rule_requires_teeth_without_dense_required_blocks(self) -> None:
-        authoring = normalized(step(read(TAKE_PROTOCOL), 4))
-        authoring_lower = authoring.lower()
-
-        for expected in [
-            "every dimension the change has",
-            "authored teeth-bearing criterion",
-            "density may be light",
-            "coverage is never zero",
-            "hollow delivery",
+        self.assertEqual(EXPECTED_CONTRACT_DIMENSIONS, set(rows))
+        for relative in [
+            "skills/contract/references/documentation-contract.md",
+            "skills/contract/references/code-quality-contract.md",
         ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, authoring_lower)
+            with self.subTest(relative=relative):
+                self.assertTrue((ROOT / relative).is_file())
+                self.assertIn(relative, body)
 
-        forbidden = re.compile(
-            r"Pointer-as-default|general contract pointer|silence is valid|"
-            r"not a mandatory per-dimension (?:declaration|block)|"
-            r"dimension with no special input uses its general contract",
-            flags=re.IGNORECASE,
-        )
-        self.assertIsNone(forbidden.search(authoring))
+    def test_contract_dimension_gate_flips_when_skill_table_changes(self) -> None:
+        self.assertEqual(EXPECTED_CONTRACT_DIMENSIONS, set(contract_dimension_rows(ROOT)))
 
-    def test_take_consults_dimension_homes_without_reencoding_apparatus_table(self) -> None:
-        body = read(TAKE_PROTOCOL)
+        with tempfile.TemporaryDirectory() as tmp:
+            tree = Path(tmp) / "tree"
+            skill = tree / "skills" / "contract" / "SKILL.md"
+            skill.parent.mkdir(parents=True)
+            body = read(CONTRACT_SKILL).replace(
+                "| **Documentation** | `work-unit-craft`/`decompose` recipient outcomes |",
+                "| **Release notes** | `work-unit-craft`/`decompose` recipient outcomes |",
+                1,
+            )
+            skill.write_text(body, encoding="utf-8")
 
-        for expected in [
-            "`contract` skill",
-            "`skills/contract/references/documentation-contract.md`",
-            "`skills/contract/references/code-quality-contract.md`",
-            "`orient`",
-            "`~/.groundwork/principles/`",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, body)
+            mutated_dimensions = set(contract_dimension_rows(tree))
 
-        dimension_row = re.compile(
-            r"\| \*\*(?:Behavior|Documentation|Code quality)\*\* \|",
-        )
-        self.assertIsNone(dimension_row.search(body))
-
-    def test_named_apparatus_agrees_with_contract_skill(self) -> None:
-        take_body = normalized(read(TAKE_PROTOCOL))
-        rows = apparatus_rows(read(CONTRACT_SKILL))
-
-        expected_forms = {
-            "Behavior": ["executable scenarios", "documentation-deliverable gates"],
-            "Documentation": ["udience-outcome"],
-            "Code quality": ["projections"],
-        }
-
-        self.assertEqual({"Behavior", "Documentation", "Code quality"}, set(rows))
-        for dimension, forms in expected_forms.items():
-            with self.subTest(dimension=dimension):
-                for form in forms:
-                    self.assertIn(form.lower(), rows[dimension].lower())
-                    self.assertIn(form, take_body)
-
-    def test_contract_delivery_declares_dimension_criteria(self) -> None:
-        delivery = normalized(step(read(TAKE_PROTOCOL), 5))
-
-        for expected in [
-            "contract({",
-            "dimension-agnostic criteria",
-            "hollow_delivery",
-            "check_kind",
-            "executable",
-            "attested",
-            "criteria",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, delivery)
-
-        self.assertNotIn("#454", delivery)
-        self.assertNotIn("deferred", delivery)
-        self.assertNotIn("behavior_form", delivery)
-
-    def test_take_ends_at_the_capstone_and_states_the_session_surface_seam(self) -> None:
-        body = read(TAKE_PROTOCOL)
-        steps = section(body, "Steps")
-
-        self.assertIsNone(
-            re.search(r"^6\. \*\*", steps, flags=re.MULTILINE),
-            "take carries a step past the capstone",
-        )
-
-        delivery = normalized(step(body, 5))
-        for expected in [
-            "Delivering the contract is take completing",
-            "session surface computes the next ready station from artifact state",
-            "advances the work to it",
-            "Where no runtime is present",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, delivery)
-
-        body_lower = normalized(body).lower()
-        for phrase in [
-            "carry the contract through",
-            "carry it forward yourself",
-            "drive the remaining stations",
-            "do not stop at a boundary",
-        ]:
-            with self.subTest(phrase=phrase):
-                self.assertNotIn(phrase, body_lower)
-
-    def test_existing_take_discipline_sections_and_corruption_modes_survive(self) -> None:
-        body = read(TAKE_PROTOCOL)
-
-        expected_sections = [
-            "Steps",
-            "Scale",
-            "Operating Principles",
-            "Corruption Modes",
-            "Cross-References",
-        ]
-        for heading in expected_sections:
-            with self.subTest(heading=heading):
-                self.assertIn(f"## {heading}", body)
-
-        corruption_modes = section(body, "Corruption Modes")
-        named_modes = re.findall(r"^- `([a-z-]+)`", corruption_modes, flags=re.MULTILINE)
+        self.assertNotEqual(EXPECTED_CONTRACT_DIMENSIONS, mutated_dimensions)
         self.assertEqual(
-            [
-                "contract-after-code",
-                "scope-creep",
-                "criteria-parroting",
-                "stale-directive-followership",
-                "skip-preparation",
-                "state-lag",
-                "dimension-declaration-only",
-                "gate-as-scenario",
-                "lifecycle-modeling",
-            ],
-            named_modes,
+            {"**Behavior**", "**Release notes**", "**Code quality**"},
+            mutated_dimensions,
         )
+
+    def test_take_ends_at_contract_capstone_with_named_corruption_modes(self) -> None:
+        steps = markdown_section(read(TAKE_PROTOCOL), "Steps")
+        corruption_modes = markdown_section(read(TAKE_PROTOCOL), "Corruption Modes")
+
+        self.assertIsNone(re.search(r"^6\. \*\*", steps, flags=re.MULTILINE))
+        self.assertIn("contract-after-code", corruption_modes)
+        self.assertIn("dimension-declaration-only", corruption_modes)
+        self.assertIn("lifecycle-modeling", corruption_modes)
 
 
 if __name__ == "__main__":

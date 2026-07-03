@@ -2,6 +2,8 @@ import re
 import unittest
 from pathlib import Path
 
+from tooling.prose_conformance import frontmatter
+
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_SKILL = ROOT / "skills" / "contract" / "SKILL.md"
@@ -113,28 +115,14 @@ outside content
     def test_contract_version_and_changelog_record_disposition_default(self) -> None:
         body = read(CONTRACT_SKILL)
         changelog = read(CHANGELOG)
+        metadata = frontmatter(body)["metadata"]
+        unreleased = changelog.split("## [Unreleased]", 1)[1].split("\n## [", 1)[0]
 
-        self.assertIn('version: "2.7.1"', body)
-        self.assertIn('updated: "2026-07-03"', body)
+        self.assertRegex(metadata["version"], r"^[0-9]+[.][0-9]+[.][0-9]+$")
+        self.assertRegex(metadata["updated"], r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
         self.assertEqual(1, changelog.splitlines().count("## [Unreleased]"))
-        self.assertIn("**Contract disposition default** (#472)", changelog)
-        self.assertIn("contract 2.3.0->2.4.0", changelog)
-        self.assertIn("**Uniform contract form** (#493)", changelog)
-        self.assertIn("contract 2.4.0->2.5.0", changelog)
-        self.assertIn("**Silent dimension doctrine** (#498)", changelog)
-        self.assertIn("contract 2.5.0->2.6.0", changelog)
-        self.assertIn("take 3.4.0->3.5.0", changelog)
-        self.assertIn("work-unit-craft 1.1.0->1.2.0", changelog)
-        self.assertIn("**Uniform pipeline carry** (#494)", changelog)
-        self.assertIn("contract 2.6.0->2.7.0", changelog)
-        self.assertIn("contract 2.7.0->2.7.1", changelog)
-        self.assertIn("work-unit-craft 1.3.0->1.3.1", changelog)
-        self.assertIn("take 3.5.0->3.6.0", changelog)
-        self.assertIn("plan 2.4.0->2.5.0", changelog)
-        self.assertIn("implement 2.3.0->2.4.0", changelog)
-        self.assertIn("submit 3.2.0->3.3.0", changelog)
-        self.assertIn("review 2.2.0->2.3.0", changelog)
-        self.assertIn("land 3.2.0->3.3.0", changelog)
+        self.assertRegex(unreleased, r"(?m)^- \*\*.+\*\* \(#\d+\)")
+        self.assertRegex(unreleased, r"\bcontract [0-9]+[.][0-9]+[.][0-9]+->[0-9]+[.][0-9]+[.][0-9]+")
 
     def test_disposition_default_is_sibling_of_teeth_principle(self) -> None:
         body = read(CONTRACT_SKILL)

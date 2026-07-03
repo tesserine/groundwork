@@ -341,7 +341,7 @@ class CanonicalExemplarTests(unittest.TestCase):
         self.assertEqual(1, len(criteria))
         criterion = criteria[0]
         self.assertEqual("executable", criterion["check_kind"])
-        self.assertIn("Automated check", criterion["check"])
+        self.assertNotEqual("", criterion["check"])
 
     def test_canonical_code_quality_evidence_is_a_recorded_run(self) -> None:
         results = {

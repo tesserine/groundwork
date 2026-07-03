@@ -44,13 +44,12 @@ cold start.
    ```
 
    The deployment-selected connector owns provider coordinates and
-   credentials. Groundwork receives the whole ticket:
-   `{handle, title, body, state}` plus, per forge-capability `1.2.0`, an
-   optional ordered `comments` log — `handle` is the connector-issued
-   `{ id, display }` identity. The body is the work-unit's spec; the
-   comment log is its running record — review state, dispositions, and
-   directives. Surface the log to the session as entry context so the
-   session grounds on the whole ticket, not the spec alone.
+   credentials.
+   The `read-ticket` output includes an optional ordered `comments` log.
+   It also includes the whole ticket: `{handle, title, body, state}` plus the
+   connector-issued `{ id, display }` identity.
+   The body is the work-unit's spec; the comment log is its running record — review state, dispositions, and directives.
+   Surface the log to the session as entry context so the session grounds on the whole ticket, not the spec alone.
 
 2. **Materialize the artifact body.** Pipe the read-ticket output through
    the materializer:
@@ -64,10 +63,10 @@ cold start.
    It derives the work-unit body — `title`, `description`, and
    `acceptance_criteria` from the ticket content, `handle` carried through
    verbatim — and the `instance_id` (`work-unit-<sha256(handle.id)>`). The
-   derivation never invents content (see step 3). The artifact
-   materializes from the ticket body alone: the comment log is read as
-   entry context, never persisted into the artifact — the ticket remains
-   the planning home, and the artifact carries the spec.
+   derivation never invents content (see step 3).
+   The artifact materializes from the ticket body alone.
+   The comment log is read as entry context, never persisted into the artifact.
+   The ticket remains the planning home, and the artifact carries the spec.
 
 3. **Surface gaps; never invent.** When the ticket does not map cleanly onto
    the required schema fields — no extractable acceptance criteria, an empty

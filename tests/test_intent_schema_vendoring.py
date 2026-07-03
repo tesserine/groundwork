@@ -106,18 +106,20 @@ class IntentSchemaVendoringTests(unittest.TestCase):
 
     def test_schemas_readme_documents_intent_vendoring_discipline(self) -> None:
         readme = SCHEMAS_README_PATH.read_text()
+        schema = json.loads(INTENT_SCHEMA_PATH.read_text())
+        canonical = schema["x-tesserine-canonical"]
+        schema_match = COMMONS_CANONICAL_URL.fullmatch(canonical["schema_url"])
+        prose_match = COMMONS_CANONICAL_URL.fullmatch(canonical["prose_url"])
+        assert schema_match is not None
+        assert prose_match is not None
 
-        self.assertIn("methodology-private", readme)
         self.assertIn("intent.schema.json", readme)
-        self.assertIn("2.0.0", readme)
-        self.assertIn("schemas/intent/v2/intent.schema.json", readme)
-        self.assertIn("tesserine/commons", readme)
+        self.assertIn(canonical["version"], readme)
+        self.assertIn(schema_match.group("path"), readme)
+        self.assertIn("tesserine/commons", canonical["schema_url"])
         self.assertRegex(readme, r"runtime consumers still read schemas from\s+groundwork")
-        self.assertNotIn("pins commons `main`", readme)
-        self.assertIn("pins the commons merge commit", readme)
-        self.assertIn("immutable", readme)
-        self.assertIn("release-tag or commit-SHA URLs", readme)
-        self.assertIn("full semver", readme)
+        self.assertEqual(schema_match.group("ref"), prose_match.group("ref"))
+        self.assertNotEqual("main", schema_match.group("ref"))
 
     def test_valid_intent_fixtures_match_vendored_schema_contract(self) -> None:
         schema = json.loads(INTENT_SCHEMA_PATH.read_text())

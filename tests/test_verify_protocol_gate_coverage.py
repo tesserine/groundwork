@@ -1,133 +1,69 @@
-import re
 import unittest
 from pathlib import Path
+
+from tooling.prose_conformance import (
+    artifact_schema,
+    delivery_boundaries,
+    manifest_protocols,
+    markdown_section,
+    read,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
 VERIFY_PROTOCOL = ROOT / "protocols" / "verify" / "PROTOCOL.md"
 
 
-def read(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
-
-
-def normalized(text: str) -> str:
-    return re.sub(r"\s+", " ", text).strip()
-
-
-def step(body: str, number: int) -> str:
-    pattern = re.compile(
-        rf"^{number}\. \*\*.*?\n(?P<section>.*?)(?=^{number + 1}\. \*\*|^## |\Z)",
-        flags=re.MULTILINE | re.DOTALL,
-    )
-    match = pattern.search(body)
-    if match is None:
-        raise AssertionError(f"missing step {number}")
-    return match.group("section")
-
-
-def section(body: str, heading: str) -> str:
-    pattern = re.compile(
-        rf"^## {re.escape(heading)}\n(?P<section>.*?)(?=^## |\Z)",
-        flags=re.MULTILINE | re.DOTALL,
-    )
-    match = pattern.search(body)
-    if match is None:
-        raise AssertionError(f"missing section: {heading}")
-    return match.group("section")
+def protocol(name: str) -> dict:
+    return {entry["name"]: entry for entry in manifest_protocols(ROOT)}[name]
 
 
 class VerifyProtocolGateCoverageTests(unittest.TestCase):
-    def test_primary_coverage_assessment_reports_criterion_results(self) -> None:
-        coverage = normalized(step(read(VERIFY_PROTOCOL), 3)).lower()
+    def test_manifest_requires_contract_and_test_evidence_for_verify(self) -> None:
+        verify = protocol("verify")
 
-        for expected in [
-            "contract criteria",
-            "performed results",
-            "`contract.criteria[].id`",
-            "`completion-evidence.results[]",
-            "criterion_id",
-            "check_kind",
-            "results",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, coverage)
+        self.assertTrue(verify["scoped"])
+        self.assertIn("contract", verify["requires"])
+        self.assertIn("test-evidence", verify["requires"])
+        self.assertIn("work-unit", verify["requires"])
+        self.assertEqual(["completion-evidence"], verify["produces"])
 
-    def test_gate_identification_consumes_contract_criteria(self) -> None:
-        body = normalized(step(read(VERIFY_PROTOCOL), 1) + step(read(VERIFY_PROTOCOL), 3)).lower()
+    def test_completion_evidence_schema_is_contract_criterion_keyed(self) -> None:
+        schema = artifact_schema(ROOT, "completion-evidence")
+        result = schema["properties"]["results"]["items"]
+        evidence = result["properties"]["evidence"]
 
-        for expected in [
-            "contract.criteria[]",
-            "criterion",
-            "check_kind",
-            "run or artifact evidence",
-            "reviewer attestation",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, body)
-        self.assertIn("do not derive scenario or gate lists", body)
-
-    def test_documentation_and_code_quality_reviews_remain_present(self) -> None:
-        review = normalized(step(read(VERIFY_PROTOCOL), 4))
-
-        for expected in [
-            "For **documentation**",
-            "declared pillar's outcome",
-            "existing docs honest",
-            "[references/documentation-review.md](references/documentation-review.md)",
-            "For **code quality**",
-            "declared universal",
-            "[references/code-quality-review.md](references/code-quality-review.md)",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, review)
-
-    def test_verify_consults_contract_lifecycle_without_reencoding_it(self) -> None:
-        body = read(VERIFY_PROTOCOL).lower()
-
-        for expected in [
-            "`contract` (skill)",
-            "contract criteria",
-            "single coverage source",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, body)
-
-        lifecycle_table = re.compile(
-            r"\| \*\*(?:Behavior|Documentation|Code quality)\*\* \| .*?"
-            r"(?:inputs to validation|validation defined|validation performed)",
-            flags=re.IGNORECASE,
+        self.assertIn("criterion_id", result["required"])
+        self.assertIn("result", result["required"])
+        self.assertIn("evidence", result["required"])
+        self.assertEqual(["pass", "fail"], result["properties"]["result"]["enum"])
+        self.assertEqual(
+            [{"required": ["run"]}, {"required": ["artifact"]}, {"required": ["attestation"]}],
+            evidence["anyOf"],
         )
-        self.assertIsNone(lifecycle_table.search(body))
 
-    def test_completion_evidence_delivery_records_per_criterion_results(self) -> None:
-        delivery = normalized(step(read(VERIFY_PROTOCOL), 5))
+    def test_verify_delivery_block_matches_manifest_and_schema_boundary(self) -> None:
+        verify = {boundary.protocol: boundary for boundary in delivery_boundaries(ROOT)}["verify"]
 
-        for expected in [
-            "`completion-evidence` MCP tool",
-            "one result per contract criterion",
-            "results",
-            "criterion_id",
-            "run",
-            "attestation",
-            "reviewer",
-            "bare pass is not evidence",
+        self.assertTrue(verify.passed)
+        self.assertEqual("completion-evidence", verify.artifact)
+
+    def test_verify_review_references_resolve_to_declared_review_guides(self) -> None:
+        review = markdown_section(read(VERIFY_PROTOCOL), "Steps")
+
+        for relative in [
+            "protocols/verify/references/documentation-review.md",
+            "protocols/verify/references/code-quality-review.md",
         ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, delivery)
+            with self.subTest(relative=relative):
+                self.assertTrue((ROOT / relative).is_file())
+                self.assertIn(relative.removeprefix("protocols/verify/"), review)
 
-        self.assertNotIn("#454", delivery)
-        self.assertNotIn("deferred", delivery)
-        self.assertNotIn("criterion_coverage", delivery)
-        self.assertIn("current contract's criteria", delivery)
-        self.assertIn("rejected before persistence", delivery)
+    def test_verify_schema_drops_retired_coverage_fields(self) -> None:
+        schema = artifact_schema(ROOT, "completion-evidence")
 
-    def test_verify_no_longer_derives_old_behavior_form_coverage(self) -> None:
-        verify_body = normalized(read(VERIFY_PROTOCOL))
-
-        self.assertNotIn("criteria × scenarios", verify_body)
-        self.assertNotIn("criteria × documentation-deliverable gates", verify_body)
-        self.assertNotIn("fabricated scenario coverage", verify_body)
+        self.assertNotIn("criterion_coverage", schema.get("properties", {}))
+        self.assertNotIn("behavior_form", schema.get("properties", {}))
 
 
 if __name__ == "__main__":

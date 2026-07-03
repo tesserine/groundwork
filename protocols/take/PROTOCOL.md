@@ -45,15 +45,13 @@ proves it, or records it.
    work whose `dependencies` are still open; a blocked work-unit is a
    substrate signal, not an invitation.
 
-   Ground the frame in the whole ticket. The ticket body is the work-unit's
-   spec; its comment log — surfaced at entry by `acquire`, carried in the
-   `read-ticket` snapshot per forge-capability `1.2.0` — is the running
-   record: review state, dispositions, and directives live there. On a
-   resume — a unit with a delivered change-proposal or an open review
-   round — the newest review directives at the submitted head govern the
-   work; the body remains the spec, and directives refine delivery against
-   it. Weigh each log entry by recency and standing: a directive superseded
-   by a newer round, or by a body amendment, is record, not direction.
+   Ground the frame in the whole ticket.
+   The ticket body is the work-unit's spec.
+   The comment log is the running record: review state, dispositions, and directives live there.
+   `acquire` surfaces it from the `read-ticket` snapshot per forge-capability `1.2.0`.
+   The newest review directives at the submitted head govern the work.
+   The body remains the spec, and directives refine delivery against it.
+   Weigh each log entry by recency and standing: a directive superseded by a newer round, or by a body amendment, is record, not direction.
 
 4. **Author validation defined across the contract.** First reckon it:
    authoring the contract is a generative act — open the resolved principles

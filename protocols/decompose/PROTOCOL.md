@@ -184,14 +184,15 @@ work-unit, first invoke the connector capability `create-ticket` operation and
 carry the returned `{ id, display }` handle into the artifact body. `create-ticket`
 is a first-delivery-only step: refinement never calls it, and decompose does not
 adopt a pre-existing tracker ticket into a new artifact. If a tracker ticket
-already exists, this delivery path must not create a second ticket for it. The
-object below is MCP tool input, not artifact body. `instance_id` is a tool
-parameter that names the artifact instance; it is extracted before validating
-artifact content, becomes the workspace filename, and must not appear in the
-artifact body. `work-unit` is a planning-phase artifact: the agent supplies the
-schema fields shown below, and runa does not inject `work_unit`. Work-unit
-artifact bodies have no top-level `work_unit` field and no forge identity
-outside the connector handle. Do not write the workspace JSON file directly.
+already exists, this delivery path must not create a second ticket for it.
+The object below is MCP tool input, not artifact body.
+`instance_id` is a tool parameter.
+It names the artifact instance and becomes the workspace filename.
+It must not appear in the artifact body.
+`work-unit` is a planning-phase artifact: the agent supplies the schema fields shown below, and runa does not inject `work_unit`.
+Work-unit artifact bodies have no top-level `work_unit` field and no forge
+identity outside the connector handle. Do not write the workspace JSON file
+directly.
 
 Use a fresh `instance_id` when creating a new work-unit. Reuse the existing
 `instance_id` when refining an already-delivered work-unit artifact so artifact

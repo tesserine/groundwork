@@ -2,6 +2,8 @@ import re
 import unittest
 from pathlib import Path
 
+from tooling.prose_conformance import frontmatter
+
 
 ROOT = Path(__file__).resolve().parents[1]
 RECKON = ROOT / "skills" / "reckon" / "SKILL.md"
@@ -111,9 +113,10 @@ class ReckonAscentTests(unittest.TestCase):
     def test_reckon_version_and_changelog_record_the_addition(self) -> None:
         reckon = read(RECKON)
         changelog = prose(read(CHANGELOG).split("## [Unreleased]", 1)[1].split("### Changed", 1)[0])
+        metadata = frontmatter(reckon)["metadata"]
 
-        self.assertIn('version: "5.4.0"', reckon)
-        self.assertIn('updated: "2026-06-20"', reckon)
+        self.assertRegex(metadata["version"], r"^[0-9]+[.][0-9]+[.][0-9]+$")
+        self.assertRegex(metadata["updated"], r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
         self.assertIn("Ascent", changelog)
         self.assertIn("Purpose Ladder", changelog)
         self.assertIn("Purpose drift", changelog)

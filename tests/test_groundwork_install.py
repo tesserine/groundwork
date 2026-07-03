@@ -8,6 +8,8 @@ import textwrap
 import unittest
 from pathlib import Path
 
+from tooling.prose_conformance import session_surface_handoff_commitments
+
 
 ROOT = Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "scripts" / "groundwork-install"
@@ -361,30 +363,58 @@ class GroundworkInstallTests(unittest.TestCase):
 
     def test_session_surface_handoff_prose_carries_non_bypassing_commitments(self) -> None:
         fixture = self.add_fixture("handoff-prose")
-        handoff = " ".join(self.handoff_text(fixture).split())
+        source = self.handoff_text(fixture)
+        commitments = session_surface_handoff_commitments(
+            source,
+            begin_marker=HANDOFF_BEGIN,
+            end_marker=HANDOFF_END,
+        )
 
-        for expected in [
-            "`runa go --work-unit <canonical-work-unit-id>`",
-            "operator issues only `go`",
-            "`next-protocol-context`",
-            "current output tool",
-            "`advance`",
-            "validated by runa",
-            "Do not assemble artifact bodies manually",
-            "Do not write workspace JSON files directly",
-        ]:
-            with self.subTest(expected=expected):
-                self.assertIn(expected, handoff)
+        self.assertTrue(commitments.passed)
 
-        for bypass_phrase in [
-            "no runa runtime",
-            "no artifact tool",
-            "no artifact store",
-            "Present that artifact body to the human",
-            "does not persist artifacts",
-        ]:
-            with self.subTest(bypass_phrase=bypass_phrase):
-                self.assertNotIn(bypass_phrase, handoff)
+    def test_session_surface_handoff_prohibition_deletion_flips_commitments(self) -> None:
+        fixture = self.add_fixture("handoff-prose-deletion")
+        source = self.handoff_text(fixture)
+        self.assertTrue(
+            session_surface_handoff_commitments(
+                source,
+                begin_marker=HANDOFF_BEGIN,
+                end_marker=HANDOFF_END,
+            ).passed
+        )
+        fixture.write(
+            HANDOFF_RELATIVE_PATH,
+            source.replace(
+                "Do not write workspace JSON files directly.",
+                "Write workspace JSON files directly.",
+                1,
+            ),
+        )
+        commitments = session_surface_handoff_commitments(
+            self.handoff_text(fixture),
+            begin_marker=HANDOFF_BEGIN,
+            end_marker=HANDOFF_END,
+        )
+
+        self.assertFalse(commitments.passed)
+        self.assertFalse(commitments.prohibits_direct_workspace_json)
+
+    def test_session_surface_handoff_bypass_insertion_flips_commitments(self) -> None:
+        fixture = self.add_fixture("handoff-prose-bypass")
+        source = self.handoff_text(fixture)
+        fixture.write(
+            HANDOFF_RELATIVE_PATH,
+            source + "\nPresent that artifact body to the human.\n",
+        )
+
+        commitments = session_surface_handoff_commitments(
+            self.handoff_text(fixture),
+            begin_marker=HANDOFF_BEGIN,
+            end_marker=HANDOFF_END,
+        )
+
+        self.assertFalse(commitments.passed)
+        self.assertEqual(("human artifact handoff bypass",), commitments.bypass_violations)
 
     def test_install_is_idempotent_for_the_same_pinned_source(self) -> None:
         fixture = self.add_fixture("idempotent")

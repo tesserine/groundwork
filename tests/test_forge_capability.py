@@ -1,5 +1,7 @@
 import json
 import re
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -8,6 +10,7 @@ from jsonschema import Draft202012Validator
 from tooling.artifact_schemas import ArtifactSchemaError, validate_artifact
 from tooling.forge_capability import CAPABILITY_PROVENANCE_URL, CAPABILITY_VERSION
 from tooling.conformance import run_conformance
+from tooling.prose_conformance import entry_surface_coherence, manifest, numbered_step, schema_def
 from tooling.workflow_contracts import workflow_registry_from_manifest
 
 
@@ -24,6 +27,31 @@ EXPECTED_OPERATIONS = {
     "apply-approved-change",
     "close-out",
 }
+RETIRED_FORGE_IDENTIFIER_PATTERNS = [
+    ("forge_tags", r"\bforge[_ -]?tags\b"),
+    ("RUNA_FORGE_", r"\bRUNA_FORGE_[A-Z0-9_]*\b"),
+    ("GROUNDWORK_FORGE_", r"\bGROUNDWORK_FORGE_[A-Z0-9_]*\b"),
+    ("groundwork-mechanic", r"\bgroundwork-mechanic\b"),
+]
+RETIRED_FORGE_ASSETS = [
+    ROOT / "mechanics" / "github",
+    ROOT / "mechanics" / "sourcehut",
+    ROOT / "tooling" / "forge_operations.py",
+    ROOT / "scripts" / "groundwork-mechanic",
+]
+CONNECTOR_MODEL_DOCUMENTS = [
+    ROOT / "README.md",
+    ROOT / "schemas" / "README.md",
+    ROOT / "docs" / "architecture" / "connecting-structure.md",
+    ROOT / "docs" / "architecture" / "decisions" / "0002-methodology-sovereignty.md",
+    ROOT / "docs" / "architecture" / "decisions" / "0004-contract-first-scoped-pipeline.md",
+    ROOT / "docs" / "architecture" / "decisions" / "0006-runtime-driven-self-install-surface.md",
+    ROOT / "skills" / "acquire" / "SKILL.md",
+    ROOT / "protocols" / "decompose" / "PROTOCOL.md",
+    ROOT / "protocols" / "submit" / "PROTOCOL.md",
+    ROOT / "protocols" / "land" / "PROTOCOL.md",
+    ROOT / "protocols" / "take" / "references" / "workspace.md",
+]
 
 
 def load_json(path: Path) -> dict:
@@ -36,6 +64,85 @@ def vendored_schema() -> dict:
 
 def connector_handle() -> dict:
     return {"id": "ticket:opaque-alpha", "display": "TRACK-ALPHA"}
+
+
+def contains_key(node: object, key: str) -> bool:
+    if isinstance(node, dict):
+        return key in node or any(contains_key(value, key) for value in node.values())
+    if isinstance(node, list):
+        return any(contains_key(value, key) for value in node)
+    return False
+
+
+def connector_model_violations(root: Path) -> list[str]:
+    schema = load_json(root / "schemas" / "forge-capability" / "v1" / "forge-capability.schema.json")
+    work_unit_schema = load_json(root / "schemas" / "work-unit.schema.json")
+    handle_schema = schema["$defs"]["handle"]
+    connecting_structure = (root / "docs" / "architecture" / "connecting-structure.md").read_text(
+        encoding="utf-8"
+    )
+    documents = [
+        root / document.relative_to(ROOT)
+        for document in CONNECTOR_MODEL_DOCUMENTS
+    ]
+    violations: list[str] = []
+
+    if handle_schema != work_unit_schema["$defs"]["handle"]:
+        violations.append("work-unit handle schema drifted from vendored handle")
+    handle_shape = "{ " + ", ".join(handle_schema["required"]) + " }"
+    if handle_shape not in connecting_structure:
+        violations.append(f"connecting-structure omits handle shape {handle_shape}")
+    for field in handle_schema["required"]:
+        if field not in connecting_structure:
+            violations.append(f"connecting-structure omits handle field {field}")
+    for document in documents:
+        body = document.read_text(encoding="utf-8")
+        for identifier, pattern in RETIRED_FORGE_IDENTIFIER_PATTERNS:
+            if re.search(pattern, body, flags=re.IGNORECASE):
+                relative = document.relative_to(root)
+                violations.append(f"{relative} contains retired identifier {identifier}")
+    return violations
+
+
+def copy_connector_model_fixture(target: Path) -> None:
+    shutil.copytree(ROOT / "schemas", target / "schemas")
+    for document in CONNECTOR_MODEL_DOCUMENTS:
+        destination = target / document.relative_to(ROOT)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(document, destination)
+
+
+def land_apply_approved_change_input_keys(body: str) -> set[str]:
+    step = numbered_step(body, 2)
+    marker = "`apply-approved-change-input` schema:"
+    if marker not in step:
+        raise AssertionError("land apply step omits apply-approved-change input mapping")
+
+    mapping_lines: list[str] = []
+    for line in step.split(marker, 1)[1].splitlines():
+        if not mapping_lines:
+            if line.startswith("   - "):
+                mapping_lines.append(line)
+            continue
+        if line.startswith("   - ") or line.startswith("     "):
+            mapping_lines.append(line)
+            continue
+        if not line.strip():
+            break
+        break
+
+    if not mapping_lines:
+        raise AssertionError("land apply step omits apply-approved-change input fields")
+
+    return {
+        match.group("key")
+        for line in mapping_lines
+        if (match := re.match(r"\s*-\s+`(?P<key>[A-Za-z_][A-Za-z0-9_-]*)`:", line))
+    }
+
+
+def land_apply_approved_change_input_omits_branch(body: str) -> bool:
+    return "branch" not in land_apply_approved_change_input_keys(body)
 
 
 class ForgeCapabilityTests(unittest.TestCase):
@@ -120,97 +227,118 @@ class ForgeCapabilityTests(unittest.TestCase):
         self.assertTrue(all(result.passed for result in results))
 
     def test_source_manifest_retains_non_forge_mechanics_and_no_provider_forge_mechanics(self) -> None:
-        manifest_text = (ROOT / "manifest.toml").read_text(encoding="utf-8")
+        parsed_manifest = manifest(ROOT)
         registry = workflow_registry_from_manifest()
 
         for mechanic in ["read-artifact", "inspect-change-proposals", "revise", "review", "inspect-worktree", "run-test"]:
             with self.subTest(mechanic=mechanic):
                 self.assertIn(mechanic, registry.mechanics)
-        self.assertNotIn("[[forge_tags]]", manifest_text)
-        self.assertNotIn("forge_tags", manifest_text)
-        self.assertFalse((ROOT / "mechanics" / "github").exists())
-        self.assertFalse((ROOT / "mechanics" / "sourcehut").exists())
-        self.assertFalse((ROOT / "tooling" / "forge_operations.py").exists())
-        self.assertFalse((ROOT / "scripts" / "groundwork-mechanic").exists())
+        self.assertFalse(contains_key(parsed_manifest, "forge_tags"))
+        for path in RETIRED_FORGE_ASSETS:
+            with self.subTest(path=path.relative_to(ROOT)):
+                self.assertFalse(path.exists())
 
     def test_methodology_docs_present_connector_model_without_retired_mechanism(self) -> None:
-        retired_tokens = [
-            "groundwork-mechanic",
-            "provider-mechanic resolver",
-            "forge-type dispatch",
-            "RUNA_FORGE_",
-            "GROUNDWORK_FORGE_",
-        ]
-        retired_patterns = [
-            re.compile(r"forge[-_ ]?tags?", re.IGNORECASE),
-        ]
-        documents = [
-            ROOT / "README.md",
-            ROOT / "schemas" / "README.md",
-            ROOT / "docs" / "architecture" / "connecting-structure.md",
-            ROOT / "docs" / "architecture" / "decisions" / "0002-methodology-sovereignty.md",
-            ROOT / "docs" / "architecture" / "decisions" / "0004-contract-first-scoped-pipeline.md",
-            ROOT / "docs" / "architecture" / "decisions" / "0006-runtime-driven-self-install-surface.md",
-            ROOT / "skills" / "acquire" / "SKILL.md",
-            ROOT / "protocols" / "decompose" / "PROTOCOL.md",
-            ROOT / "protocols" / "submit" / "PROTOCOL.md",
-            ROOT / "protocols" / "land" / "PROTOCOL.md",
-            ROOT / "protocols" / "take" / "references" / "workspace.md",
-        ]
+        schema = vendored_schema()
+        operations = schema["$defs"]["operation-name"]["enum"]
 
-        for document in documents:
+        combined = "\n".join(document.read_text(encoding="utf-8") for document in CONNECTOR_MODEL_DOCUMENTS)
+        for operation in operations:
+            with self.subTest(operation=operation):
+                self.assertIn(operation, combined)
+        for document in CONNECTOR_MODEL_DOCUMENTS:
             body = document.read_text(encoding="utf-8")
-            with self.subTest(document=document.relative_to(ROOT)):
-                self.assertIn("connector", body)
-                self.assertIn("capability", body)
-                for token in retired_tokens:
-                    self.assertNotIn(token, body)
-                for pattern in retired_patterns:
-                    self.assertIsNone(pattern.search(body), pattern.pattern)
+            for identifier, pattern in RETIRED_FORGE_IDENTIFIER_PATTERNS:
+                with self.subTest(
+                    document=document.relative_to(ROOT),
+                    identifier=identifier,
+                ):
+                    self.assertIsNone(re.search(pattern, body, flags=re.IGNORECASE))
+        for path in RETIRED_FORGE_ASSETS:
+            with self.subTest(retired_asset=path.relative_to(ROOT)):
+                self.assertFalse(path.exists())
+        self.assertEqual([], connector_model_violations(ROOT))
+
+    def test_connector_model_retired_identifier_insertion_flips_absence_result(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tree = Path(tmp) / "tree"
+            copy_connector_model_fixture(tree)
+            readme = tree / "README.md"
+            readme.write_text(
+                readme.read_text(encoding="utf-8")
+                + "\nLegacy examples may use forge-tags in old deployments.\n",
+                encoding="utf-8",
+            )
+
+            violations = connector_model_violations(tree)
+
+        self.assertIn("README.md contains retired identifier forge_tags", violations)
 
     def test_land_protocol_maps_apply_input_to_vendored_connector_schema(self) -> None:
         schema = vendored_schema()
         apply_input = schema["$defs"]["apply-approved-change-input"]
+        proposal = load_json(SCHEMAS / "change-proposal.schema.json")
         body = (ROOT / "protocols" / "land" / "PROTOCOL.md").read_text(encoding="utf-8")
+        apply_mapping_keys = land_apply_approved_change_input_keys(body)
 
         for field in apply_input["required"]:
             with self.subTest(field=field):
-                self.assertIn(f"`{field}`", body)
-        self.assertIn("`branch` is not passed", body)
-        self.assertNotIn("operation with the resolved proposal detail", body)
+                self.assertIn(field, apply_mapping_keys)
+        self.assertIn("branch", proposal["required"])
+        self.assertNotIn("branch", apply_input["required"])
+        self.assertTrue(land_apply_approved_change_input_omits_branch(body))
+
+    def test_land_protocol_branch_input_insertion_flips_prose_gate(self) -> None:
+        body = (ROOT / "protocols" / "land" / "PROTOCOL.md").read_text(encoding="utf-8")
+        body = body.replace(
+            "   - `base`: the resolved `change-proposal.base`",
+            "   - `base`: the resolved `change-proposal.base`\n"
+            "   - `branch`: the resolved `change-proposal.branch`",
+            1,
+        )
+
+        self.assertFalse(land_apply_approved_change_input_omits_branch(body))
 
     def test_methodology_docs_preserve_connector_model_coherence(self) -> None:
+        handle_schema = vendored_schema()["$defs"]["handle"]
+        work_unit_schema = load_json(SCHEMAS / "work-unit.schema.json")
         connecting_structure = (ROOT / "docs" / "architecture" / "connecting-structure.md").read_text(encoding="utf-8")
         adr_0006 = (
             ROOT / "docs" / "architecture" / "decisions" / "0006-runtime-driven-self-install-surface.md"
         ).read_text(encoding="utf-8")
 
-        self.assertIn(
-            "schema requires the connector-issued `{ id, display }` handle",
-            connecting_structure,
-        )
-        self.assertIn("Every work-unit is tracker-backed.", connecting_structure)
-        self.assertNotIn("Work-units without tracker linkage", connecting_structure)
-        self.assertNotIn("non-tracker work-units", connecting_structure)
-        self.assertNotIn("GitHub handles name an issue URL and number", connecting_structure)
-        self.assertNotIn("SourceHut handles name a tracker ID and ticket number", connecting_structure)
-
+        self.assertEqual(handle_schema, work_unit_schema["$defs"]["handle"])
+        for field in handle_schema["required"]:
+            with self.subTest(handle_field=field):
+                self.assertIn(field, connecting_structure)
         self.assertRegex(adr_0006, r"`~/.groundwork` is a self-contained\s+methodology layout")
         self.assertIn("`schemas/{artifact_type}.schema.json`", adr_0006)
         self.assertIn("`protocols/{name}/PROTOCOL.md`", adr_0006)
-        self.assertIn("connector capability tools supplied through runa's MCP surface", adr_0006)
-        self.assertNotIn("mechanics, forge-operations modules, and", adr_0006)
-        self.assertNotIn("resolver binaries are retired", adr_0006)
-        self.assertNotIn("pruned on upgrade", adr_0006)
-        self.assertNotIn("`mechanics/`, the forge-operations module", adr_0006)
-        self.assertNotIn("bin/connector capability tool", adr_0006)
+        for path in RETIRED_FORGE_ASSETS:
+            with self.subTest(retired_asset=path.relative_to(ROOT)):
+                self.assertFalse(path.exists())
+        self.assertEqual([], connector_model_violations(ROOT))
+
+    def test_connector_model_handle_field_deletion_flips_coherence_result(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tree = Path(tmp) / "tree"
+            copy_connector_model_fixture(tree)
+            connecting_structure = tree / "docs" / "architecture" / "connecting-structure.md"
+            body = connecting_structure.read_text(encoding="utf-8")
+            self.assertIn("{ id, display }", body)
+            connecting_structure.write_text(
+                body.replace("{ id, display }", "{ id }", 1),
+                encoding="utf-8",
+            )
+
+            violations = connector_model_violations(tree)
+
+        self.assertIn("connecting-structure omits handle shape { id, display }", violations)
 
     def test_read_ticket_output_schema_declares_connector_handle(self) -> None:
         schema = vendored_schema()
         ticket_snapshot_ref = schema["$defs"]["read-ticket-tool"]["allOf"][1]["properties"]["output_schema"]["const"]
-        ticket_snapshot = schema
-        for part in ticket_snapshot_ref.removeprefix("#/").split("/"):
-            ticket_snapshot = ticket_snapshot[part]
+        ticket_snapshot = schema_def(schema, ticket_snapshot_ref)
 
         handle = connector_handle()
         snapshot = {
@@ -231,25 +359,26 @@ class ForgeCapabilityTests(unittest.TestCase):
         Draft202012Validator(schema).evolve(schema=ticket_snapshot).validate(snapshot)
 
     def test_entry_surfaces_ground_on_the_whole_ticket(self) -> None:
-        acquire = (ROOT / "skills" / "acquire" / "SKILL.md").read_text(encoding="utf-8")
-        take = (ROOT / "protocols" / "take" / "PROTOCOL.md").read_text(encoding="utf-8")
+        self.assertTrue(entry_surface_coherence(ROOT).passed)
 
-        for token in [
-            "`comments`",
-            "entry context",
-            "never persisted into the artifact",
-            "`log-blindness`",
-        ]:
-            with self.subTest(surface="acquire", token=token):
-                self.assertIn(token, acquire)
+    def test_entry_surface_comment_lifecycle_deletion_flips_coherence_result(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tree = Path(tmp) / "tree"
+            shutil.copytree(ROOT / "skills" / "acquire", tree / "skills" / "acquire")
+            shutil.copytree(ROOT / "protocols" / "take", tree / "protocols" / "take")
+            acquire = tree / "skills" / "acquire" / "SKILL.md"
+            body = acquire.read_text(encoding="utf-8")
+            clause = "The comment log is read as entry context, never persisted into the artifact"
+            self.assertIn(clause, body)
+            acquire.write_text(
+                body.replace(clause, "The comment log is read as background", 1),
+                encoding="utf-8",
+            )
 
-        for token in [
-            "comment log",
-            "newest review directives at the submitted head",
-            "`stale-directive-followership`",
-        ]:
-            with self.subTest(surface="take", token=token):
-                self.assertIn(token, take)
+            coherence = entry_surface_coherence(tree)
+
+        self.assertFalse(coherence.passed)
+        self.assertFalse(coherence.acquire_excludes_comments_from_artifact)
 
 
 if __name__ == "__main__":
