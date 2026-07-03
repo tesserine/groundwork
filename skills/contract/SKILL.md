@@ -11,8 +11,8 @@ description: >-
   or completion claims must stay traceable to a defined contract instead of
   drifting toward implementation convenience.
 metadata:
-  version: "2.7.0"
-  updated: "2026-07-02"
+  version: "2.7.1"
+  updated: "2026-07-03"
 ---
 
 # Contract
@@ -28,9 +28,9 @@ structure, and only the criterion-level checking apparatus varying.
 This skill is the home of the contract across its dimensions. It declares
 the lifecycle as the single home for the contract surface: work-unit
 authoring inputs become defined validation, performed evidence, and a
-landing record. Consuming protocol migration proceeds unit by unit across
-epic #443; until a protocol's migration unit lands, its current framing
-remains local to that protocol. The contract remains the source of truth
+landing record. Consuming protocol migration is complete: epic #443 landed
+every downstream unit, and each protocol in the pipeline now works directly
+against this lifecycle rather than a locally framed copy. The contract remains the source of truth
 through every later stage: plans link decisions to it, the build is shaped
 to it, verification is decided against it, and landing records what shipped.
 
@@ -99,20 +99,11 @@ obligation: every dimension a change has carries at least one authored
 teeth-bearing criterion: statement of done, hollow delivery, `check_kind`,
 check descriptor, and later performed result. Density is situational; a
 lightly touched dimension may need one simple criterion, and simple criteria
-are legitimate, while a stressed dimension may need many. But coverage and
-teeth are not situational: coverage is never zero for a dimension the change
-has, and silent dimensions are not valid. The only honest form of less is fewer,
-simpler teeth-bearing criteria, never a dimension present with no criterion
-to fail. The lifecycle is inputs to validation -> validation defined ->
-validation performed, and it is one lifecycle for every dimension: inputs
-become validation defined as typed criteria in `contract.criteria[]` at
-`take`; validation is carried through `implement` by `criterion_id` — the
-plan's mappings and the per-cycle evidence key off it; `verify` produces
-validation performed as one result per criterion in
-`completion-evidence.results[]`, the evidence shaped by each criterion's
-`check_kind`; and `land` records the result from that uniform evidence
-surface. What varies per dimension is only its inputs and its usual
-checking apparatus:
+are legitimate. Density and coverage rules are given in full under
+[Density and Coverage](#density-and-coverage) below. The one lifecycle
+every dimension moves through is given in full under
+[Stage Handoffs](#stage-handoffs) below. What varies per dimension is only
+its inputs and its usual checking apparatus:
 
 | Dimension | Inputs to validation | Usual checking apparatus |
 |---|---|---|
@@ -140,7 +131,23 @@ The stage boundary is part of the contract lifecycle:
 - `land` consumes validation performed and records what shipped from the
   uniform evidence surface, including explicit gaps if any remain.
 
+In short: the lifecycle is inputs to validation -> validation defined ->
+validation performed, and it is one lifecycle for every dimension: inputs
+become validation defined as typed criteria in `contract.criteria[]` at
+`take`; validation is carried through `implement` by `criterion_id`;
+`verify` produces validation performed as one result per criterion in
+`completion-evidence.results[]`, the evidence shaped by each criterion's
+`check_kind`; and `land` records the result from that uniform evidence
+surface.
+
 ### Density and Coverage
+
+Density is situational; a lightly touched dimension may need one simple
+criterion, and simple criteria are legitimate, while a stressed dimension
+may need many. But coverage and teeth are not situational: coverage is
+never zero for a dimension the change has, and silent dimensions are not
+valid. The only honest form of less is fewer, simpler teeth-bearing
+criteria, never a dimension present with no criterion to fail.
 
 `work-unit-craft`/`decompose` must consider every dimension and record
 inputs for every dimension the change has. The true density rule is that

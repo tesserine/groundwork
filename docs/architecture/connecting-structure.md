@@ -365,8 +365,8 @@ Schema internals, file placement conventions, or state management.
 *The subsections below extend the interface pattern above. The inference
 of `work_unit` from execution context is present behavior. The
 simplifications it enables — `deliver(content)`, structured queries,
-cross-reference validation, progressive authoring — are design
-directions, not current behavior.*
+cross-reference validation, progressive authoring, pre-population, and
+observability — are design directions, not current behavior.*
 
 The MCP server is not just an artifact I/O layer. It is the agent's
 entire interface to the methodology. The agent doesn't know about runa,

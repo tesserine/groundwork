@@ -1,5 +1,5 @@
 name = "verify"
-purpose = "Gate completion claims with fresh verification evidence against the behavior contract, and record the documentation impact of the change."
+purpose = "Gate completion claims with fresh verification evidence against the contract, and record the documentation impact of the change."
 session_role = "verification gate"
 preconditions = ["contract, test-evidence, and work-unit artifacts exist"]
 start_node = "identify-verification"
@@ -30,7 +30,7 @@ outcomes = ["fresh command output and exit status are available"]
 
 [[nodes]]
 name = "assess-completion"
-intent = "Compare fresh output and test evidence against the behavior contract and work-unit criteria."
+intent = "Compare fresh output and test evidence against the contract and work-unit criteria."
 disciplines = ["contract"]
 mechanics = ["read-artifact"]
 outcomes = ["criterion coverage status is determined"]

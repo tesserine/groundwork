@@ -9,8 +9,8 @@ description: >-
   and the corruption modes that make records mis-steer the agents who
   read them.
 metadata:
-  version: "1.3.0"
-  updated: "2026-07-02"
+  version: "1.3.1"
+  updated: "2026-07-03"
   origin: >-
     Adapted from pentaxis93/with-claude
     _shared/methodology/issue-craft.md (internal), renamed and
@@ -219,13 +219,6 @@ record body is the single source of truth`), keeping genuinely-still-valid
 findings flagged as such. Do not let a record's truth be a diff the reader
 must compute across body and comment history.
 
-*Learned in the field: a record was re-scoped to grounding-first in the
-body, but three earlier comments carried discarded design directions. The
-delegated agent read the comment trail and came back asking the operator to
-choose between two of the discarded shapes — having never seen the body's
-"ground first, choose nothing" as the live instruction, because the comments
-contradicted it.*
-
 ### implicit-how
 
 Implementation prescription leaks into scope or criteria. The record says
@@ -258,11 +251,6 @@ exist in the problem, or did I create it?" If the problem statement is "runa
 targets Linux" and the criterion says "distinguishes between cross-platform
 compilation and Linux-targeted live execution," the distinction was
 invented — the problem has no tiers to distinguish.
-
-*Learned in the field: a record said "runa targets Linux" but the acceptance
-criteria invented a multi-tier platform support contract. The implementing
-agent built its entire plan around that distinction. Three iterations to
-trace the contamination back to the record.*
 
 ### negative-criteria
 
