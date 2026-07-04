@@ -15,7 +15,7 @@ before the ADR distills the seam.
 
 ## Method
 
-The audit reads the 18 live row-1 assets: 9 skills under `skills/` and 9
+The audit reads the 19 live row-1 assets: 10 skills under `skills/` and 9
 protocols under `protocols/`. Each asset is placed on the two axes from the
 foundation note:
 
@@ -45,6 +45,7 @@ Groundwork scoped pipeline.
 | reckon | skill | universal | skill | First-principles grounding and traceable reasoning are domain-neutral; gazette's editorial choices also need constraints before inherited frames. |
 | research | skill | universal | skill | Systematic external-evidence gathering projects directly to non-code work, including gazette's source and historical evidence questions. |
 | resolve | skill | universal | skill | Structural friction resolution applies whenever tooling, configuration, convention, or process blocks work in another domain. |
+| verification-craft | skill | universal | skill | Another domain still needs verification gates that consult authorities, model coherence, or substrate structure instead of matching vocabulary as a proxy; only the artifact surfaces change. |
 | work-unit-craft | skill | universal | skill | Another domain still needs delegation-record craft: outcome-first records, body-as-spec authority, and criteria that transfer intent across contexts. The artifact name may change. |
 | decompose | protocol | domain:software | protocol | The cognitive craft projects, but this shell produces `work-unit` artifacts and tracker-backed handles, not gazette's non-code artifact crossings. |
 | implement | protocol | domain:software | protocol | Another domain can reuse test-first construction, but this shell consumes implementation plans and emits `test-evidence` for software work-unit behavior. |
