@@ -7,7 +7,7 @@ description: >-
   protocol carries to land; the session surface advances the pipeline from
   it. Trigger on: 'take', 'take work', 'start work-unit'.
 metadata:
-  version: "3.8.0"
+  version: "3.9.0"
   updated: "2026-07-02"
 ---
 
@@ -58,45 +58,27 @@ proves it, or records it.
    corpus at `~/.groundwork/principles/`, select the principles that govern
    what "done" means here, read them, and reason the contract from them
    rather than the work-unit's surface wording alone (the reckon skill is
-   the move). Then consume the work-unit's per-dimension inputs to
-   validation: behavior's acceptance criteria, documentation's recipient
-   outcomes, and code quality's principles-corpus pointer plus stressed
-   universals.
+   the move).
 
-   Use the `contract` skill as the single home for the validation defined
-   discipline, consulting `skills/contract/references/documentation-contract.md`
-   for the documentation form and
+   The `contract` skill is the single home of what validation defined means,
+   per dimension: consult `skills/contract/SKILL.md` for the dimension
+   table, the teeth principle, and the density rule that bind every
+   dimension alike; `skills/contract/references/documentation-contract.md`
+   for the documentation dimension's authoring form; and
    `skills/contract/references/code-quality-contract.md` for the
-   code-quality form. Use `orient` for the documentation audience taxonomy,
-   and `~/.groundwork/principles/` for the universals themselves. Do not
-   restate the lifecycle here; this protocol applies its `take` role.
+   code-quality dimension's authoring form. Use `orient` for the
+   documentation audience taxonomy, and `~/.groundwork/principles/` for the
+   universals themselves.
 
-   Define behavior validation in the form the deliverable requires. For a
-   runtime-behavior work-unit, refine each acceptance criterion into one or
-   more sentence-named executable scenarios in Given/When/Then form: one
-   behavior per scenario, names that read as specification, and observable
-   Then clauses a stub cannot satisfy. For a documentation-deliverable
-   work-unit, define documentation-deliverable gates instead: structural,
-   coherence, and conformance checks that prove the methodology document
-   works as a usable surface. The gates are realized as committed
-   structural, coherence, and conformance tests and later carried as gate
-   coverage, not encoded as fabricated scenarios.
-
-   Define documentation validation as documentation outcomes in an
-   audience-outcome checklist: the pillars the change touches — user,
-   developer, discovery — and the outcome each recipient must reach, in the
-   teeth-bearing form where hollow docs fail. Define code-quality validation
-   as reviewer-checkable projections of the stressed principles-corpus
-   universals, written as reviewer-checkable projected universals: each item
-   asks the universal as a question of the change, names the failing tell,
-   and names the locus where it holds.
-
-   For all three dimensions, every dimension the change has gets at least
-   one authored teeth-bearing criterion. Density may be light: one sharp
-   documentation outcome or one projected code-quality universal can be
-   enough when that dimension is lightly touched. Coverage is never zero.
-   Each dimension's criterion must name the hollow delivery that would fail
-   it, so ordinary discipline cannot stand in for validation defined.
+   Take's own role here is narrow and does not re-derive any of that: from
+   this work-unit's own already-framed inputs (step 3), author this
+   work-unit's validation defined — one instance of criteria per dimension
+   the work-unit has, in the form and to the teeth and density the
+   `contract` skill defines, sized to what this work-unit actually
+   stresses. A validation-defined output that cannot be checked against the
+   `contract` skill's own dimension table and teeth principle has
+   re-encoded the lifecycle instead of consulting it — the
+   `lifecycle-modeling` corruption mode below names exactly this failure.
 
 5. **Deliver the contract spine.** Invoke the `contract` MCP tool with
    dimension-agnostic criteria. Each criterion declares the dimension it
