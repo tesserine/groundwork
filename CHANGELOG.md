@@ -133,6 +133,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **`take` step 4 consults the `contract` skill instead of restating its
+  doctrine** (#521, discharging the epic #443 migration landed via PR #455).
+  With #443 closed and the `contract` skill established as the single home
+  of the per-dimension authoring forms, the teeth principle, and the density
+  rule, `protocols/take/PROTOCOL.md` step 4 no longer restates the seven
+  passages that already live in `skills/contract/SKILL.md` and its two
+  references. Step 4 now consults those homes by path — plus `orient` for
+  the documentation audience taxonomy and `~/.groundwork/principles/` for
+  the universals — and states only take's role-local obligation: author
+  this work-unit's validation defined, in the form and to the teeth and
+  density the `contract` skill defines. This resolves the internal
+  contradiction with take's own `lifecycle-modeling` corruption mode, which
+  named exactly the re-encoding step 4 was performing. The prose gates over
+  this file were already re-grounded to consultation/structure checks by the
+  #477/#522 arc (`tests/test_take_protocol_contract_dimensions.py`, #524),
+  so no test change is required. take 3.8.0->3.9.0.
+
 - **Prose is projection: the architecture document carries rationale only —
   structural renderings live in their substrate homes** (#507, enacting
   ADR-0008 consequence 3). `docs/architecture/connecting-structure.md` is
