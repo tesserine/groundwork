@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Verification-craft surface for vocabulary-proxy gates** (#523).
+  `skills/verification-craft/SKILL.md` gives contributors the durable rule
+  from the #477/#522 arc: a prose/text-artifact gate consults the invariant,
+  owning authority, or substrate structure instead of matching authored
+  vocabulary as a proxy for correctness. The surface names the three
+  re-grounded forms (authority-consultation, model-coherence, structural),
+  teaches the token-is-invariant retain boundary, and records the
+  paraphrase-residual boundary so forbidden-state gates do not regrow synonym
+  lists. README links the skill from the discovery path, and
+  `tests/test_verification_craft_skill.py` pins the rule, examples,
+  boundaries, sibling-face structure, and reachability.
+
 - **Entry grounds on the whole ticket** (#516). Forge-capability re-vendored
   at `1.2.0` (immutable pin `b229fb1`): the `read-ticket` snapshot carries an
   optional ordered `comments` log. `acquire` (v1.1.0) reads the ticket whole

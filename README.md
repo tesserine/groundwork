@@ -60,6 +60,8 @@ stage-specific judgment:
 - **research** — external evidence gathering when facts are missing
 - **contract** — the BDD home: contract authoring at entry, traceability through execution
 - **work-unit-craft** — the discipline for authoring work-unit tracker records
+- **verification-craft** — [`skills/verification-craft/SKILL.md`](skills/verification-craft/SKILL.md),
+  the discipline for authoring verification gates over prose and text artifacts
 - **code-review** — review judgment for submitted change proposals
 - **acquire** — entry from an existing forge ticket: materializes the work-unit artifact take activates on
 
