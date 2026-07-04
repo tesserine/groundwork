@@ -115,7 +115,7 @@ class MethodologyFixture:
         self.write("skills/orient/SKILL.md", "---\nname: orient\n---\n# Orient\n")
         self.write("skills/reckon/SKILL.md", "---\nname: reckon\n---\n# Reckon\n")
         self.write("skills/reckon/references/example.md", "reckon reference\n")
-        self.write("protocols/take/PROTOCOL.md", "---\nname: take\n---\n# Take\n")
+        self.write("protocols/define/PROTOCOL.md", "---\nname: define\n---\n# Define\n")
         self.write(
             "schemas/work-unit.schema.json",
             """
@@ -155,7 +155,7 @@ class MethodologyFixture:
             name = "read-artifact"
 
             [[protocols]]
-            name = "take"
+            name = "define"
             requires = ["work-unit"]
             produces = ["contract"]
             scoped = true
@@ -332,7 +332,7 @@ class SelfInstallTests(unittest.TestCase):
             name = "contract"
 
             [[protocols]]
-            name = "take"
+            name = "define"
             requires = ["work-unit"]
             produces = ["contract"]
             scoped = true
@@ -391,7 +391,7 @@ class SelfInstallTests(unittest.TestCase):
         self.assertTrue((runtime / "manifest.toml").is_file())
         self.assertTrue((runtime / MARKER_NAME).is_file())
         self.assertTrue((runtime / "schemas" / "work-unit.schema.json").is_file())
-        self.assertTrue((runtime / "protocols" / "take" / "PROTOCOL.md").is_file())
+        self.assertTrue((runtime / "protocols" / "define" / "PROTOCOL.md").is_file())
         self.assertFalse((runtime / "mechanics").exists())
         self.assertFalse((runtime / "lib" / "tooling" / "forge_operations.py").exists())
         self.assertFalse((runtime / "bin" / "groundwork-mechanic").exists())
@@ -591,13 +591,13 @@ class SelfInstallTests(unittest.TestCase):
 
     def test_missing_manifest_declared_protocol_fails_before_target_mutation(self) -> None:
         fixture = self.add_fixture("missing-declared-protocol")
-        fixture.remove("protocols/take")
+        fixture.remove("protocols/define")
         fixture.commit("drop declared protocol")
         install = InstallRun(self, fixture.root)
 
         result = install.run_installer("install")
 
-        assert_failure_contains(self, result, "protocols/take/PROTOCOL.md")
+        assert_failure_contains(self, result, "protocols/define/PROTOCOL.md")
         for surface in [".claude", ".agents", ".groundwork"]:
             self.assertFalse((install.home / surface).exists(), f"{surface} must be untouched")
 
@@ -612,7 +612,7 @@ class SelfInstallTests(unittest.TestCase):
             name = "../../escaped/work-unit"
 
             [[protocols]]
-            name = "take"
+            name = "define"
             requires = ["work-unit"]
             produces = ["work-unit"]
             scoped = true

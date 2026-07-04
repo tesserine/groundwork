@@ -57,8 +57,8 @@ class ProseConformanceHelperTests(unittest.TestCase):
 
         self.assertEqual(manifest_producers, [boundary.protocol for boundary in boundaries])
         self.assertEqual([], [boundary for boundary in boundaries if not boundary.passed])
-        self.assertTrue(by_protocol["take"].scoped)
-        self.assertTrue(by_protocol["take"].schema_requires_work_unit)
+        self.assertTrue(by_protocol["define"].scoped)
+        self.assertTrue(by_protocol["define"].schema_requires_work_unit)
         self.assertFalse(by_protocol["decompose"].scoped)
         self.assertFalse(by_protocol["decompose"].schema_requires_work_unit)
 
@@ -71,21 +71,21 @@ class ProseConformanceHelperTests(unittest.TestCase):
             shutil.copytree(ROOT / "schemas", tree / "schemas")
             manifest = (ROOT / "manifest.toml").read_text(encoding="utf-8")
             manifest = manifest.replace(
-                'name = "take"\nscoped = true\nrequires = ["work-unit"]',
-                'name = "take"\nrequires = ["work-unit"]',
+                'name = "define"\nscoped = true\nrequires = ["work-unit"]',
+                'name = "define"\nrequires = ["work-unit"]',
                 1,
             )
             (tree / "manifest.toml").write_text(manifest, encoding="utf-8")
 
-            take = [
+            define = [
                 boundary
                 for boundary in helper.delivery_boundaries(tree)
-                if boundary.protocol == "take"
+                if boundary.protocol == "define"
             ][0]
 
-        self.assertFalse(take.passed)
-        self.assertFalse(take.scoped)
-        self.assertTrue(take.schema_requires_work_unit)
+        self.assertFalse(define.passed)
+        self.assertFalse(define.scoped)
+        self.assertTrue(define.schema_requires_work_unit)
 
     def test_delivery_boundary_explanation_removal_flips_semantic_result(self) -> None:
         helper = prose_conformance()
@@ -98,23 +98,23 @@ class ProseConformanceHelperTests(unittest.TestCase):
                 (ROOT / "manifest.toml").read_text(encoding="utf-8"),
                 encoding="utf-8",
             )
-            take = tree / "protocols" / "take" / "PROTOCOL.md"
+            define = tree / "protocols" / "define" / "PROTOCOL.md"
             body, substitutions = re.subn(
                 r"The object below\s+is MCP tool input, not artifact body[.]\s+"
                 r"`instance_id` is a tool parameter\s+that names the artifact instance;.*?"
                 r"must not appear in\s+the artifact body[.]\s*",
                 "",
-                take.read_text(encoding="utf-8"),
+                define.read_text(encoding="utf-8"),
                 count=1,
                 flags=re.DOTALL,
             )
             self.assertEqual(1, substitutions)
-            take.write_text(body, encoding="utf-8")
+            define.write_text(body, encoding="utf-8")
 
             boundary = [
                 boundary
                 for boundary in helper.delivery_boundaries(tree)
-                if boundary.protocol == "take"
+                if boundary.protocol == "define"
             ][0]
 
         self.assertTrue(boundary.passed)
@@ -131,21 +131,21 @@ class ProseConformanceHelperTests(unittest.TestCase):
                 (ROOT / "manifest.toml").read_text(encoding="utf-8"),
                 encoding="utf-8",
             )
-            take = tree / "protocols" / "take" / "PROTOCOL.md"
+            define = tree / "protocols" / "define" / "PROTOCOL.md"
             body, substitutions = re.subn(
                 r"Runa injects `work_unit` from session context; the\s+"
                 r"agent does not supply `work_unit`[.]",
                 "The schema carries work-unit identity.",
-                take.read_text(encoding="utf-8"),
+                define.read_text(encoding="utf-8"),
                 count=1,
             )
             self.assertEqual(1, substitutions)
-            take.write_text(body, encoding="utf-8")
+            define.write_text(body, encoding="utf-8")
 
             boundary = [
                 boundary
                 for boundary in helper.delivery_boundaries(tree)
-                if boundary.protocol == "take"
+                if boundary.protocol == "define"
             ][0]
 
         self.assertTrue(boundary.passed)
@@ -193,21 +193,21 @@ class ProseConformanceHelperTests(unittest.TestCase):
                 (ROOT / "manifest.toml").read_text(encoding="utf-8"),
                 encoding="utf-8",
             )
-            take = tree / "protocols" / "take" / "PROTOCOL.md"
+            define = tree / "protocols" / "define" / "PROTOCOL.md"
             body, substitutions = re.subn(
                 r"Runa validates the remaining artifact body fields against the contract\s+"
                 r"schema, persists the artifact, and records it in the artifact store[.]",
                 "Runa validates the contract schema and records the artifact.",
-                take.read_text(encoding="utf-8"),
+                define.read_text(encoding="utf-8"),
                 count=1,
             )
             self.assertEqual(1, substitutions)
-            take.write_text(body, encoding="utf-8")
+            define.write_text(body, encoding="utf-8")
 
             boundary = [
                 boundary
                 for boundary in helper.delivery_boundaries(tree)
-                if boundary.protocol == "take"
+                if boundary.protocol == "define"
             ][0]
 
         self.assertTrue(boundary.passed)

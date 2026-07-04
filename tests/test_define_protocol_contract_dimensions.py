@@ -14,7 +14,7 @@ from tooling.prose_conformance import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-TAKE_PROTOCOL = ROOT / "protocols" / "take" / "PROTOCOL.md"
+DEFINE_PROTOCOL = ROOT / "protocols" / "define" / "PROTOCOL.md"
 CONTRACT_SKILL = ROOT / "skills" / "contract" / "SKILL.md"
 EXPECTED_CONTRACT_DIMENSIONS = {
     "**Behavior**",
@@ -27,13 +27,13 @@ def protocol(name: str) -> dict:
     return {entry["name"]: entry for entry in manifest_protocols(ROOT)}[name]
 
 
-class TakeProtocolContractDimensionTests(unittest.TestCase):
-    def test_manifest_declares_take_as_scoped_contract_entry(self) -> None:
-        take = protocol("take")
+class DefineProtocolContractDimensionTests(unittest.TestCase):
+    def test_manifest_declares_define_as_scoped_contract_entry(self) -> None:
+        define = protocol("define")
 
-        self.assertTrue(take["scoped"])
-        self.assertEqual(["work-unit"], take["requires"])
-        self.assertEqual(["contract"], take["produces"])
+        self.assertTrue(define["scoped"])
+        self.assertEqual(["work-unit"], define["requires"])
+        self.assertEqual(["contract"], define["produces"])
 
     def test_contract_schema_requires_dimension_agnostic_teeth_fields(self) -> None:
         schema = artifact_schema(ROOT, "contract")
@@ -45,16 +45,16 @@ class TakeProtocolContractDimensionTests(unittest.TestCase):
         self.assertEqual(["executable", "attested"], criterion["properties"]["check_kind"]["enum"])
         self.assertNotIn("behavior_form", criterion["properties"])
 
-    def test_take_delivery_block_matches_manifest_and_schema_boundary(self) -> None:
-        take = {boundary.protocol: boundary for boundary in delivery_boundaries(ROOT)}["take"]
+    def test_define_delivery_block_matches_manifest_and_schema_boundary(self) -> None:
+        define = {boundary.protocol: boundary for boundary in delivery_boundaries(ROOT)}["define"]
 
-        self.assertTrue(take.passed)
-        self.assertEqual("contract", take.artifact)
-        self.assertTrue(take.scoped)
-        self.assertTrue(take.schema_requires_work_unit)
+        self.assertTrue(define.passed)
+        self.assertEqual("contract", define.artifact)
+        self.assertTrue(define.scoped)
+        self.assertTrue(define.schema_requires_work_unit)
 
-    def test_take_consults_contract_dimension_authorities(self) -> None:
-        body = read(TAKE_PROTOCOL)
+    def test_define_consults_contract_dimension_authorities(self) -> None:
+        body = read(DEFINE_PROTOCOL)
         rows = contract_dimension_rows(ROOT)
 
         self.assertEqual(EXPECTED_CONTRACT_DIMENSIONS, set(rows))
@@ -88,9 +88,9 @@ class TakeProtocolContractDimensionTests(unittest.TestCase):
             mutated_dimensions,
         )
 
-    def test_take_ends_at_contract_capstone_with_named_corruption_modes(self) -> None:
-        steps = markdown_section(read(TAKE_PROTOCOL), "Steps")
-        corruption_modes = markdown_section(read(TAKE_PROTOCOL), "Corruption Modes")
+    def test_define_ends_at_contract_capstone_with_named_corruption_modes(self) -> None:
+        steps = markdown_section(read(DEFINE_PROTOCOL), "Steps")
+        corruption_modes = markdown_section(read(DEFINE_PROTOCOL), "Corruption Modes")
 
         self.assertIsNone(re.search(r"^6\. \*\*", steps, flags=re.MULTILINE))
         self.assertIn("contract-after-code", corruption_modes)

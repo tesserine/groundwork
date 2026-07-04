@@ -81,7 +81,7 @@ name = "run-test"
 #
 # Planning phase (unscoped): survey → decompose
 # Scoped pipeline (per work unit):
-#   take → plan → implement → verify → submit → review → land
+#   define → plan → implement → verify → submit → review → land
 #
 # `decompose` is also the acquisition surface: it is the sole unscoped
 # producer of `work-unit`. Ordinary planning still reaches it through the
@@ -89,7 +89,7 @@ name = "run-test"
 # trigger so acquisition can materialize the work-unit before requirements
 # exist.
 #
-# The contract is the spine: take produces it at entry, and every
+# The contract is the spine: define produces it at entry, and every
 # judgment station (plan, implement, verify, submit, review) requires it.
 # land, the mechanical applier, accepts it for the completion record.
 
@@ -109,7 +109,7 @@ may_produce = ["research-record"]
 trigger = { type = "on_artifact", name = "requirements" }
 
 [[protocols]]
-name = "take"
+name = "define"
 scoped = true
 requires = ["work-unit"]
 accepts = ["research-record"]

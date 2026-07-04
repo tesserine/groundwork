@@ -147,7 +147,7 @@ long. Multi-subsystem or interface-changing work earns the full convergence.
   the existing system or an adjacent example. Per reckon's own trigger
   (every generative act, not a sequence position); dose proportional to the
   change, the discipline constant.
-- `take` (protocol): produced validation defined in the contract dimensions
+- `define` (protocol): produced validation defined in the contract dimensions
   this plan serves.
 - `implement` (protocol): executes this plan through RED-GREEN-REFACTOR over
   each contract criterion the plan orders.

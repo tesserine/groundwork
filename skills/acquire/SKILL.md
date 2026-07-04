@@ -2,9 +2,9 @@
 name: acquire
 description: >-
   Entry from an existing forge ticket. Use to start scoped work from a ticket
-  reference that is already on the tracker (e.g. "take runa#14") when no
+  reference that is already on the tracker (e.g. "define runa#14") when no
   work-unit artifact exists yet — acquisition reads the ticket and
-  materializes the work-unit artifact that take then proceeds on. The mirror
+  materializes the work-unit artifact that define then proceeds on. The mirror
   of decompose's create path: decompose creates the ticket it delivers;
   acquire adopts the ticket it is given, and creates no ticket.
 metadata:
@@ -18,7 +18,7 @@ The scoped pipeline activates on a `work-unit` artifact, but the live
 planning surface is the forge tracker. Acquisition is the bridge for the
 natural developer entry — "start on ticket #N" — when that ticket already
 exists and no work-unit artifact does yet. It reads the ticket and
-materializes the work-unit artifact; `take` then proceeds unchanged on that
+materializes the work-unit artifact; `define` then proceeds unchanged on that
 artifact through its existing contract.
 
 Acquisition is **one-way**: the ticket is the planning home, the artifact is
@@ -95,17 +95,17 @@ cold start.
    ```
 
    Runa validates the body against the `work-unit` schema, persists it, and
-   records it. The cascade then computes `take` as the next station on the
+   records it. The cascade then computes `define` as the next station on the
    acquired artifact.
 
-5. **Hand off to `take`.** Acquisition materializes; `take` claims. Tracker
-   claiming (assigning the ticket, marking it in progress) is `take`'s
+5. **Hand off to `define`.** Acquisition materializes; `define` claims. Tracker
+   claiming (assigning the ticket, marking it in progress) is `define`'s
    workspace-preparation step, not acquisition's — keep the one-way boundary
    clean.
 
 ## Corruption Modes
 
-- `log-blindness`: handing off to `take` with the ticket's comment log
+- `log-blindness`: handing off to `define` with the ticket's comment log
   unread and unsurfaced. The snapshot carries the running record so the
   session grounds on the whole ticket; an entry that reads the spec alone
   executes blind to its own live corrections.
@@ -115,7 +115,7 @@ cold start.
 - `content-fabrication`: hand-filling acceptance criteria or a description
   the ticket does not contain, instead of routing the gap to refinement. The
   artifact must be a faithful snapshot of the planning home.
-- `write-back`: editing the ticket from acquisition (beyond `take`'s later
+- `write-back`: editing the ticket from acquisition (beyond `define`'s later
   claim). Derivation is one-way.
 - `handle-drift`: re-deriving or altering the `handle` instead of carrying
   the ticket's identity through verbatim — breaks the back-link and risks a
@@ -125,7 +125,7 @@ cold start.
 
 - `decompose` (protocol): the create path acquisition mirrors, and the home
   of `refine-work-unit` — where a ticket-quality gap surfaced here is fixed.
-- `take` (protocol): proceeds on the acquired artifact through its existing
+- `define` (protocol): proceeds on the acquired artifact through its existing
   contract; owns tracker claiming.
 - `read-ticket` (connector capability operation): emits
   `{handle, title, body, state}` and, per forge-capability `1.2.0`, the

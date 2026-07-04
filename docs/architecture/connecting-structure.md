@@ -51,10 +51,10 @@ The work-unit artifact bridges two phases, both declared in
   the one type nothing inside the system produces — survey turns intent
   into requirements, and decompose breaks requirements into work-unit
   artifacts.
-- **Scoped pipeline**: take → plan → implement → verify → submit →
-  review → land. Take picks up a work-unit whose dependencies are
-  satisfied, authors the contract, and the forward flow produces
-  artifacts that runa tracks and threads by work-unit identity. The
+- **Scoped pipeline**: define → plan → implement → verify → submit →
+  review → land. Define authors the contract for a work-unit whose
+  dependencies are satisfied, and the forward flow produces artifacts
+  that runa tracks and threads by work-unit identity. The
   pipeline-shape decision is
   [ADR-0007](decisions/0007-dimension-agnostic-contract-machine.md).
 
@@ -63,7 +63,8 @@ what needs doing at any scope — a new tool, a feature, a migration —
 and is the project-level specification. The **contract** declares how a
 single work-unit is validated, criterion by criterion, and is the
 implementation-level specification. Decompose bridges the scales: it
-consumes requirements and produces the work-units that take picks up.
+consumes requirements and produces the work-units that define turns into
+contracts.
 
 The contract is the spine of the scoped pipeline: authored at entry,
 required by every judgment station, and the surface every downstream
@@ -88,11 +89,11 @@ Planning-phase artifacts predate work-unit identity and are scoped
 through trigger evaluation against specific instances instead — see
 *Common envelope* below for the schema side of this split.
 
-## The Entry: Contract-First Take
+## The Entry: Contract-First Define
 
-In work-unit-first entry, selection is not take's job: the work-unit is
-already the entry, and runa activates take on it. What entry truly is —
-once selection is gone — is the place where done gets defined. Take
+In work-unit-first entry, selection is not define's job: the work-unit is
+already the entry, and runa activates define on it. What entry truly is —
+once selection is gone — is the place where done gets defined. Define
 prepares the workspace, frames the work, and authors the contract.
 
 The contract is the root of the scoped artifact chain. No separate
@@ -100,7 +101,7 @@ threading artifact is needed: work-unit identity is runtime-enforced —
 runa injects `work_unit` into every scoped artifact and validates
 canonical ids — so the entry's capstone is the contract itself.
 
-The `work-unit` artifact take activates on arrives one of two ways:
+The `work-unit` artifact define activates on arrives one of two ways:
 created by `decompose`, or materialized from an existing forge ticket by
 the [`acquire`](../../skills/acquire/SKILL.md) skill. Acquisition is
 skill-side intake — the mirror of decompose's create path — and reaches
@@ -346,7 +347,7 @@ the agent supplies it and runa validates it.
 owns the derivation rules, the eligibility rules, and how unscoped
 sessions interact with `work_unit`-bearing schemas. Each producing
 protocol's `PROTOCOL.md` carries its own delivery-call form, gate-bound
-to the owning schema (ADR-0008, consequence 1) — the take protocol's
+to the owning schema (ADR-0008, consequence 1) — the define protocol's
 contract delivery is the worked example.
 
 The MCP server validates the payload, writes the artifact to the

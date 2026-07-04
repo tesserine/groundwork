@@ -15,7 +15,7 @@ CONTRACT_SURFACE = [
 ]
 AUTHORING_DOCTRINE_SURFACE = [
     CONTRACT_SKILL,
-    ROOT / "protocols" / "take" / "PROTOCOL.md",
+    ROOT / "protocols" / "define" / "PROTOCOL.md",
     ROOT / "protocols" / "decompose" / "PROTOCOL.md",
     ROOT / "skills" / "work-unit-craft" / "SKILL.md",
 ]
@@ -34,7 +34,7 @@ MIGRATED_LIFECYCLE_CONSUMERS = {
     ROOT / "protocols" / "implement" / "PROTOCOL.md",
     ROOT / "protocols" / "review" / "PROTOCOL.md",
     ROOT / "protocols" / "submit" / "PROTOCOL.md",
-    ROOT / "protocols" / "take" / "PROTOCOL.md",
+    ROOT / "protocols" / "define" / "PROTOCOL.md",
     ROOT / "protocols" / "verify" / "PROTOCOL.md",
 }
 UNMIGRATED_LIFECYCLE_CONSUMERS = [
@@ -304,7 +304,7 @@ outside content
 
         for expected in [
             "one lifecycle for every dimension",
-            "typed criteria in `contract.criteria[]` at `take`",
+            "typed criteria in `contract.criteria[]` at `define`",
             "carried through `implement` by `criterion_id`",
             "one result per criterion in `completion-evidence.results[]`",
             "`check_kind`",
@@ -356,7 +356,7 @@ outside content
         handoffs = normalized(section(read(CONTRACT_SKILL), "Stage Handoffs"))
         expected_handoffs = [
             "`work-unit-craft`/`decompose` produces inputs to validation",
-            "`take` consumes inputs to validation and produces validation defined",
+            "`define` consumes inputs to validation and produces validation defined",
             "typed criteria in `contract.criteria[]`",
             "`plan` consumes validation defined and maps every criterion",
             "`implement` consumes validation defined",
@@ -398,8 +398,8 @@ outside content
 
     def test_contract_surface_replaces_entry_only_framing_everywhere(self) -> None:
         forbidden = re.compile(
-            r"declared at `take`|At `take`, the contract declares|declared at entry|"
-            r"Each dimension is \*\*declared\*\* at `take`",
+            r"declared at `define`|At `define`, the contract declares|declared at entry|"
+            r"Each dimension is \*\*declared\*\* at `define`",
             flags=re.IGNORECASE,
         )
 

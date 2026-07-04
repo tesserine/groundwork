@@ -46,7 +46,7 @@ domains is the loudest signal that it is core, not delivery.
 
 What differs is purely domain: the artifact types (`work-unit`,
 `contract`, `implementation-plan` vs. `brief`, `beat`, `dispatch`,
-`draft`), the pipeline steps (`take → … → land` vs. `survey → … → publish`), and
+`draft`), the pipeline steps (`define → … → land` vs. `survey → … → publish`), and
 the forge mechanics.
 
 The decisive observation: gazette today has schemas and a manifest and **no
@@ -117,7 +117,7 @@ Every asset has a coordinate on two orthogonal axes.
 **Axis 1 — domain coupling.** Neutral ↔ domain-specific. The membership test:
 *an asset is core iff it is reusable by a methodology in another domain.* Run
 each asset through the projection to gazette. `reckon`, `orient`, `research`
-survive; the `take → land` pipeline, the software schemas, the forge mechanics
+survive; the `define → land` pipeline, the software schemas, the forge mechanics
 do not.
 
 **Axis 2 — form.** How the asset is consumed: **skill** (advisory cognition,
@@ -197,7 +197,7 @@ different basis.
 
 The same cut recurs at several scales — protocol↔skill, universal↔projection,
 and contract↔review-skill across the whole pipeline (the multidimensional
-contract is the standing WHAT the pipeline's HOW answers to, declared at `take`
+contract is the standing WHAT the pipeline's HOW answers to, declared at `define`
 and binding every judgment station). One boundary, many scales.
 
 ## Phase is sequence, not a type

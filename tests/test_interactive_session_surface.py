@@ -90,7 +90,7 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                         "title": "task(dual-mode): groundwork conforms to the session surface",
                         "description": "Make interactive Groundwork sessions use runa's validated session surface.",
                         "acceptance_criteria": [
-                            "Interactive sessions reach take through the runa session surface"
+                            "Interactive sessions reach define through the runa session surface"
                         ],
                         "handle": {
                             "id": "ticket:382-session-surface",
@@ -117,7 +117,7 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                     printf '%s\\n' '{{"jsonrpc":"2.0","id":1,"method":"initialize","params":{{"protocolVersion":"2024-11-05","capabilities":{{}},"clientInfo":{{"name":"groundwork-go-smoke","version":"1.0.0"}}}}}}'
                     printf '%s\\n' '{{"jsonrpc":"2.0","method":"notifications/initialized"}}'
                     printf '%s\\n' '{{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{{"name":"next-protocol-context","arguments":{{}}}}}}'
-                    printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"contract","arguments":{{"instance_id":"contract-1","title":"Interactive sessions use the session surface","criteria":[{{"id":"session-surface-records-output","dimension":"behavior","acceptance_criterion":"Interactive sessions reach take through the runa session surface","statement":"The scoped session records the produced contract artifact through the MCP session surface.","hollow_delivery":"The agent prints a contract but no validated artifact is persisted.","check_kind":"executable","check":"Run the interactive session smoke test."}}]}}}}}}'
+                    printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"contract","arguments":{{"instance_id":"contract-1","title":"Interactive sessions use the session surface","criteria":[{{"id":"session-surface-records-output","dimension":"behavior","acceptance_criterion":"Interactive sessions reach define through the runa session surface","statement":"The scoped session records the produced contract artifact through the MCP session surface.","hollow_delivery":"The agent prints a contract but no validated artifact is persisted.","check_kind":"executable","check":"Run the interactive session smoke test."}}]}}}}}}'
                     printf '%s\\n' '{{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{{"name":"advance","arguments":{{}}}}}}'
                     sleep 1
                 }} | "$3" --session --work-unit {WORK_UNIT_ID} > "$4"
@@ -157,7 +157,7 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
             self.assertEqual(contract["work_unit"], WORK_UNIT_ID)
             self.assertEqual(
                 contract["criteria"][0]["acceptance_criterion"],
-                "Interactive sessions reach take through the runa session surface",
+                "Interactive sessions reach define through the runa session surface",
             )
 
     def test_completion_evidence_persist_rejects_contract_mismatches(self) -> None:
@@ -304,7 +304,7 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                     printf '%s\\n' '{{"jsonrpc":"2.0","method":"notifications/initialized"}}'
                     printf '%s\\n' '{{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{{"name":"next-protocol-context","arguments":{{}}}}}}'
                     case "$protocol" in
-                      take)
+                      define)
                         printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"contract","arguments":{{"instance_id":"contract-1","title":"Dimension criteria stay on the contract surface","criteria":[{{"id":"gate-form-behavior-artifacts","dimension":"behavior","acceptance_criterion":{json.dumps(criterion)},"statement":"Gate-form behavior artifacts stay schema-valid through the runtime MCP tool.","hollow_delivery":"The artifact validates only by fabricating a scenario-shaped contract.","check_kind":"executable","check":"Validate runtime artifacts through the MCP tool."}}]}}}}}}'
                         ;;
                       plan)
@@ -314,7 +314,7 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                         printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"test-evidence","arguments":{{"instance_id":"evidence-1","evidence":[{{"criterion_id":"gate-form-behavior-artifacts","result":"pass","command":"python -m unittest tests.test_artifact_schemas","output_summary":"Gate-checked artifact fixtures validated."}}]}}}}}}'
                         ;;
                       verify)
-                        printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"completion-evidence","arguments":{{"instance_id":"completion-1","results":[{{"criterion_id":"gate-form-behavior-artifacts","result":"pass","evidence":{{"summary":"Gate-form runtime artifacts validated.","run":{{"command":"python -m unittest tests.test_artifact_schemas","result":"pass","output_summary":"Artifact fixtures validated."}}}}}}],"documentation":{{"updated":["schemas/README.md","CHANGELOG.md"],"verified_accurate":["protocols/take/PROTOCOL.md"],"follow_up_work_units":[]}}}}}}}}'
+                        printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"completion-evidence","arguments":{{"instance_id":"completion-1","results":[{{"criterion_id":"gate-form-behavior-artifacts","result":"pass","evidence":{{"summary":"Gate-form runtime artifacts validated.","run":{{"command":"python -m unittest tests.test_artifact_schemas","result":"pass","output_summary":"Artifact fixtures validated."}}}}}}],"documentation":{{"updated":["schemas/README.md","CHANGELOG.md"],"verified_accurate":["protocols/define/PROTOCOL.md"],"follow_up_work_units":[]}}}}}}}}'
                         ;;
                       *)
                         printf 'unexpected protocol: %s\\n' "$protocol" >&2
@@ -335,7 +335,7 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                 [agent_path, prompt_path, config_capture_path, runa_mcp, mcp_log_path],
             )
 
-            for expected_protocol in ["take", "plan", "implement", "verify"]:
+            for expected_protocol in ["define", "plan", "implement", "verify"]:
                 with self.subTest(protocol=expected_protocol):
                     env = groundwork_env()
                     env["GROUNDWORK_GATE_PROTOCOL"] = expected_protocol

@@ -36,11 +36,11 @@ units with acceptance criteria and dependency edges.
 
 **Entry** into the scoped pipeline happens one of two ways: a work-unit newly
 created by decompose, or one the acquire skill materializes from an existing
-forge ticket (the "start on ticket #N" path). Either way take activates on a
+forge ticket (the "start on ticket #N" path). Either way define activates on a
 work-unit artifact.
 
 **The scoped pipeline** takes one work-unit and carries it through to a merged
-increment: take prepares the workspace and writes the dimension-agnostic
+increment: define prepares the workspace and writes the dimension-agnostic
 contract — the spine threaded through every later stage → plan converges on a
 decision-complete design → implement executes through RED-GREEN-REFACTOR →
 verify gates completion with performed evidence and documentation review →
@@ -63,7 +63,7 @@ stage-specific judgment:
 - **verification-craft** — [`skills/verification-craft/SKILL.md`](skills/verification-craft/SKILL.md),
   the discipline for authoring verification gates over prose and text artifacts
 - **code-review** — review judgment for submitted change proposals
-- **acquire** — entry from an existing forge ticket: materializes the work-unit artifact take activates on
+- **acquire** — entry from an existing forge ticket: materializes the work-unit artifact define activates on
 
 Not every piece of work needs every stage. A bug with an existing work-unit enters
 at execution. A new capability enters at planning. The constraint is sequence,
@@ -261,12 +261,12 @@ define interfaces and decisions, not scripts to follow.
 
 ### How work is executed
 
-**The contract is the thread.** The contract written at take — the entry —
+**The contract is the thread.** The contract written at define — the entry —
 traces through every subsequent stage. Plans link design decisions to declared
 criteria. Implementation produces evidence. Verification records each
 criterion result in one performed-evidence shape. Review judges against the
 contract. Landing records what shipped.
-→ [`protocols/take/PROTOCOL.md`](protocols/take/PROTOCOL.md),
+→ [`protocols/define/PROTOCOL.md`](protocols/define/PROTOCOL.md),
 [`skills/contract/SKILL.md`](skills/contract/SKILL.md)
 
 **Evidence before assertion.** No completion claims without fresh verification

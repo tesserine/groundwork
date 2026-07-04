@@ -1,6 +1,6 @@
 # Workspace Preparation
 
-Reference for take Step 2. States the outcomes preparation must establish
+Reference for define Step 2. States the outcomes preparation must establish
 and the repository-local conventions for reaching them. Command sequences
 are illustrative; the outcomes are the contract.
 

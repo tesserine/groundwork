@@ -64,7 +64,7 @@ what its check actually is.
 ## Projecting the corpus
 
 The projection is generated, not hardcoded. When `work-unit-craft`/`decompose`
-supplies inputs or `take` defines validation, consult the resolved corpus
+supplies inputs or `define` defines validation, consult the resolved corpus
 (`~/.groundwork/principles/`), select the universals this change most
 stresses, and write each as a typed `contract.criteria[]` entry whose
 statement carries one shape:
@@ -100,7 +100,7 @@ demand.
 ## Lifecycle
 
 `work-unit-craft`/`decompose` supplies corpus pointers and stressed
-universals as inputs to validation. `take` turns those inputs into
+universals as inputs to validation. `define` turns those inputs into
 validation defined: the subset of universals the change puts under real
 pressure, named from the resolved corpus, not a ritual recital, and emitted
 as typed criteria into the uniform contract surface. `verify` performs
