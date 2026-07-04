@@ -117,7 +117,7 @@ The stage boundary is part of the contract lifecycle:
 
 - `work-unit-craft`/`decompose` produces inputs to validation: the work-unit criteria,
   recipient outcomes, and corpus pointers each dimension must consider.
-- `take` consumes inputs to validation and produces validation defined:
+- `define` consumes inputs to validation and produces validation defined:
   typed criteria in `contract.criteria[]` — every dimension in the same
   surface.
 - `plan` consumes validation defined and maps every criterion to
@@ -134,7 +134,7 @@ The stage boundary is part of the contract lifecycle:
 In short: the lifecycle is inputs to validation -> validation defined ->
 validation performed, and it is one lifecycle for every dimension: inputs
 become validation defined as typed criteria in `contract.criteria[]` at
-`take`; validation is carried through `implement` by `criterion_id`;
+`define`; validation is carried through `implement` by `criterion_id`;
 `verify` produces validation performed as one result per criterion in
 `completion-evidence.results[]`, the evidence shaped by each criterion's
 `check_kind`; and `land` records the result from that uniform evidence
@@ -467,7 +467,7 @@ declared dimension proves qualification-to-remain.
 
 - `work-unit-craft` and `decompose`: produce the inputs each dimension
   considers before validation is defined.
-- `take` (protocol): consumes dimension inputs and defines validation using
+- `define` (protocol): consumes dimension inputs and defines validation using
   this discipline.
 - `plan` (protocol): maps scenarios to a decision-complete design.
 - `implement` (protocol): executes RED-GREEN-REFACTOR per named scenario.

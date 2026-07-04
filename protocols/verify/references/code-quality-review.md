@@ -4,7 +4,7 @@ Reference for verify step 4: auditing the change against the declared
 **code-quality contract** (the contract skill's code-quality dimension)
 before the change is packaged for review.
 
-The contract declared, at `take`, the principles-corpus universals this
+The contract declared, at `define`, the principles-corpus universals this
 change most stresses. This review audits the diff against each one. The
 review is the gate; a self-report of cleanliness is not the evidence
 (**Verifiable Completion**, **Honest Signal**).

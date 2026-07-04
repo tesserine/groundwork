@@ -34,7 +34,7 @@ on the criterion.
 ## Lifecycle
 
 `work-unit-craft`/`decompose` supplies recipient outcomes as inputs to
-validation. `take` turns those inputs into validation defined: typed
+validation. `define` turns those inputs into validation defined: typed
 criteria in the uniform contract surface naming the pillar, recipient
 outcome, hollow delivery, `check_kind`, and check descriptor. `verify`
 performs validation by auditing whether those recipients can reach the

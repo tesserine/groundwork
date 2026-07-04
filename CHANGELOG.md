@@ -133,6 +133,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Breaking vocabulary rename: entry protocol `take` becomes `define`**
+  (#529). The contract-first entry stage is now registered and installed as
+  `define` (protocol version 4.0.0), matching the stage's act: authoring
+  the contract that defines done. Consumers must update manifest protocol
+  names, `protocols/define/` paths, tests, fixtures, and any entry-stage
+  references that named `take`. Protocol capstones now stop at their
+  delivered artifact; `define` records the `contract` and ends there, with
+  the runtime-less fallback preserved. The `contract` artifact is stable:
+  its name, schema, and MCP tool are unchanged, so integrations that consume
+  `contract` artifacts need no migration.
+
 - **`take` step 4 consults the `contract` skill instead of restating its
   doctrine** (#521, discharging the epic #443 migration landed via PR #455).
   With #443 closed and the `contract` skill established as the single home

@@ -37,7 +37,7 @@ Groundwork scoped pipeline.
 
 | Asset | Kind | Domain Coupling | Form | Membership-Test Ground |
 |---|---|---|---|---|
-| acquire | skill | domain:software | skill | Gazette or another non-code methodology may need entry from an existing planning record, but this skill materializes a forge ticket as a `work-unit` snapshot with a `handle` for `take`. |
+| acquire | skill | domain:software | skill | Gazette or another non-code methodology may need entry from an existing planning record, but this skill materializes a forge ticket as a `work-unit` snapshot with a `handle` for `define`. |
 | code-review | skill | domain:software | skill | Gazette needs independent quality judgment, but code-review's criteria are software-specific: behavior regressions, schemas, interfaces, tests, and documentation impact for code changes. |
 | contract | skill | universal | skill | Gazette or another domain still needs an executable definition of done across behavior, documentation, and quality dimensions; only the evidence form changes. |
 | debug | skill | universal | skill | Root-cause-before-fix applies to non-code failures as well as software failures; gazette grounding or publication failures still need evidence before correction. |
@@ -54,7 +54,7 @@ Groundwork scoped pipeline.
 | review | protocol | domain:software | protocol | Another domain can reuse independent judgment, but this shell routes Groundwork `change-proposal` artifacts through `change-approved` or `change-needs-revision`. |
 | submit | protocol | domain:software | protocol | Another domain can reuse proposal packaging, but this shell delivers verified software changes through forge mechanics into a `change-proposal`. |
 | survey | protocol | domain:software | protocol | The inquiry discipline projects and gazette also has a `survey` protocol, but this shell transforms `intent` into Groundwork `requirements`. |
-| take | protocol | domain:software | protocol | Another domain can reuse contract-first entry, but this shell claims a work-unit issue, prepares a feature branch, and authors a `contract` for a software work-unit. |
+| define | protocol | domain:software | protocol | Another domain can reuse contract-first entry, but this shell claims a work-unit issue, prepares a feature branch, and authors a `contract` for a software work-unit. |
 | verify | protocol | domain:software | protocol | Another domain can reuse evidence-before-claim, but this shell gates software completion with `completion-evidence` tied to work-unit criteria, tests, and documentation review. |
 
 ## Protocol Reduction Test
@@ -73,7 +73,7 @@ obligations in the protocol boundary.
 | review | quality-review | no | The protocol depends on `code-review`, a software projection. The universal quality-review parent is predicted but not yet extracted. |
 | submit | proposal-submission | no | The cognitive band is packaging verified work for review, but forge delivery and `change-proposal` shape are wrapper concerns. |
 | survey | disciplined-inquiry | no | The cognitive band is separating descriptive state from normative need, but the wrapper turns `intent` into `requirements`. |
-| take | contract-first-entry | no | The core band is contract-first entry, but the current body also owns workspace preparation, tracker claiming, and temporary carry-through to later stations. |
+| define | contract-first-entry | no | The core band is contract-first entry, but the current body also owns workspace preparation, tracker claiming, and contract artifact delivery. |
 | verify | evidence-gate | no | The cognitive band is evidence before completion claims, but the wrapper records Groundwork gate or scenario coverage in `completion-evidence`. |
 
 ## Projection Seams
@@ -84,7 +84,7 @@ skills.
 
 | Domain Skill | Domain Scope | Projects From | Inherited Discipline | Domain Delta |
 |---|---|---|---|---|
-| acquire | domain:software | acquisition | Materialize an execution artifact from an authorized planning record without fabricating content. | Reads a forge ticket, preserves `handle`, derives a `work-unit` body, and hands execution to `take`. |
+| acquire | domain:software | acquisition | Materialize an execution artifact from an authorized planning record without fabricating content. | Reads a forge ticket, preserves `handle`, derives a `work-unit` body, and hands execution to `define`. |
 | code-review | domain:software | quality-review | Judge proposed work against scope, contract, evidence, and recipient impact before approval. | Adds software-specific correctness checks: code semantics, schemas, interfaces, tests, regressions, and current documentation accuracy. |
 
 ## Lateral Harmonics
@@ -92,9 +92,9 @@ skills.
 | Atomic Bead | Kin Assets | Shared Invariant | Extraction Value |
 |---|---|---|---|
 | Ground before design | reckon, survey, decompose, plan, work-unit-craft | The current substrate is evidence, not the need; the next artifact must derive from verified constraints. | High: shared by the planning front and record-craft surfaces. |
-| Contract carries forward | contract, take, plan, implement, verify, review, land | Validation defined at entry remains the measure through planning, execution, evidence, judgment, and close. | High: this is the pipeline's spine and the clearest single-home pressure. |
+| Contract carries forward | contract, define, plan, implement, verify, review, land | Validation defined at entry remains the measure through planning, execution, evidence, judgment, and close. | High: this is the pipeline's spine and the clearest single-home pressure. |
 | Evidence before claim | debug, implement, verify, review, land | A claim is accepted only after fresh evidence or an independent finding decides it. | High: repeated across failure handling, build, completion, review, and governance. |
-| Artifact delivery boundary | decompose, take, plan, implement, verify, submit, land | Tool parameters are not artifact body, `work_unit` injection is scoped, and runa validates the remaining body fields. | Medium: repeated protocol-shell text points at an extractable delivery wrapper discipline. |
+| Artifact delivery boundary | decompose, define, plan, implement, verify, submit, land | Tool parameters are not artifact body, `work_unit` injection is scoped, and runa validates the remaining body fields. | Medium: repeated protocol-shell text points at an extractable delivery wrapper discipline. |
 | Forge containment | acquire, decompose, submit, land | Provider-specific operations stay in mechanics and handles, while protocol and skill language stays forge-invariant. | Medium: strongest where tracker or proposal mechanics touch the outside world. |
 
 ## Mendeleev Gaps
@@ -121,7 +121,7 @@ skills.
 | Finding | Witness Marks | Disposition |
 |---|---|---|
 | `review` is graded by the domain-skill graduation, not the wrapped-universal graduation. | `protocols/review` names `skills/code-review` as its evaluation discipline, while the foundation note predicts domain review skills project from a universal quality-review parent. | Surface for row 2 and ADR-0007; do not extract in this unit. |
-| `take` carries temporary station-bridging content in addition to contract-first entry. | `protocols/take` owns workspace preparation and says it must carry through later stations until runtime sequencing is wired. | Record as a substrate fine-tuning candidate; no protocol rewrite in this unit. |
+| `define` carries workspace and tracker preparation in addition to contract-first entry. | `protocols/define` owns workspace preparation, tracker claiming, and delivery of the contract artifact. | Record as a substrate fine-tuning candidate; no extraction in this unit. |
 | `decompose` and `work-unit-craft` still duplicate substantial record-craft teaching. | `protocols/decompose` contains the same outcome-first record discipline that `skills/work-unit-craft` owns. | Candidate for the factoring work after the seam ADR. |
 | Producer protocols repeat artifact-delivery shell language. | The producer protocols share the same `instance_id`, MCP-input, scoped `work_unit`, and validation boundary paragraphs. | Candidate extraction to a protocol-shell or delivery-wrapper reference. |
 

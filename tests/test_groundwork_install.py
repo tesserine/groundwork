@@ -76,8 +76,8 @@ class MethodologyFixture:
         self.write("skills/orient/SKILL.md", "---\nname: orient\n---\n# Orient\n")
         self.write("skills/reckon/SKILL.md", "---\nname: reckon\n---\n# Reckon\n")
         self.write("skills/reckon/references/example.md", "reckon reference\n")
-        self.write("protocols/take/PROTOCOL.md", "---\nname: take\n---\n# Take\n")
-        self.write("protocols/take/references/example.md", "take reference\n")
+        self.write("protocols/define/PROTOCOL.md", "---\nname: define\n---\n# Define\n")
+        self.write("protocols/define/references/example.md", "define reference\n")
         self.write("protocols/submit/PROTOCOL.md", "---\nname: submit\n---\n# Submit\n")
 
     def init_git(self) -> None:
@@ -202,10 +202,10 @@ class GroundworkInstallTests(unittest.TestCase):
         result = install.run_installer("install")
 
         assert_success(self, result)
-        self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
-        take_body = (install.target(".claude", "take") / "SKILL.md").read_text(encoding="utf-8")
-        self.assert_handoff_projected_once(take_body)
-        self.assertTrue((install.target(".agents", "take") / "references" / "example.md").is_file())
+        self.assert_installed_inventory(install, {"orient", "reckon", "define", "submit"})
+        define_body = (install.target(".claude", "define") / "SKILL.md").read_text(encoding="utf-8")
+        self.assert_handoff_projected_once(define_body)
+        self.assertTrue((install.target(".agents", "define") / "references" / "example.md").is_file())
         self.assertTrue((install.target(".agents", "reckon") / "references" / "example.md").is_file())
 
     def test_install_projects_post_retirement_runtime_bundle(self) -> None:
@@ -289,7 +289,7 @@ class GroundworkInstallTests(unittest.TestCase):
         producer_protocols = [
             "survey",
             "decompose",
-            "take",
+            "define",
             "specify",
             "plan",
             "implement",
@@ -426,7 +426,7 @@ class GroundworkInstallTests(unittest.TestCase):
 
         assert_success(self, result)
         self.assertEqual(self.installed_entry_stats(install), before)
-        self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
+        self.assert_installed_inventory(install, {"orient", "reckon", "define", "submit"})
 
     def test_install_restores_same_sha_managed_target_drift(self) -> None:
         fixture = self.add_fixture("same-sha-drift")
@@ -443,7 +443,7 @@ class GroundworkInstallTests(unittest.TestCase):
         assert_success(self, result)
         self.assertEqual(skill.read_text(encoding="utf-8"), expected)
         self.assertFalse((entry / "local-only.md").exists())
-        self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
+        self.assert_installed_inventory(install, {"orient", "reckon", "define", "submit"})
 
     def test_install_restores_state_recorded_target_when_marker_is_missing(self) -> None:
         fixture = self.add_fixture("missing-marker-drift")
@@ -462,7 +462,7 @@ class GroundworkInstallTests(unittest.TestCase):
         self.assertTrue((entry / ".groundwork-install").is_file())
         self.assertEqual(skill.read_text(encoding="utf-8"), expected)
         self.assertFalse((entry / "local-only.md").exists())
-        self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
+        self.assert_installed_inventory(install, {"orient", "reckon", "define", "submit"})
 
     def test_sync_converges_to_a_different_pinned_source_state(self) -> None:
         fixture = self.add_fixture("sync")
@@ -475,7 +475,7 @@ class GroundworkInstallTests(unittest.TestCase):
         result = install.run_installer("sync")
 
         assert_success(self, result)
-        self.assert_installed_inventory(install, {"orient", "take", "submit", "verify"})
+        self.assert_installed_inventory(install, {"orient", "define", "submit", "verify"})
         self.assertFalse(install.target(".claude", "reckon").exists())
 
     def test_sync_upgrades_state_owned_entry_when_kind_changes(self) -> None:
@@ -561,7 +561,7 @@ class GroundworkInstallTests(unittest.TestCase):
         assert_success(self, result)
         self.assertTrue((unrelated / "SKILL.md").is_file())
         self.assertFalse(install.target(".agents", "orient").exists())
-        self.assertFalse(install.target(".claude", "take").exists())
+        self.assertFalse(install.target(".claude", "define").exists())
 
     def test_uninstall_fails_and_retains_state_when_managed_entry_is_missing_marker(self) -> None:
         fixture = self.add_fixture("uninstall-missing-marker")
@@ -591,7 +591,7 @@ class GroundworkInstallTests(unittest.TestCase):
         self.assertIn("scripts/install", result.stderr)
         self.assertNotIn("unmanaged conflict at %s" % conflict, result.stderr)
         self.assertEqual((conflict / "SKILL.md").read_text(encoding="utf-8"), "# Canonical\n")
-        self.assertFalse((install.home / ".agents" / "skills" / "take").exists())
+        self.assertFalse((install.home / ".agents" / "skills" / "define").exists())
         self.assertFalse(install.state_file().exists())
 
     def test_install_redirects_runtime_owned_by_canonical_installer(self) -> None:
@@ -632,7 +632,7 @@ class GroundworkInstallTests(unittest.TestCase):
 
         assert_failure_contains(self, result, "unmanaged conflict")
         self.assertEqual((conflict / "SKILL.md").read_text(encoding="utf-8"), "# Mine\n")
-        self.assertFalse((install.home / ".agents" / "skills" / "take").exists())
+        self.assertFalse((install.home / ".agents" / "skills" / "define").exists())
 
     def test_install_rejects_marker_only_targets_as_unmanaged_conflicts(self) -> None:
         fixture = self.add_fixture("marker-only-conflict")
@@ -646,7 +646,7 @@ class GroundworkInstallTests(unittest.TestCase):
 
         assert_failure_contains(self, result, "unmanaged conflict")
         self.assertEqual((conflict / "SKILL.md").read_text(encoding="utf-8"), "# Mine\n")
-        self.assertFalse((install.home / ".agents" / "skills" / "take").exists())
+        self.assertFalse((install.home / ".agents" / "skills" / "define").exists())
         self.assertFalse(install.state_file().exists())
 
     def test_install_rejects_unmanaged_runtime_conflict_before_replacing_it(self) -> None:
@@ -726,7 +726,7 @@ class GroundworkInstallTests(unittest.TestCase):
         result = install.run_installer("install", "--from-branch")
 
         assert_success(self, result)
-        self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
+        self.assert_installed_inventory(install, {"orient", "reckon", "define", "submit"})
         recorded = {
             line.split("\t")[3]
             for line in install.state_file().read_text(encoding="utf-8").splitlines()
@@ -747,7 +747,7 @@ class GroundworkInstallTests(unittest.TestCase):
         result = install.run_installer("sync", "--from-branch")
 
         assert_success(self, result)
-        self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit", "added"})
+        self.assert_installed_inventory(install, {"orient", "reckon", "define", "submit", "added"})
         recorded = {
             line.split("\t")[3]
             for line in install.state_file().read_text(encoding="utf-8").splitlines()
@@ -769,7 +769,7 @@ class GroundworkInstallTests(unittest.TestCase):
         fixture.write(".gitignore", "*.swp\n")
         fixture.commit_new_ref("v2")
         fixture.write("skills/orient/local.swp", "ignored skill artifact\n")
-        fixture.write("protocols/take/local.swp", "ignored protocol artifact\n")
+        fixture.write("protocols/define/local.swp", "ignored protocol artifact\n")
         install = InstallRun(self, fixture.root)
 
         result = install.run_installer("install")
@@ -777,7 +777,7 @@ class GroundworkInstallTests(unittest.TestCase):
         assert_success(self, result)
         for root in [".claude", ".agents"]:
             self.assertFalse((install.target(root, "orient") / "local.swp").exists())
-            self.assertFalse((install.target(root, "take") / "local.swp").exists())
+            self.assertFalse((install.target(root, "define") / "local.swp").exists())
 
     def test_install_omits_ignored_top_level_files_under_skills(self) -> None:
         fixture = self.add_fixture("ignored-top-level-skill-files")
@@ -789,7 +789,7 @@ class GroundworkInstallTests(unittest.TestCase):
         result = install.run_installer("install")
 
         assert_success(self, result)
-        self.assert_installed_inventory(install, {"orient", "reckon", "take", "submit"})
+        self.assert_installed_inventory(install, {"orient", "reckon", "define", "submit"})
         for root in [".claude", ".agents"]:
             self.assertFalse((install.home / root / "skills" / "local.swp").exists())
 

@@ -97,7 +97,7 @@ class ReleaseFixture:
             name = "claim"
 
             [[protocols]]
-            name = "take"
+            name = "define"
             requires = ["claim"]
             accepts = []
             produces = ["claim"]
@@ -120,7 +120,7 @@ class ReleaseFixture:
             """,
         )
         self.write("schemas/claim.schema.json", '{"type":"object"}\n')
-        self.write("protocols/take/PROTOCOL.md", "# Take\n")
+        self.write("protocols/define/PROTOCOL.md", "# Define\n")
         self.write("skills/orient/SKILL.md", "# Orient\n")
         self.write("README.md", "# Groundwork\n")
         self.write("RELEASING.md", "scripts/release-cut vX.Y.Z\nADR-0012\n")
@@ -239,7 +239,7 @@ class ReleaseCeremonyTests(unittest.TestCase):
             name = "claim"
 
             [[protocols]]
-            name = "take"
+            name = "define"
             requires = ["claim"]
             accepts = []
             produces = ["claim"]

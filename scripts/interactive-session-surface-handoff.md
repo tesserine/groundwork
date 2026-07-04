@@ -9,7 +9,7 @@ the runa MCP tools.
 
 Inside that cascade, the configured agent calls `next-protocol-context`, follows
 the rendered protocol prompt, records the protocol output through the current
-output tool, calls `advance`, and stops. For example, a ready `take` step
+output tool, calls `advance`, and stops. For example, a ready `define` step
 records `contract` through the current output tool; the operator does not call
 `contract` or `advance` beside `go`.
 

@@ -1,24 +1,24 @@
 ---
-name: take
+name: define
 description: >-
   Contract-first entry of the scoped pipeline: receive an already-selected
   work-unit, prepare the workspace, and establish the contract that
   defines done. The contract produced here is the spine every downstream
-  protocol carries to land; the session surface advances the pipeline from
-  it. Trigger on: 'take', 'take work', 'start work-unit'.
+  protocol carries to land. Trigger on: 'define', 'define work',
+  'start work-unit'.
 metadata:
-  version: "3.9.0"
-  updated: "2026-07-02"
+  version: "4.0.0"
+  updated: "2026-07-04"
 ---
 
-# Take — Contract-First Entry
+# Define — Contract-First Entry
 
-Take opens work on a single work-unit. Selection happened upstream — the
-work-unit artifact exists and runa activates take on it, having arrived
-either from `decompose` (a newly created work-unit) or from the `acquire`
-skill (materialized from an existing forge ticket). Entry's real job is to
-stand on prepared ground and state, precisely and verifiably, what will be
-true when this work is done.
+Define authors the contract for a single work-unit. Selection happened
+upstream — the work-unit artifact exists and runa activates define on it,
+having arrived either from `decompose` (a newly created work-unit) or from
+the `acquire` skill (materialized from an existing forge ticket). Entry's
+job is to stand on prepared ground and state, precisely and verifiably,
+what will be true when this work is done.
 
 That statement is the `contract`: development here is
 contract-driven, and it begins at the door. The contract authored in this
@@ -70,7 +70,7 @@ proves it, or records it.
    documentation audience taxonomy, and `~/.groundwork/principles/` for the
    universals themselves.
 
-   Take's own role here is narrow and does not re-derive any of that: from
+   Define's own role here is narrow and does not re-derive any of that: from
    this work-unit's own already-framed inputs (step 3), author this
    work-unit's validation defined — one instance of criteria per dimension
    the work-unit has, in the form and to the teeth and density the
@@ -111,15 +111,13 @@ proves it, or records it.
    Runa validates the remaining artifact body fields against the contract
    schema, persists the artifact, and records it in the artifact store.
 
-   Delivering the contract is take completing: the session surface computes
-   the next ready station from artifact state and advances the work to it —
-   the seam runa's session-surface contract
-   (`docs/session-surface-contract.md` in the runa repository) and the
-   manifest's trigger declarations own. Where no runtime is present
-   to accept the MCP tool — a checkout that is not an initialized runa
-   project — author the same contract as a committed workspace artifact (the
-   contract JSON, or the work-unit issue if there is no workspace store) so
-   the spine exists and binds the test-first cycle either way.
+   Delivering the contract is define completing. The stage ends with the
+   recorded contract as the spine every downstream station consumes. Where
+   no runtime is present to accept the MCP tool — a checkout that is not an
+   initialized runa project — author the same contract as a committed
+   workspace artifact (the contract JSON, or the work-unit issue if there is
+   no workspace store) so the spine exists and binds the test-first cycle
+   either way.
 
 ## Scale
 
@@ -167,7 +165,7 @@ begins — the dose is proportional.
   documentation-deliverable unit whose behavior is actually proved by
   structural, coherence, and conformance gates.
 - `lifecycle-modeling`: re-encoding the contract lifecycle or dimension
-  authority in `take` instead of consulting the `contract` skill, `orient`,
+  authority in `define` instead of consulting the `contract` skill, `orient`,
   and the principles corpus as their single homes.
 
 ## Cross-References
@@ -184,8 +182,8 @@ begins — the dose is proportional.
 - `decompose` (protocol): owns work-unit boundaries and acceptance-criteria
   quality. A work-unit that cannot be framed or contracted routes back there.
 - `acquire` (skill): the other entry source — materializes the work-unit
-  artifact from an existing forge ticket before take activates on it.
+  artifact from an existing forge ticket before define activates on it.
 - `plan` (protocol): the next station — consumes the contract and converges
   on a decision-complete design.
-- `land` (protocol): the closing bookend — take establishes what done means;
+- `land` (protocol): the closing bookend — define establishes what done means;
   land records that it was done.

@@ -302,7 +302,7 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
             self.assertEqual(payload["execution_plan"][0]["projection"], "current")
             projected = [
                 entry for entry in payload["execution_plan"]
-                if entry["protocol"] == "take" and entry["projection"] == "projected"
+                if entry["protocol"] == "define" and entry["projection"] == "projected"
             ]
             self.assertEqual(1, len(projected), payload["execution_plan"])
             self.assertEqual("work-unit-499", projected[0]["work_unit"])
@@ -368,7 +368,7 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
             }
             self.assertEqual("ready", requirements_state["decompose"]["status"], requirements_state)
 
-    def test_acquired_work_unit_makes_take_the_next_ready_station(self) -> None:
+    def test_acquired_work_unit_makes_define_the_next_ready_station(self) -> None:
         runa = runa_bin()
         runa_mcp = runa_mcp_bin(runa)
         if runa_mcp is None:
@@ -421,16 +421,16 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
             body = json.loads(recorded.read_text(encoding="utf-8"))
             self.assertEqual(ticket["handle"], body["handle"])
 
-            # The cascade now computes take as the next READY station for the
-            # acquired work-unit — entry from an existing ticket reached take.
+            # The cascade now computes define as the next READY station for the
+            # acquired work-unit — entry from an existing ticket reached define.
             state = subprocess.run(
                 [str(runa), "state", "--work-unit", instance_id],
                 cwd=project, capture_output=True, text=True,
             )
             self.assertEqual(state.returncode, 0, f"{state.stdout}\n{state.stderr}")
             ready_block = state.stdout.split("BLOCKED")[0]
-            self.assertIn("take", ready_block,
-                          f"take not READY after acquisition:\n{state.stdout}")
+            self.assertIn("define", ready_block,
+                          f"define not READY after acquisition:\n{state.stdout}")
 
 
 if __name__ == "__main__":

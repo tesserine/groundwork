@@ -417,8 +417,8 @@ class EntrySurfaceCoherence:
     acquire_reads_ticket_comments: bool
     acquire_surfaces_comments_as_entry_context: bool
     acquire_excludes_comments_from_artifact: bool
-    take_grounds_frame_in_whole_ticket: bool
-    take_uses_newest_review_directives: bool
+    define_grounds_frame_in_whole_ticket: bool
+    define_uses_newest_review_directives: bool
 
     @property
     def passed(self) -> bool:
@@ -426,14 +426,14 @@ class EntrySurfaceCoherence:
             self.acquire_reads_ticket_comments
             and self.acquire_surfaces_comments_as_entry_context
             and self.acquire_excludes_comments_from_artifact
-            and self.take_grounds_frame_in_whole_ticket
-            and self.take_uses_newest_review_directives
+            and self.define_grounds_frame_in_whole_ticket
+            and self.define_uses_newest_review_directives
         )
 
 
 def entry_surface_coherence(root: Path) -> EntrySurfaceCoherence:
     acquire = read(root / "skills" / "acquire" / "SKILL.md")
-    take = read(root / "protocols" / "take" / "PROTOCOL.md")
+    define = read(root / "protocols" / "define" / "PROTOCOL.md")
     return EntrySurfaceCoherence(
         acquire_reads_ticket_comments=(
             "`comments`" in acquire
@@ -458,16 +458,16 @@ def entry_surface_coherence(root: Path) -> EntrySurfaceCoherence:
             r"\bnever persisted\b",
             r"\bartifact\b",
         ),
-        take_grounds_frame_in_whole_ticket=(
-            has_semantic_clause(take, r"\bGround\b", r"\bwhole ticket\b")
+        define_grounds_frame_in_whole_ticket=(
+            has_semantic_clause(define, r"\bGround\b", r"\bwhole ticket\b")
             and has_semantic_clause(
-                take,
+                define,
                 r"\bcomment log\b",
                 r"\brunning record\b",
             )
         ),
-        take_uses_newest_review_directives=has_semantic_clause(
-            take,
+        define_uses_newest_review_directives=has_semantic_clause(
+            define,
             r"\bnewest\b",
             r"\breview directives\b",
             r"\bsubmitted head\b",

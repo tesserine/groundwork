@@ -50,7 +50,7 @@ CONNECTOR_MODEL_DOCUMENTS = [
     ROOT / "protocols" / "decompose" / "PROTOCOL.md",
     ROOT / "protocols" / "submit" / "PROTOCOL.md",
     ROOT / "protocols" / "land" / "PROTOCOL.md",
-    ROOT / "protocols" / "take" / "references" / "workspace.md",
+    ROOT / "protocols" / "define" / "references" / "workspace.md",
 ]
 
 
@@ -365,7 +365,7 @@ class ForgeCapabilityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tree = Path(tmp) / "tree"
             shutil.copytree(ROOT / "skills" / "acquire", tree / "skills" / "acquire")
-            shutil.copytree(ROOT / "protocols" / "take", tree / "protocols" / "take")
+            shutil.copytree(ROOT / "protocols" / "define", tree / "protocols" / "define")
             acquire = tree / "skills" / "acquire" / "SKILL.md"
             body = acquire.read_text(encoding="utf-8")
             clause = "The comment log is read as entry context, never persisted into the artifact"

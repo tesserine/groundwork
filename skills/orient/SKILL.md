@@ -52,13 +52,13 @@ work-units with acceptance criteria and dependency edges.
 **Entry.** A work-unit reaches the scoped pipeline one of two ways: newly
 created by `decompose`, or materialized from an existing forge ticket by the
 `acquire` skill (the "start on ticket #N" path). Either way the result is a
-work-unit artifact, indistinguishable downstream, that `take` activates on.
+work-unit artifact, indistinguishable downstream, that `define` activates on.
 
 **The scoped pipeline (per work-unit).** Seven stations carry one selected
 work-unit to a landed change. The contract is the spine: created
 at entry, threaded unbroken to the close.
 
-1. **`take`** — contract-first entry: prepare the workspace, frame the
+1. **`define`** — contract-first entry: prepare the workspace, frame the
    work, author the contract that defines done.
 2. **`plan`** — converge on a decision-complete design that maps scenarios
    to implementation steps.
@@ -94,7 +94,7 @@ These are not stations; they engage when their trigger fires, at any stage.
   every generative act — planning and diagnosis included — the trigger is
   creation, not sequence position.
 - **`contract`** — the BDD discipline: authoring the contract at
-  `take`, carrying traceability through every station after.
+  `define`, carrying traceability through every station after.
 - **`work-unit-craft`** — the discipline for authoring a work-unit's tracker
   record: outcomes over prescription, so the record does not mis-steer the
   agent that reads it. Fires when a work-unit record is written or re-scoped.
@@ -110,7 +110,7 @@ These are not stations; they engage when their trigger fires, at any stage.
 - **`code-review`** — the evaluation discipline `review` applies to a
   change proposal.
 - **`acquire`** — entry from an existing forge ticket: reads the ticket and
-  materializes the work-unit artifact `take` activates on. Fires at the
+  materializes the work-unit artifact `define` activates on. Fires at the
   cold-start boundary, when work begins from a ticket reference.
 
 ## Integration Principles
@@ -125,7 +125,7 @@ These are not stations; they engage when their trigger fires, at any stage.
   comments are a log. When authoring or re-scoping a record, `work-unit-craft`
   provides the discipline: outcomes over prescription, and the corruption
   modes that make records mis-steer their readers.
-- **Behavior traceability.** The contract from `take` is traceable at every
+- **Behavior traceability.** The contract from `define` is traceable at every
   station: plans link decisions to scenarios, tests prove named scenarios,
   verification reports scenario-level coverage, review judges against the
   contract, landing records what coverage shipped.

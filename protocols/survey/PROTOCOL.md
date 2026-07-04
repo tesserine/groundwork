@@ -258,5 +258,5 @@ rejection, or judgment.
 - `research`: evidence gathering when local inspection is insufficient.
 - `decompose`: consumes `requirements` and turns the selected work into executable
   work-units.
-- `take`: starts a session once the work-unit graph reflects the work chosen
-  through survey.
+- `define`: authors the contract that defines done once the work-unit graph
+  reflects the work chosen through survey.

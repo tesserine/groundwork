@@ -68,7 +68,7 @@ Every dimension the change has must leave an authored teeth-bearing input
 for the later contract; every dimension the change has is covered that way.
 The rule is that density may be light, but coverage is never zero: one sharp
 recipient outcome or one corpus projection can be enough, while silence
-cannot. Each input should make the hollow delivery visible enough that `take`
+cannot. Each input should make the hollow delivery visible enough that `define`
 can turn it into a criterion with a statement of done,
 `check_kind`, check descriptor, and result path.
 

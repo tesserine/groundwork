@@ -20,7 +20,7 @@ is packaged for review.
 ## Method
 
 Begin from the declared contract. From the documentation contract authored
-at `take`, list the pillars it declared (user / developer / discovery) and
+at `define`, list the pillars it declared (user / developer / discovery) and
 the outcome each must reach; those outcomes are what this audit confirms.
 The steps below keep the surrounding documentation honest against drift.
 

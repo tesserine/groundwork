@@ -72,7 +72,7 @@ class ProtocolArtifactDeliveryDocsTests(unittest.TestCase):
             [
                 "survey",
                 "decompose",
-                "take",
+                "define",
                 "plan",
                 "implement",
                 "verify",

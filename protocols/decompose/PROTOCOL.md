@@ -215,7 +215,7 @@ work-unit({
   title: "<type(scope): what>",
   description: "<what needs doing and why>",
   acceptance_criteria: ["..."],
-  scope: ["decompose delivery", "take framing"],
+  scope: ["decompose delivery", "define framing"],
   out_of_scope: ["submit protocol", "land protocol"],
   dependencies: ["work-unit-122-artifact-store-cleanup"],
   handle: {
@@ -233,7 +233,7 @@ work-unit({
   title: "<type(scope): what>",
   description: "<what needs doing and why>",
   acceptance_criteria: ["..."],
-  scope: ["decompose delivery", "take framing"],
+  scope: ["decompose delivery", "define framing"],
   out_of_scope: ["submit protocol", "land protocol"],
   dependencies: ["work-unit-122-artifact-store-cleanup"],
   handle: {
@@ -297,7 +297,8 @@ decompose's own — epic, graph, and delivery misuse.
   creates the ticket it delivers; acquire adopts the ticket it is given and
   creates none. A ticket-quality gap acquire surfaces routes to
   `refine-work-unit` here.
-- `take`: session-level prioritization and execution discipline.
+- `define`: contract-authoring entry discipline that states what done means
+  for one work-unit.
 - `contract` (skill): behavior framing and scenario naming discipline.
 - `plan`: design convergence before implementation.
 - `land`: merge-and-close completion events.

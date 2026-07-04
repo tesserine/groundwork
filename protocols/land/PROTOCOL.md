@@ -12,7 +12,7 @@ metadata:
 # Land
 
 Land is the approved-disposition gate and the pipeline's closing bookend:
-take established what done means; land records that it was done. It
+define established what done means; land records that it was done. It
 activates only from `change-approved`, applies exactly the proposal version
 that approval names, reflects the disposition, and records completion.
 
@@ -129,5 +129,5 @@ The protocol is not a forge operation. It must not activate from a raw
   code-quality results enter close-out context as committed evidence.
 - `contract` (skill): owns the lifecycle this protocol consults while
   recording validation-performed.
-- `take` (protocol): the opening bookend — the contract established there
+- `define` (protocol): the opening bookend — the contract established there
   is what this record closes.

@@ -551,18 +551,18 @@ name = "survey"
         self.assertFalse(results[0].passed)
         self.assertIn("protocol `survey` leaks forge-specific token `gh`", " ".join(results[0].errors))
 
-    def test_manifest_forge_leakage_scan_covers_take_protocol(self) -> None:
+    def test_manifest_forge_leakage_scan_covers_define_protocol(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             manifest = root / "manifest.toml"
             manifest.write_text(
                 """
 [[protocols]]
-name = "take"
+name = "define"
 """.lstrip(),
                 encoding="utf-8",
             )
-            protocol = root / "protocols" / "take"
+            protocol = root / "protocols" / "define"
             protocol.mkdir(parents=True)
             (protocol / "PROTOCOL.md").write_text("Fallback: run `gh issue view 353`.\n", encoding="utf-8")
 
@@ -570,7 +570,7 @@ name = "take"
 
         self.assertEqual("C-5 manifest", results[0].category)
         self.assertFalse(results[0].passed)
-        self.assertIn("protocol `take` leaks forge-specific token `gh`", " ".join(results[0].errors))
+        self.assertIn("protocol `define` leaks forge-specific token `gh`", " ".join(results[0].errors))
 
     def test_malformed_directory_manifest_does_not_abort_sibling_registry_checks(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
