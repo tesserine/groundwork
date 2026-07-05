@@ -476,6 +476,267 @@ def entry_surface_coherence(root: Path) -> EntrySurfaceCoherence:
     )
 
 
+FRESHEN_ADR_0015_URL = (
+    "https://github.com/tesserine/commons/blob/main/adr/"
+    "0015-mode-is-a-property-of-the-session.md"
+)
+
+
+def freshen_record_schema(root: Path) -> dict:
+    return json.loads(read(root / "schemas" / "freshen-record.schema.json"))
+
+
+def freshen_dispositions(schema: dict) -> list[str]:
+    disposition = schema_def(schema, "#/properties/disposition/enum")
+    if not isinstance(disposition, list):
+        raise AssertionError("freshen disposition enum must be a list")
+    return [str(value) for value in disposition]
+
+
+def freshen_graph_facets(schema: dict) -> list[str]:
+    facets = schema_def(schema, "#/properties/graph_finding/required")
+    if not isinstance(facets, list):
+        raise AssertionError("freshen graph facets must be schema-required list")
+    return [str(value) for value in facets]
+
+
+def freshen_record_elements(schema: dict) -> list[str]:
+    required = schema_def(schema, "#/required")
+    if not isinstance(required, list):
+        raise AssertionError("freshen record required fields must be a list")
+    return [str(value) for value in required]
+
+
+def protocol_triggering_on_artifact(root: Path, artifact: str) -> str:
+    matches = [
+        protocol["name"]
+        for protocol in manifest_protocols(root)
+        if protocol.get("trigger") == {"type": "on_artifact", "name": artifact}
+    ]
+    if len(matches) != 1:
+        raise AssertionError(f"expected one protocol triggered by {artifact}, got {matches}")
+    return matches[0]
+
+
+@dataclass(frozen=True)
+class FreshenSurfaceCoherence:
+    freshen_step_is_step_four_once: bool
+    materialized_artifact_held_until_freshened: bool
+    routing_table_matches_disposition_enum: bool
+    routing_table_routes_every_disposition: bool
+    only_proceed_reaches_admitted_destination: bool
+    delivery_conditioned_on_proceed: bool
+    admitted_destination_trigger_is_work_unit: bool
+    record_contract_matches_schema_required: bool
+    graph_facets_match_schema_required: bool
+    record_is_ticket_comment_not_body: bool
+    proceed_recrafts_before_delivery: bool
+    grounds_body_and_graph_against_current_substrate: bool
+    shared_boundary_mode_parity_declared: bool
+    no_mode_specific_freshening_section: bool
+    defective_substrate_escalates_to_resolve: bool
+
+    @property
+    def passed(self) -> bool:
+        return all(
+            [
+                self.freshen_step_is_step_four_once,
+                self.materialized_artifact_held_until_freshened,
+                self.routing_table_matches_disposition_enum,
+                self.routing_table_routes_every_disposition,
+                self.only_proceed_reaches_admitted_destination,
+                self.delivery_conditioned_on_proceed,
+                self.admitted_destination_trigger_is_work_unit,
+                self.record_contract_matches_schema_required,
+                self.graph_facets_match_schema_required,
+                self.record_is_ticket_comment_not_body,
+                self.proceed_recrafts_before_delivery,
+                self.grounds_body_and_graph_against_current_substrate,
+                self.shared_boundary_mode_parity_declared,
+                self.no_mode_specific_freshening_section,
+                self.defective_substrate_escalates_to_resolve,
+            ]
+        )
+
+
+def _freshen_step_numbers(acquire: str) -> list[int]:
+    return [
+        int(match.group("number"))
+        for match in re.finditer(
+            r"^(?P<number>\d+)\. \*\*Freshen\b",
+            acquire,
+            flags=re.MULTILINE,
+        )
+    ]
+
+
+def _section_table_values(
+    text: str,
+    heading: str,
+    header: str,
+    *,
+    level: int = 3,
+) -> list[str]:
+    return [row[header] for row in markdown_table_rows(markdown_section(text, heading, level=level))]
+
+
+def freshen_surface_coherence(
+    root: Path,
+    *,
+    acquire_text: str | None = None,
+    schema: dict | None = None,
+) -> FreshenSurfaceCoherence:
+    acquire = acquire_text if acquire_text is not None else read(root / "skills" / "acquire" / "SKILL.md")
+    freshen_schema = schema if schema is not None else freshen_record_schema(root)
+    dispositions = freshen_dispositions(freshen_schema)
+    record_elements = freshen_record_elements(freshen_schema)
+    graph_facets = freshen_graph_facets(freshen_schema)
+    admitted_destination = protocol_triggering_on_artifact(root, "work-unit")
+
+    try:
+        freshen_step = numbered_step(acquire, 4)
+    except AssertionError:
+        freshen_step = ""
+    try:
+        delivery_step = numbered_step(acquire, 5)
+    except AssertionError:
+        delivery_step = ""
+
+    try:
+        routing_rows = markdown_table_rows(markdown_section(freshen_step, "Freshen routing table", level=3))
+    except AssertionError:
+        routing_rows = []
+    route_dispositions = [row.get("Disposition", "") for row in routing_rows]
+    route_by_disposition = {row.get("Disposition", ""): row for row in routing_rows}
+
+    try:
+        record_rows = markdown_table_rows(markdown_section(freshen_step, "Freshen record contract", level=3))
+    except AssertionError:
+        record_rows = []
+    record_rendered = [row.get("Element", "") for row in record_rows]
+
+    try:
+        facet_rendered = _section_table_values(
+            freshen_step,
+            "Graph facets",
+            "Facet",
+            level=3,
+        )
+    except AssertionError:
+        facet_rendered = []
+
+    non_proceed_rows = [
+        row
+        for row in routing_rows
+        if row.get("Disposition") != "proceed-as-freshened"
+    ]
+    proceed_row = route_by_disposition.get("proceed-as-freshened", {})
+    mode_specific_headings = re.findall(
+        r"^#{2,6} .*freshen.*(?:autonomous|interactive)|"
+        r"^#{2,6} .*(?:autonomous|interactive).*freshen",
+        acquire,
+        flags=re.IGNORECASE | re.MULTILINE,
+    )
+
+    return FreshenSurfaceCoherence(
+        freshen_step_is_step_four_once=_freshen_step_numbers(acquire) == [4],
+        materialized_artifact_held_until_freshened=has_semantic_clause(
+            freshen_step,
+            r"\bmaterialized artifact\b",
+            r"\bheld\b",
+            r"\bfreshen pass completes\b",
+        ),
+        routing_table_matches_disposition_enum=route_dispositions == dispositions,
+        routing_table_routes_every_disposition=(
+            len(routing_rows) == len(dispositions)
+            and all(row.get("Consequence", "").strip() for row in routing_rows)
+            and all(row.get("Onward route", "").strip() for row in routing_rows)
+        ),
+        only_proceed_reaches_admitted_destination=(
+            bool(proceed_row)
+            and admitted_destination in proceed_row.get("Consequence", "")
+            and all(
+                admitted_destination not in row.get("Consequence", "")
+                for row in non_proceed_rows
+            )
+            and all(
+                admitted_destination not in row.get("Onward route", "")
+                for row in non_proceed_rows
+            )
+        ),
+        delivery_conditioned_on_proceed=has_semantic_clause(
+            delivery_step,
+            r"\bdeliver\b",
+            r"\bonly\b",
+            r"`?proceed-as-freshened`?",
+        ),
+        admitted_destination_trigger_is_work_unit=(admitted_destination == "define"),
+        record_contract_matches_schema_required=record_rendered == record_elements,
+        graph_facets_match_schema_required=facet_rendered == graph_facets,
+        record_is_ticket_comment_not_body=(
+            has_semantic_clause(
+                freshen_step,
+                r"\brecord\b",
+                r"\bposted\b",
+                r"\bticket\b",
+                r"\bcomment\b",
+            )
+            and has_semantic_clause(
+                freshen_step,
+                r"\bfreshened unit'?s body\b",
+                r"\bonly\b",
+                r"\bspec\b",
+            )
+        ),
+        proceed_recrafts_before_delivery=(
+            has_semantic_clause(
+                freshen_step,
+                r"\bre-craft\b",
+                r"\bticket body\b",
+                r"\bplanning home\b",
+                r"\bwork-unit-craft\b",
+            )
+            and has_semantic_clause(
+                freshen_step,
+                r"\bre-run\b",
+                r"\bmaterialize.py\b",
+                r"\bstandalone\b",
+                r"\bcurrently-verifiable\b",
+            )
+        ),
+        grounds_body_and_graph_against_current_substrate=(
+            has_semantic_clause(
+                freshen_step,
+                r"\bticket body\b",
+                r"\bcurrent tree\b",
+                r"\bcurrent base commit\b",
+            )
+            and has_semantic_clause(
+                freshen_step,
+                r"\bdependency graph\b",
+                r"\blive tracker state\b",
+            )
+        ),
+        shared_boundary_mode_parity_declared=(
+            FRESHEN_ADR_0015_URL in freshen_step
+            and has_semantic_clause(
+                freshen_step,
+                r"\bsingle acquisition boundary\b",
+                r"\bautonomous\b",
+                r"\binteractive\b",
+            )
+        ),
+        no_mode_specific_freshening_section=not mode_specific_headings,
+        defective_substrate_escalates_to_resolve=has_semantic_clause(
+            freshen_step,
+            r"\bdefective substrate\b",
+            r"\bresolve\b",
+            r"\bfreshen repairs the unit\b",
+            r"\bresolve repairs the substrate\b",
+        ),
+    )
+
+
 @dataclass(frozen=True)
 class SessionSurfaceHandoffCommitments:
     has_single_marker_pair: bool

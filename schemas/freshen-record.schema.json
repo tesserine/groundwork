@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/freshen-record.schema.json",
+  "title": "Freshen Record",
+  "description": "Authoring-substrate schema for the tracker comment recording an acquired work-unit freshen pass. The record is a log entry on the ticket, not a runtime artifact.",
+  "type": "object",
+  "required": [
+    "work_unit",
+    "grounded_against",
+    "staleness_finding",
+    "graph_finding",
+    "disposition"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "work_unit": {
+      "type": "string",
+      "description": "Common envelope - threads to work unit.",
+      "pattern": "^[a-z][a-z0-9]*([-.][a-z0-9]+)*$"
+    },
+    "grounded_against": {
+      "type": "object",
+      "description": "Current substrate the freshen pass grounded against.",
+      "required": ["commit", "grounded_at", "tracker_state"],
+      "additionalProperties": false,
+      "properties": {
+        "commit": {
+          "type": "string",
+          "description": "Repository commit or immutable source identifier consulted during grounding.",
+          "minLength": 1
+        },
+        "grounded_at": {
+          "type": "string",
+          "description": "Timestamp when the grounding pass was performed.",
+          "format": "date-time"
+        },
+        "tracker_state": {
+          "type": "string",
+          "description": "Tracker state consulted for the ticket body and dependency graph.",
+          "minLength": 1
+        }
+      }
+    },
+    "staleness_finding": {
+      "type": "string",
+      "description": "Present finding naming what was stale or thin and what changed, or stating that grounding found the body current.",
+      "minLength": 1
+    },
+    "graph_finding": {
+      "type": "object",
+      "description": "Present finding for every dependency-graph facet on the acquired unit.",
+      "required": [
+        "blockers",
+        "blocked",
+        "epic_membership",
+        "siblings",
+        "milestone",
+        "labels"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "blockers": {
+          "type": "string",
+          "description": "Finding for blocking work-units and their current state.",
+          "minLength": 1
+        },
+        "blocked": {
+          "type": "string",
+          "description": "Finding for work-units blocked by this unit and their current state.",
+          "minLength": 1
+        },
+        "epic_membership": {
+          "type": "string",
+          "description": "Finding for parent epic membership or absence.",
+          "minLength": 1
+        },
+        "siblings": {
+          "type": "string",
+          "description": "Finding for sibling or duplicate work-unit state.",
+          "minLength": 1
+        },
+        "milestone": {
+          "type": "string",
+          "description": "Finding for milestone currency or absence.",
+          "minLength": 1
+        },
+        "labels": {
+          "type": "string",
+          "description": "Finding for label accuracy against current tracker state.",
+          "minLength": 1
+        }
+      }
+    },
+    "disposition": {
+      "type": "string",
+      "description": "Exactly one typed freshen disposition selected before any re-craft.",
+      "enum": [
+        "proceed-as-freshened",
+        "close",
+        "split",
+        "relink",
+        "reblock",
+        "reframe-as-spike"
+      ]
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "work_unit": "work-unit-465-freshen-built-in",
+  "grounded_against": {
+    "commit": "1e751e9b",
+    "grounded_at": "2026-07-05T08:57:19Z",
+    "tracker_state": "issue body, comment log, labels, milestone, and linked issue state at acquisition"
+  },
+  "staleness_finding": "The current need exceeds one session-sized unit and must be split before implementation.",
+  "graph_finding": {
+    "blockers": "No blocking work-units remain open.",
+    "blocked": "Downstream work depends on only part of this scope.",
+    "epic_membership": "The parent epic remains current.",
+    "siblings": "Sibling units divide adjacent scope.",
+    "milestone": "The milestone remains current.",
+    "labels": "The enhancement label remains accurate."
+  },
+  "disposition": "split"
+}

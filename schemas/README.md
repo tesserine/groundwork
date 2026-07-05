@@ -15,6 +15,12 @@ Mechanic parameters are shell environment variable names because invocation
 data is supplied through the child process environment; secret parameters use
 `secret = true` and must remain values, not rendered command text.
 
+`freshen-record.schema.json` is an authoring substrate for acquisition
+freshening records. It is validated by the general schema conformance sweep,
+not declared as a runtime artifact type in `manifest.toml`: the record's home
+is a tracker comment on the acquired ticket, while the delivered runtime
+artifact remains the re-materialized `work-unit`.
+
 `change-proposal.schema.json`, `change-approved.schema.json`, and
 `change-needs-revision.schema.json` are the C-4 artifact schemas for the
 submit -> review handoff from ADR-0002 and ADR-0003. `change-proposal`

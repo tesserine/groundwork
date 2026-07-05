@@ -1,0 +1,18 @@
+{
+  "work_unit": "work-unit-465-freshen-built-in",
+  "grounded_against": {
+    "commit": "1e751e9b",
+    "grounded_at": "2026-07-05T08:57:19Z",
+    "tracker_state": "issue body, comment log, labels, milestone, and linked issue state at acquisition"
+  },
+  "staleness_finding": "The body remains useful, but current tracker links show it must be relinked before entry.",
+  "graph_finding": {
+    "blockers": "A former blocker closed and should be removed.",
+    "blocked": "Blocked units remain linked to the current deliverable.",
+    "epic_membership": "The unit belongs under a different parent epic.",
+    "siblings": "A duplicate candidate requires merge resolution.",
+    "milestone": "The milestone remains current.",
+    "labels": "The enhancement label remains accurate."
+  },
+  "disposition": "relink"
+}

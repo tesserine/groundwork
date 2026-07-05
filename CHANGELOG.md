@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Freshening is built into acquisition** (#465). `acquire` (v2.0.0) now
+  re-grounds an inherited ticket body and dependency graph before delivery,
+  records exactly one typed freshen disposition, and admits the work-unit to
+  `define` only when the disposition is `proceed-as-freshened`. The freshen
+  record is single-homed in `schemas/freshen-record.schema.json` as a tracker
+  comment substrate, with conformance gates in `tooling/prose_conformance.py`
+  and `tests/test_freshen_conformance.py` binding the disposition set, record
+  elements, graph facets, and withhold rule to the schema and manifest.
+
 - **The comment log carries resumption state** (#481).
   `skills/work-unit-craft/SKILL.md` §"The Body Is the Spec; Comments Are a
   Log" (v1.4.0) gains the resumption obligation: a progress comment carries,

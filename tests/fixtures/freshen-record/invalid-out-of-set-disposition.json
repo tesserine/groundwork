@@ -1,0 +1,18 @@
+{
+  "work_unit": "work-unit-465-freshen-built-in",
+  "grounded_against": {
+    "commit": "1e751e9b",
+    "grounded_at": "2026-07-05T08:57:19Z",
+    "tracker_state": "issue body and dependency graph at acquisition"
+  },
+  "staleness_finding": "The unit remains current.",
+  "graph_finding": {
+    "blockers": "No blockers.",
+    "blocked": "No blocked units.",
+    "epic_membership": "No epic.",
+    "siblings": "No siblings.",
+    "milestone": "No milestone.",
+    "labels": "Labels are current."
+  },
+  "disposition": "proceed-with-caveats"
+}
