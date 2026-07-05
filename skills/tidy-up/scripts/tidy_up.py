@@ -139,8 +139,8 @@ def tidy_land(run_branch: str | None) -> None:
     hard_reset_and_clean()
     fetch_origin()
     checkout_canonical(canonical)
-    delete_branch(run_branch)
     prune_worktrees()
+    delete_branch(run_branch)
     verify_canonical_clean()
 
 
@@ -150,8 +150,8 @@ def tidy_abandon(run_branch: str | None) -> None:
     hard_reset_and_clean()
     fetch_origin()
     checkout_canonical(canonical)
-    delete_branch(run_branch)
     prune_worktrees()
+    delete_branch(run_branch)
     verify_canonical_clean()
 
 

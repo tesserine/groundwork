@@ -64,8 +64,8 @@ and recorded. The landed content is already on the canonical branch. Tidy-up
 receives the run branch from the resolved `change-proposal.branch`, discards
 only process scaffolding from the worktree, removes untracked-unignored residue
 while preserving ignored files, checks out the canonical branch, fetches and
-fast-forwards it to its remote state, deletes the supplied run branch, prunes
-run-introduced worktrees, and verifies canonical-clean.
+fast-forwards it to its remote state, prunes run-introduced worktrees, deletes
+the supplied run branch, and verifies canonical-clean.
 
 Run:
 
@@ -78,8 +78,8 @@ python3 skills/tidy-up/scripts/tidy_up.py land --run-branch <change-proposal.bra
 Abandonment and regeneration start from a run whose work must not remain in the
 checkout. Tidy-up discards uncommitted residue, removes untracked-unignored
 residue while preserving ignored files, returns to the canonical branch,
-fast-forwards it to its remote state, deletes the supplied run branch carrying
-unlanded work, prunes run-introduced worktrees, and verifies canonical-clean
+fast-forwards it to its remote state, prunes run-introduced worktrees, deletes
+the supplied run branch carrying unlanded work, and verifies canonical-clean
 before a fresh derivation begins.
 
 Run:

@@ -93,9 +93,12 @@ class GitFixture:
         self.seed_common_residue()
         return git(self.repo, "show", "HEAD:landed.txt").stdout
 
-    def create_stale_linked_worktree_entry(self) -> Path:
+    def create_stale_linked_worktree_entry(self, branch: str | None = None) -> Path:
         stale = self.root / "stale-linked-worktree"
-        git(self.repo, "worktree", "add", str(stale))
+        command = ["worktree", "add", str(stale)]
+        if branch is not None:
+            command.append(branch)
+        git(self.repo, *command)
         shutil.rmtree(stale)
         return stale
 
@@ -155,6 +158,21 @@ class TidyUpMechanicsTests(unittest.TestCase):
                 git(fixture.repo, "show-ref", "--verify", f"refs/heads/{fixture.run_branch}", check=False).returncode,
             )
 
+    def test_land_prunes_stale_worktree_metadata_before_deleting_run_branch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = GitFixture(Path(tmp))
+            fixture.create_landed_state(checkout_run_branch=False)
+            fixture.create_stale_linked_worktree_entry(fixture.run_branch)
+
+            result = run_tidy(fixture.repo, "land", fixture.run_branch)
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual("main", branch(fixture.repo))
+            self.assertNotEqual(
+                0,
+                git(fixture.repo, "show-ref", "--verify", f"refs/heads/{fixture.run_branch}", check=False).returncode,
+            )
+
     def test_abandon_deletes_supplied_run_branch_when_invoked_from_canonical(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             fixture = GitFixture(Path(tmp))
@@ -163,6 +181,26 @@ class TidyUpMechanicsTests(unittest.TestCase):
             git(fixture.repo, "add", "unlanded.txt")
             git(fixture.repo, "commit", "-m", "unlanded work")
             git(fixture.repo, "checkout", "main")
+
+            result = run_tidy(fixture.repo, "abandon", fixture.run_branch)
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual("main", branch(fixture.repo))
+            self.assertNotIn("unlanded.txt", git(fixture.repo, "ls-tree", "--name-only", "HEAD").stdout)
+            self.assertNotEqual(
+                0,
+                git(fixture.repo, "show-ref", "--verify", f"refs/heads/{fixture.run_branch}", check=False).returncode,
+            )
+
+    def test_abandon_prunes_stale_worktree_metadata_before_deleting_run_branch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = GitFixture(Path(tmp))
+            fixture.checkout_run_branch()
+            (fixture.repo / "unlanded.txt").write_text("unlanded\n", encoding="utf-8")
+            git(fixture.repo, "add", "unlanded.txt")
+            git(fixture.repo, "commit", "-m", "unlanded work")
+            git(fixture.repo, "checkout", "main")
+            fixture.create_stale_linked_worktree_entry(fixture.run_branch)
 
             result = run_tidy(fixture.repo, "abandon", fixture.run_branch)
 
