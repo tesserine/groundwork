@@ -34,6 +34,18 @@ Groundwork artifact schemas carry self-contained copies of the handle schema so
 runa can validate artifacts without an external registry or network fetch, and
 conformance checks that those copies do not drift from the vendored contract.
 
+`freshen-record.schema.json` is an authoring substrate for the freshen record
+produced when an acquired work-unit is re-grounded at the acquisition boundary
+(`skills/acquire/SKILL.md`). It is the single home of the freshen disposition
+set (the `disposition` enum), the record's four required elements, and the six
+dependency-graph facets (the `graph_finding` required keys). It is deliberately
+not a `manifest.toml` artifact type: the record's home is a tracker comment, not
+a workspace artifact, so declaring an artifact type would mint a second
+workspace home and an MCP tool for something that must not accrete in the
+workspace. Placement in `schemas/` alone registers it with the conformance
+sweep; the acquire surface renders the set, elements, and facets as projections
+gate-bound to this schema.
+
 The scoped contract spine is dimension-agnostic. `contract.schema.json`
 declares criteria for any dimension; each criterion names its dimension,
 the acceptance criterion it refines, the statement that defines done, the

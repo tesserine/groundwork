@@ -1,0 +1,13 @@
+{
+  "work_unit": "work-unit-465-freshen-built-in",
+  "staleness_finding": "Body carried retired ticket vocabulary and a resolved blocker line; swept to neutral work-unit vocabulary and removed the resolved blocker.",
+  "graph_finding": {
+    "blockers": "commons#106 was the sole blocker; verified closed/completed - resolved.",
+    "blocked": "No units are blocked by this one; verified against the tracker.",
+    "epic_membership": "Not a child of any epic; verified.",
+    "siblings": "No sibling absorbed the freshen scope; verified.",
+    "milestone": "No milestone; verified.",
+    "labels": "One enhancement label; discriminating; verified."
+  },
+  "disposition": "proceed-as-freshened"
+}

@@ -3,13 +3,14 @@ name: acquire
 description: >-
   Entry from an existing forge work-unit. Use to start scoped work from a work-unit
   reference that is already on the tracker (e.g. "define runa#14") when no
-  work-unit artifact exists yet — acquisition reads the work-unit and
-  materializes the work-unit artifact that define then proceeds on. The mirror
-  of decompose's create path: decompose creates the work-unit it delivers;
-  acquire adopts the work-unit it is given, and creates no work-unit.
+  work-unit artifact exists yet — acquisition reads the work-unit, freshens it
+  against current substrate, and materializes the work-unit artifact that define
+  then proceeds on. The mirror of decompose's create path: decompose creates the
+  work-unit it delivers; acquire adopts the work-unit it is given, and creates no
+  work-unit.
 metadata:
-  version: "1.1.0"
-  updated: "2026-07-02"
+  version: "2.0.0"
+  updated: "2026-07-05"
 ---
 
 # Acquire
@@ -77,8 +78,33 @@ cold start.
    re-acquire. Do not hand-fill the missing fields here — that would forge an
    execution snapshot the planning home never authorized.
 
-4. **Deliver the `work-unit` artifact.** Invoke the `work-unit` MCP tool with
-   the materializer's `instance_id` and `artifact` body — the same call shape
+4. **Freshen the acquired work-unit.** A well-formed work-unit can still be
+   *stale*: it was authored in another context at another time, and its body
+   and its stated dependency edges are a claim about a past moment, not current
+   ground — reality wins over the work-unit record, the need wins over the
+   record. This is groundwork's one inherited-frame entry, so re-grounding is
+   owed here, before `define` builds on the frame. Run the freshen pass over
+   the acquired work-unit and choose exactly one disposition; the pass, the
+   disposition set, and the freshen record it produces are detailed under
+   [Freshening](#freshening) below. The pass has three moves in order: ground
+   the body against current substrate, ground the dependency graph against live
+   tracker state, then re-craft or dispose. Where grounding finds staleness or
+   thinness, the body is re-crafted through `refine-work-unit` at its planning
+   home rather than reimplemented here — freshening adds the staleness trigger
+   and the dependency-graph re-verification, not a second re-craft engine. When
+   grounding shows the substrate the unit rests on is itself defective, the
+   finding escalates to `resolve` as a side quest rather than being absorbed
+   into the unit — freshen repairs the unit, resolve repairs the substrate.
+   Freshening fires at this single acquisition boundary in both session modes —
+   mode is a property of the session (commons ADR-0015), not a fork in the
+   pass.
+
+5. **Deliver the `work-unit` artifact.** Only a `proceed-as-freshened`
+   disposition may deliver the work-unit artifact; every other disposition ends
+   acquisition without delivery, so `define` — whose sole trigger is the
+   `work-unit` artifact — never fires on an unfreshened or withheld frame.
+   Under `proceed-as-freshened`, invoke the `work-unit` MCP tool with the
+   materializer's `instance_id` and `artifact` body — the same call shape
    `decompose` uses for a tracker-backed work-unit, with the work-unit's
    `handle` carried unchanged. `work-unit` is a planning-phase artifact: the
    agent supplies the schema fields and runa does not inject `work_unit`. Do
@@ -98,10 +124,64 @@ cold start.
    records it. The cascade then computes `define` as the next station on the
    acquired artifact.
 
-5. **Hand off to `define`.** Acquisition materializes; `define` claims. Tracker
+6. **Hand off to `define`.** Acquisition materializes; `define` claims. Tracker
    claiming (assigning the work-unit, marking it in progress) is `define`'s
    workspace-preparation step, not acquisition's — keep the one-way boundary
    clean.
+
+## Freshening
+
+Freshening re-grounds an acquired work-unit against current substrate at the
+acquisition boundary and yields exactly one typed disposition. The discipline
+is groundwork's native re-derivation of the `freshen-work-unit` station skill:
+the transferable invariants are the pass shape, the typed disposition, and the
+freshen record. It composes existing assets at their homes — `reckon` supplies
+the re-grounding reasoning, `refine-work-unit` the body re-craft, the `spike`
+work-unit the reframe home, `resolve` the defective-substrate escalation — and
+builds on the comment log this skill already surfaces, adding no second
+log-surfacing.
+
+**The pass.** Ground the body against the current substrate the work-unit's
+acceptance criteria cite; ground the dependency graph against live tracker
+state; then choose one disposition and record it. The disposition is chosen
+*before* any re-craft.
+
+**The disposition set and where each unit goes.** The `disposition` value is
+one member of the set declared in `schemas/freshen-record.schema.json` — the
+single home of the set. Only `proceed-as-freshened` admits the unit to
+`define`; every other disposition withholds it, the way the
+committed-but-unspecced gate withholds an unspecced unit.
+
+| Disposition | Admits to `define`? | Onward route |
+| --- | --- | --- |
+| `proceed-as-freshened` | yes | delivered to `define` through step 5 |
+| `close` | no | closed at the tracker; the need is gone or already met |
+| `split` | no | routed to `decompose`'s `refine-work-unit`, then re-acquired |
+| `relink` | no | re-linked or merged at the tracker, then re-acquired or closed |
+| `reblock` | no | blocking edges recorded at the tracker; the unit waits, unmaterialized |
+| `reframe-as-spike` | no | filed as a `spike` work-unit per `work-unit-craft` |
+
+**The freshen record.** Every acquisition from an existing work-unit attaches a
+freshen record — validated against `schemas/freshen-record.schema.json` and
+posted as a comment on the work-unit, a log entry in the running record, not
+written into the work-unit body. It carries four required elements: the
+`grounded_against` substrate state (commit, when, and the tracker state the
+graph was verified against), the `staleness_finding` (what was stale or thin
+and what changed, or that grounding found the body current), the `graph_finding`
+(below), and the `disposition`.
+
+**The graph finding covers the whole graph, not only the body.** The
+`graph_finding` re-verifies each stated edge against current tracker state, one
+finding per facet: `blockers`, `blocked`, `epic_membership`, `siblings`,
+`milestone`, `labels`. A finding that addresses only body staleness does not
+satisfy the record — the schema's `graph_finding` object requires all six
+facets.
+
+**Proceed re-craft.** Under `proceed-as-freshened`, where grounding found
+staleness or thinness the body is re-crafted through `refine-work-unit` at the
+planning home — which re-applies `work-unit-craft`'s contract-input pass — and
+re-materialized, so the body `define` receives is a standalone spec verifiable
+against current substrate, not a stale body wearing a freshened annotation.
 
 ## Corruption Modes
 
@@ -109,14 +189,20 @@ cold start.
   unread and unsurfaced. The snapshot carries the running record so the
   session grounds on the whole work-unit; an entry that reads the spec alone
   executes blind to its own live corrections.
+- `freshen-skipped`: handing off to `define` without running the freshen pass
+  and recording a disposition. An acquired frame is inherited, not reckoned;
+  skipping the pass carries a stale body and stale edges into the pipeline with
+  perfect fidelity.
 - `work-unit-creation`: calling `create-work-unit` during acquisition. Acquisition
   adopts an existing work-unit; creating one is `decompose`'s path, and doing
   both makes a second work-unit for the same work.
 - `content-fabrication`: hand-filling acceptance criteria or a description
   the work-unit does not contain, instead of routing the gap to refinement. The
   artifact must be a faithful snapshot of the planning home.
-- `write-back`: editing the work-unit from acquisition (beyond `define`'s later
-  claim). Derivation is one-way.
+- `write-back`: editing the work-unit artifact from acquisition (beyond a freshen
+  re-craft at the planning home and `define`'s later claim). Derivation is
+  one-way: freshening repairs the work-unit at its planning home through
+  `refine-work-unit`, never the materialized artifact.
 - `handle-drift`: re-deriving or altering the `handle` instead of carrying
   the work-unit's identity through verbatim — breaks the back-link and risks a
   downstream identity collision.
@@ -124,9 +210,16 @@ cold start.
 ## Cross-References
 
 - `decompose` (protocol): the create path acquisition mirrors, and the home
-  of `refine-work-unit` — where a work-unit-quality gap surfaced here is fixed.
+  of `refine-work-unit` — where a work-unit-quality gap surfaced here is fixed,
+  and where a freshen `proceed-as-freshened` re-craft is performed.
 - `define` (protocol): proceeds on the acquired artifact through its existing
-  contract; owns tracker claiming.
+  contract; owns tracker claiming. Its sole trigger is the `work-unit` artifact,
+  so withholding delivery under a non-proceed disposition structurally withholds
+  the unit from the scoped pipeline.
+- `resolve` (skill): the defective-substrate escalation when freshening finds
+  the substrate the unit rests on is itself defective.
 - `read-work-unit` (connector capability operation): emits
   `{handle, title, body, state}` and, per forge-capability `2.0.0`, the
   optional ordered `comments` log for the selected connector.
+- `schemas/freshen-record.schema.json`: the single home of the freshen
+  disposition set, the record's required elements, and the graph-facet list.
