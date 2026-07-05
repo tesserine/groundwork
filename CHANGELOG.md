@@ -8,6 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Freshening as a groundwork built-in** (#465).
+  `skills/acquire/SKILL.md` (2.0.0) inserts a mandatory Freshen step between
+  materialization and delivery: an acquired work-unit is re-grounded against
+  current substrate — its body **and its dependency graph** — before `define`
+  activates, and the acquisition yields exactly one typed disposition. Only
+  `proceed-as-freshened` delivers the `work-unit` artifact; since `define`'s
+  sole trigger is that artifact, every other disposition structurally withholds
+  the unit from the scoped pipeline. The disposition set, the freshen record's
+  four required elements, and the six dependency-graph facets are single-homed
+  in the new `schemas/freshen-record.schema.json` (auto-gated by the conformance
+  sweep); the record lands as a comment on the work-unit, not in its body. Body
+  re-craft under a proceed disposition routes to `decompose`'s `refine-work-unit`
+  rather than reimplementing re-craft (Principle #13), so freshening's own
+  contribution is the staleness trigger and the dependency-graph re-verification.
+  `tests/test_freshen_conformance.py` gates the discipline — schema fixtures plus
+  a coherence gate that consults the schema and manifest authorities (never a
+  phrase list), with mutation probes proving the checks bite.
+
 - **Runa runtime state commit policy** (#238).
   [ADR-0009](docs/architecture/decisions/0009-runa-runtime-state-commit-policy.md)
   declares, for the four entries runa creates under `.runa/`, which a consuming

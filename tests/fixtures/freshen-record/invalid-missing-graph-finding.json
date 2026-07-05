@@ -1,0 +1,10 @@
+{
+  "work_unit": "work-unit-465-freshen-built-in",
+  "grounded_against": {
+    "commit": "13a9ac14",
+    "grounded_at": "2026-07-05T16:40:00Z",
+    "tracker_state": "commons#106 closed; #459 open compose-with; enhancement label; no epic; no milestone"
+  },
+  "staleness_finding": "Body carried retired ticket vocabulary and a resolved blocker line; swept to neutral work-unit vocabulary and removed the resolved blocker.",
+  "disposition": "proceed-as-freshened"
+}

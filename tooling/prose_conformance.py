@@ -549,3 +549,205 @@ def session_surface_handoff_commitments(
             forbidden_pattern_hits(body, PUBLIC_DOCS_BYPASS_PATTERNS)
         ),
     )
+
+
+# --- Freshen-on-acquire coherence (groundwork#465) ----------------------------
+#
+# These helpers gate the freshen-on-acquire built-in's methodology surface
+# (skills/acquire/SKILL.md) against the authorities that own its invariants:
+# the freshen-record schema (the disposition set, the required record elements,
+# the six graph facets), and the manifest (the protocol whose trigger admits an
+# acquired work-unit). No assertion enumerates forbidden prose; the surface's
+# own renderings are checked against their schema/manifest homes, and positive
+# coherence clauses are checked where the surface is the single home of its own
+# rule.
+
+FRESHEN_ACQUISITION_TRIGGER_ARTIFACT = "work-unit"
+
+
+def freshen_record_disposition_set(root: Path) -> list[str]:
+    schema = artifact_schema(root, "freshen-record")
+    return list(schema_def(schema, "#/properties/disposition/enum"))
+
+
+def freshen_record_graph_facets(root: Path) -> list[str]:
+    schema = artifact_schema(root, "freshen-record")
+    return list(schema_def(schema, "#/properties/graph_finding/required"))
+
+
+def freshen_record_required_elements(root: Path) -> list[str]:
+    schema = artifact_schema(root, "freshen-record")
+    return [name for name in schema.get("required", []) if name != "work_unit"]
+
+
+def acquisition_admitted_destination(root: Path) -> str | None:
+    """The protocol that admits an acquired work-unit into the scoped pipeline:
+    the one whose trigger fires on_artifact work-unit. Derived from the
+    manifest, never hard-coded, so manifest drift that re-homes the trigger is
+    caught by every gate built on this."""
+    for protocol in manifest_protocols(root):
+        trigger = protocol.get("trigger") or {}
+        if (
+            trigger.get("type") == "on_artifact"
+            and trigger.get("name") == FRESHEN_ACQUISITION_TRIGGER_ARTIFACT
+        ):
+            name = protocol.get("name")
+            return name if isinstance(name, str) else None
+    return None
+
+
+def _cell(value: str) -> str:
+    return value.strip().strip("`").strip().lower()
+
+
+def _column(rows: list[dict[str, str]], header_substring: str) -> list[str]:
+    if not rows:
+        return []
+    header = next(
+        (key for key in rows[0] if header_substring.lower() in key.lower()),
+        None,
+    )
+    if header is None:
+        return []
+    return [row[header] for row in rows]
+
+
+@dataclass(frozen=True)
+class FreshenOnAcquireCoherence:
+    freshen_step_present: bool
+    freshen_precedes_delivery: bool
+    disposition_set_matches_schema: bool
+    only_proceed_admits_to_pipeline: bool
+    record_contract_covers_required_elements: bool
+    graph_finding_covers_schema_facets: bool
+    withhold_conditioning_present: bool
+    record_is_log_entry_not_body: bool
+    composes_refine_work_unit: bool
+    resolve_escalation_present: bool
+    mode_parity_single_boundary: bool
+
+    @property
+    def passed(self) -> bool:
+        return (
+            self.freshen_step_present
+            and self.freshen_precedes_delivery
+            and self.disposition_set_matches_schema
+            and self.only_proceed_admits_to_pipeline
+            and self.record_contract_covers_required_elements
+            and self.graph_finding_covers_schema_facets
+            and self.withhold_conditioning_present
+            and self.record_is_log_entry_not_body
+            and self.composes_refine_work_unit
+            and self.resolve_escalation_present
+            and self.mode_parity_single_boundary
+        )
+
+
+def _step_title_index(steps: str, title_pattern: str) -> int | None:
+    match = re.search(
+        rf"^\d+\. \*\*[^*]*{title_pattern}[^*]*\*\*",
+        steps,
+        flags=re.MULTILINE | re.IGNORECASE,
+    )
+    return match.start() if match else None
+
+
+def freshen_on_acquire_coherence(root: Path) -> FreshenOnAcquireCoherence:
+    acquire = read(root / "skills" / "acquire" / "SKILL.md")
+    disposition_set = set(freshen_record_disposition_set(root))
+    facets = freshen_record_graph_facets(root)
+    required_elements = freshen_record_required_elements(root)
+    destination = acquisition_admitted_destination(root)
+
+    steps = markdown_section(acquire, "Steps")
+    freshen_index = _step_title_index(steps, r"Freshen")
+    deliver_index = _step_title_index(steps, r"Deliver")
+    freshen_step_present = freshen_index is not None
+    freshen_precedes_delivery = (
+        freshen_index is not None
+        and deliver_index is not None
+        and freshen_index < deliver_index
+    )
+
+    try:
+        freshening = markdown_section(acquire, "Freshening")
+        rows = markdown_table_rows(freshening)
+    except AssertionError:
+        rows = []
+
+    disposition_cells = {_cell(value) for value in _column(rows, "disposition")}
+    disposition_set_matches_schema = bool(rows) and disposition_cells == disposition_set
+
+    only_proceed_admits = False
+    if rows and destination is not None:
+        admit_column = _column(rows, destination)
+        disposition_column = _column(rows, "disposition")
+        if admit_column and len(admit_column) == len(disposition_column):
+            proceed_admits: list[bool] = []
+            nonproceed_admits: list[bool] = []
+            for disposition_value, admit_value in zip(disposition_column, admit_column):
+                admits = _cell(admit_value) in {"yes", "y", "true"}
+                if _cell(disposition_value) == "proceed-as-freshened":
+                    proceed_admits.append(admits)
+                else:
+                    nonproceed_admits.append(admits)
+            only_proceed_admits = (
+                len(proceed_admits) == 1
+                and all(proceed_admits)
+                and not any(nonproceed_admits)
+            )
+
+    record_contract_covers_required_elements = all(
+        f"`{element}`" in acquire for element in required_elements
+    )
+    graph_finding_covers_schema_facets = all(
+        f"`{facet}`" in acquire for facet in facets
+    )
+
+    withhold_conditioning_present = has_semantic_clause(
+        acquire,
+        r"\bonly\b",
+        r"\bproceed-as-freshened\b",
+        r"\bdeliver",
+    )
+    record_is_log_entry_not_body = has_semantic_clause(
+        acquire,
+        r"\bfreshen record\b",
+        r"\bcomment\b",
+        r"\bnot\b",
+        r"\bbody\b",
+    )
+    composes_refine_work_unit = has_semantic_clause(
+        acquire,
+        r"\brefine-work-unit\b",
+        r"\bre-craft",
+    )
+    resolve_escalation_present = has_semantic_clause(
+        acquire,
+        r"\bresolve\b",
+        r"\bsubstrate\b",
+        r"\bescalat",
+    )
+    mode_parity_single_boundary = (
+        has_semantic_clause(
+            acquire,
+            r"\bADR-0015\b",
+            r"\bmode is a property of the session\b",
+        )
+        and len(re.findall(r"^\d+\. \*\*[^*]*Freshen[^*]*\*\*", steps, flags=re.MULTILINE))
+        == 1
+    )
+
+    return FreshenOnAcquireCoherence(
+        freshen_step_present=freshen_step_present,
+        freshen_precedes_delivery=freshen_precedes_delivery,
+        disposition_set_matches_schema=disposition_set_matches_schema,
+        only_proceed_admits_to_pipeline=only_proceed_admits,
+        record_contract_covers_required_elements=record_contract_covers_required_elements,
+        graph_finding_covers_schema_facets=graph_finding_covers_schema_facets,
+        withhold_conditioning_present=withhold_conditioning_present,
+        record_is_log_entry_not_body=record_is_log_entry_not_body,
+        composes_refine_work_unit=composes_refine_work_unit,
+        resolve_escalation_present=resolve_escalation_present,
+        mode_parity_single_boundary=mode_parity_single_boundary,
+    )

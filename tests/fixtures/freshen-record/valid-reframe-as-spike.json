@@ -1,0 +1,18 @@
+{
+  "work_unit": "work-unit-465-freshen-built-in",
+  "grounded_against": {
+    "commit": "13a9ac14",
+    "grounded_at": "2026-07-05T16:40:00Z",
+    "tracker_state": "commons#106 closed; #459 open compose-with; enhancement label; no epic; no milestone"
+  },
+  "staleness_finding": "The unit's answer depends on an unresolved unknown; reframed as a spike.",
+  "graph_finding": {
+    "blockers": "commons#106 was the sole blocker; verified closed/completed - resolved.",
+    "blocked": "No units are blocked by this one; verified against the tracker.",
+    "epic_membership": "Not a child of any epic; verified.",
+    "siblings": "No sibling absorbed the freshen scope; verified.",
+    "milestone": "No milestone; verified.",
+    "labels": "One enhancement label; discriminating; verified."
+  },
+  "disposition": "reframe-as-spike"
+}
