@@ -1,3 +1,4 @@
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -21,9 +22,12 @@ def git(cwd: Path, *args: str, check: bool = True) -> subprocess.CompletedProces
     return result
 
 
-def run_tidy(repo: Path, kind: str) -> subprocess.CompletedProcess[str]:
+def run_tidy(repo: Path, kind: str, run_branch: str | None = None) -> subprocess.CompletedProcess[str]:
+    command = [sys.executable, str(TIDY_UP), kind]
+    if run_branch is not None:
+        command.extend(["--run-branch", run_branch])
     return subprocess.run(
-        [sys.executable, str(TIDY_UP), kind],
+        command,
         cwd=repo,
         capture_output=True,
         text=True,
@@ -75,7 +79,7 @@ class GitFixture:
         (self.repo / "build.tmp").write_text("run build artifact\n", encoding="utf-8")
         self.ignored.write_text("ignored survivor\n", encoding="utf-8")
 
-    def create_landed_state(self) -> str:
+    def create_landed_state(self, *, checkout_run_branch: bool = True) -> str:
         self.checkout_run_branch()
         landed = self.repo / "landed.txt"
         landed.write_text("landed content\n", encoding="utf-8")
@@ -84,9 +88,16 @@ class GitFixture:
         git(self.repo, "checkout", "main")
         git(self.repo, "merge", "--ff-only", self.run_branch)
         git(self.repo, "push", "origin", "main")
-        git(self.repo, "checkout", self.run_branch)
+        if checkout_run_branch:
+            git(self.repo, "checkout", self.run_branch)
         self.seed_common_residue()
         return git(self.repo, "show", "HEAD:landed.txt").stdout
+
+    def create_stale_linked_worktree_entry(self) -> Path:
+        stale = self.root / "stale-linked-worktree"
+        git(self.repo, "worktree", "add", str(stale))
+        shutil.rmtree(stale)
+        return stale
 
 
 class TidyUpMechanicsTests(unittest.TestCase):
@@ -95,7 +106,7 @@ class TidyUpMechanicsTests(unittest.TestCase):
             fixture = GitFixture(Path(tmp))
             landed_before = fixture.create_landed_state()
 
-            result = run_tidy(fixture.repo, "land")
+            result = run_tidy(fixture.repo, "land", fixture.run_branch)
 
             self.assertEqual(0, result.returncode, result.stderr)
             self.assertEqual("", porcelain(fixture.repo))
@@ -117,13 +128,46 @@ class TidyUpMechanicsTests(unittest.TestCase):
             git(fixture.repo, "commit", "-m", "unlanded work")
             fixture.seed_common_residue()
 
-            result = run_tidy(fixture.repo, "abandon")
+            result = run_tidy(fixture.repo, "abandon", fixture.run_branch)
 
             self.assertEqual(0, result.returncode, result.stderr)
             self.assertEqual("", porcelain(fixture.repo))
             self.assertEqual("main", branch(fixture.repo))
             self.assertFalse((fixture.repo / "build.tmp").exists())
             self.assertTrue(fixture.ignored.exists())
+            self.assertNotIn("unlanded.txt", git(fixture.repo, "ls-tree", "--name-only", "HEAD").stdout)
+            self.assertNotEqual(
+                0,
+                git(fixture.repo, "show-ref", "--verify", f"refs/heads/{fixture.run_branch}", check=False).returncode,
+            )
+
+    def test_land_deletes_supplied_run_branch_when_invoked_from_canonical(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = GitFixture(Path(tmp))
+            fixture.create_landed_state(checkout_run_branch=False)
+
+            result = run_tidy(fixture.repo, "land", fixture.run_branch)
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual("main", branch(fixture.repo))
+            self.assertNotEqual(
+                0,
+                git(fixture.repo, "show-ref", "--verify", f"refs/heads/{fixture.run_branch}", check=False).returncode,
+            )
+
+    def test_abandon_deletes_supplied_run_branch_when_invoked_from_canonical(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = GitFixture(Path(tmp))
+            fixture.checkout_run_branch()
+            (fixture.repo / "unlanded.txt").write_text("unlanded\n", encoding="utf-8")
+            git(fixture.repo, "add", "unlanded.txt")
+            git(fixture.repo, "commit", "-m", "unlanded work")
+            git(fixture.repo, "checkout", "main")
+
+            result = run_tidy(fixture.repo, "abandon", fixture.run_branch)
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual("main", branch(fixture.repo))
             self.assertNotIn("unlanded.txt", git(fixture.repo, "ls-tree", "--name-only", "HEAD").stdout)
             self.assertNotEqual(
                 0,
@@ -165,6 +209,18 @@ class TidyUpMechanicsTests(unittest.TestCase):
             self.assertNotEqual(0, result.returncode)
             self.assertIn("canonical-clean residual", result.stderr)
             self.assertIn("working tree is not porcelain-clean", result.stderr)
+
+    def test_verify_fails_loudly_with_named_residual_on_stale_linked_worktree_entry(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = GitFixture(Path(tmp))
+            stale = fixture.create_stale_linked_worktree_entry()
+
+            result = run_tidy(fixture.repo, "verify")
+
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn("canonical-clean residual", result.stderr)
+            self.assertIn("linked worktree residue remains", result.stderr)
+            self.assertIn(stale.name, result.stderr)
 
 
 if __name__ == "__main__":

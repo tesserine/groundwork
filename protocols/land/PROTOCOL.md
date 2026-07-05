@@ -94,8 +94,11 @@ The protocol is not a forge operation. It must not activate from a raw
 
 6. **Tidy up.** Invoke the tidy-up skill (`skills/tidy-up/SKILL.md`) to
    return the repository to the canonical clean post-run state after the
-   completion-record is delivered. The next reader grounds against the
-   substrate the run actually left, not process residue from the run.
+   completion-record is delivered. Pass the resolved `change-proposal.branch`
+   as tidy-up's `--run-branch`; cleanup must not infer the run branch from
+   `HEAD`, because this step may begin after the checkout already rests on the
+   canonical branch. The next reader grounds against the substrate the run
+   actually left, not process residue from the run.
 
 ## Failure Policy
 

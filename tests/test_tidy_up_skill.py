@@ -71,10 +71,10 @@ class TidyUpSkillTests(unittest.TestCase):
     def test_each_termination_kind_has_distinct_action_prose_and_invocation(self) -> None:
         termination = section(read(TIDY_UP), "Termination Kinds")
         expectations = {
-            "Land": ["approved change has been applied", "deletes the run branch", "land"],
+            "Land": ["approved change has been applied", "deletes the supplied run branch", "land"],
             "Abandonment and Regeneration": [
                 "work must not remain",
-                "deletes the run branch carrying unlanded work",
+                "deletes the supplied run branch carrying unlanded work",
                 "abandon",
             ],
             "Halt": ["disposition still needs to be visible", "halt-marked commit", "halt"],
@@ -101,6 +101,8 @@ class TidyUpSkillTests(unittest.TestCase):
         self.assertIn("6. **Tidy up.**", steps)
         self.assertIn("skills/tidy-up/SKILL.md", steps)
         self.assertIn("completion-record", steps)
+        self.assertIn("change-proposal.branch", steps)
+        self.assertIn("--run-branch", steps)
         self.assertIn("skills/tidy-up/SKILL.md", cross_refs)
 
     def test_non_land_surfaces_reference_one_skill_without_command_blocks(self) -> None:

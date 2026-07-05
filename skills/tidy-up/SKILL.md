@@ -19,13 +19,16 @@ inspect.
 The executable mechanics live in one place:
 
 ```
-python3 skills/tidy-up/scripts/tidy_up.py <kind>
+python3 skills/tidy-up/scripts/tidy_up.py <kind> [--run-branch BRANCH]
 ```
 
 Resolve the script path from the methodology root and run it with the current
 working directory inside the repository being tidied. `<kind>` is one of
-`land`, `abandon`, `halt`, or `verify`. The script is the mechanics home; this
-skill names the outcomes and the per-kind action sequence.
+`land`, `abandon`, `halt`, or `verify`. `land` and `abandon` require the
+caller to supply `--run-branch` from the run artifact it is closing; the script
+does not infer it from `HEAD`, because cleanup may begin after the checkout has
+already returned to canonical. The script is the mechanics home; this skill
+names the outcomes and the per-kind action sequence.
 
 ## The Canonical Clean State
 
@@ -58,15 +61,16 @@ the obstacle through the `resolve` skill.
 
 Land starts after the approved change has been applied, reflected, closed out,
 and recorded. The landed content is already on the canonical branch. Tidy-up
-checks out the canonical branch, fetches and fast-forwards it to its remote
-state, discards only process scaffolding from the worktree, removes
-untracked-unignored residue while preserving ignored files, deletes the run
-branch, prunes run-introduced worktrees, and verifies canonical-clean.
+receives the run branch from the resolved `change-proposal.branch`, discards
+only process scaffolding from the worktree, removes untracked-unignored residue
+while preserving ignored files, checks out the canonical branch, fetches and
+fast-forwards it to its remote state, deletes the supplied run branch, prunes
+run-introduced worktrees, and verifies canonical-clean.
 
 Run:
 
 ```
-python3 skills/tidy-up/scripts/tidy_up.py land
+python3 skills/tidy-up/scripts/tidy_up.py land --run-branch <change-proposal.branch>
 ```
 
 ### Abandonment and Regeneration
@@ -74,14 +78,14 @@ python3 skills/tidy-up/scripts/tidy_up.py land
 Abandonment and regeneration start from a run whose work must not remain in the
 checkout. Tidy-up discards uncommitted residue, removes untracked-unignored
 residue while preserving ignored files, returns to the canonical branch,
-fast-forwards it to its remote state, deletes the run branch carrying
+fast-forwards it to its remote state, deletes the supplied run branch carrying
 unlanded work, prunes run-introduced worktrees, and verifies canonical-clean
 before a fresh derivation begins.
 
 Run:
 
 ```
-python3 skills/tidy-up/scripts/tidy_up.py abandon
+python3 skills/tidy-up/scripts/tidy_up.py abandon --run-branch <run-branch>
 ```
 
 ### Halt
@@ -110,8 +114,9 @@ python3 skills/tidy-up/scripts/tidy_up.py verify
 ```
 
 Verification runs the four canonical-clean checks above. A dirty worktree,
-detached HEAD, non-canonical checkout, or worktree-prune failure is reported as
-a named canonical-clean residual on stderr with a nonzero exit.
+detached HEAD, non-canonical checkout, prunable linked-worktree residue, or
+worktree-prune failure is reported as a named canonical-clean residual on
+stderr with a nonzero exit.
 
 ## Corruption Modes
 

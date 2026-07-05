@@ -81,8 +81,8 @@ def hard_reset_and_clean() -> None:
     git("clean", "-fd")
 
 
-def delete_branch(branch: str | None) -> None:
-    if branch and branch_exists(branch):
+def delete_branch(branch: str) -> None:
+    if branch_exists(branch):
         git("branch", "-D", branch)
 
 
@@ -115,34 +115,38 @@ def verify_canonical_clean() -> None:
         residuals.append(f"run-scoped residue remains outside ignored paths: {clean_check.stdout.strip()}")
 
     prune = git("worktree", "prune", "--dry-run", check=False)
+    prune_output = "\n".join(part for part in [prune.stdout.strip(), prune.stderr.strip()] if part)
     if prune.returncode != 0:
         residuals.append(f"could not inspect linked worktree residue: {prune.stderr.strip()}")
+    elif prune_output:
+        residuals.append(f"linked worktree residue remains: {prune_output}")
 
     if residuals:
         raise TidyUpError("; ".join(residuals))
 
 
-def run_branch_before_cleanup(canonical: str) -> str | None:
-    branch = current_branch()
-    if branch == canonical:
-        return None
-    return branch
+def required_run_branch(kind: str, run_branch: str | None, canonical: str) -> str:
+    if run_branch is None:
+        raise TidyUpError(f"{kind} cleanup requires --run-branch")
+    if run_branch == canonical:
+        raise TidyUpError("run branch must not be the canonical branch")
+    return run_branch
 
 
-def tidy_land() -> None:
+def tidy_land(run_branch: str | None) -> None:
     canonical = canonical_branch()
-    run_branch = run_branch_before_cleanup(canonical)
+    run_branch = required_run_branch("land", run_branch, canonical)
+    hard_reset_and_clean()
     fetch_origin()
     checkout_canonical(canonical)
-    hard_reset_and_clean()
     delete_branch(run_branch)
     prune_worktrees()
     verify_canonical_clean()
 
 
-def tidy_abandon() -> None:
+def tidy_abandon(run_branch: str | None) -> None:
     canonical = canonical_branch()
-    run_branch = run_branch_before_cleanup(canonical)
+    run_branch = required_run_branch("abandon", run_branch, canonical)
     hard_reset_and_clean()
     fetch_origin()
     checkout_canonical(canonical)
@@ -198,14 +202,18 @@ def tidy_halt() -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("kind", choices=["land", "abandon", "halt", "verify"])
+    parser.add_argument(
+        "--run-branch",
+        help="run branch to delete; required for land and abandon",
+    )
     args = parser.parse_args()
 
     try:
         ensure_repository()
         if args.kind == "land":
-            tidy_land()
+            tidy_land(args.run_branch)
         elif args.kind == "abandon":
-            tidy_abandon()
+            tidy_abandon(args.run_branch)
         elif args.kind == "halt":
             tidy_halt()
         else:
