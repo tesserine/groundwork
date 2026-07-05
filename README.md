@@ -64,6 +64,8 @@ stage-specific judgment:
   the discipline for authoring verification gates over prose and text artifacts
 - **code-review** — review judgment for submitted change proposals
 - **acquire** — entry from an existing forge ticket: materializes the work-unit artifact define activates on
+- **tidy-up** — [`skills/tidy-up/SKILL.md`](skills/tidy-up/SKILL.md),
+  the canonical clean post-run worktree discipline for land, abandonment or regeneration, and halt
 
 Not every piece of work needs every stage. A bug with an existing work-unit enters
 at execution. A new capability enters at planning. The constraint is sequence,

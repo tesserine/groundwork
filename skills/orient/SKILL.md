@@ -6,8 +6,8 @@ description: >-
   documentation-writing guidance. Activates the full skill system as one
   connected methodology and carries the always-on documentation discipline.
 metadata:
-  version: "4.1.1"
-  updated: "2026-07-02"
+  version: "4.2.0"
+  updated: "2026-07-05"
 ---
 
 # Orient
@@ -74,6 +74,10 @@ at entry, threaded unbroken to the close.
 7. **`land`** — apply the approved version, reflect the disposition, close
    out, record completion.
 
+Every run termination — land, abandonment or regeneration, and halt — closes
+the worktree through the tidy-up skill (`skills/tidy-up/SKILL.md`) so the
+next session grounds on canonical-clean substrate rather than run residue.
+
 Under runa, the runtime drives these stations per work-unit; an agent's job
 inside any station is that station's discipline, ending at its capstone
 artifact. Depth scales with the change at every station — a trivial
@@ -112,6 +116,10 @@ These are not stations; they engage when their trigger fires, at any stage.
 - **`acquire`** — entry from an existing forge ticket: reads the ticket and
   materializes the work-unit artifact `define` activates on. Fires at the
   cold-start boundary, when work begins from a ticket reference.
+- **`tidy-up`** — run termination hygiene: land, abandonment/regeneration, and
+  halt return the repository to canonical-clean through
+  `skills/tidy-up/SKILL.md` so residue does not become the next session's
+  ground.
 
 ## Integration Principles
 

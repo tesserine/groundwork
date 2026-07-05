@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Tidy-up leaves run worktrees canonical-clean** (#518).
+  `skills/tidy-up/SKILL.md` introduces the post-run repository hygiene
+  discipline at v1.0.0 and ships `skills/tidy-up/scripts/tidy_up.py` as the
+  single executable mechanics home for `land`, `abandon`, `halt`, and
+  `verify`. The skill names the four canonical-clean checks, preserves landed
+  work and ignored files, and reports named residuals loudly on partial
+  cleanup. `land` 3.3.0->3.4.0 invokes tidy-up as Step 6 after
+  completion-record delivery; `contract` 2.7.1->2.8.0 routes abandoned and
+  regenerated runs through tidy-up before fresh derivation; `orient`
+  4.1.1->4.2.0 records the run-lifecycle rule including halt. README and the
+  ontology audit expose the new skill. Pinned by
+  `tests/test_tidy_up_skill.py` and `tests/test_tidy_up_mechanics.py`.
+
 - **The comment log carries resumption state** (#481).
   `skills/work-unit-craft/SKILL.md` §"The Body Is the Spec; Comments Are a
   Log" (v1.4.0) gains the resumption obligation: a progress comment carries,

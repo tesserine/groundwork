@@ -15,7 +15,7 @@ before the ADR distills the seam.
 
 ## Method
 
-The audit reads the 19 live row-1 assets: 10 skills under `skills/` and 9
+The audit reads the 20 live row-1 assets: 11 skills under `skills/` and 9
 protocols under `protocols/`. Each asset is placed on the two axes from the
 foundation note:
 
@@ -45,6 +45,7 @@ Groundwork scoped pipeline.
 | reckon | skill | universal | skill | First-principles grounding and traceable reasoning are domain-neutral; gazette's editorial choices also need constraints before inherited frames. |
 | research | skill | universal | skill | Systematic external-evidence gathering projects directly to non-code work, including gazette's source and historical evidence questions. |
 | resolve | skill | universal | skill | Structural friction resolution applies whenever tooling, configuration, convention, or process blocks work in another domain. |
+| tidy-up | skill | domain:software | skill | Another domain may need run-termination hygiene, but this skill's actions are git worktree mechanics for software contribution checkouts. |
 | verification-craft | skill | universal | skill | Another domain still needs verification gates that consult authorities, model coherence, or substrate structure instead of matching vocabulary as a proxy; only the artifact surfaces change. |
 | work-unit-craft | skill | universal | skill | Another domain still needs delegation-record craft: outcome-first records, body-as-spec authority, and criteria that transfer intent across contexts. The artifact name may change. |
 | decompose | protocol | domain:software | protocol | The cognitive craft projects, but this shell produces `work-unit` artifacts and tracker-backed handles, not gazette's non-code artifact crossings. |
@@ -78,7 +79,7 @@ obligations in the protocol boundary.
 
 ## Projection Seams
 
-The current row has two domain-specific skills. Both point at universal
+The current row has three domain-specific skills. All point at universal
 parents that row 1 predicts but has not yet extracted as standalone source
 skills.
 
@@ -86,6 +87,7 @@ skills.
 |---|---|---|---|---|
 | acquire | domain:software | acquisition | Materialize an execution artifact from an authorized planning record without fabricating content. | Reads a forge ticket, preserves `handle`, derives a `work-unit` body, and hands execution to `define`. |
 | code-review | domain:software | quality-review | Judge proposed work against scope, contract, evidence, and recipient impact before approval. | Adds software-specific correctness checks: code semantics, schemas, interfaces, tests, regressions, and current documentation accuracy. |
+| tidy-up | domain:software | termination-hygiene | Leave the shared substrate canonical at run termination so the next actor does not inherit process residue. | Implements the invariant with git worktree checks, branch handling, ignored-file boundaries, and halt preservation commits. |
 
 ## Lateral Harmonics
 
@@ -103,6 +105,7 @@ skills.
 |---|---|---|
 | Universal parent of `code-review` and gazette `factcheck` | Independent quality judgment over a proposal or artifact, using scope, evidence, recipient impact, and domain-specific correctness as projections. | `quality-review` skill |
 | Universal parent of `acquire` | Faithfully materialize an execution-scoped artifact from an existing authoritative planning record, surfacing gaps instead of inventing content. | `acquisition` skill |
+| Universal parent of `tidy-up` | Every domain's run termination leaves the shared substrate canonical, preserving intentional outcomes while removing process residue. | `termination-hygiene` skill |
 | Universal shell authoring discipline | Explain how a typed protocol wraps one cognitive skill, owns only the artifact crossing, and leaves composition below the shell. | `protocol-shell-craft` skill |
 | Shared artifact-delivery wrapper | State the MCP tool input boundary, `instance_id` extraction, scoped `work_unit` injection, and artifact-body validation once for producer protocols. | `artifact-delivery` reference or skill |
 | Universal governance close | Close a unit only from an approved disposition, bind the approved version, record performed validation, and surface any gaps. | `governance-closure` skill |

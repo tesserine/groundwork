@@ -11,8 +11,8 @@ description: >-
   or completion claims must stay traceable to a defined contract instead of
   drifting toward implementation convenience.
 metadata:
-  version: "2.7.1"
-  updated: "2026-07-03"
+  version: "2.8.0"
+  updated: "2026-07-05"
 ---
 
 # Contract
@@ -88,6 +88,11 @@ the behavioral failing-test classification. `When an existing test fails
 after a change` decides where the defect lives: bug introduced, behavior
 moved, or behavior obsolete. The disposition default decides what survives
 after the defect is known to be a contract defect.
+
+A regenerated or abandoned unit's run ends through the tidy-up skill
+(`skills/tidy-up/SKILL.md`) before the fresh derivation begins, so the next
+attempt grounds on canonical-clean substrate rather than residue from the
+discarded branch.
 
 ## The dimensions
 

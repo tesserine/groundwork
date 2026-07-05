@@ -5,8 +5,8 @@ description: >-
   out the work unit, and deliver the completion-record. The closing bookend
   of the scoped pipeline.
 metadata:
-  version: "3.3.0"
-  updated: "2026-07-02"
+  version: "3.4.0"
+  updated: "2026-07-05"
 ---
 
 # Land
@@ -92,6 +92,11 @@ The protocol is not a forge operation. It must not activate from a raw
    the same derivation, with `completion-evidence.results[]` as the single
    evidence surface.
 
+6. **Tidy up.** Invoke the tidy-up skill (`skills/tidy-up/SKILL.md`) to
+   return the repository to the canonical clean post-run state after the
+   completion-record is delivered. The next reader grounds against the
+   substrate the run actually left, not process residue from the run.
+
 ## Failure Policy
 
 - If approval does not resolve to exactly one proposal by
@@ -131,3 +136,5 @@ The protocol is not a forge operation. It must not activate from a raw
   recording validation-performed.
 - `define` (protocol): the opening bookend — the contract established there
   is what this record closes.
+- `tidy-up` (skill, `skills/tidy-up/SKILL.md`): returns the repository to
+  canonical-clean after land completes its record.
