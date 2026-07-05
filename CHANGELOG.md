@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Runa runtime state commit policy** (#238).
+  [ADR-0009](docs/architecture/decisions/0009-runa-runtime-state-commit-policy.md)
+  declares, for the four entries runa creates under `.runa/`, which a consuming
+  project commits and which it ignores: `workspace/` is committed as durable,
+  agent-produced project state; `store/` (regenerable cache + the
+  `execution-records.json` singleton), `config.toml`, and `state.toml`
+  (machine-local) are ignored. The published `.gitignore` stanza is complete
+  over `.runa/` — nothing is left untracked-and-unignored — which is the
+  clean-safety property groundwork#518's `tidy-up` defers to (`git clean` at
+  land removes untracked, unignored paths). groundwork's own `.gitignore`
+  adopts the stanza. The layout's single home is runa's `ARCHITECTURE.md`;
+  idempotency (#237) is the coupled discipline.
+
 - **The comment log carries resumption state** (#481).
   `skills/work-unit-craft/SKILL.md` §"The Body Is the Spec; Comments Are a
   Log" (v1.4.0) gains the resumption obligation: a progress comment carries,
