@@ -9,8 +9,8 @@ description: >-
   and the corruption modes that make records mis-steer the agents who
   read them.
 metadata:
-  version: "1.3.1"
-  updated: "2026-07-03"
+  version: "1.4.0"
+  updated: "2026-07-05"
   origin: >-
     Adapted from pentaxis93/with-claude
     _shared/methodology/issue-craft.md (internal), renamed and
@@ -187,6 +187,27 @@ verification results, dependency signals, and a record that a decision was
 body. If a comment's direction is later superseded, either it is harmless
 history (a finding that still holds) or it must be explicitly marked
 superseded so it cannot be read as live.
+
+**The resumption obligation.** A progress comment carries, in positive
+form, *where the work stands and the immediate next move* — not merely that
+progress happened, but the working state a successor resumes from. The
+comment log is the one surface that survives a context loss which takes the
+working clone with it, so it is where working state is reconstructed: any
+role picking the unit up — a resuming instance of the same worker, a
+delegated agent, the operator — recovers where the work stands and what
+comes next from the log alone, without re-asking what the prior worker
+already knew. This is the cross-role coordination contract the log carries,
+and it makes capture a byproduct of coordinating rather than a separate act
+skipped under load.
+
+This is **state, not direction.** The comment *reports* working state — "the
+plan is reviewed sound; next is the PR at the committed head" — it does not
+carry live direction that competes with the body's spec. The body remains
+the single standalone source of the unit's contract (above); the
+`stale-comment-direction` guard is untouched, because a report of where the
+work stands is not a redefinition of what the work is. A resumption comment
+that drifted into re-specifying the contract would be that guard's failure,
+not this obligation's fulfillment.
 
 ## Corruption Modes
 

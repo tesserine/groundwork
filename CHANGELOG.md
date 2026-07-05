@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **The comment log carries resumption state** (#481).
+  `skills/work-unit-craft/SKILL.md` §"The Body Is the Spec; Comments Are a
+  Log" (v1.4.0) gains the resumption obligation: a progress comment carries,
+  in positive form, where the work stands and the immediate next move, as the
+  cross-role coordination contract any role — a resuming instance, a delegated
+  agent, the operator — reconstructs working state from. The obligation is
+  bounded as state, not direction: the body stays the standalone spec and the
+  `stale-comment-direction` guard is untouched. Pinned by
+  `tests/test_work_unit_craft_skill.py`.
+
 - **Verification-craft surface for vocabulary-proxy gates** (#523).
   `skills/verification-craft/SKILL.md` gives contributors the durable rule
   from the #477/#522 arc: a prose/text-artifact gate consults the invariant,

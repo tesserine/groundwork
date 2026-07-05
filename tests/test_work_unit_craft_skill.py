@@ -110,6 +110,27 @@ class WorkUnitCraftSkillTests(unittest.TestCase):
             with self.subTest(heading=heading):
                 self.assertIn(expected_text, normalized(section(body, heading)))
 
+    def test_comment_log_carries_the_resumption_obligation(self) -> None:
+        # The skill is the single home of its own comment-log rule, so this
+        # gate is coherence over the section's own prose (no external
+        # authority to consult), anchored on the obligation's defining terms
+        # and the stale-comment-direction symbol it defers to — not a
+        # synonym sweep.
+        comment_log = normalized(
+            section(read_work_unit_craft(), "The Body Is the Spec; Comments Are a Log")
+        )
+
+        # The obligation carries where-it-stands and the next move.
+        self.assertIn("where the work stands", comment_log)
+        self.assertRegex(comment_log, r"\bimmediate next move\b")
+        # It serves the cross-role recipients, reconstructed from the log.
+        self.assertIn("resuming instance", comment_log)
+        self.assertIn("delegated agent", comment_log)
+        self.assertIn("operator", comment_log)
+        # Bounded as state, not direction — the guard is named and stays intact.
+        self.assertIn("state, not direction", comment_log)
+        self.assertIn("stale-comment-direction", comment_log)
+
     def test_primary_workflow_authors_contract_inputs_for_every_dimension(self) -> None:
         body = read_work_unit_craft()
         contract_inputs = section_between(body, "Author Contract Inputs", "The Sovereignty Test")
