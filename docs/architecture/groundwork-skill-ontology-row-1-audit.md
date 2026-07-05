@@ -37,7 +37,7 @@ Groundwork scoped pipeline.
 
 | Asset | Kind | Domain Coupling | Form | Membership-Test Ground |
 |---|---|---|---|---|
-| acquire | skill | domain:software | skill | Gazette or another non-code methodology may need entry from an existing planning record, but this skill materializes a forge ticket as a `work-unit` snapshot with a `handle` for `define`. |
+| acquire | skill | domain:software | skill | Gazette or another non-code methodology may need entry from an existing planning record, but this skill materializes a forge work-unit as a `work-unit` snapshot with a `handle` for `define`. |
 | code-review | skill | domain:software | skill | Gazette needs independent quality judgment, but code-review's criteria are software-specific: behavior regressions, schemas, interfaces, tests, and documentation impact for code changes. |
 | contract | skill | universal | skill | Gazette or another domain still needs an executable definition of done across behavior, documentation, and quality dimensions; only the evidence form changes. |
 | debug | skill | universal | skill | Root-cause-before-fix applies to non-code failures as well as software failures; gazette grounding or publication failures still need evidence before correction. |
@@ -84,7 +84,7 @@ skills.
 
 | Domain Skill | Domain Scope | Projects From | Inherited Discipline | Domain Delta |
 |---|---|---|---|---|
-| acquire | domain:software | acquisition | Materialize an execution artifact from an authorized planning record without fabricating content. | Reads a forge ticket, preserves `handle`, derives a `work-unit` body, and hands execution to `define`. |
+| acquire | domain:software | acquisition | Materialize an execution artifact from an authorized planning record without fabricating content. | Reads a forge work-unit, preserves `handle`, derives a `work-unit` body, and hands execution to `define`. |
 | code-review | domain:software | quality-review | Judge proposed work against scope, contract, evidence, and recipient impact before approval. | Adds software-specific correctness checks: code semantics, schemas, interfaces, tests, regressions, and current documentation accuracy. |
 
 ## Lateral Harmonics

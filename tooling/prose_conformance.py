@@ -414,19 +414,19 @@ def public_docs_interactive_adapter_bypass_violations(root: Path) -> dict[str, l
 
 @dataclass(frozen=True)
 class EntrySurfaceCoherence:
-    acquire_reads_ticket_comments: bool
+    acquire_reads_work_unit_comments: bool
     acquire_surfaces_comments_as_entry_context: bool
     acquire_excludes_comments_from_artifact: bool
-    define_grounds_frame_in_whole_ticket: bool
+    define_grounds_frame_in_whole_work_unit: bool
     define_uses_newest_review_directives: bool
 
     @property
     def passed(self) -> bool:
         return (
-            self.acquire_reads_ticket_comments
+            self.acquire_reads_work_unit_comments
             and self.acquire_surfaces_comments_as_entry_context
             and self.acquire_excludes_comments_from_artifact
-            and self.define_grounds_frame_in_whole_ticket
+            and self.define_grounds_frame_in_whole_work_unit
             and self.define_uses_newest_review_directives
         )
 
@@ -435,11 +435,11 @@ def entry_surface_coherence(root: Path) -> EntrySurfaceCoherence:
     acquire = read(root / "skills" / "acquire" / "SKILL.md")
     define = read(root / "protocols" / "define" / "PROTOCOL.md")
     return EntrySurfaceCoherence(
-        acquire_reads_ticket_comments=(
+        acquire_reads_work_unit_comments=(
             "`comments`" in acquire
             and has_semantic_clause(
                 acquire,
-                r"\bread-ticket\b",
+                r"\bread-work-unit\b",
                 r"`?comments`?",
                 r"\blog\b",
             )
@@ -449,7 +449,7 @@ def entry_surface_coherence(root: Path) -> EntrySurfaceCoherence:
             r"\bSurface\b",
             r"\blog\b",
             r"\bentry context\b",
-            r"\bwhole ticket\b",
+            r"\bwhole work-unit\b",
         ),
         acquire_excludes_comments_from_artifact=has_semantic_clause(
             acquire,
@@ -458,8 +458,8 @@ def entry_surface_coherence(root: Path) -> EntrySurfaceCoherence:
             r"\bnever persisted\b",
             r"\bartifact\b",
         ),
-        define_grounds_frame_in_whole_ticket=(
-            has_semantic_clause(define, r"\bGround\b", r"\bwhole ticket\b")
+        define_grounds_frame_in_whole_work_unit=(
+            has_semantic_clause(define, r"\bGround\b", r"\bwhole work-unit\b")
             and has_semantic_clause(
                 define,
                 r"\bcomment log\b",

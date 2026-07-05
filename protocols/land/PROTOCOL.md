@@ -120,7 +120,7 @@ The protocol is not a forge operation. It must not activate from a raw
 - `schemas/change-approved.schema.json` defines the approval disposition.
 - `schemas/change-proposal.schema.json` defines the proposal detail land
   resolves before mapping it to the connector apply input.
-- `schemas/forge-capability/v1/forge-capability.schema.json` defines the
+- `schemas/forge-capability/v2/forge-capability.schema.json` defines the
   `apply-approved-change-input` connector payload land must satisfy.
 - `schemas/completion-record.schema.json` defines the record fields land
   fills from the uniform evidence surface: `criterion_summary` carries

@@ -1,6 +1,6 @@
 # ADR-0002: Methodology Sovereignty
 
-Current forge work follows the connector-owned Forge Capability v1.1.0
+Current forge work follows the connector-owned Forge Capability v2.0.0
 contract: Groundwork carries connector-issued `{ id, display }` handles in
 artifacts and invokes canonical capability operations through runa's connector
 MCP surface.

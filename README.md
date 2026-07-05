@@ -36,7 +36,7 @@ units with acceptance criteria and dependency edges.
 
 **Entry** into the scoped pipeline happens one of two ways: a work-unit newly
 created by decompose, or one the acquire skill materializes from an existing
-forge ticket (the "start on ticket #N" path). Either way define activates on a
+forge work-unit (the "start on work-unit #N" path). Either way define activates on a
 work-unit artifact.
 
 **The scoped pipeline** takes one work-unit and carries it through to a merged
@@ -63,7 +63,7 @@ stage-specific judgment:
 - **verification-craft** — [`skills/verification-craft/SKILL.md`](skills/verification-craft/SKILL.md),
   the discipline for authoring verification gates over prose and text artifacts
 - **code-review** — review judgment for submitted change proposals
-- **acquire** — entry from an existing forge ticket: materializes the work-unit artifact define activates on
+- **acquire** — entry from an existing forge work-unit: materializes the work-unit artifact define activates on
 
 Not every piece of work needs every stage. A bug with an existing work-unit enters
 at execution. A new capability enters at planning. The constraint is sequence,
@@ -163,9 +163,9 @@ marker. It deliberately contains no provider mechanics, resolver module, or
 forge-operation binary; upgrading removes stale copies of those retired runtime
 children.
 
-Forge work uses the vendored Forge Capability v1.1.0 contract at
-`schemas/forge-capability/v1/forge-capability.schema.json`. The eight canonical
-operations are connector MCP tools: `read-ticket`, `create-ticket`,
+Forge work uses the vendored Forge Capability v2.0.0 contract at
+`schemas/forge-capability/v2/forge-capability.schema.json`. The eight canonical
+operations are connector MCP tools: `read-work-unit`, `create-work-unit`,
 `claim-work-unit`, `record-progress`, `deliver-change-proposal`,
 `reflect-disposition`, `apply-approved-change`, and `close-out`. Work units and
 change proposals carry the connector-issued `{ id, display }` handle. The

@@ -510,9 +510,9 @@ name = "close-out"
             with self.subTest(artifact_schema_name=artifact_schema_name), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 schemas = root / "schemas"
-                vendored = schemas / "forge-capability" / "v1"
+                vendored = schemas / "forge-capability" / "v2"
                 vendored.mkdir(parents=True)
-                shutil.copy2(SCHEMAS / "forge-capability" / "v1" / "forge-capability.schema.json", vendored)
+                shutil.copy2(SCHEMAS / "forge-capability" / "v2" / "forge-capability.schema.json", vendored)
                 shutil.copy2(SCHEMAS / "work-unit.schema.json", schemas)
                 shutil.copy2(SCHEMAS / "change-proposal.schema.json", schemas)
                 manifest = root / "manifest.toml"
@@ -628,7 +628,7 @@ name = "define"
         results = run_conformance([SCHEMAS])
 
         self.assertGreater(len(results), 0)
-        self.assertIn(SCHEMAS / "forge-capability" / "v1" / "forge-capability.schema.json", [result.path for result in results])
+        self.assertIn(SCHEMAS / "forge-capability" / "v2" / "forge-capability.schema.json", [result.path for result in results])
         self.assertTrue(all(result.category == "C-4 schema-definition" for result in results))
         self.assertTrue(all(result.passed for result in results))
 

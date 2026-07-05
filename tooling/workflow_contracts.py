@@ -76,7 +76,7 @@ def workflow_registry_from_manifest(
         if isinstance(entry, dict) and isinstance(entry.get("name"), str)
     }
     mechanic_names.update(_mechanic_names_from_directory(root_path / "mechanics"))
-    if (root_path / "schemas" / "forge-capability" / "v1" / "forge-capability.schema.json").exists() or root_path.resolve() == ROOT:
+    if (root_path / "schemas" / "forge-capability" / "v2" / "forge-capability.schema.json").exists() or root_path.resolve() == ROOT:
         mechanic_names.update(forge_operation_names())
 
     return WorkflowRegistry(
