@@ -3,3 +3,10 @@ assets/logo/dist/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+
+# runa runtime state (tesserine/runa) — policy: groundwork ADR-0009.
+# Ignore the machine-local config/init files and the regenerable runtime cache.
+.runa/config.toml
+.runa/state.toml
+.runa/store/
+# .runa/workspace/ is committed as durable project state — do not ignore it.
