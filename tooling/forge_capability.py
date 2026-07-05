@@ -7,17 +7,17 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CAPABILITY_SCHEMA = ROOT / "schemas" / "forge-capability" / "v1" / "forge-capability.schema.json"
-CAPABILITY_VERSION = "1.2.0"
+CAPABILITY_SCHEMA = ROOT / "schemas" / "forge-capability" / "v2" / "forge-capability.schema.json"
+CAPABILITY_VERSION = "2.0.0"
 CAPABILITY_PROVENANCE_URL = (
     "https://raw.githubusercontent.com/tesserine/commons/"
-    "b229fb1a840c27ced31d582b40d766f4f441dcf6/"
-    "schemas/forge-capability/v1/forge-capability.schema.json"
+    "e75e211689e92a4772614bfe6e4eca4b647d4d66/"
+    "schemas/forge-capability/v2/forge-capability.schema.json"
 )
 
 
 def load_schema(root: Path | str = ROOT) -> dict[str, Any]:
-    path = Path(root) / "schemas" / "forge-capability" / "v1" / "forge-capability.schema.json"
+    path = Path(root) / "schemas" / "forge-capability" / "v2" / "forge-capability.schema.json"
     return json.loads(path.read_text(encoding="utf-8"))
 
 

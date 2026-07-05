@@ -156,6 +156,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Forge Capability v2.0.0 consumption: neutral work-unit operation names**
+  ([tesserine/commons#106](https://github.com/tesserine/commons/issues/106)).
+  Groundwork now vendors forge-capability **v2.0.0** at
+  `schemas/forge-capability/v2/forge-capability.schema.json`, pinned to the
+  immutable commons authority
+  (`e75e211689e92a4772614bfe6e4eca4b647d4d66`), and the v1 copy is retired from
+  the active vendored path. The capability read/create operations are the
+  neutral `read-work-unit` and `create-work-unit`, and the shared output type is
+  `work-unit-snapshot`; the leaked provider-noun operations `read-ticket`,
+  `create-ticket`, and `ticket-snapshot` are gone from the capability layer.
+  Tooling (`forge_capability`, `conformance`, `workflow_contracts`), the
+  conformance and prose gates, and capability-level methodology prose — `acquire`,
+  `decompose`, `define`, `orient`, `contract`, `verification-craft`,
+  `work-unit-craft`, and the connecting-structure architecture doc — name the
+  work-unit vocabulary. Provider nouns remain only where a specific provider is
+  projected: GitHub says *issue*, SourceHut says *ticket*, and SourceHut
+  tracker-backed handles keep their `ticket:`-prefixed opaque identity. No
+  old-name alias, compatibility shim, or new pre-claim noun is introduced;
+  commons v1 remains the retained frozen authority for v1 consumers.
+
 - **Breaking vocabulary rename: entry protocol `take` becomes `define`**
   (#529). The contract-first entry stage is now registered and installed as
   `define` (protocol version 4.0.0), matching the stage's act: authoring

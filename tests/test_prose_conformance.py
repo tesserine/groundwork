@@ -269,7 +269,7 @@ class ProseConformanceHelperTests(unittest.TestCase):
     def test_json_schema_ref_resolution_reads_current_schema(self) -> None:
         helper = prose_conformance()
         schema = json.loads(
-            (ROOT / "schemas" / "forge-capability" / "v1" / "forge-capability.schema.json").read_text(
+            (ROOT / "schemas" / "forge-capability" / "v2" / "forge-capability.schema.json").read_text(
                 encoding="utf-8"
             )
         )

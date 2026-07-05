@@ -1,20 +1,25 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "x-tesserine-canonical": {
-    "version": "1.2.0",
-    "schema_url": "https://raw.githubusercontent.com/tesserine/commons/b229fb1a840c27ced31d582b40d766f4f441dcf6/schemas/forge-capability/v1/forge-capability.schema.json"
+    "version": "2.0.0",
+    "schema_url": "https://raw.githubusercontent.com/tesserine/commons/e75e211689e92a4772614bfe6e4eca4b647d4d66/schemas/forge-capability/v2/forge-capability.schema.json"
   },
   "title": "Forge Capability",
-  "description": "Canonical schema for the forge capability connector tool-set and operation payloads. Version 1.2.0. commons is the spec authority; FORGE-CAPABILITY.md carries the governing prose and ADR-0005 describes the system-conventions pattern under which this lives. When this schema and FORGE-CAPABILITY.md disagree, FORGE-CAPABILITY.md is authoritative.",
+  "description": "Canonical schema for the forge capability connector tool-set and operation payloads. Version 2.0.0. commons is the spec authority; FORGE-CAPABILITY.md carries the governing prose and ADR-0005 describes the system-conventions pattern under which this lives. When this schema and FORGE-CAPABILITY.md disagree, FORGE-CAPABILITY.md is authoritative.",
   "type": "object",
-  "required": ["capability", "version", "handle_schema", "tools"],
+  "required": [
+    "capability",
+    "version",
+    "handle_schema",
+    "tools"
+  ],
   "additionalProperties": false,
   "properties": {
     "capability": {
       "const": "forge"
     },
     "version": {
-      "const": "1.2.0"
+      "const": "2.0.0"
     },
     "handle_schema": {
       "const": "#/$defs/handle"
@@ -30,12 +35,12 @@
       "allOf": [
         {
           "contains": {
-            "$ref": "#/$defs/read-ticket-tool"
+            "$ref": "#/$defs/read-work-unit-tool"
           }
         },
         {
           "contains": {
-            "$ref": "#/$defs/create-ticket-tool"
+            "$ref": "#/$defs/create-work-unit-tool"
           }
         },
         {
@@ -74,7 +79,10 @@
   "$defs": {
     "handle": {
       "type": "object",
-      "required": ["id", "display"],
+      "required": [
+        "id",
+        "display"
+      ],
       "additionalProperties": false,
       "properties": {
         "id": {
@@ -92,8 +100,8 @@
     "operation-name": {
       "type": "string",
       "enum": [
-        "read-ticket",
-        "create-ticket",
+        "read-work-unit",
+        "create-work-unit",
         "claim-work-unit",
         "record-progress",
         "reflect-disposition",
@@ -114,7 +122,12 @@
     },
     "tool-base": {
       "type": "object",
-      "required": ["operation", "name", "input_schema", "output_schema"],
+      "required": [
+        "operation",
+        "name",
+        "input_schema",
+        "output_schema"
+      ],
       "additionalProperties": false,
       "properties": {
         "operation": {
@@ -134,10 +147,10 @@
     "tool": {
       "oneOf": [
         {
-          "$ref": "#/$defs/read-ticket-tool"
+          "$ref": "#/$defs/read-work-unit-tool"
         },
         {
-          "$ref": "#/$defs/create-ticket-tool"
+          "$ref": "#/$defs/create-work-unit-tool"
         },
         {
           "$ref": "#/$defs/claim-work-unit-tool"
@@ -159,7 +172,7 @@
         }
       ]
     },
-    "read-ticket-tool": {
+    "read-work-unit-tool": {
       "allOf": [
         {
           "$ref": "#/$defs/tool-base"
@@ -168,22 +181,22 @@
           "type": "object",
           "properties": {
             "operation": {
-              "const": "read-ticket"
+              "const": "read-work-unit"
             },
             "name": {
-              "const": "read-ticket"
+              "const": "read-work-unit"
             },
             "input_schema": {
-              "const": "#/$defs/read-ticket-input"
+              "const": "#/$defs/read-work-unit-input"
             },
             "output_schema": {
-              "const": "#/$defs/ticket-snapshot"
+              "const": "#/$defs/work-unit-snapshot"
             }
           }
         }
       ]
     },
-    "create-ticket-tool": {
+    "create-work-unit-tool": {
       "allOf": [
         {
           "$ref": "#/$defs/tool-base"
@@ -192,16 +205,16 @@
           "type": "object",
           "properties": {
             "operation": {
-              "const": "create-ticket"
+              "const": "create-work-unit"
             },
             "name": {
-              "const": "create-ticket"
+              "const": "create-work-unit"
             },
             "input_schema": {
-              "const": "#/$defs/create-ticket-input"
+              "const": "#/$defs/create-work-unit-input"
             },
             "output_schema": {
-              "const": "#/$defs/ticket-snapshot"
+              "const": "#/$defs/work-unit-snapshot"
             }
           }
         }
@@ -351,21 +364,26 @@
         }
       ]
     },
-    "read-ticket-input": {
+    "read-work-unit-input": {
       "type": "object",
-      "required": ["reference"],
+      "required": [
+        "reference"
+      ],
       "additionalProperties": false,
       "properties": {
         "reference": {
           "type": "string",
-          "description": "Connector-interpreted ticket reference in the active deployment; may carry provider coordinates the connector validates against its configured scope. See FORGE-CAPABILITY.md (Forge Work-Unit Identity).",
+          "description": "Connector-interpreted work-unit reference in the active deployment; may carry provider coordinates the connector validates against its configured scope. See FORGE-CAPABILITY.md (Forge Work-Unit Identity).",
           "minLength": 1
         }
       }
     },
-    "create-ticket-input": {
+    "create-work-unit-input": {
       "type": "object",
-      "required": ["title", "body"],
+      "required": [
+        "title",
+        "body"
+      ],
       "additionalProperties": false,
       "properties": {
         "title": {
@@ -380,7 +398,9 @@
     },
     "claim-work-unit-input": {
       "type": "object",
-      "required": ["handle"],
+      "required": [
+        "handle"
+      ],
       "additionalProperties": false,
       "properties": {
         "handle": {
@@ -390,7 +410,10 @@
     },
     "record-progress-input": {
       "type": "object",
-      "required": ["handle", "body"],
+      "required": [
+        "handle",
+        "body"
+      ],
       "additionalProperties": false,
       "properties": {
         "handle": {
@@ -404,7 +427,9 @@
     },
     "comment-entry": {
       "type": "object",
-      "required": ["body"],
+      "required": [
+        "body"
+      ],
       "additionalProperties": false,
       "properties": {
         "body": {
@@ -422,9 +447,13 @@
         }
       }
     },
-    "ticket-snapshot": {
+    "work-unit-snapshot": {
       "type": "object",
-      "required": ["handle", "title", "state"],
+      "required": [
+        "handle",
+        "title",
+        "state"
+      ],
       "additionalProperties": false,
       "properties": {
         "handle": {
@@ -435,7 +464,10 @@
           "minLength": 1
         },
         "body": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "state": {
           "type": "string",
@@ -443,7 +475,7 @@
         },
         "comments": {
           "type": "array",
-          "description": "Ordered comment log, oldest first. The ticket body is the work-unit's spec; the comment log is its running record — review state, dispositions, and directives.",
+          "description": "Ordered comment log, oldest first. The body is the work-unit's spec; the comment log is its running record — review state, dispositions, and directives.",
           "items": {
             "$ref": "#/$defs/comment-entry"
           }
@@ -452,7 +484,10 @@
     },
     "work-unit-effect": {
       "type": "object",
-      "required": ["handle", "receipt"],
+      "required": [
+        "handle",
+        "receipt"
+      ],
       "additionalProperties": false,
       "properties": {
         "handle": {
@@ -471,7 +506,15 @@
     },
     "deliver-change-proposal-input": {
       "type": "object",
-      "required": ["work_unit", "branch", "commit", "base", "summary", "body", "version"],
+      "required": [
+        "work_unit",
+        "branch",
+        "commit",
+        "base",
+        "summary",
+        "body",
+        "version"
+      ],
       "additionalProperties": false,
       "properties": {
         "work_unit": {
@@ -503,7 +546,12 @@
     },
     "change-proposal": {
       "type": "object",
-      "required": ["handle", "work_unit", "commit", "version"],
+      "required": [
+        "handle",
+        "work_unit",
+        "commit",
+        "version"
+      ],
       "additionalProperties": false,
       "properties": {
         "handle": {
@@ -524,7 +572,10 @@
     },
     "finding": {
       "type": "object",
-      "required": ["observation", "classification"],
+      "required": [
+        "observation",
+        "classification"
+      ],
       "additionalProperties": false,
       "properties": {
         "observation": {
@@ -533,7 +584,10 @@
         },
         "classification": {
           "type": "string",
-          "enum": ["blocking", "non-blocking"]
+          "enum": [
+            "blocking",
+            "non-blocking"
+          ]
         },
         "location": {
           "type": "string",
@@ -543,12 +597,21 @@
     },
     "disposition": {
       "type": "object",
-      "required": ["kind", "against_version", "reviewer", "reviewed_at", "findings"],
+      "required": [
+        "kind",
+        "against_version",
+        "reviewer",
+        "reviewed_at",
+        "findings"
+      ],
       "additionalProperties": false,
       "properties": {
         "kind": {
           "type": "string",
-          "enum": ["approved", "needs-revision"]
+          "enum": [
+            "approved",
+            "needs-revision"
+          ]
         },
         "against_version": {
           "type": "integer",
@@ -573,7 +636,12 @@
     },
     "reflect-disposition-input": {
       "type": "object",
-      "required": ["work_unit", "change", "disposition", "body"],
+      "required": [
+        "work_unit",
+        "change",
+        "disposition",
+        "body"
+      ],
       "additionalProperties": false,
       "properties": {
         "work_unit": {
@@ -593,7 +661,11 @@
     },
     "disposition-effect": {
       "type": "object",
-      "required": ["work_unit", "change", "receipt"],
+      "required": [
+        "work_unit",
+        "change",
+        "receipt"
+      ],
       "additionalProperties": false,
       "properties": {
         "work_unit": {
@@ -610,7 +682,13 @@
     },
     "apply-approved-change-input": {
       "type": "object",
-      "required": ["work_unit", "change", "approved_version", "approved_commit", "base"],
+      "required": [
+        "work_unit",
+        "change",
+        "approved_version",
+        "approved_commit",
+        "base"
+      ],
       "additionalProperties": false,
       "properties": {
         "work_unit": {
@@ -634,7 +712,12 @@
     },
     "apply-result": {
       "type": "object",
-      "required": ["work_unit", "change", "applied_commit", "receipt"],
+      "required": [
+        "work_unit",
+        "change",
+        "applied_commit",
+        "receipt"
+      ],
       "additionalProperties": false,
       "properties": {
         "work_unit": {
@@ -655,7 +738,12 @@
     },
     "completion": {
       "type": "object",
-      "required": ["criterion_summary", "gaps", "change_reference", "documentation_status"],
+      "required": [
+        "criterion_summary",
+        "gaps",
+        "change_reference",
+        "documentation_status"
+      ],
       "additionalProperties": false,
       "properties": {
         "criterion_summary": {
@@ -681,7 +769,11 @@
     },
     "close-out-input": {
       "type": "object",
-      "required": ["work_unit", "completion", "body"],
+      "required": [
+        "work_unit",
+        "completion",
+        "body"
+      ],
       "additionalProperties": false,
       "properties": {
         "work_unit": {
@@ -698,7 +790,10 @@
     },
     "close-out-effect": {
       "type": "object",
-      "required": ["work_unit", "receipt"],
+      "required": [
+        "work_unit",
+        "receipt"
+      ],
       "additionalProperties": false,
       "properties": {
         "work_unit": {

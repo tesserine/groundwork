@@ -102,13 +102,13 @@ runa injects `work_unit` into every scoped artifact and validates
 canonical ids — so the entry's capstone is the contract itself.
 
 The `work-unit` artifact define activates on arrives one of two ways:
-created by `decompose`, or materialized from an existing forge ticket by
+created by `decompose`, or materialized from an existing forge work-unit by
 the [`acquire`](../../skills/acquire/SKILL.md) skill. Acquisition is
 skill-side intake — the mirror of decompose's create path — and reaches
 runa's store through decompose's own `work-unit` output tool, the same
 way the `research` skill's output reaches the store through a protocol's
 `may_produce` tool (see *the `may_produce` bridge* below). It creates no
-ticket, derives the artifact one-way from the ticket (ticket = planning
+work-unit, derives the artifact one-way from the work-unit (work-unit = planning
 home, artifact = execution snapshot, `handle` = back-link), and uses
 decompose's tracker-backed `instance_id` convention, so acquired and
 decomposed work-units are indistinguishable downstream. The manifest
@@ -140,7 +140,7 @@ live in [`manifest.toml`](../../manifest.toml); each protocol's
 the distinction visible: ordinary planning reaches decompose through the
 `requirements` trigger, and `requirements` is accepted so the protocol
 receives the content it is decomposing — not required, because
-cold-start ticket entry substitutes the trigger with the ticket
+cold-start work-unit entry substitutes the trigger with the work-unit
 reference, reaches the same `work-unit` output surface, and has no
 planning-phase requirements artifact yet.
 
@@ -515,13 +515,13 @@ groundwork treats it as opaque: schema validity and conformance are
 checked against the vendored Forge Capability handle definition, while
 identity comparisons derive from `id` equality rather than provider
 coordinates or display text. The vendored schema at
-[`schemas/forge-capability/v1/forge-capability.schema.json`](../../schemas/forge-capability/v1/forge-capability.schema.json)
+[`schemas/forge-capability/v2/forge-capability.schema.json`](../../schemas/forge-capability/v2/forge-capability.schema.json)
 is the single home for the handle definition and the canonical
 capability operations; groundwork artifact schemas carry self-contained
 copies so runa can validate artifacts directly, and conformance fails
 when those copies drift from the vendored `#/$defs/handle` definition.
 The [decompose delivery rules](../../protocols/decompose/PROTOCOL.md)
-create the tracker ticket before first work-unit delivery and carry the
+create the tracker work-unit before first work-unit delivery and carry the
 returned connector handle exactly once.
 
 ## Where Documentation Discipline Lives

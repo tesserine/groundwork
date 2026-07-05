@@ -234,9 +234,9 @@ breaks on refactor and specifies nothing.
 A well-formed scenario can still specify nothing. "Observable, not internal"
 guards one direction — assertions that reach into internals break on refactor
 and pin implementation. The opposite failure is as fatal: a Then so shallow a
-canned return satisfies it. `create-ticket returns a complete-scoped handle` is
+canned return satisfies it. `create-work-unit returns a complete-scoped handle` is
 observable, and a connector that builds the handle string while creating no
-ticket passes it. The scenario proves the shape of a return, not that the work
+work-unit passes it. The scenario proves the shape of a return, not that the work
 happened.
 
 A contract is robust when **every scenario fails on a stub** — a vacuous or
@@ -248,8 +248,8 @@ Three shapes of hollow scenario, with the repair:
 
 - **Shape, not effect.** The Then asserts the structure of a return — a
   well-formed handle, a schema-valid payload — which a stub fabricates. Assert
-  the effect a stub cannot fake instead: not "create-ticket returns a handle"
-  but "the ticket named by the handle reads back"; not "the connector validates
+  the effect a stub cannot fake instead: not "create-work-unit returns a handle"
+  but "the work-unit named by the handle reads back"; not "the connector validates
   the operation" but "the operation issues the provider request," checkable
   against a recording transport with no live side effect.
 - **No falsifying case.** Every scenario is a positive — "valid input is
@@ -275,12 +275,12 @@ one such scenario. The check is cheap, it runs before any code exists, and it
 is the line between a contract that defines done and one that describes the
 happy shape of done.
 
-Hollow: `create_ticket_returns_complete_handle` — asserts the returned handle is
+Hollow: `create_work_unit_returns_complete_handle` — asserts the returned handle is
 well-formed; a connector that fabricates the handle and never calls the forge
-passes. Robust: `create_ticket_persists_a_retrievable_ticket` — Given a
-recording transport (or a real forge on the gated path), When create-ticket
+passes. Robust: `create_work_unit_persists_a_retrievable_ticket` — Given a
+recording transport (or a real forge on the gated path), When create-work-unit
 runs, Then the transport received the create request with the mapped fields and
-the ticket named by the returned handle reads back. The fabricating stub fails
+the work-unit named by the returned handle reads back. The fabricating stub fails
 the first Then; the no-request stub fails the second.
 
 ### Documentation-deliverable behavior gates

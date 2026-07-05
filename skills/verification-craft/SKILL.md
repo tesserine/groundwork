@@ -53,7 +53,7 @@ tokens are the invariant, and a meaning-preserving rewrite still passes.
 Worked example: `test_entry_surfaces_ground_on_the_whole_ticket` in
 [`tests/test_forge_capability.py`](https://github.com/tesserine/groundwork/blob/252024f/tests/test_forge_capability.py)
 uses `tooling.prose_conformance.entry_surface_coherence` to check the
-read-ticket comment-log lifecycle across `acquire` and `define` instead of
+read-work-unit comment-log lifecycle across `acquire` and `define` instead of
 pinning one sentence about entry context.
 
 ### Structural

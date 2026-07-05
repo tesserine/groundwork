@@ -3,7 +3,7 @@ name: decompose
 description: >-
   The work-unit protocol. Produce `work-unit` artifacts: create, refine, and
   triage work-units, decompose epics into them, and deliver each through the
-  `work-unit` MCP tool with its connector ticket handle. Close-state review
+  `work-unit` MCP tool with its connector work-unit handle. Close-state review
   happens here; the close itself is performed by `land`. The authoring craft
   lives in the `work-unit-craft` skill; this protocol consults it.
 metadata:
@@ -25,9 +25,9 @@ protocol consults that home and owns only its own moves.
 `decompose` is also Groundwork's acquisition surface: it is the sole unscoped
 producer of the `work-unit` artifact. Ordinary planning reaches this protocol
 when a `requirements` artifact satisfies its trigger, so requirements still
-precede decomposition in the planning route. Cold-start ticket entry substitutes
+precede decomposition in the planning route. Cold-start work-unit entry substitutes
 that trigger with the entry reference and serves the same work-unit output
-surface so the acquire discipline can read the ticket and materialize the
+surface so the acquire discipline can read the work-unit and materialize the
 work-unit before any planning-phase requirements artifact exists. The manifest
 therefore keeps `requirements` as the trigger, not as a `requires` precondition.
 
@@ -180,11 +180,11 @@ connector handle back to it.
 
 Deliver each `work-unit` artifact by invoking the `work-unit` MCP tool once
 per delivered artifact. Every work-unit is tracker-backed. For a newly created
-work-unit, first invoke the connector capability `create-ticket` operation and
-carry the returned `{ id, display }` handle into the artifact body. `create-ticket`
+work-unit, first invoke the connector capability `create-work-unit` operation and
+carry the returned `{ id, display }` handle into the artifact body. `create-work-unit`
 is a first-delivery-only step: refinement never calls it, and decompose does not
-adopt a pre-existing tracker ticket into a new artifact. If a tracker ticket
-already exists, this delivery path must not create a second ticket for it.
+adopt a pre-existing tracker work-unit into a new artifact. If a tracker work-unit
+already exists, this delivery path must not create a second work-unit for it.
 The object below is MCP tool input, not artifact body.
 `instance_id` is a tool parameter.
 It names the artifact instance and becomes the workspace filename.
@@ -198,10 +198,10 @@ Use a fresh `instance_id` when creating a new work-unit. Reuse the existing
 `instance_id` when refining an already-delivered work-unit artifact so artifact
 identity and inbound dependency references remain stable. First MCP delivery
 uses a stable id derived from the connector handle's `id`, and must populate
-`handle` exactly once from the identity returned by `create-ticket`.
+`handle` exactly once from the identity returned by `create-work-unit`.
 Subsequent updates reuse the `instance_id` established at first delivery and
 carry the existing `handle` through unchanged from the previously delivered
-artifact body. Do not call `create-ticket`, re-derive `handle`, or omit
+artifact body. Do not call `create-work-unit`, re-derive `handle`, or omit
 `handle` during refinement; MCP delivery persists the submitted body. In this
 section, "refining an existing work-unit" means refining an existing artifact,
 not merely refining a tracker item.
@@ -219,8 +219,8 @@ work-unit({
   out_of_scope: ["submit protocol", "land protocol"],
   dependencies: ["work-unit-122-artifact-store-cleanup"],
   handle: {
-    id: "<connector-issued ticket identity>",
-    display: "<human-readable ticket identity>"
+    id: "<connector-issued work-unit identity>",
+    display: "<human-readable work-unit identity>"
   }
 })
 ```
@@ -279,9 +279,9 @@ decompose's own — epic, graph, and delivery misuse.
   cannot answer without reading all task bodies, the graph is missing.*
 
 - `refinement-as-first-delivery`: a refinement is delivered as if it were a
-  first delivery — `create-ticket` invoked, a fresh `instance_id` minted, or
+  first delivery — `create-work-unit` invoked, a fresh `instance_id` minted, or
   `handle` re-derived for an already-delivered work-unit. The tracker gains a
-  second ticket for the same work, or the artifact store gains a duplicate
+  second work-unit for the same work, or the artifact store gains a duplicate
   whose inbound `dependencies` still point at the stale instance.
   *Recognition: before delivering, ask "does a delivered artifact for this
   work-unit already exist?" If yes, the delivery is a refinement — reuse its
@@ -294,8 +294,8 @@ decompose's own — epic, graph, and delivery misuse.
 - `reckon`: first-principles constraint verification before work-unit framing,
   refinement, and epic decomposition.
 - `acquire` (skill): the mirror of this protocol's create path — decompose
-  creates the ticket it delivers; acquire adopts the ticket it is given and
-  creates none. A ticket-quality gap acquire surfaces routes to
+  creates the work-unit it delivers; acquire adopts the work-unit it is given and
+  creates none. A work-unit-quality gap acquire surfaces routes to
   `refine-work-unit` here.
 - `define`: contract-authoring entry discipline that states what done means
   for one work-unit.

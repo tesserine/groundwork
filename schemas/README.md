@@ -28,7 +28,7 @@ is tracker-backed and carries the connector-issued `{ id, display }` handle.
 Planning-phase work-unit bodies do not carry a top-level `work_unit` field.
 
 The vendored forge capability schema at
-`schemas/forge-capability/v1/forge-capability.schema.json` is the authority for
+`schemas/forge-capability/v2/forge-capability.schema.json` is the authority for
 the connector handle definition and the eight canonical forge operations.
 Groundwork artifact schemas carry self-contained copies of the handle schema so
 runa can validate artifacts without an external registry or network fetch, and

@@ -1,4 +1,4 @@
-"""Acquisition: materializing a work-unit artifact from an existing connector ticket."""
+"""Acquisition: materializing a work-unit artifact from an existing connector work-unit."""
 
 import json
 import os
@@ -15,17 +15,17 @@ ROOT = Path(__file__).resolve().parents[1]
 MATERIALIZE = ROOT / "skills" / "acquire" / "scripts" / "materialize.py"
 
 TICKET_BODY = (
-    "Cold-start entry from a forge ticket reference.\n\n"
+    "Cold-start entry from a forge work-unit reference.\n\n"
     "## Acceptance criteria\n\n"
-    "- [ ] Given an existing ticket, an artifact is materialized\n"
-    "- [ ] The artifact handle identifies that ticket\n"
+    "- [ ] Given an existing work-unit, an artifact is materialized\n"
+    "- [ ] The artifact handle identifies that work-unit\n"
 )
 
 
-def materialize(read_ticket_stdout: str) -> subprocess.CompletedProcess[str]:
+def materialize(read_work_unit_stdout: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, str(MATERIALIZE)],
-        input=read_ticket_stdout,
+        input=read_work_unit_stdout,
         capture_output=True,
         text=True,
     )
@@ -69,7 +69,7 @@ class MaterializeTicketTests(unittest.TestCase):
     def test_opaque_connector_ticket_materializes_to_schema_valid_adopted_work_unit(self) -> None:
         ticket = {
             "handle": {"id": "ticket:opaque-alpha", "display": "TRACK-ALPHA"},
-            "title": "task(entry): cold-start scoped entry from a connector ticket",
+            "title": "task(entry): cold-start scoped entry from a connector work-unit",
             "body": TICKET_BODY,
             "state": "open",
         }
@@ -82,8 +82,8 @@ class MaterializeTicketTests(unittest.TestCase):
         self.assertEqual(ticket["handle"], payload["artifact"]["handle"])
         self.assertEqual(
             [
-                "Given an existing ticket, an artifact is materialized",
-                "The artifact handle identifies that ticket",
+                "Given an existing work-unit, an artifact is materialized",
+                "The artifact handle identifies that work-unit",
             ],
             payload["artifact"]["acceptance_criteria"],
         )
@@ -144,7 +144,7 @@ class MaterializeTicketTests(unittest.TestCase):
             "handle": {"id": "ticket:wrapped-criteria", "display": "WRAPPED"},
             "title": "Wrapped criteria",
             "body": (
-                "A ticket with wrapped markdown list items.\n\n"
+                "A work-unit with wrapped markdown list items.\n\n"
                 "## Acceptance criteria\n\n"
                 "1. A single contract surface admits criteria for any dimension. Each criterion\n"
                 "   declares dimension, acceptance criterion, statement, hollow delivery, and\n"
@@ -176,7 +176,7 @@ class MaterializeTicketTests(unittest.TestCase):
             "handle": {"id": "ticket:criteria-prose", "display": "CRITERIA-PROSE"},
             "title": "Trailing prose after criteria",
             "body": (
-                "A ticket with prose after the criteria list.\n\n"
+                "A work-unit with prose after the criteria list.\n\n"
                 "## Acceptance criteria\n\n"
                 "- [ ] The contract payload uses criteria\n"
                 "- [ ] The workflow surfaces name the contract artifact\n"
@@ -257,7 +257,7 @@ def runa_bin() -> Path | None:
             capture_output=True,
             text=True,
         )
-        if "--ticket" in help_result.stdout:
+        if "--work-unit" in help_result.stdout:
             return path
     return None
 
@@ -273,7 +273,7 @@ def runa_mcp_bin(runa: Path) -> Path | None:
 
 @unittest.skipUnless(runa_bin() is not None, "runa binary not available")
 class AcquisitionEntryEndToEndTests(unittest.TestCase):
-    def test_ticket_entry_dry_run_reaches_acquisition_and_projects_take(self) -> None:
+    def test_work_unit_entry_dry_run_reaches_acquisition_and_projects_take(self) -> None:
         runa = runa_bin()
         self.assertIsNotNone(runa)
 
@@ -284,7 +284,7 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
                 [
                     str(runa),
                     "run",
-                    "--ticket",
+                    "--work-unit",
                     "tesserine/groundwork#499",
                     "--dry-run",
                     "--json",
@@ -422,7 +422,7 @@ class AcquisitionEntryEndToEndTests(unittest.TestCase):
             self.assertEqual(ticket["handle"], body["handle"])
 
             # The cascade now computes define as the next READY station for the
-            # acquired work-unit — entry from an existing ticket reached define.
+            # acquired work-unit — entry from an existing work-unit reached define.
             state = subprocess.run(
                 [str(runa), "state", "--work-unit", instance_id],
                 cwd=project, capture_output=True, text=True,

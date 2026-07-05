@@ -393,21 +393,21 @@ def _manifest_retired_forge_model_errors(
 
 def _manifest_capability_contract_errors(root: Path) -> list[tuple[str, str]]:
     errors: list[tuple[str, str]] = []
-    schema_path = root / "schemas" / "forge-capability" / "v1" / "forge-capability.schema.json"
+    schema_path = root / "schemas" / "forge-capability" / "v2" / "forge-capability.schema.json"
     if not schema_path.exists() and root.resolve() != ROOT:
         return []
     try:
         schema = load_forge_capability_schema(root)
     except (OSError, json.JSONDecodeError) as error:
-        return [("schemas/forge-capability/v1/forge-capability.schema.json", f"cannot load vendored forge capability schema: {error}")]
+        return [("schemas/forge-capability/v2/forge-capability.schema.json", f"cannot load vendored forge capability schema: {error}")]
 
     metadata = schema.get("x-tesserine-canonical")
     if metadata != {"version": CAPABILITY_VERSION, "schema_url": CAPABILITY_PROVENANCE_URL}:
-        errors.append(("schemas/forge-capability/v1/forge-capability.schema.json", f"vendored forge capability provenance is not immutable v{CAPABILITY_VERSION}"))
+        errors.append(("schemas/forge-capability/v2/forge-capability.schema.json", f"vendored forge capability provenance is not immutable v{CAPABILITY_VERSION}"))
     if schema.get("properties", {}).get("handle_schema", {}).get("const") != "#/$defs/handle":
-        errors.append(("schemas/forge-capability/v1/forge-capability.schema.json", "forge capability handle_schema must point at #/$defs/handle"))
+        errors.append(("schemas/forge-capability/v2/forge-capability.schema.json", "forge capability handle_schema must point at #/$defs/handle"))
     if len(forge_operation_names(schema)) != 8:
-        errors.append(("schemas/forge-capability/v1/forge-capability.schema.json", "forge capability must declare exactly eight operations"))
+        errors.append(("schemas/forge-capability/v2/forge-capability.schema.json", "forge capability must declare exactly eight operations"))
     errors.extend(_manifest_artifact_handle_contract_errors(root, schema))
     return errors
 
@@ -416,7 +416,7 @@ def _manifest_artifact_handle_contract_errors(root: Path, capability_schema: dic
     errors: list[tuple[str, str]] = []
     expected_handle = capability_schema.get("$defs", {}).get("handle")
     if not isinstance(expected_handle, dict):
-        return [("schemas/forge-capability/v1/forge-capability.schema.json", "forge capability #/$defs/handle must be an object")]
+        return [("schemas/forge-capability/v2/forge-capability.schema.json", "forge capability #/$defs/handle must be an object")]
 
     for schema_name in ("work-unit.schema.json", "change-proposal.schema.json"):
         relative = Path("schemas") / schema_name

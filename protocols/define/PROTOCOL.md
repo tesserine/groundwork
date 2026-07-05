@@ -16,7 +16,7 @@ metadata:
 Define authors the contract for a single work-unit. Selection happened
 upstream — the work-unit artifact exists and runa activates define on it,
 having arrived either from `decompose` (a newly created work-unit) or from
-the `acquire` skill (materialized from an existing forge ticket). Entry's
+the `acquire` skill (materialized from an existing forge work-unit). Entry's
 job is to stand on prepared ground and state, precisely and verifiably,
 what will be true when this work is done.
 
@@ -45,10 +45,10 @@ proves it, or records it.
    work whose `dependencies` are still open; a blocked work-unit is a
    substrate signal, not an invitation.
 
-   Ground the frame in the whole ticket.
-   The ticket body is the work-unit's spec.
+   Ground the frame in the whole work-unit.
+   The work-unit body is the work-unit's spec.
    The comment log is the running record: review state, dispositions, and directives live there.
-   `acquire` surfaces it from the `read-ticket` snapshot per forge-capability `1.2.0`.
+   `acquire` surfaces it from the `read-work-unit` snapshot per forge-capability `2.0.0`.
    The newest review directives at the submitted head govern the work.
    The body remains the spec, and directives refine delivery against it.
    Weigh each log entry by recency and standing: a directive superseded by a newer round, or by a body amendment, is record, not direction.
@@ -182,7 +182,7 @@ begins — the dose is proportional.
 - `decompose` (protocol): owns work-unit boundaries and acceptance-criteria
   quality. A work-unit that cannot be framed or contracted routes back there.
 - `acquire` (skill): the other entry source — materializes the work-unit
-  artifact from an existing forge ticket before define activates on it.
+  artifact from an existing forge work-unit before define activates on it.
 - `plan` (protocol): the next station — consumes the contract and converges
   on a decision-complete design.
 - `land` (protocol): the closing bookend — define establishes what done means;

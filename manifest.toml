@@ -85,7 +85,7 @@ name = "run-test"
 #
 # `decompose` is also the acquisition surface: it is the sole unscoped
 # producer of `work-unit`. Ordinary planning still reaches it through the
-# `requirements` trigger, while cold-start ticket entry substitutes that
+# `requirements` trigger, while cold-start work-unit entry substitutes that
 # trigger so acquisition can materialize the work-unit before requirements
 # exist.
 #

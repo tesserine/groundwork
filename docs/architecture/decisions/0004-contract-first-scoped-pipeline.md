@@ -93,43 +93,43 @@ begins"; verification/documentation share the boundary "work is complete").
 The scoped pipeline activates on a `work-unit` artifact, but the live
 planning surface is the forge tracker, and before this redesign the only
 path to a work-unit artifact was `decompose`'s create path — which refuses
-to adopt a pre-existing ticket (`create-ticket` is first-delivery-only).
-The natural developer entry, "start on ticket #N" for a ticket already on
+to adopt a pre-existing work-unit (`create-work-unit` is first-delivery-only).
+The natural developer entry, "start on work-unit #N" for a work-unit already on
 the tracker, had no path: `decompose` would not adopt it, `runa take <id>`
 was retired, and runa-native decompose is future work.
 
 The **methodology half** of that entry is decided here: the `acquire` skill.
-Given a reference to an existing forge ticket on either forge, an agent in a
-scoped session reads the ticket through the existing `read-ticket` mechanic
+Given a reference to an existing forge work-unit on either forge, an agent in a
+scoped session reads the work-unit through the existing `read-work-unit` mechanic
 and materializes a `work-unit` artifact from it, after which `take` proceeds
 unchanged. The governing constraints:
 
 - **Acquisition produces the work-unit artifact; take's contract is
   untouched** (take still requires/triggers on `work-unit`).
-- **One-way derivation**, ticket → artifact (Single Home): the ticket is the
+- **One-way derivation**, work-unit → artifact (Single Home): the work-unit is the
   planning home, the artifact its execution-scoped snapshot, `handle` the
-  back-link. Nothing in acquisition writes content back to the ticket.
+  back-link. Nothing in acquisition writes content back to the work-unit.
 - **Adopt, don't create.** Acquisition is the mirror of decompose's create
-  path — decompose creates the ticket it delivers; acquisition adopts the
-  ticket it is given — and creates no ticket. `handle` is the ticket's, and
+  path — decompose creates the work-unit it delivers; acquisition adopts the
+  work-unit it is given — and creates no work-unit. `handle` is the work-unit's, and
   the tracker-backed `work-unit-<N>-<short-slug>` instance-id convention
   matches decompose's, so acquired and decomposed work-units are
   indistinguishable downstream.
 - **No new mechanic, artifact type, or schema.** The forge read resolves
-  through `read-ticket`; delivery is through the existing `work-unit` MCP
+  through `read-work-unit`; delivery is through the existing `work-unit` MCP
   tool. Acquisition is skill-side intake reaching the store through
   decompose's declared output tool — the same shape as `research`-record's
   `may_produce` bridge — so `decompose` remains the sole manifest producer
   of `work-unit`.
-- **Gaps route to refinement, never to invention.** Where ticket content
+- **Gaps route to refinement, never to invention.** Where work-unit content
   does not map onto required schema fields (no extractable acceptance
-  criteria, empty body, non-open ticket), the materializer surfaces a named
+  criteria, empty body, non-open work-unit), the materializer surfaces a named
   work-unit-quality defect routed to `decompose`'s `refine-work-unit`
   discipline rather than fabricating content.
 - **Claiming stays take's.** Acquisition materializes; take claims the
   tracker in its workspace-prep step. The one-way boundary stays clean.
 
-The **runtime half** — a cold-start entrypoint that accepts a ticket
+The **runtime half** — a cold-start entrypoint that accepts a work-unit
 reference and opens the scoped session in which acquisition runs (so the
 operator types the equivalent of "take runa#14" against an empty store) —
 needs a runtime change and stays flagged below as
@@ -210,7 +210,7 @@ context to fire passively — with full expositions in references.
    "stopped short of submit" were accidents of the session framing removed
    in (2).
 7. **The crisp entry tool** → split by layer. The methodology half — a
-   ticket → work-unit materialization path — is decided here as the
+   work-unit → work-unit materialization path — is decided here as the
    `acquire` skill (see *Entry: two sources, one artifact*). The runtime
    half — a cold-start entrypoint that opens the session acquisition runs in
    — stays flagged below as a coordinated runtime dependency
@@ -244,7 +244,7 @@ context to fire passively — with full expositions in references.
   The methodology half of acquisition is delivered here (the `acquire`
   skill; see *Entry: two sources, one artifact*), and runs today inside a
   `decompose`-scoped session. What remains runtime-side is the cold-start
-  affordance: an entrypoint that takes a bare ticket reference against an
+  affordance: an entrypoint that takes a bare work-unit reference against an
   empty store and opens the scoped session acquisition runs in — so the
   operator types "take runa#14" with nothing materialized yet. That is the
   retired `runa take <id>` shape, filed as

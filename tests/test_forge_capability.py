@@ -16,10 +16,10 @@ from tooling.workflow_contracts import workflow_registry_from_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMAS = ROOT / "schemas"
-VENDORED_SCHEMA = SCHEMAS / "forge-capability" / "v1" / "forge-capability.schema.json"
+VENDORED_SCHEMA = SCHEMAS / "forge-capability" / "v2" / "forge-capability.schema.json"
 EXPECTED_OPERATIONS = {
-    "read-ticket",
-    "create-ticket",
+    "read-work-unit",
+    "create-work-unit",
     "claim-work-unit",
     "record-progress",
     "deliver-change-proposal",
@@ -75,7 +75,7 @@ def contains_key(node: object, key: str) -> bool:
 
 
 def connector_model_violations(root: Path) -> list[str]:
-    schema = load_json(root / "schemas" / "forge-capability" / "v1" / "forge-capability.schema.json")
+    schema = load_json(root / "schemas" / "forge-capability" / "v2" / "forge-capability.schema.json")
     work_unit_schema = load_json(root / "schemas" / "work-unit.schema.json")
     handle_schema = schema["$defs"]["handle"]
     connecting_structure = (root / "docs" / "architecture" / "connecting-structure.md").read_text(
@@ -335,19 +335,19 @@ class ForgeCapabilityTests(unittest.TestCase):
 
         self.assertIn("connecting-structure omits handle shape { id, display }", violations)
 
-    def test_read_ticket_output_schema_declares_connector_handle(self) -> None:
+    def test_read_work_unit_output_schema_declares_connector_handle(self) -> None:
         schema = vendored_schema()
-        ticket_snapshot_ref = schema["$defs"]["read-ticket-tool"]["allOf"][1]["properties"]["output_schema"]["const"]
-        ticket_snapshot = schema_def(schema, ticket_snapshot_ref)
+        work_unit_snapshot_ref = schema["$defs"]["read-work-unit-tool"]["allOf"][1]["properties"]["output_schema"]["const"]
+        work_unit_snapshot = schema_def(schema, work_unit_snapshot_ref)
 
         handle = connector_handle()
         snapshot = {
             "handle": handle,
-            "title": "Opaque ticket",
-            "body": "## Acceptance criteria\n- [ ] Materialize opaque ticket",
+            "title": "Opaque work unit",
+            "body": "## Acceptance criteria\n- [ ] Materialize opaque work unit",
             "state": "open",
         }
-        Draft202012Validator(schema).evolve(schema=ticket_snapshot).validate(snapshot)
+        Draft202012Validator(schema).evolve(schema=work_unit_snapshot).validate(snapshot)
         snapshot["comments"] = [
             {"body": "Freshen record."},
             {
@@ -356,7 +356,7 @@ class ForgeCapabilityTests(unittest.TestCase):
                 "created_at": "2026-07-02T10:53:26Z",
             },
         ]
-        Draft202012Validator(schema).evolve(schema=ticket_snapshot).validate(snapshot)
+        Draft202012Validator(schema).evolve(schema=work_unit_snapshot).validate(snapshot)
 
     def test_entry_surfaces_ground_on_the_whole_ticket(self) -> None:
         self.assertTrue(entry_surface_coherence(ROOT).passed)
