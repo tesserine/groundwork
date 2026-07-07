@@ -48,9 +48,10 @@ gate-bound to this schema.
 
 The scoped contract spine is dimension-agnostic. `contract.schema.json`
 declares criteria for any dimension; each criterion names its dimension,
-the acceptance criterion it refines, the statement that defines done, the
-hollow delivery that would fail it, the criterion-level `check_kind`, and
-the check descriptor. `completion-evidence.schema.json` records one
+the numbered work-unit acceptance criterion or explicit body-ground obligation
+source it refines, the statement that defines done, the hollow delivery that
+would fail it, the criterion-level `check_kind`, and the check descriptor.
+`completion-evidence.schema.json` records one
 performed result shape per contract criterion. Executable criteria carry run
 or artifact evidence; attested criteria carry reviewer identity and finding.
 Root schemas remain ordinary top-level object schemas with no root `oneOf`,
