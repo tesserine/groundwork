@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Principle-derived contracts for open-ended methodology units** (#531).
+  `skills/contract/SKILL.md` (contract 2.7.1->2.8.0) now routes
+  methodology, design, and re-derivation units whose answer must emerge from
+  ground and principles to
+  `skills/contract/references/principle-derived-contracts.md`. The reference
+  teaches mechanism-open, quality-closed criteria; operational hollow
+  detection; auditable body-ground source mapping on the existing
+  `acceptance_criterion` field; teeth-bearing attested checks; and
+  evolvability as a documentation outcome. The pattern stays inside the
+  existing `contract.criteria[]` lifecycle and cites #158/#539 as examples
+  without importing their local workflow choices.
+
 - **Freshening as a groundwork built-in** (#465).
   `skills/acquire/SKILL.md` (2.0.0) inserts a mandatory Freshen step between
   materialization and delivery: an acquired work-unit is re-grounded against

@@ -11,8 +11,8 @@ description: >-
   or completion claims must stay traceable to a defined contract instead of
   drifting toward implementation convenience.
 metadata:
-  version: "2.7.1"
-  updated: "2026-07-03"
+  version: "2.8.0"
+  updated: "2026-07-07"
 ---
 
 # Contract
@@ -385,6 +385,28 @@ it holds or the place it fails. How the projection is generated from the
 resolved corpus, and grows with it, is
 [references/code-quality-contract.md](references/code-quality-contract.md).
 
+## Principle-Derived Contracts
+
+Most contracts refine already-scoped behavior: the work-unit acceptance
+criteria name what must be true, and the contract turns that into
+teeth-bearing criteria. Some methodology, design, and re-derivation units
+are different: the deliverable's form is itself the work, so the contract
+must be derived from the work-unit ground and the governing principles
+without smuggling in the author's preferred mechanism.
+
+Use the principle-derived pattern only when the answer must emerge from
+ground and principles: a re-derivation, design, methodology asset, or other
+open-ended artifact. Do not route ordinary well-scoped behavior through the
+extra pattern, and do not treat derivation as permission for vague criteria;
+every derived criterion still names its hollow delivery and a performable
+check.
+
+The full authoring and review pattern is
+[references/principle-derived-contracts.md](references/principle-derived-contracts.md).
+It stays inside the existing `contract.criteria[]` lifecycle and enriches
+how the current dimensions are authored; it is not a new schema, a new
+dimension, or a second contract rulebook.
+
 ## Corruption Modes
 
 **Contract dropoff.** The contract is treated as a phase that ended when
@@ -484,3 +506,6 @@ declared dimension proves qualification-to-remain.
   the documentation dimension's three sub-modules and checklists.
 - [references/code-quality-contract.md](references/code-quality-contract.md):
   the code-quality projection and how it grows with the corpus.
+- [references/principle-derived-contracts.md](references/principle-derived-contracts.md):
+  deriving mechanism-open, quality-closed contracts for open-ended
+  methodology and design units.
