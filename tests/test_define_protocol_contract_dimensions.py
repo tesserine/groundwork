@@ -16,6 +16,9 @@ from tooling.prose_conformance import (
 ROOT = Path(__file__).resolve().parents[1]
 DEFINE_PROTOCOL = ROOT / "protocols" / "define" / "PROTOCOL.md"
 CONTRACT_SKILL = ROOT / "skills" / "contract" / "SKILL.md"
+PRINCIPLE_DERIVED_CONTRACTS = (
+    ROOT / "skills" / "contract" / "references" / "principle-derived-contracts.md"
+)
 EXPECTED_CONTRACT_DIMENSIONS = {
     "**Behavior**",
     "**Documentation**",
@@ -44,6 +47,27 @@ class DefineProtocolContractDimensionTests(unittest.TestCase):
         self.assertIn("check_kind", criterion["required"])
         self.assertEqual(["executable", "attested"], criterion["properties"]["check_kind"]["enum"])
         self.assertNotIn("behavior_form", criterion["properties"])
+
+    def test_acceptance_criterion_source_mapping_exposes_dual_use(self) -> None:
+        schema = artifact_schema(ROOT, "contract")
+        body = read(DEFINE_PROTOCOL)
+        source_mapping = markdown_section(read(PRINCIPLE_DERIVED_CONTRACTS), "Source Mapping")
+        acceptance_criterion = schema["properties"]["criteria"]["items"]["properties"][
+            "acceptance_criterion"
+        ]
+
+        self.assertEqual(
+            "Source for this contract criterion: numbered work-unit acceptance criterion or explicit body-ground obligation.",
+            acceptance_criterion["description"],
+        )
+        self.assertIn(
+            'acceptance_criterion: "<numbered acceptance criterion or explicit body-ground obligation source>",',
+            body,
+        )
+        self.assertIn("numbered acceptance criterion", source_mapping)
+        self.assertIn("explicit body-ground source", source_mapping)
+        self.assertIn("Body-ground mapping is not scope expansion", source_mapping)
+        self.assertNotIn("<acceptance criterion this refines>", body)
 
     def test_define_delivery_block_matches_manifest_and_schema_boundary(self) -> None:
         define = {boundary.protocol: boundary for boundary in delivery_boundaries(ROOT)}["define"]

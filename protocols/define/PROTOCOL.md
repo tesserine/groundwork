@@ -99,7 +99,7 @@ proves it, or records it.
      criteria: [{
        id: "<stable criterion id>",
        dimension: "behavior" | "documentation" | "code-quality" | "<other>",
-       acceptance_criterion: "<acceptance criterion this refines>",
+       acceptance_criterion: "<numbered acceptance criterion or explicit body-ground obligation source>",
        statement: "<dimension-specific definition of done>",
        hollow_delivery: "<plausible delivery that would fail this criterion>",
        check_kind: "executable" | "attested",

@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Contract acceptance-criterion source guidance** (#580).
+  `schemas/contract.schema.json` and the define protocol's contract tool
+  example now state that `contract.criteria[].acceptance_criterion` may cite
+  either a numbered work-unit acceptance criterion or an explicit body-ground
+  obligation, matching the Source Mapping reference without changing the
+  schema shape.
+
 ### Added
 
 - **Principle-derived contracts for open-ended methodology units** (#531).
