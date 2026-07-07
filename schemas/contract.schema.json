@@ -46,7 +46,7 @@
           },
           "acceptance_criterion": {
             "type": "string",
-            "description": "Work-unit acceptance criterion this contract criterion refines.",
+            "description": "Source for this contract criterion: numbered work-unit acceptance criterion or explicit body-ground obligation.",
             "minLength": 1
           },
           "statement": {

@@ -186,6 +186,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Contract acceptance-criterion source guidance** (#580).
+  `schemas/contract.schema.json` and the define protocol's contract tool
+  example now state that `contract.criteria[].acceptance_criterion` may cite
+  either a numbered work-unit acceptance criterion or an explicit body-ground
+  obligation, matching the Source Mapping reference without changing the
+  schema shape.
+
 - **Forge Capability v2.0.0 consumption: neutral work-unit operation names**
   ([tesserine/commons#106](https://github.com/tesserine/commons/issues/106)).
   Groundwork now vendors forge-capability **v2.0.0** at

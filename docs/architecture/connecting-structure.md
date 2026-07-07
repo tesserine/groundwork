@@ -492,7 +492,8 @@ work-unit acceptance criteria → contract criteria that trace to them →
 test-evidence results that trace to criteria → completion-evidence
 coverage rolled up at the acceptance-criterion level. Two schema
 consequences carry the design: each contract criterion names the
-acceptance criterion it refines, and completion-evidence reports
+numbered work-unit acceptance criterion or explicit body-ground obligation
+source it refines, and completion-evidence reports
 coverage at the acceptance-criterion level — so verify can answer "are
 all acceptance criteria covered?" The exact fields live in
 [`schemas/`](../../schemas/).
