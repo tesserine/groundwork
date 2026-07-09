@@ -37,5 +37,6 @@ only that the operator may still revise the decision.
 | [0007](0007-dimension-agnostic-contract-machine.md) | Dimension-Agnostic Contract Machine | Proposed — delivered for operator review | 2026-07-01 |
 | [0008](0008-prose-is-projection.md) | Prose Is Projection | Proposed — delivered for operator review | 2026-07-02 |
 | [0009](0009-runa-runtime-state-commit-policy.md) | Runa Runtime State Commit Policy | Proposed — delivered for operator review | 2026-07-05 |
+| [0010](0010-content-kinds-behavior-and-meaning.md) | Content Kinds — Behavior and Meaning | Proposed — delivered for operator review | 2026-07-10 |
 
 New decisions add a row here in the same change.
