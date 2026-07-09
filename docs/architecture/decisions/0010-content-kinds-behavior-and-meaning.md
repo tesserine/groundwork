@@ -1,6 +1,6 @@
 # ADR-0010: Content Kinds — Behavior and Meaning
 
-**Status:** Proposed — delivered for operator review with groundwork#582 \
+**Status:** Accepted — operator-ratified 2026-07-10 (delivered with groundwork#582) \
 **Date:** 2026-07-10 \
 **Amends:** [ADR-0007](0007-dimension-agnostic-contract-machine.md) — the
 criterion-level `check_kind` apparatus it introduced retires; its

@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Content kinds: behavior and meaning** (#582).
   [ADR-0010](docs/architecture/decisions/0010-content-kinds-behavior-and-meaning.md)
-  (Proposed) ratifies the contract-ontology rotation: every criterion carries
+  (Accepted 2026-07-10) ratifies the contract-ontology rotation: every criterion carries
   exactly one content kind — behavior (execution-native) or meaning
   (reconstruction-native, graded against a stated proposition) — with checks
   as operational procedures (actor, procedure, observable, declared cases)
