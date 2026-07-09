@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Content kinds: behavior and meaning** (#582).
+  [ADR-0010](docs/architecture/decisions/0010-content-kinds-behavior-and-meaning.md)
+  (Proposed) ratifies the contract-ontology rotation: every criterion carries
+  exactly one content kind — behavior (execution-native) or meaning
+  (reconstruction-native, graded against a stated proposition) — with checks
+  as operational procedures (actor, procedure, observable, declared cases)
+  and execution binding (`ci`/`harness`/`manual`) as policy single-homed at
+  `policy.toml`. Attestation is redefined as the manual binding of a stated
+  procedure; `check_kind` retires via #583; evidence becomes binding-stamped
+  (#585); retrofit is graded per #539. Carries the 25-criterion probe as
+  evidence; follow-on graph #583–#587 filed with the decision.
+
 - **Principle-derived contracts for open-ended methodology units** (#531).
   `skills/contract/SKILL.md` (contract 2.7.1->2.8.0) now routes
   methodology, design, and re-derivation units whose answer must emerge from
