@@ -118,10 +118,13 @@ criteria are covered, and the documentation still tells the truth.
    ```
 
    Runa validates the remaining artifact body fields against the
-   completion-evidence schema and the current contract's criteria before
-   persisting the artifact and recording it in the artifact store. Unknown
-   `criterion_id` values and missing contract criteria are rejected before
-   persistence.
+   completion-evidence schema before persisting the artifact and recording
+   it in the artifact store. The schema is the persist seam's whole
+   validation reach — it cannot range over another artifact's criterion
+   ids — so criterion coverage is this protocol's own gate: every result
+   names a declared contract criterion and every contract criterion carries
+   a performed result (`invented-coverage` below), and review blocks on any
+   uncovered criterion.
 
 The evidence is honest, not aspirational: gaps and failures are recorded as
 gaps and failures. Review consumes this evidence and blocks on it — an

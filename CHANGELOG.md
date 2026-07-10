@@ -533,6 +533,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **The verify protocol claims only what the persist seam enforces.**
+  `protocols/verify/PROTOCOL.md` stated that runa rejects unknown
+  `criterion_id` values and missing contract criteria before persistence —
+  enforcement no runa commit has ever carried (the prose presented an
+  aspiration as current runtime behavior; the #547 finding's declared-home
+  outcome stands as the tracked path to real enforcement). The prose now
+  states the schema-validation boundary truthfully and homes
+  criterion-coverage totality in the protocol's own gate, consumed by
+  review. The interactive-session test asserting the phantom rejection —
+  which had never passed against any runa — is removed until the declared
+  home and its enforcement exist.
+- **The runa-driving suites are grounded to the current runtime
+  interface.** The cold-start acquisition entry test now enters through the
+  `intent.target` route (runa retired flag-based reference entry in
+  runa#222/#224; `--work-unit` takes a canonical instance id, not a forge
+  reference), and the gate-form sequencing test's completion-evidence
+  payload carries the execution-binding stamp the v-next completion-evidence
+  schema requires. Both had failed on every runa-equipped host while CI —
+  which provisions no runa — stayed green.
+
 - **Prose-is-projection residue: a rename landing-gap, a stale migration
   reference, internal duplication, and two witness-mark examples.** Found
   during a principle-derived renewal audit verified against live HEAD and

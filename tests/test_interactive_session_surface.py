@@ -9,7 +9,6 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT_FIXTURES = ROOT / "tests" / "fixtures" / "artifacts"
 WORK_UNIT_ID = "work-unit-382-task-dual-mode-groundwork-conforms-to"
 
 
@@ -160,98 +159,6 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                 "Interactive sessions reach define through the runa session surface",
             )
 
-    def test_completion_evidence_persist_rejects_contract_mismatches(self) -> None:
-        runa = runa_bin()
-        self.assertIsNotNone(runa)
-        runa_mcp = runa_mcp_bin(runa)
-        if runa_mcp is None:
-            self.skipTest("runa-mcp binary not available")
-
-        work_unit_id = "work-unit-492-contract-machine"
-        with tempfile.TemporaryDirectory(prefix="groundwork-runa-contract-evidence-") as tmp:
-            root = Path(tmp)
-            project_dir = root / "project"
-            project_dir.mkdir()
-
-            init = run([str(runa), "init", "--methodology", str(ROOT / "manifest.toml")], project_dir)
-            self.assertEqual(init.returncode, 0, f"stdout:\n{init.stdout}\nstderr:\n{init.stderr}")
-
-            workspace = project_dir / ".runa" / "workspace"
-            (workspace / "work-unit").mkdir(parents=True)
-            (workspace / "work-unit" / f"{work_unit_id}.json").write_text(
-                json.dumps(
-                    {
-                        "title": "task(contract): reject mismatched completion evidence",
-                        "description": "Completion evidence must cover the declared contract criteria.",
-                        "acceptance_criteria": [
-                            "Completion evidence names only declared contract criteria",
-                        ],
-                        "handle": {
-                            "id": "ticket:492-contract-machine",
-                            "display": "492",
-                        },
-                    },
-                    indent=2,
-                ),
-                encoding="utf-8",
-            )
-            (workspace / "contract").mkdir()
-            contract = json.loads((ARTIFACT_FIXTURES / "valid-contract.json").read_text(encoding="utf-8"))
-            (workspace / "contract" / "contract-1.json").write_text(
-                json.dumps(contract, indent=2),
-                encoding="utf-8",
-            )
-
-            valid_evidence = json.loads(
-                (ARTIFACT_FIXTURES / "valid-completion-evidence.json").read_text(encoding="utf-8")
-            )
-
-            def unknown_criterion(evidence: dict) -> None:
-                evidence["results"][0]["criterion_id"] = "unknown-contract-criterion"
-
-            def missing_criterion(evidence: dict) -> None:
-                evidence["results"].pop()
-
-            cases = [
-                ("completion-unknown", "unknown contract criterion", unknown_criterion),
-                ("completion-missing", "has no completion evidence", missing_criterion),
-            ]
-            for instance_id, expected, mutate in cases:
-                with self.subTest(instance_id=instance_id):
-                    evidence = json.loads(json.dumps(valid_evidence))
-                    mutate(evidence)
-                    rpc = "\n".join(
-                        json.dumps(message)
-                        for message in [
-                            {"jsonrpc": "2.0", "id": 1, "method": "initialize",
-                             "params": {"protocolVersion": "2024-11-05", "capabilities": {},
-                                        "clientInfo": {"name": "contract-evidence-persist-smoke", "version": "1.0.0"}}},
-                            {"jsonrpc": "2.0", "method": "notifications/initialized"},
-                            {"jsonrpc": "2.0", "id": 2, "method": "tools/call",
-                             "params": {"name": "completion-evidence",
-                                        "arguments": {"instance_id": instance_id, **evidence}}},
-                        ]
-                    ) + "\n"
-
-                    delivery = subprocess.run(
-                        [str(runa_mcp), "--protocol", "verify", "--work-unit", work_unit_id],
-                        cwd=project_dir,
-                        input=rpc,
-                        capture_output=True,
-                        text=True,
-                    )
-
-                    self.assertEqual(
-                        delivery.returncode,
-                        0,
-                        f"stdout:\n{delivery.stdout}\nstderr:\n{delivery.stderr}",
-                    )
-                    self.assertIn(expected, delivery.stdout)
-                    self.assertFalse(
-                        (workspace / "completion-evidence" / f"{instance_id}.json").exists(),
-                        f"invalid completion evidence was persisted:\n{delivery.stdout}",
-                    )
-
     def test_session_sequences_documentation_deliverable_gate_form_behavior(self) -> None:
         runa = runa_bin()
         self.assertIsNotNone(runa)
@@ -314,7 +221,7 @@ class InteractiveSessionSurfaceTests(unittest.TestCase):
                         printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"test-evidence","arguments":{{"instance_id":"evidence-1","evidence":[{{"criterion_id":"gate-form-behavior-artifacts","result":"pass","command":"python -m unittest tests.test_artifact_schemas","output_summary":"Gate-checked artifact fixtures validated."}}]}}}}}}'
                         ;;
                       verify)
-                        printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"completion-evidence","arguments":{{"instance_id":"completion-1","results":[{{"criterion_id":"gate-form-behavior-artifacts","result":"pass","evidence":{{"summary":"Gate-form runtime artifacts validated.","run":{{"command":"python -m unittest tests.test_artifact_schemas","result":"pass","output_summary":"Artifact fixtures validated."}}}}}}],"documentation":{{"updated":["schemas/README.md","CHANGELOG.md"],"verified_accurate":["protocols/define/PROTOCOL.md"],"follow_up_work_units":[]}}}}}}}}'
+                        printf '%s\\n' '{{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{{"name":"completion-evidence","arguments":{{"instance_id":"completion-1","results":[{{"criterion_id":"gate-form-behavior-artifacts","result":"pass","binding":"ci","evidence":{{"summary":"Gate-form runtime artifacts validated.","run":{{"command":"python -m unittest tests.test_artifact_schemas","result":"pass","output_summary":"Artifact fixtures validated."}}}}}}],"documentation":{{"updated":["schemas/README.md","CHANGELOG.md"],"verified_accurate":["protocols/define/PROTOCOL.md"],"follow_up_work_units":[]}}}}}}}}'
                         ;;
                       *)
                         printf 'unexpected protocol: %s\\n' "$protocol" >&2
