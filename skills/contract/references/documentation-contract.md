@@ -1,16 +1,22 @@
 # Documentation Contract
 
-The documentation dimension of the uniform contract machine declares what
+The documentation lens of the uniform contract machine declares what
 each **recipient** can do once the work lands. It serves **Transmission**:
 work completes when the recipient can act on it, not when the maker
 finishes — so the contract is written as outcomes the recipient reaches,
 and is satisfied only when they can reach them.
 
-This reference owns the documentation dimension's authoring discipline, not
+This reference owns the documentation lens's authoring discipline, not
 a separate contract structure. It consults `orient`'s audience taxonomy and
-emits typed documentation criteria into `contract.criteria[]`; the usual
-checking apparatus is `check_kind: "attested"` with performed evidence
-recorded as a reviewer finding in `completion-evidence.results[]`.
+emits kind-typed documentation criteria into `contract.criteria[]`. Each
+criterion's content kind routes by the ADR-0010 discriminator: an outcome a
+cold recipient's procedure reproduces — install and complete the task,
+construct the call from the reference — is **behavior**-kind; an outcome
+graded against a stated proposition, the artifact's distinction
+generalizing beyond its worked examples, is **meaning**-kind. Either way
+the check is the criterion's own operational procedure with the recipient
+as actor, and its performed evidence lands in
+`completion-evidence.results[]`.
 
 ## The teeth of a documentation contract
 
@@ -34,9 +40,9 @@ on the criterion.
 ## Lifecycle
 
 `work-unit-craft`/`decompose` supplies recipient outcomes as inputs to
-validation. `define` turns those inputs into validation defined: typed
+validation. `define` turns those inputs into validation defined: kind-typed
 criteria in the uniform contract surface naming the pillar, recipient
-outcome, hollow delivery, `check_kind`, and check descriptor. `verify`
+outcome, hollow delivery, content kind, and operational check. `verify`
 performs validation by auditing whether those recipients can reach the
 outcomes and recording the finding in the uniform evidence surface. A
 subset is legitimate — a refactor with no user-visible effect carries no
@@ -45,7 +51,7 @@ is silence where the change clearly serves a recipient: a new user-facing
 capability with no user pillar is an under-declared contract, not a small
 one. Mechanically, the pillar outcomes selected for a change enter the
 warranted acceptance-criteria set the shared contract/evidence detector
-checks — the same under-declaration flag every dimension answers to. The
+checks — the same under-declaration flag every lens answers to. The
 exemplar fixtures under `tests/fixtures/artifacts/` model both sides: the
 rich pillar pair that passes that gate, and the hollow generic form it
 catches (`tests/test_documentation_dimension.py` pins the pair).
@@ -153,6 +159,6 @@ Three layers, one home each, none restating another:
 - `protocols/verify/references/documentation-review.md` — the audit that
   verifies this contract.
 - Transmission, Honest Signal — the principles-corpus universals this
-  dimension serves (`~/.groundwork/principles/`).
+  lens serves (`~/.groundwork/principles/`).
 - [../SKILL.md](../SKILL.md) — the contract skill and the teeth principle
   this checklist instantiates.

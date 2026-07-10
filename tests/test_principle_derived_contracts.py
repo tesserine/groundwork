@@ -44,8 +44,8 @@ class PrincipleDerivedContractTests(unittest.TestCase):
         route = markdown_section(body, "Principle-Derived Contracts")
         cross_references = markdown_section(body, "Cross-References")
 
-        self.assertEqual("2.8.0", metadata["version"])
-        self.assertEqual("2026-07-07", metadata["updated"])
+        self.assertEqual("3.0.0", metadata["version"])
+        self.assertEqual("2026-07-10", metadata["updated"])
         self.assertIn("references/principle-derived-contracts.md", route)
         self.assertIn("references/principle-derived-contracts.md", cross_references)
 
@@ -96,7 +96,7 @@ class PrincipleDerivedContractTests(unittest.TestCase):
         validate_artifact("contract", example)
         self.assertEqual(
             {"behavior", "documentation", "code-quality"},
-            {criterion["dimension"] for criterion in example["criteria"]},
+            {criterion["lens"] for criterion in example["criteria"]},
         )
         self.assertTrue(
             any(

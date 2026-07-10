@@ -18,20 +18,20 @@ before modifying code. Decision-complete means the implementer makes no
 design choices: approach, interfaces, data flow, edge cases, and test
 strategy are all resolved or recorded as explicit assumptions.
 
-The plan serves the multidimensional contract. It consults the `contract`
+The plan serves the multi-lens contract. It consults the `contract`
 skill (`skills/contract/SKILL.md`) for the contract lifecycle and the
-dimensions the build must serve: the behavior dimension, the documentation
-dimension, and the code-quality dimension are declared as uniform typed
+lenses the build must serve: the behavior lens, the documentation
+lens, and the code-quality lens are declared as uniform typed
 criteria in `contract.criteria[]`.
 
 The plan maps every contract criterion to implementation steps, keyed by
-`criterion_id`. Each criterion carries its own dimension, statement, and
+`criterion_id`. Each criterion carries its own lens, statement, and
 check on the contract artifact; the plan consults them there rather than
 restating them. A behavior criterion's check is commonly an executable
 scenario or a structural, coherence, or conformance gate; a documentation
 criterion's steps say how the declared documentation outcome will be met;
 a code-quality criterion's steps say how the reviewer-checkable projection
-will hold of the change. One mapping shape serves every dimension.
+will hold of the change. One mapping shape serves every lens.
 
 ## Constraints
 
@@ -47,14 +47,14 @@ will hold of the change. One mapping shape serves every dimension.
 ## Steps
 
 1. **Ground in the environment.** Read the contract and work-unit; read
-   every declared criterion — its dimension, statement, hollow delivery,
-   `check_kind`, and check — from `contract.criteria[]`; search the entrypoints, configs, schemas, and existing
+   every declared criterion — its lens, statement, hollow delivery,
+   content `kind`, and operational check — from `contract.criteria[]`; search the entrypoints, configs, schemas, and existing
    implementations of similar behavior; trace the code paths the change
    will touch; note the patterns and utilities to reuse — and what remains
    unknown.
 
 2. **Resolve intent.** State the goal and success criteria from the
-   contract's declared criteria across every dimension. Name each criterion
+   contract's declared criteria across every lens. Name each criterion
    by its `criterion_id` and take its check as the contract states it —
    an executable scenario stays a scenario, a structural, coherence, or
    conformance gate stays a gate; never convert one check into another.
@@ -88,7 +88,7 @@ will hold of the change. One mapping shape serves every dimension.
 5. **Deliver the `implementation-plan`.**
    Invoke the `implementation-plan` MCP tool with one uniform
    `criterion_mapping` keyed by `criterion_id` — one mapping per contract
-   criterion, the same shape for every dimension. The object below is MCP
+   criterion, the same shape for every lens. The object below is MCP
    tool input, not artifact body.
    `instance_id` is a tool parameter that names the artifact instance; it is
    extracted before validating artifact content, becomes the workspace
@@ -137,9 +137,9 @@ long. Multi-subsystem or interface-changing work earns the full convergence.
 
 ## Cross-References
 
-- `contract` (skill): owns the contract lifecycle — every dimension
+- `contract` (skill): owns the contract lifecycle — every lens
   declared as uniform typed criteria, with executable scenarios and
-  structural, coherence, and conformance gates as the behavior dimension's
+  structural, coherence, and conformance gates as the behavior lens's
   usual checking apparatus.
 - `reckon` (skill): first-principles constraint framing. A decision-complete
   design is a generative act, so reckon fires before the plan converges —
@@ -147,7 +147,7 @@ long. Multi-subsystem or interface-changing work earns the full convergence.
   the existing system or an adjacent example. Per reckon's own trigger
   (every generative act, not a sequence position); dose proportional to the
   change, the discipline constant.
-- `define` (protocol): produced validation defined in the contract dimensions
+- `define` (protocol): produced validation defined in the contract lenses
   this plan serves.
 - `implement` (protocol): executes this plan through RED-GREEN-REFACTOR over
   each contract criterion the plan orders.

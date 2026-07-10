@@ -7,8 +7,8 @@ description: >-
   protocol carries to land. Trigger on: 'define', 'define work',
   'start work-unit'.
 metadata:
-  version: "4.0.0"
-  updated: "2026-07-04"
+  version: "5.0.0"
+  updated: "2026-07-10"
 ---
 
 # Define — Contract-First Entry
@@ -61,31 +61,35 @@ proves it, or records it.
    the move).
 
    The `contract` skill is the single home of what validation defined means,
-   per dimension: consult `skills/contract/SKILL.md` for the dimension
-   table, the teeth principle, and the density rule that bind every
-   dimension alike; `skills/contract/references/documentation-contract.md`
-   for the documentation dimension's authoring form; and
+   per lens: consult `skills/contract/SKILL.md` for the lens table, the
+   teeth principle, and the density rule that bind every lens alike;
+   `skills/contract/references/documentation-contract.md` for the
+   documentation lens's authoring form; and
    `skills/contract/references/code-quality-contract.md` for the
-   code-quality dimension's authoring form. Use `orient` for the
-   documentation audience taxonomy, and `~/.groundwork/principles/` for the
-   universals themselves.
+   code-quality lens's authoring form. Route each criterion's content
+   `kind` (`behavior` or `meaning`) by the discriminator
+   [ADR-0010](../../docs/architecture/decisions/0010-content-kinds-behavior-and-meaning.md)
+   owns, and write its check as the operational procedure that decision
+   defines. Use `orient` for the documentation audience taxonomy, and
+   `~/.groundwork/principles/` for the universals themselves.
 
    Define's own role here is narrow and does not re-derive any of that: from
    this work-unit's own already-framed inputs (step 3), author this
-   work-unit's validation defined — one instance of criteria per dimension
-   the work-unit has, in the form and to the teeth and density the
+   work-unit's validation defined — one instance of criteria per lens the
+   work-unit has, in the form and to the teeth and density the
    `contract` skill defines, sized to what this work-unit actually
    stresses. A validation-defined output that cannot be checked against the
-   `contract` skill's own dimension table and teeth principle has
+   `contract` skill's own lens table and teeth principle has
    re-encoded the lifecycle instead of consulting it — the
    `lifecycle-modeling` corruption mode below names exactly this failure.
 
 5. **Deliver the contract spine.** Invoke the `contract` MCP tool with
-   dimension-agnostic criteria. Each criterion declares the dimension it
+   kind-typed, lens-sourced criteria. Each criterion declares the lens it
    serves, the numbered work-unit acceptance criterion or explicit body-ground
    obligation source it refines, the statement that defines done, the hollow
-   delivery that would fail it, the `check_kind` (`executable` or `attested`),
-   and the check descriptor. The object below
+   delivery that would fail it, its content `kind` (`behavior` or `meaning`),
+   and its check as an operational procedure — actor, procedure, observable,
+   and declared conforming and falsifying cases. The object below
    is MCP tool input, not artifact body. `instance_id` is a tool parameter
    that names the artifact instance; it is extracted before validating
    artifact content, becomes the workspace filename, and must not appear in
@@ -99,12 +103,18 @@ proves it, or records it.
      title: "<human-readable contract title>",
      criteria: [{
        id: "<stable criterion id>",
-       dimension: "behavior" | "documentation" | "code-quality" | "<other>",
+       lens: "behavior" | "documentation" | "code-quality" | "<other>",
        acceptance_criterion: "<numbered acceptance criterion or explicit body-ground obligation source>",
-       statement: "<dimension-specific definition of done>",
+       statement: "<concrete definition of done for this criterion>",
        hollow_delivery: "<plausible delivery that would fail this criterion>",
-       check_kind: "executable" | "attested",
-       check: "<check descriptor>"
+       kind: "behavior" | "meaning",
+       check: {
+         actor: "<who or what performs the check>",
+         procedure: "<the steps the actor performs>",
+         observable: "<the pass/fail the procedure yields>",
+         conforming_case: "<a concrete input or delivery that passes>",
+         falsifying_case: "<a concrete input or delivery that fails>"
+       }
      }]
    })
    ```
@@ -159,22 +169,23 @@ begins — the dose is proportional.
   loses workspace isolation and makes `submit` harder.
 - `state-lag`: the tracker not reflecting that this work-unit is in
   progress. Inaccurate state is planning debt for every other session.
-- `dimension-declaration-only`: naming documentation or code-quality
-  dimensions without defining the validation each must satisfy. The
+- `lens-declaration-only`: naming documentation or code-quality
+  lenses without defining the validation each must satisfy. The
   contract has labels but no teeth.
 - `gate-as-scenario`: fabricating Given/When/Then scenarios for a
   documentation-deliverable unit whose behavior is actually proved by
   structural, coherence, and conformance gates.
-- `lifecycle-modeling`: re-encoding the contract lifecycle or dimension
+- `lifecycle-modeling`: re-encoding the contract lifecycle or lens
   authority in `define` instead of consulting the `contract` skill, `orient`,
   and the principles corpus as their single homes.
 
 ## Cross-References
 
-- `contract` (skill): the multidimensional contract discipline — validation
+- `contract` (skill): the multi-lens contract discipline — validation
   defined here, carrying it through every later stage. Its documentation and
   code-quality references own the audience-outcome checklist and projected
-  universals forms.
+  universals forms; ADR-0010 owns the content-kind discriminator its
+  criteria route by.
 - `reckon` (skill): authoring the contract is a generative act, so
   reckon fires before the contract is set — grounding what "done" means in
   the navigational principles, not pattern-matching an adjacent work-unit.

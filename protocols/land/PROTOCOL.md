@@ -16,9 +16,9 @@ define established what done means; land records that it was done. It
 activates only from `change-approved`, applies exactly the proposal version
 that approval names, reflects the disposition, and records completion.
 
-Land closes the multidimensional contract. It consults the `contract` skill
+Land closes the multi-lens contract. It consults the `contract` skill
 (`skills/contract/SKILL.md`) for the lifecycle and records validation
-performed for every declared dimension from the same uniform evidence
+performed for every declared lens from the same uniform evidence
 surface: the per-criterion results in `completion-evidence.results[]`.
 
 The protocol is not a forge operation. It must not activate from a raw
@@ -55,16 +55,16 @@ The protocol is not a forge operation. It must not activate from a raw
 
 4. **Close out.** Invoke `close-out`: the work unit's tracker record carries
    its completion context — per-criterion coverage across every declared
-   dimension, gaps named, and the merge reference — derived from
+   lens, gaps named, and the merge reference — derived from
    `completion-evidence.results[]`.
 
 5. **Deliver the `completion-record`.**
    Invoke the `completion-record` MCP tool. Every field derives from the
    uniform evidence surface: `criterion_summary` summarizes the
    per-criterion results in `completion-evidence.results[]` across every
-   declared dimension — behavior, documentation, and code quality alike;
-   `documentation_status` derives from the documentation dimension's
-   recorded results; the code-quality dimension's recorded findings and
+   declared lens — behavior, documentation, and code quality alike;
+   `documentation_status` derives from the documentation lens's
+   recorded results; the code-quality lens's recorded findings and
    diff loci enter the close-out context as committed evidence. Do not
    assert a field the completion-record schema does not define.
 
@@ -88,7 +88,7 @@ The protocol is not a forge operation. It must not activate from a raw
    Runa validates the remaining artifact body fields against the
    completion-record schema, persists the artifact, and records it in the
    artifact store. The record distills the contract's closure: every
-   recorded dimension derives from the performed per-criterion results, by
+   recorded lens derives from the performed per-criterion results, by
    the same derivation, with `completion-evidence.results[]` as the single
    evidence surface.
 
@@ -110,8 +110,8 @@ The protocol is not a forge operation. It must not activate from a raw
   version review approved.
 - `forge-leakage`: embedding forge-specific apply or close-out procedure in
   the protocol rather than in mechanics.
-- `dimension-drop`: recording behavior-only completion while omitting a
-  declared dimension. Dropping documentation or code-quality evidence from
+- `lens-drop`: recording behavior-only completion while omitting a
+  declared lens. Dropping documentation or code-quality evidence from
   close-out breaks the contract even when `criterion_summary` is complete.
 
 ## Cross-References
@@ -124,8 +124,8 @@ The protocol is not a forge operation. It must not activate from a raw
   `apply-approved-change-input` connector payload land must satisfy.
 - `schemas/completion-record.schema.json` defines the record fields land
   fills from the uniform evidence surface: `criterion_summary` carries
-  per-criterion coverage for every dimension, `documentation_status`
-  carries the documentation dimension's derived summary, and the
+  per-criterion coverage for every lens, `documentation_status`
+  carries the documentation lens's derived summary, and the
   code-quality results enter close-out context as committed evidence.
 - `contract` (skill): owns the lifecycle this protocol consults while
   recording validation-performed.

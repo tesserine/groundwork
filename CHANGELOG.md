@@ -210,6 +210,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Contract schema v-next: criteria carry kind and an operational check** (#583).
+  `schemas/contract.schema.json` now requires each criterion to carry one
+  content `kind` (`behavior` | `meaning`) and a `check` object stating the
+  operational procedure — `actor`, `procedure`, `observable`,
+  `conforming_case`, `falsifying_case`, each required and non-empty — per
+  [ADR-0010](docs/architecture/decisions/0010-content-kinds-behavior-and-meaning.md).
+  The former `dimension` field re-grounds as `lens`: the source/coverage
+  grouping a criterion's content comes from, never a determinant of how it
+  is checked (`schemas/README.md` documents the shape). `check_kind` is
+  retired from the criterion surface; evidence-shape gating by `check_kind`
+  retires from `tooling/artifact_schemas.py` (binding-stamped evidence
+  arrives with #585), while criterion-coverage and warranted-lens gates are
+  unchanged. Authoring and consuming surfaces re-ground on the new
+  vocabulary (define 4.0.0->5.0.0, contract 2.8.0->3.0.0, plan/verify/review
+  protocols, work-unit-craft, contract references). New contracts validate
+  on v-next; landed records are untouched.
+
 - **Contract acceptance-criterion source guidance** (#580).
   `schemas/contract.schema.json` and the define protocol's contract tool
   example now state that `contract.criteria[].acceptance_criterion` may cite

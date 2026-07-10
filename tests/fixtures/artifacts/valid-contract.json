@@ -4,30 +4,63 @@
   "criteria": [
     {
       "id": "behavior-api-validates-records",
-      "dimension": "behavior",
+      "lens": "behavior",
       "acceptance_criterion": "Valid records pass through unchanged",
       "statement": "The ingestion endpoint forwards a valid record without changing its fields.",
       "hollow_delivery": "The endpoint accepts the request but silently drops or rewrites a field.",
-      "check_kind": "executable",
-      "check": "Run the ingestion endpoint behavior test."
+      "kind": "behavior",
+      "check": {
+        "actor": "ingestion behavior test (tests/test_ingestion.py)",
+        "procedure": "Submit a valid record to the ingestion endpoint and read the forwarded record.",
+        "observable": "The forwarded record equals the submitted record field for field.",
+        "conforming_case": "A valid record is forwarded with every field unchanged.",
+        "falsifying_case": "A valid record is forwarded with a field dropped or rewritten."
+      }
     },
     {
       "id": "documentation-api-reference",
-      "dimension": "documentation",
+      "lens": "documentation",
       "acceptance_criterion": "An API consumer submits a valid record and handles each validation failure from the reference alone",
       "statement": "An API consumer, reading only the API reference, constructs a valid record submission and recovers from each documented validation failure without reading source.",
       "hollow_delivery": "The reference is touched but an API consumer still cannot construct a submission or handle a failure from it alone \u2014 or no reference change lands at all.",
-      "check_kind": "attested",
-      "check": "Reviewer performs the primary submission and one failure recovery following only the API reference."
+      "kind": "behavior",
+      "check": {
+        "actor": "cold recipient (API consumer) equipped only with the API reference",
+        "procedure": "Construct the primary record submission and perform one documented validation-failure recovery following the reference alone.",
+        "observable": "The submission is accepted and the recovery clears the failure without reading source.",
+        "conforming_case": "The reference-built submission passes and the documented recovery clears the invalid-field failure.",
+        "falsifying_case": "The consumer must read handler source to construct the submission or clear the failure."
+      }
+    },
+    {
+      "id": "documentation-error-taxonomy-transmits",
+      "lens": "documentation",
+      "acceptance_criterion": "The reference's failure taxonomy generalizes: a reader classifies a novel validation failure from the taxonomy alone",
+      "statement": "The API reference's validation-failure taxonomy transmits: a cold reader classifies a failure response absent from its worked examples into the documented classes and names the documented recovery.",
+      "hollow_delivery": "The taxonomy section lists the worked examples verbatim; a reader can replay them but misroutes any failure the examples do not spell out.",
+      "kind": "meaning",
+      "check": {
+        "actor": "instantiated cold recipient (fresh reader, reference-only context)",
+        "procedure": "Present a validation-failure response absent from the reference's examples; the recipient classifies it into the documented taxonomy and names the recovery, graded against the stated proposition.",
+        "observable": "Classification and recovery match the taxonomy \u2014 pass; a guess outside it \u2014 fail.",
+        "conforming_case": "A novel missing-field failure is classified under the documented required-field class with its documented recovery.",
+        "falsifying_case": "The recipient replays a worked example and misclassifies the novel failure."
+      }
     },
     {
       "id": "code-quality-single-validation-path",
-      "dimension": "code-quality",
+      "lens": "code-quality",
       "acceptance_criterion": "Validation remains centralized",
       "statement": "Record validation continues through the shared validator path.",
       "hollow_delivery": "A second validator is added for this endpoint only.",
-      "check_kind": "executable",
-      "check": "Automated check: the validation-entry fitness test asserts exactly one module imports the shared validator (tests/test_validation_entry.py)."
+      "kind": "behavior",
+      "check": {
+        "actor": "validation-entry fitness function (tests/test_validation_entry.py)",
+        "procedure": "Run the fitness test asserting exactly one module imports the shared validator.",
+        "observable": "The run reports exactly one importer of the shared validator.",
+        "conforming_case": "One importer: the ingestion handler routes through the shared validator.",
+        "falsifying_case": "A second, endpoint-local validator imports or reimplements validation."
+      }
     }
   ]
 }

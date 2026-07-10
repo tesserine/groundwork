@@ -1,13 +1,13 @@
 {
   "work_unit": "work-unit-492-contract-machine",
-  "title": "Missing hollow delivery",
+  "title": "Missing content kind",
   "criteria": [
     {
       "id": "behavior-api-validates-records",
       "lens": "behavior",
       "acceptance_criterion": "Valid records pass through unchanged",
       "statement": "The ingestion endpoint forwards a valid record without changing its fields.",
-      "kind": "behavior",
+      "hollow_delivery": "The endpoint accepts the request but silently drops or rewrites a field.",
       "check": {
         "actor": "ingestion behavior test (tests/test_ingestion.py)",
         "procedure": "Submit a valid record to the ingestion endpoint and read the forwarded record.",

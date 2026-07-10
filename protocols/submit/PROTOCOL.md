@@ -16,11 +16,11 @@ forge-neutral `change-proposal` artifact that review consumes — whether this
 is the first proposal version or a revised version answering review
 findings.
 
-Submit packages the multidimensional contract for review. It consults the
+Submit packages the multi-lens contract for review. It consults the
 `contract` skill (`skills/contract/SKILL.md`) for the lifecycle and carries
 the performed validation from `verify`: one result per contract criterion
 in `completion-evidence.results[]`, the same uniform evidence surface for
-the behavior, documentation, and code-quality dimensions alike.
+the behavior, documentation, and code-quality lenses alike.
 
 The protocol is not a forge operation. It names the methodology obligation:
 collect the verified change, deliver it through the configured mechanics,
@@ -40,12 +40,12 @@ carries the connector-backed reference downstream.
 2. **Address findings (revision rounds only).** Resolve each blocking
    finding with the same discipline the original work used: behavior-level
    findings get failing tests first (`implement`'s cycle), documentation or
-   code-quality findings update the affected dimension and evidence gaps get
+   code-quality findings update the affected lens and evidence gaps get
    the gate re-run (`verify`), contract gaps update the contract. Commit the
    revision to the proposal branch.
 
 3. **Prepare the proposal.** Fix the branch, commit, and base that carry the
-   change, and write a summary that names the declared dimensions the change
+   change, and write a summary that names the declared lenses the change
    ships. The summary is the proposal's public claim; it derives from
    `completion-evidence.results[]`, not from memory: per-criterion behavior
    coverage, documentation outcomes from the documentation criteria's
@@ -64,7 +64,7 @@ carries the connector-backed reference downstream.
    Invoke the `change-proposal` MCP tool through the existing
    `change-proposal` schema. The proposal summary carries per-criterion
    coverage derived from `completion-evidence.results[]` for every declared
-   dimension — behavior, documentation, and code quality in the same form —
+   lens — behavior, documentation, and code quality in the same form —
    as committed evidence in the summary and proposal context. The object
    below is MCP tool input, not artifact body.
    `instance_id` is a tool parameter.
@@ -114,7 +114,7 @@ Review re-runs through its `on_change` trigger on the new version.
 - `forge-leakage`: embedding forge-specific delivery procedure in the
   protocol rather than in mechanics and handles.
 - `summary-drift`: a proposal summary that names work the evidence does not
-  support, or omits a declared dimension the contract requires. A
+  support, or omits a declared lens the contract requires. A
   behavior-only summary that drops documentation or code-quality validation
   is drift even when behavior coverage is green.
 

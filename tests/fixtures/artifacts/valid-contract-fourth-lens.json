@@ -1,0 +1,21 @@
+{
+  "work_unit": "work-unit-492-contract-machine",
+  "title": "Contract criteria admit a fourth lens",
+  "criteria": [
+    {
+      "id": "release-notes-call-out",
+      "lens": "release-notes",
+      "acceptance_criterion": "User-facing changes are announced",
+      "statement": "The release notes call out the user-visible behavior change.",
+      "hollow_delivery": "The change ships with no release-note entry.",
+      "kind": "behavior",
+      "check": {
+        "actor": "reviewer inspecting the release notes",
+        "procedure": "Read the release-note entry against the delivered change.",
+        "observable": "An entry naming the user-visible change is present and matches the delivery.",
+        "conforming_case": "The entry names the changed behavior a user sees.",
+        "falsifying_case": "The notes ship without an entry for the change."
+      }
+    }
+  ]
+}
