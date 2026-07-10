@@ -1,0 +1,36 @@
+# Groundwork Policy
+#
+# Revisable operational policy, in its own file beside manifest.toml for the
+# reason ADR-0005 drew for its surface and ADR-0010 draws here: the manifest
+# is the invariant topology the runtime executes; policy is revisable and
+# moves on its own cadence. One file each.
+#
+# This file is the single home of the execution-binding register and the
+# CI-gating constraint. Every other surface consults or points here.
+# Origin: docs/architecture/decisions/0010-content-kinds-behavior-and-meaning.md
+
+[execution-binding]
+
+# The binding set. What a criterion is — its claim and the operational
+# procedure (actor, procedure, observable, declared cases) that checks it —
+# is contract content. A binding names where that procedure runs, selected
+# per criterion.
+bindings = ["ci", "harness", "manual"]
+
+# Attestation is the manual binding of a criterion's stated operational
+# procedure — never a kind of check.
+attestation = "a named actor performs the contract's own stated procedure and signs that performance"
+
+# The CI-gating constraint — one revisable line. When the constraint falls,
+# revise it here; no contract changes.
+ci_gating = "no interpreter-graded check gates CI"
+
+# Bindings strengthen monotonically, weakest to strongest. Migrating a
+# criterion's binding up this ladder requires no contract edit — the
+# procedure was always the contract's; only where it runs changes.
+strengthening = ["manual", "harness", "ci"]
+
+[execution-binding.meanings]
+ci = "the procedure runs mechanically and gates the merge"
+harness = "the procedure runs mechanically outside the merge gate"
+manual = "a named actor performs the criterion's stated procedure and signs the performance"
