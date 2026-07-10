@@ -89,8 +89,10 @@ version choice, verification, or publication procedure.
 5. Write acceptance criteria as observable outcomes — functional behavior,
    testing expectations, documentation updates where applicable.
 6. Record contract inputs by applying `work-unit-craft`: behavior through
-   criteria, documentation through recipient outcomes from `orient`, and code
-   quality through the principles corpus plus any stressed universals. Consult
+   criteria; documentation through recipient outcomes from `orient` — asking
+   *where does each recipient first meet this change?*, so a first-contact
+   surface the change ships or alters carries its outcome; and code quality
+   through the principles corpus plus any stressed universals. Consult
    `contract` for how these inputs are used downstream.
 7. Identify dependencies by searching existing work-units in the tracker.
    Record each as a work-unit reference.

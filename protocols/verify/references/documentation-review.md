@@ -14,6 +14,15 @@ is packaged for review.
 - `same-change`: documentation updates ship with the code change that
   caused them. Deeper work gets a tracking work-unit rather than untracked
   drift.
+- `standard-raising`: retrofit to a raised documentation standard is
+  graded by recipient exposure — a surface where a recipient lands cold
+  (met-cold) is audited against the raised standard as a scheduled
+  retrofit unit; a change touching a below-standard surface brings it to
+  the standard in the same change (the `same-change` rule applied to
+  standard-raising); interior, maker-met artifacts stand until touched
+  (accept-legacy). Landed contract and evidence records stand as true
+  records of the machine that produced them. This rule's home is here;
+  other surfaces consult it.
 - `changelog-before-land`: user-visible changes carry a CHANGELOG entry so
   consumers understand what changed without reading code.
 
@@ -33,6 +42,13 @@ The steps below keep the surrounding documentation honest against drift.
    - Inline doc comments — if function behavior changed
    - CHANGELOG — for any user-visible or API-visible change
    - ADRs — if the change implements or reverses a recorded decision
+   - Command help (invocation surface) — if the change ships or alters a
+     command's invocation: `--help`, subcommand help, usage, interactive
+     prompt flows
+   - Error output (failure surface) — if the change ships or alters a
+     failure path a recipient meets
+   - Machine self-description — if the change ships or alters an MCP tool
+     description, a schema, or a manifest entry an agent discovers
 3. **Classify each mapped document:**
    - `accurate` — no update needed
    - `drifted` — claims no longer match code (update required)
@@ -51,6 +67,13 @@ The steps below keep the surrounding documentation honest against drift.
    files. An outcome a doc-less delivery would still fail is unmet; the
    change is incomplete until it is met or the gap is tracked as a follow-up
    work-unit.
+8. **Cold-read changed first-contact surfaces.** For each command help,
+   error output, or machine self-description the change ships or alters:
+   render the surface and record a finding per question of its outcome
+   form (the contract reference's meeting-surface axis), as a reader with
+   no session context. The performed result enters the declared
+   criterion's `completion-evidence.results[]` as the manual performance
+   of the criterion's stated procedure.
 
 The declared documentation criterion's performed result is recorded in
 `completion-evidence.results[]` as attested evidence: reviewer identity plus

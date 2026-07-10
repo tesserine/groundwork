@@ -20,6 +20,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   repository-wide; ADR-0010 now consults the home in place of its former
   inline statement.
 
+- **The meeting-surface axis of the documentation lens** (#573).
+  Documentation outcomes are declared at recipient × meeting surface: a
+  first-contact surface a change ships or alters — command help, error
+  output, a machine self-description — always carries a teeth-bearing
+  transmission outcome, and a command-shipping contract naming only
+  README-style outcomes is flagged as under-declared by the shared
+  detector. `orient`'s taxonomy gains the invocation-, failure-, and
+  self-description-surface rows; the contract reference gains the outcome
+  forms with named hollows and content-kind check grading per ADR-0010 (a
+  `ci`-bound structural floor; a `manual`-bound three-question cold read);
+  `verify`'s documentation review maps the new surfaces and carries the
+  cold-read method plus the `standard-raising` retrofit rule, single-homed
+  there;
+  `work-unit-craft` and `decompose` ask *where does each recipient first
+  meet this change?* at input-shaping. First contract authored under
+  ADR-0010 Accepted.
+
 - **Content kinds: behavior and meaning** (#582).
   [ADR-0010](docs/architecture/decisions/0010-content-kinds-behavior-and-meaning.md)
   (Accepted 2026-07-10) ratifies the contract-ontology rotation: every criterion carries

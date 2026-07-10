@@ -37,6 +37,86 @@ nothing useful for this recipient still pass this criterion?* If yes,
 rewrite it as the recipient's outcome and keep the hollow delivery visible
 on the criterion.
 
+## The meeting-surface axis
+
+Transmission's invariant has two halves: *the recipient can act* — the
+recipient pillars below carry this — and *the door fits who enters*. The
+second half is a surface. The lens therefore declares outcomes at
+**recipient × meeting surface**: for each recipient pillar a change
+serves, the authoring discipline names the surfaces where that recipient
+meets the change, and a first-contact surface the change ships or alters
+always carries a teeth-bearing outcome. A command-shipping change whose
+documentation contract names only narrative-surface outcomes is an
+**under-declared lens** — the same warranted acceptance-criteria
+flag every lens answers to, raised by the shared contract/evidence
+detector, never a documentation-only gate.
+
+The surface classes are `orient`'s taxonomy
+(`skills/orient/references/documentation.md`): the **invocation
+surface**, the **failure surface**, the **machine self-description**,
+and the **narrative surfaces** — README, quickstart, CHANGELOG, ADR, API
+reference — whose outcomes the recipient sub-modules below already
+carry. The selection question, asked here where validation is defined
+exactly as it is asked where documentation inputs are shaped: *where
+does each recipient first meet this change?*
+
+### Invocation surface
+
+A recipient invoking `<command> --help` can tell, from the help alone:
+**what it does** — the effect in the world, stated as the change it
+makes, not a slogan; **when to use it** — the situation it serves,
+distinguished from adjacent commands; **how to invoke it** — every
+argument and flag carrying purpose-stating help, with a canonical
+example where invocation is non-obvious.
+
+Hollow deliveries that fail it: a flag or prompt list that never states
+purpose; an about-line slogan over undescribed arguments; help that
+describes mechanism while never naming the act; a missing example where
+argument semantics are non-obvious.
+
+### Failure surface
+
+From the error alone, the recipient can tell **what failed**, **why**,
+and **the recovery step** — the error is a meeting point, not a pointer
+to documentation.
+
+Hollow deliveries that fail it: an error that restates the exception; a
+failure that names the symptom but not an actionable recovery.
+
+### Machine self-description
+
+An agent discovering a machine surface — an MCP tool description, a
+schema, a manifest entry — can act from the self-description alone: it
+chooses the surface correctly and invokes it, with the self-description
+as its whole ground.
+
+Hollow delivery that fails it: a description that forces source-reading
+or a trial invocation to choose correctly.
+
+### Check grading
+
+Checks for these surfaces route by content kind
+([ADR-0010](../../../docs/architecture/decisions/0010-content-kinds-behavior-and-meaning.md)):
+
+- **Behavior — the structural floor, binding `ci` today.** The
+  structurally checkable facts are fitness functions over the tree:
+  every argument, flag, and subcommand carries non-empty help; examples
+  parse. A blank argument fails this gate mechanically.
+- **Meaning — the cold read, binding `manual` today.** The
+  three-question read is a transmission-shape check, stated as an
+  operational procedure: **actor** — an instantiated cold recipient with
+  no session context; **procedure** — render the help, record a finding
+  per question; **observable** — all three questions answerable from the
+  help alone; **declared cases** — the conforming surface that passes
+  and the hollow that fails, stated on the criterion. Where the check
+  runs is binding, not ontology: `manual` today, rising monotonically
+  (harness, then `ci`) with no contract edit. A complete-but-purposeless
+  surface fails this check.
+
+A surface class with no named transmission standard treats that absence
+as the first defect to repair — the standard is authored before the
+criterion, never a procedure-less check in its place.
+
 ## Lifecycle
 
 `work-unit-craft`/`decompose` supplies recipient outcomes as inputs to
@@ -54,7 +134,10 @@ warranted acceptance-criteria set the shared contract/evidence detector
 checks — the same under-declaration flag every lens answers to. The
 exemplar fixtures under `tests/fixtures/artifacts/` model both sides: the
 rich pillar pair that passes that gate, and the hollow generic form it
-catches (`tests/test_documentation_dimension.py` pins the pair).
+catches (`tests/test_documentation_dimension.py` pins the pair). Retrofit
+of surfaces that predate a raised documentation standard follows the
+`standard-raising` rule homed in
+[`verify`'s documentation review](../../../protocols/verify/references/documentation-review.md).
 
 The audience taxonomy, artifact types, and writing stance are **not**
 restated here — they live in the `orient` skill's documentation discipline
@@ -64,7 +147,8 @@ how to write for them.
 
 ## The three sub-modules
 
-One per recipient. Each names the recipient, the outcome they must reach,
+One per recipient — the recipient axis of the frame above. Each names the
+recipient, the outcome they must reach,
 and example checklist items already in teeth-bearing form.
 
 ### User documentation
@@ -145,7 +229,8 @@ the place the outcome holds or the place it fails.
 Three layers, one home each, none restating another:
 
 - **Taxonomy and stance** — `orient`'s documentation discipline: who the
-  readers are, what artifacts serve them, how to write at the right depth.
+  readers are, which surface classes meet them, what artifacts serve
+  them, how to write at the right depth.
 - **Inputs and definition** — this module: the per-recipient outcomes a
   given change must reach.
 - **Audit** — `verify`'s documentation review: the change checked against
