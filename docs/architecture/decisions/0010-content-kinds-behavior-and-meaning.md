@@ -195,9 +195,10 @@ while a binding register is revisable operational policy — different
 revision cadence, one file each.
 
 The environment constraint that produced the original leak lives in that
-policy home as one revisable line, and is stated exactly once in this
-decision: **no interpreter-graded check gates CI.** When the constraint
-falls, the line is revised at its home and no contract changes.
+policy home as one revisable line — the `ci_gating` value in
+[`policy.toml`](../../../policy.toml), the constraint's single home
+repository-wide. When the constraint falls, the line is revised at its
+home and no contract changes.
 
 **Attestation is redefined.** It is not a kind of check; it is the
 **manual binding** of a criterion's stated operational procedure — a

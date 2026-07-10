@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Execution-binding policy home** (#584).
+  `policy.toml` at the repository root is the single home of the
+  execution-binding register ADR-0010 names: the binding set
+  (`ci`/`harness`/`manual`) with per-binding meanings, the CI-gating
+  constraint as one revisable line (`ci_gating`), attestation as the
+  manual binding of a criterion's stated procedure, and the monotone
+  strengthening order (manual → harness → ci, no contract edit to
+  migrate). A conformance gate reads the constraint line from the home
+  at run time and asserts it occurs in exactly one tracked file
+  repository-wide; ADR-0010 now consults the home in place of its former
+  inline statement.
+
 - **Content kinds: behavior and meaning** (#582).
   [ADR-0010](docs/architecture/decisions/0010-content-kinds-behavior-and-meaning.md)
   (Accepted 2026-07-10) ratifies the contract-ontology rotation: every criterion carries
