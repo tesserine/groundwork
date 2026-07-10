@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/completion-evidence.schema.json",
   "title": "Completion Evidence",
-  "description": "Validates the content of a completion-evidence artifact. Records performed evidence for every contract criterion in one lens-agnostic result shape.",
+  "description": "Validates the content of a completion-evidence artifact. Records performed evidence for every contract criterion in one lens-agnostic result shape, each result stamped with the execution binding that discharged it (ADR-0010).",
   "type": "object",
   "required": ["work_unit", "results", "documentation"],
   "additionalProperties": false,
@@ -18,8 +18,40 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["criterion_id", "result", "evidence"],
+        "required": ["criterion_id", "result", "binding", "evidence"],
         "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "required": ["binding"],
+              "properties": { "binding": { "const": "manual" } }
+            },
+            "then": {
+              "properties": {
+                "evidence": {
+                  "required": ["attestation"],
+                  "not": {
+                    "anyOf": [{ "required": ["run"] }, { "required": ["artifact"] }]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "required": ["binding"],
+              "properties": { "binding": { "enum": ["ci", "harness"] } }
+            },
+            "then": {
+              "properties": {
+                "evidence": {
+                  "anyOf": [{ "required": ["run"] }, { "required": ["artifact"] }],
+                  "not": { "required": ["attestation"] }
+                }
+              }
+            }
+          }
+        ],
         "properties": {
           "criterion_id": {
             "type": "string",
@@ -31,9 +63,14 @@
             "description": "Observed criterion result.",
             "enum": ["pass", "fail"]
           },
+          "binding": {
+            "type": "string",
+            "description": "Execution binding that discharged this result. The register's single home is policy.toml ([execution-binding], ADR-0010); this enum derives from it, drift-gated. The stamp is the honest-signal surface: how a result presents derives from it.",
+            "enum": ["ci", "harness", "manual"]
+          },
           "evidence": {
             "type": "object",
-            "description": "Performed evidence. Executable criteria use run or artifact evidence; attested criteria use reviewer attestation.",
+            "description": "Performed evidence, form-coherent with the binding stamp: ci and harness results carry run or artifact evidence; manual results carry the signed performance.",
             "required": ["summary"],
             "additionalProperties": false,
             "anyOf": [
@@ -49,7 +86,7 @@
               },
               "run": {
                 "type": "object",
-                "description": "Executable run evidence.",
+                "description": "Mechanically run evidence (ci or harness binding).",
                 "required": ["command", "result", "output_summary"],
                 "additionalProperties": false,
                 "properties": {
@@ -69,7 +106,7 @@
               },
               "artifact": {
                 "type": "object",
-                "description": "Artifact evidence produced or inspected by an executable check.",
+                "description": "Artifact evidence produced or inspected by a mechanically run check (ci or harness binding).",
                 "required": ["path", "description"],
                 "additionalProperties": false,
                 "properties": {
@@ -85,7 +122,7 @@
               },
               "attestation": {
                 "type": "object",
-                "description": "Reviewer attestation evidence.",
+                "description": "Signed manual performance: a named actor performed the criterion's stated procedure and signs it (ADR-0010's manual binding).",
                 "required": ["reviewer", "finding"],
                 "additionalProperties": false,
                 "properties": {

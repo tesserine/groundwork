@@ -4,6 +4,7 @@
     {
       "criterion_id": "documentation-generic-review",
       "result": "pass",
+      "binding": "manual",
       "evidence": {
         "summary": "Reviewer marked documentation as reviewed.",
         "attestation": {
@@ -14,7 +15,9 @@
     }
   ],
   "documentation": {
-    "updated": ["README.md"],
+    "updated": [
+      "README.md"
+    ],
     "verified_accurate": [],
     "follow_up_work_units": []
   }

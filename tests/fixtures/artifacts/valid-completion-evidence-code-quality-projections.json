@@ -4,6 +4,7 @@
     {
       "criterion_id": "code-quality-layer-import-direction",
       "result": "pass",
+      "binding": "ci",
       "evidence": {
         "summary": "The import-direction fitness function reports the src-to-tests edge absent.",
         "run": {
@@ -16,6 +17,7 @@
     {
       "criterion_id": "code-quality-earns-its-place",
       "result": "pass",
+      "binding": "manual",
       "evidence": {
         "summary": "Reviewer audited each added element against the universal.",
         "attestation": {
@@ -27,6 +29,7 @@
     {
       "criterion_id": "code-quality-fail-loudly",
       "result": "pass",
+      "binding": "manual",
       "evidence": {
         "summary": "Reviewer traced both failure paths the change adds.",
         "attestation": {
@@ -38,7 +41,9 @@
   ],
   "documentation": {
     "updated": [],
-    "verified_accurate": ["docs/architecture/layers.md"],
+    "verified_accurate": [
+      "docs/architecture/layers.md"
+    ],
     "follow_up_work_units": []
   }
 }

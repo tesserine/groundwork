@@ -1,0 +1,23 @@
+{
+  "work_unit": "work-unit-585-binding-stamps",
+  "results": [
+    {
+      "criterion_id": "documentation-api-reference",
+      "result": "pass",
+      "binding": "manual",
+      "evidence": {
+        "summary": "A manual stamp wearing machine evidence cannot present as machine-verified.",
+        "run": {
+          "command": "python -m unittest tests.test_ingestion",
+          "result": "pass",
+          "output_summary": "tests passed"
+        }
+      }
+    }
+  ],
+  "documentation": {
+    "updated": [],
+    "verified_accurate": [],
+    "follow_up_work_units": []
+  }
+}

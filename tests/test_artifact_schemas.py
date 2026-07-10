@@ -108,6 +108,53 @@ class ArtifactSchemaTests(unittest.TestCase):
 
         self.assertIn("results/0/evidence", context.exception.paths)
 
+    def test_completion_evidence_requires_binding_stamp_on_every_result(self) -> None:
+        artifact = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))
+        self.assertTrue(
+            {result["binding"] for result in artifact["results"]} <= {"ci", "harness", "manual"}
+        )
+
+        with self.assertRaises(ArtifactSchemaError) as context:
+            load_artifact(
+                "completion-evidence",
+                self.fixture("invalid-completion-evidence-unstamped.json"),
+            )
+        self.assertIn("results/0/binding", context.exception.paths)
+
+        unknown = json.loads(json.dumps(artifact))
+        unknown["results"][0]["binding"] = "reviewed"
+        with self.assertRaises(ArtifactSchemaError) as context:
+            validate_artifact("completion-evidence", unknown)
+        self.assertIn("results/0/binding", context.exception.paths)
+
+    def test_binding_stamp_enum_derives_from_the_policy_register(self) -> None:
+        """The register's single home is policy.toml; the schema's enum is a
+        drift-gated derived copy, read from both homes at run time."""
+        import tomllib
+
+        with (ROOT / "policy.toml").open("rb") as handle:
+            register = tomllib.load(handle)["execution-binding"]["bindings"]
+        schema = json.loads((SCHEMAS / "completion-evidence.schema.json").read_text(encoding="utf-8"))
+        enum = schema["properties"]["results"]["items"]["properties"]["binding"]["enum"]
+
+        self.assertEqual(set(enum), set(register))
+
+    def test_manual_stamp_cannot_present_as_machine_verified(self) -> None:
+        with self.assertRaises(ArtifactSchemaError) as context:
+            load_artifact(
+                "completion-evidence",
+                self.fixture("invalid-completion-evidence-manual-machine-evidence.json"),
+            )
+        self.assertIn("results/0/evidence", context.exception.paths)
+
+    def test_machine_stamp_cannot_ride_a_bare_signoff(self) -> None:
+        with self.assertRaises(ArtifactSchemaError) as context:
+            load_artifact(
+                "completion-evidence",
+                self.fixture("invalid-completion-evidence-ci-bare-signoff.json"),
+            )
+        self.assertIn("results/0/evidence", context.exception.paths)
+
     def test_completion_evidence_covers_every_contract_criterion(self) -> None:
         contract = load_artifact("contract", self.fixture("valid-contract.json"))
         evidence = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))

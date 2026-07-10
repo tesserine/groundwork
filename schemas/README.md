@@ -61,7 +61,32 @@ way — `actor`, `procedure`, `observable`, and declared `conforming_case`
 and `falsifying_case` — whether or not today's environment runs it
 mechanically; where a check runs is binding policy, not contract content.
 `completion-evidence.schema.json` records one
-performed result shape per contract criterion.
+performed result shape per contract criterion. Every result is stamped with
+the execution binding that discharged it — `ci`, `harness`, or `manual`
+(ADR-0010; the register's single home is `policy.toml` `[execution-binding]`, from which the schema's enum derives, drift-gated) — and
+the evidence form is coherent with the stamp: `ci` and `harness` results
+carry run or artifact evidence, `manual` results carry the signed performance
+(`attestation`: the named actor who performed the criterion's stated
+procedure). The coherence is schema-enforced, so a manually-discharged
+criterion cannot present as machine-verified and a machine stamp cannot ride
+a bare sign-off.
+
+The stamp makes the binding profile queryable — the per-criterion
+degradation debt register ADR-0010 names, visible at two grains:
+
+```sh
+# contract grain — one evidence record
+jq '.results | group_by(.binding)
+    | map({binding: .[0].binding, count: length})' completion-evidence.json
+
+# repository grain — the record set
+jq -s '[.[].results[]] | group_by(.binding)
+    | map({binding: .[0].binding, count: length})' path/to/records/*.json
+
+# the manual-bound criteria to manage downward
+jq -r '.results[] | select(.binding == "manual") | .criterion_id' \
+    completion-evidence.json
+```
 Root schemas remain ordinary top-level object schemas with no root `oneOf`,
 `anyOf`, `allOf`, or `$ref`, so runtime tool advertisement continues to expose
 them as MCP artifact tools.

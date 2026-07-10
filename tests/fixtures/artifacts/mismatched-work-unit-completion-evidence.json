@@ -4,6 +4,7 @@
     {
       "criterion_id": "behavior-api-validates-records",
       "result": "pass",
+      "binding": "ci",
       "evidence": {
         "summary": "Behavior test passed for valid record forwarding.",
         "run": {
@@ -16,6 +17,7 @@
     {
       "criterion_id": "documentation-api-reference",
       "result": "pass",
+      "binding": "manual",
       "evidence": {
         "summary": "Reviewer performed the submission and a failure recovery from the API reference alone.",
         "attestation": {
@@ -27,6 +29,7 @@
     {
       "criterion_id": "documentation-error-taxonomy-transmits",
       "result": "pass",
+      "binding": "manual",
       "evidence": {
         "summary": "A reference-only reader classified a novel validation failure into the documented taxonomy.",
         "attestation": {
@@ -38,6 +41,7 @@
     {
       "criterion_id": "code-quality-single-validation-path",
       "result": "pass",
+      "binding": "ci",
       "evidence": {
         "summary": "The shared validation path remains the only endpoint validation path.",
         "artifact": {
