@@ -2,8 +2,8 @@
 
 Checks that no Python module inside one top-level layer imports from a
 forbidden top-level layer — the structurally-checkable code-quality
-projection the contract skill's code-quality lens types as an
-``executable`` criterion. A run of this checker is the recorded evidence
+projection the contract skill's code-quality lens types as a
+behavior-kind criterion. A run of this checker is the recorded evidence
 for such a criterion; a seeded violating change fails it.
 
 Scope, stated honestly: layers are top-level directories under the given
