@@ -49,27 +49,40 @@ class ArtifactSchemaTests(unittest.TestCase):
 
                 self.assertEqual({"id", "display"}, set(artifact["handle"]))
 
-    def test_contract_criteria_require_dimension_hollow_delivery_and_check_kind(self) -> None:
+    def test_contract_criteria_require_kind_lens_and_operational_check(self) -> None:
         artifact = load_artifact("contract", self.fixture("valid-contract.json"))
         self.assertEqual(
             {"behavior", "documentation", "code-quality"},
-            {criterion["dimension"] for criterion in artifact["criteria"]},
+            {criterion["lens"] for criterion in artifact["criteria"]},
+        )
+        self.assertEqual(
+            {"behavior", "meaning"},
+            {criterion["kind"] for criterion in artifact["criteria"]},
         )
 
         for fixture_name, expected_path in [
             ("invalid-contract.json", "criteria/0/hollow_delivery"),
-            ("invalid-contract-missing-check-kind.json", "criteria/0/check_kind"),
-            ("invalid-contract-dimension-check-kind.json", "<root>"),
+            ("invalid-contract-missing-kind.json", "criteria/0/kind"),
+            ("invalid-contract-kind-out-of-enum.json", "criteria/0/kind"),
+            ("invalid-contract-check-string.json", "criteria/0/check"),
+            ("invalid-contract-check-missing-actor.json", "criteria/0/check/actor"),
+            ("invalid-contract-check-missing-procedure.json", "criteria/0/check/procedure"),
+            ("invalid-contract-check-missing-observable.json", "criteria/0/check/observable"),
+            ("invalid-contract-check-missing-conforming-case.json", "criteria/0/check/conforming_case"),
+            ("invalid-contract-check-missing-falsifying-case.json", "criteria/0/check/falsifying_case"),
+            ("invalid-contract-empty-conforming-case.json", "criteria/0/check/conforming_case"),
+            ("invalid-contract-empty-falsifying-case.json", "criteria/0/check/falsifying_case"),
+            ("invalid-contract-carries-check-kind.json", "criteria/0"),
         ]:
             with self.subTest(fixture=fixture_name):
                 with self.assertRaises(ArtifactSchemaError) as context:
                     load_artifact("contract", self.fixture(fixture_name))
                 self.assertIn(expected_path, context.exception.paths)
 
-    def test_contract_accepts_new_dimension_without_schema_change(self) -> None:
-        artifact = load_artifact("contract", self.fixture("valid-contract-fourth-dimension.json"))
+    def test_contract_accepts_new_lens_without_schema_change(self) -> None:
+        artifact = load_artifact("contract", self.fixture("valid-contract-fourth-lens.json"))
 
-        self.assertEqual("release-notes", artifact["criteria"][0]["dimension"])
+        self.assertEqual("release-notes", artifact["criteria"][0]["lens"])
 
     def test_completion_evidence_records_one_result_shape(self) -> None:
         artifact = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))
@@ -78,6 +91,7 @@ class ArtifactSchemaTests(unittest.TestCase):
             {
                 "behavior-api-validates-records",
                 "documentation-api-reference",
+                "documentation-error-taxonomy-transmits",
                 "code-quality-single-validation-path",
             },
             {result["criterion_id"] for result in artifact["results"]},
@@ -94,14 +108,14 @@ class ArtifactSchemaTests(unittest.TestCase):
 
         self.assertIn("results/0/evidence", context.exception.paths)
 
-    def test_completion_evidence_validates_against_contract_check_kind(self) -> None:
+    def test_completion_evidence_covers_every_contract_criterion(self) -> None:
         contract = load_artifact("contract", self.fixture("valid-contract.json"))
         evidence = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))
 
         validate_contract_evidence(
             contract,
             evidence,
-            warranted_dimensions={"behavior", "documentation", "code-quality"},
+            warranted_lenses={"behavior", "documentation", "code-quality"},
         )
 
         missing = json.loads(json.dumps(evidence))
@@ -109,19 +123,6 @@ class ArtifactSchemaTests(unittest.TestCase):
         with self.assertRaises(ArtifactSchemaError) as context:
             validate_contract_evidence(contract, missing)
         self.assertIn("results", context.exception.paths)
-
-        wrong_kind = json.loads(json.dumps(evidence))
-        wrong_kind["results"][1]["evidence"] = {
-            "summary": "A run cannot satisfy an attested criterion.",
-            "run": {
-                "command": "python -m unittest",
-                "result": "pass",
-                "output_summary": "tests passed",
-            },
-        }
-        with self.assertRaises(ArtifactSchemaError) as context:
-            validate_contract_evidence(contract, wrong_kind)
-        self.assertIn("results/1/evidence", context.exception.paths)
 
     def test_validate_artifact_rejects_completion_evidence_not_matching_contract(self) -> None:
         contract = load_artifact("contract", self.fixture("valid-contract.json"))
@@ -170,14 +171,14 @@ class ArtifactSchemaTests(unittest.TestCase):
 
                 self.assertIn(f"documentation/{field}/0", context.exception.paths)
 
-    def test_detectability_mechanism_is_dimension_agnostic(self) -> None:
+    def test_detectability_mechanism_is_lens_agnostic(self) -> None:
         contract = load_artifact("contract", self.fixture("valid-contract.json"))
         evidence = load_artifact("completion-evidence", self.fixture("valid-completion-evidence.json"))
 
         defects = detect_contract_evidence_defects(
             contract,
             evidence,
-            warranted_dimensions={"behavior", "release-notes"},
+            warranted_lenses={"behavior", "release-notes"},
             warranted_acceptance_criteria={
                 "code-quality": {"Validation remains centralized", "Public APIs stay typed"},
             },

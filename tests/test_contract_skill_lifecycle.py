@@ -88,9 +88,9 @@ def nested_section(body: str, heading: str, level: int) -> str:
 def lifecycle_rows(body: str) -> dict[str, str]:
     rows = {}
     for line in body.splitlines():
-        match = re.match(r"\| \*\*(?P<dimension>Behavior|Documentation|Code quality)\*\* \| (?P<row>.+) \|$", line)
+        match = re.match(r"\| \*\*(?P<lens>Behavior|Documentation|Code quality)\*\* \| (?P<row>.+) \|$", line)
         if match:
-            rows[match.group("dimension")] = match.group("row")
+            rows[match.group("lens")] = match.group("row")
     return rows
 
 
@@ -130,22 +130,24 @@ outside content
         self.assertIn("## The disposition default", body)
         teeth_index = body.index("## The teeth principle")
         disposition_index = body.index("## The disposition default")
-        dimensions_index = body.index("## The dimensions")
+        lenses_index = body.index("## The lenses")
 
         self.assertLess(teeth_index, disposition_index)
-        self.assertLess(disposition_index, dimensions_index)
-        self.assertNotIn("## The dimensions", body[teeth_index:disposition_index])
+        self.assertLess(disposition_index, lenses_index)
+        self.assertNotIn("## The lenses", body[teeth_index:disposition_index])
 
-    def test_teeth_principle_distinguishes_uniform_structure_from_checking_apparatus(self) -> None:
+    def test_teeth_principle_distinguishes_uniform_structure_from_content_kind(self) -> None:
         teeth = normalized(top_section(read(CONTRACT_SKILL), "The teeth principle"))
 
         for expected in [
             "same contract structure",
             "same evidence obligation",
-            "checking apparatus may vary per criterion",
-            "`check_kind`",
-            "executable",
-            "attested",
+            "carries one content `kind`",
+            "`behavior` or `meaning`",
+            "operational procedure",
+            "declared conforming and falsifying cases",
+            "Nothing is inherently attested",
+            "binding policy, never contract content",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, teeth)
@@ -159,39 +161,40 @@ outside content
         )
         self.assertIsNone(forbidden.search(teeth))
 
-    def test_dimensions_are_first_class_citizens_of_one_machine(self) -> None:
-        dimensions = normalized(top_section(read(CONTRACT_SKILL), "The dimensions"))
+    def test_lenses_are_first_class_citizens_of_one_machine(self) -> None:
+        lenses = normalized(top_section(read(CONTRACT_SKILL), "The lenses"))
 
         for expected in [
             "first-class symmetric citizen",
             "one contract machine",
-            "Behavior is one dimension among N",
+            "Behavior is one lens among N",
             "documentation and code quality carry the identical teeth obligation",
             "same performed-evidence obligation",
-            "every dimension a change has carries at least one authored teeth-bearing criterion",
+            "every lens a change has carries at least one authored teeth-bearing criterion",
+            "never determines how a criterion is checked",
+            "the criterion's `kind` selects the native check",
             "coverage is never zero",
             "fewer, simpler teeth-bearing criteria",
         ]:
             with self.subTest(expected=expected):
-                self.assertIn(expected, dimensions)
+                self.assertIn(expected, lenses)
 
         forbidden = re.compile(
             r"behavior is always present|declared as the change warrants|"
-            r"the most developed dimension|behavior is the unit of progress|"
+            r"the most developed lens|behavior is the unit of progress|"
             r"completion is behavior coverage|need not exercise every code path",
             flags=re.IGNORECASE,
         )
         self.assertIsNone(forbidden.search(read(CONTRACT_SKILL)))
 
-    def test_attested_judgment_is_recorded_inside_the_uniform_evidence_surface(self) -> None:
+    def test_every_kind_is_recorded_inside_the_uniform_evidence_surface(self) -> None:
         body = normalized(read(CONTRACT_SKILL))
 
         for expected in [
-            "every criterion in every dimension names the hollow delivery",
-            "attested criteria",
+            "every criterion under every lens names the hollow delivery",
+            "one performed result",
             "`completion-evidence.results[]`",
-            "reviewer identity",
-            "finding",
+            "whether or not today's environment runs that procedure mechanically",
             "free-form reviewer prose outside the artifact is not evidence",
         ]:
             with self.subTest(expected=expected):
@@ -215,17 +218,17 @@ outside content
         self.assertIn("**Thin contract.**", corruption_modes)
         self.assertIn("contract richness", corruption_modes)
 
-    def test_dimension_references_emit_typed_criteria_into_the_uniform_surface(self) -> None:
+    def test_lens_references_emit_kind_typed_criteria_into_the_uniform_surface(self) -> None:
         body = normalized(read(CONTRACT_SKILL))
         documentation = normalized(read(ROOT / "skills" / "contract" / "references" / "documentation-contract.md"))
         code_quality = normalized(read(ROOT / "skills" / "contract" / "references" / "code-quality-contract.md"))
 
         for text, expected in [
-            (body, "typed criteria into the uniform surface"),
+            (body, "kind-typed criteria into the uniform surface"),
             (documentation, "`contract.criteria[]`"),
-            (documentation, "`check_kind: \"attested\"`"),
+            (documentation, "kind"),
             (code_quality, "`contract.criteria[]`"),
-            (code_quality, "`check_kind: \"attested\"`"),
+            (code_quality, "kind"),
             (code_quality, "consult, do not model"),
         ]:
             with self.subTest(expected=expected):
@@ -244,14 +247,14 @@ outside content
             with self.subTest(expected=expected):
                 self.assertIn(expected, disposition)
 
-    def test_qualification_to_remain_is_positive_per_dimension_and_conjunctive(self) -> None:
+    def test_qualification_to_remain_is_positive_per_lens_and_conjunctive(self) -> None:
         disposition = normalized(top_section(read(CONTRACT_SKILL), "The disposition default"))
 
         for expected in [
-            "Qualification-to-remain is positive, per-dimension, and conjunctive",
-            "every declared contract dimension",
+            "Qualification-to-remain is positive, per-lens, and conjunctive",
+            "every declared contract lens",
             "as sound and elegant as a fresh derivation from the corrected contract",
-            "failing the proof on any one dimension regenerates",
+            "failing the proof on any one lens regenerates",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, disposition)
@@ -262,7 +265,7 @@ outside content
         disposition = normalized(top_section(read(CONTRACT_SKILL), "The disposition default"))
 
         for expected in [
-            "could a patched branch pass this dimension while carrying structure a fresh derivation from the corrected contract would not",
+            "could a patched branch pass this lens while carrying structure a fresh derivation from the corrected contract would not",
             "A boundary is necessary, not sufficient",
             "small enough that the in-place fix is indistinguishable from a fresh derivation",
             "When qualification is not clear, the default decides: regenerate",
@@ -299,40 +302,38 @@ outside content
             with self.subTest(expected=expected):
                 self.assertIn(expected, corruption_modes)
 
-    def test_lifecycle_is_stated_once_and_uniformly_for_every_dimension(self) -> None:
-        dimensions = normalized(top_section(read(CONTRACT_SKILL), "The dimensions"))
+    def test_lifecycle_is_stated_once_and_uniformly_for_every_lens(self) -> None:
+        lenses = normalized(top_section(read(CONTRACT_SKILL), "The lenses"))
 
         for expected in [
-            "one lifecycle for every dimension",
-            "typed criteria in `contract.criteria[]` at `define`",
+            "one lifecycle for every lens",
+            "kind-typed criteria in `contract.criteria[]` at `define`",
             "carried through `implement` by `criterion_id`",
             "one result per criterion in `completion-evidence.results[]`",
-            "`check_kind`",
+            "each result performing the criterion's stated check",
             "`land` records the result from that uniform evidence surface",
         ]:
             with self.subTest(expected=expected):
-                self.assertIn(expected, dimensions)
+                self.assertIn(expected, lenses)
 
-    def test_dimension_rows_carry_inputs_and_apparatus_without_stage_variance(self) -> None:
+    def test_lens_rows_carry_inputs_and_coverage_without_check_determination(self) -> None:
         rows = lifecycle_rows(read(CONTRACT_SKILL))
         expected_cells = {
             "Behavior": [
                 "acceptance criteria",
-                "scenarios",
-                "documentation-deliverable gates",
-                '`check_kind: "executable"`',
+                "What the system or documented procedure does",
+                "check runs it",
             ],
             "Documentation": [
                 "recipient outcomes",
-                "udience-outcome",
-                '`check_kind: "attested"`',
+                "What each recipient can do once the work lands",
+                "kind routed by the discriminator",
             ],
             "Code quality": [
                 "corpus pointers",
                 "stressed universals",
-                "projections",
-                "diff loci or findings",
-                '`check_kind: "attested"`',
+                "What must hold of the change's internal form",
+                "projects onto the diff",
             ],
         }
 
@@ -342,14 +343,19 @@ outside content
             r"carried through|recorded at",
             flags=re.IGNORECASE,
         )
-        for dimension, cells in expected_cells.items():
-            with self.subTest(dimension=dimension):
-                row = rows[dimension]
+        check_determination = re.compile(r"check_kind|attested criteria|executable criteria")
+        for lens, cells in expected_cells.items():
+            with self.subTest(lens=lens):
+                row = rows[lens]
                 for cell in cells:
                     self.assertIn(cell, row)
                 self.assertIsNone(
                     stage_terms.search(row),
-                    "a dimension row re-encodes lifecycle stages",
+                    "a lens row re-encodes lifecycle stages",
+                )
+                self.assertIsNone(
+                    check_determination.search(row),
+                    "a lens row determines a check",
                 )
 
     def test_stage_handoffs_have_one_receive_produce_home(self) -> None:
@@ -357,7 +363,7 @@ outside content
         expected_handoffs = [
             "`work-unit-craft`/`decompose` produces inputs to validation",
             "`define` consumes inputs to validation and produces validation defined",
-            "typed criteria in `contract.criteria[]`",
+            "kind-typed criteria in `contract.criteria[]`",
             "`plan` consumes validation defined and maps every criterion",
             "`implement` consumes validation defined",
             "`verify` consumes validation defined and produces validation performed",
@@ -408,17 +414,17 @@ outside content
                 self.assertIsNone(forbidden.search(read(path)))
 
     def test_density_rule_distinguishes_simple_criteria_from_zero_coverage(self) -> None:
-        dimensions = normalized(top_section(read(CONTRACT_SKILL), "The dimensions"))
+        lenses = normalized(top_section(read(CONTRACT_SKILL), "The lenses"))
 
         for expected in [
             "Density is situational",
             "coverage and teeth are not situational",
-            "never zero for a dimension the change has",
+            "never zero for a lens the change has",
             "simple criteria are legitimate",
-            "silent dimensions are not",
+            "silent lenses are not",
         ]:
             with self.subTest(expected=expected):
-                self.assertIn(expected, dimensions)
+                self.assertIn(expected, lenses)
 
         self.assertNotIn("Pointer-as-default", read(CONTRACT_SKILL))
 
@@ -439,14 +445,14 @@ outside content
             with self.subTest(path=path.relative_to(ROOT)):
                 self.assertIsNone(forbidden.search(read(path)))
 
-    def test_silent_dimension_corruption_mode_is_named(self) -> None:
+    def test_silent_lens_corruption_mode_is_named(self) -> None:
         corruption_modes = normalized(top_section(read(CONTRACT_SKILL), "Corruption Modes"))
 
         for expected in [
-            "**Silent dimension.**",
-            "a dimension the change has, left with no authored teeth-bearing criterion",
+            "**Silent lens.**",
+            "a lens the change has, left with no authored teeth-bearing criterion",
             "pointer has no teeth",
-            "uncovered dimension hollows the contract",
+            "uncovered lens hollows the contract",
         ]:
             with self.subTest(expected=expected):
                 self.assertIn(expected, corruption_modes)

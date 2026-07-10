@@ -52,7 +52,7 @@ After reckoning the work, author the record's **contract inputs**. The
 the inputs visible in the work-unit record without turning them into
 implementation prescription.
 
-The authoring pass must **consider every dimension**:
+The authoring pass must **consider every lens**:
 
 - **Behavior:** write acceptance criteria as positive, observable outcomes.
   These are the behavior input the later contract sharpens into executable
@@ -64,13 +64,13 @@ The authoring pass must **consider every dimension**:
   universals the work puts under unusual pressure. The code quality input can
   be one projected universal when internal-form risk is light.
 
-Every dimension the change has must leave an authored teeth-bearing input
-for the later contract; every dimension the change has is covered that way.
+Every lens the change has must leave an authored teeth-bearing input
+for the later contract; every lens the change has is covered that way.
 The rule is that density may be light, but coverage is never zero: one sharp
 recipient outcome or one corpus projection can be enough, while silence
 cannot. Each input should make the hollow delivery visible enough that `define`
-can turn it into a criterion with a statement of done,
-`check_kind`, check descriptor, and result path.
+can turn it into a criterion with a statement of done, content
+kind, operational check, and result path.
 
 ## The Sovereignty Test
 
@@ -445,7 +445,7 @@ to start?" If the answer references unfinished work, that is a dependency.
   schemas.
 - `reckon`: establishes the verified constraints a record states; fire it
   before framing the work-unit.
-- `contract`: owns the multidimensional lifecycle that receives the contract
+- `contract`: owns the multi-lens lifecycle that receives the contract
   inputs a record carries; this craft points to that home and does not restate
   it.
 - `orient`: owns the documentation audience taxonomy used when authoring

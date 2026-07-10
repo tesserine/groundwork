@@ -1,7 +1,7 @@
 ---
 name: implement
 description: >-
-  Execute the multidimensional contract through test-driven development:
+  Execute the multi-lens contract through test-driven development:
   RED-GREEN-REFACTOR with delete-and-start-over discipline. Fires when
   production code is about to be written — implementing contracted
   behaviors, fixing bugs, or refactoring.
@@ -36,13 +36,15 @@ leads to untrusted code:
 
 Take the next contract criterion (the plan's `criterion_mapping` orders
 them). Consult the `contract` skill (`skills/contract/SKILL.md`) for the
-contract lifecycle: every criterion in every dimension carries its own
-check, and an executable criterion is driven by watching that check fail
-first — a scenario test where its check names one, a structural, coherence,
-or conformance gate where its check names one. An attested criterion is
-advanced by producing the state its statement names; its performed evidence
-is the reviewer attestation `verify` records. Build toward every declared
-dimension — behavior, documentation, and code quality — not behavior alone.
+contract lifecycle: every criterion under every lens states its own
+operational check. A criterion whose stated check this environment runs
+mechanically is driven by watching that check fail first — a scenario test
+where its procedure names one, a structural, coherence, or conformance gate
+where its procedure names one. A criterion whose check a recipient or
+reviewer performs is advanced by producing the state its statement names;
+its performed evidence is the recorded finding `verify` records. Build
+toward every declared lens — behavior, documentation, and code quality —
+not behavior alone.
 
 1. **RED — write one failing check.** The check name is the criterion's
    behavior statement. One behavior, real code over mocks
@@ -58,7 +60,7 @@ dimension — behavior, documentation, and code quality — not behavior alone.
 
 3. **GREEN — write minimal code or documentation to pass.** The simplest
    change that satisfies the check and the relevant documentation or
-   code-quality dimension. No extra parameters, no configuration, no error
+   code-quality lens. No extra parameters, no configuration, no error
    handling that no check requires. Over-engineering in GREEN is scope creep
    wearing a productivity mask. Where the minimal change involves a real
    design choice — a structure, an abstraction, a boundary — reckon it: open
@@ -76,10 +78,10 @@ dimension — behavior, documentation, and code quality — not behavior alone.
    Documentation outcomes and code-quality projections stay true while the
    internal form improves.
 
-6. **Repeat** for the next criterion. When every executable criterion in
-   scope has cycle evidence, and the attested criteria — documentation and
-   code-quality among them — have been advanced where declared, deliver
-   (below).
+6. **Repeat** for the next criterion. When every mechanically-run check in
+   scope has cycle evidence, and the recipient- and reviewer-performed
+   criteria — documentation and code-quality among them — have been
+   advanced where declared, deliver (below).
 
 Worked good/bad examples for each phase:
 [references/cycle-examples.md](references/cycle-examples.md).
@@ -105,8 +107,8 @@ should be built.
 
 The capstone is delivery of the `test-evidence` artifact through the
 `test-evidence` MCP tool: one uniform entry shape keyed by `criterion_id`,
-recording each executable criterion's cycle — the same shape for every
-dimension. The object below is MCP tool input, not artifact body. `instance_id` is a tool parameter that names the
+recording the cycle of each criterion whose check ran — the same shape for
+every lens. The object below is MCP tool input, not artifact body. `instance_id` is a tool parameter that names the
 artifact instance; it is extracted before validating artifact content,
 becomes the workspace filename, and must not appear in the artifact body.
 Runa injects `work_unit` from session context; the agent does not supply
@@ -127,7 +129,7 @@ test-evidence({
 Runa validates the remaining artifact body fields against the test-evidence
 schema, persists the artifact, and records it in the artifact store.
 
-This protocol owns per-cycle evidence — each executable criterion watched
+This protocol owns per-cycle evidence — each mechanically-run check watched
 failing, then passing. The aggregate completion gate belongs to `verify`.
 
 ## When Stuck
@@ -157,10 +159,10 @@ Hard to test means hard to use. Listen to the test.
 
 ## Cross-References
 
-- `contract` (skill): owns the contract lifecycle — every dimension
+- `contract` (skill): owns the contract lifecycle — every lens
   declared as uniform typed criteria this protocol carries through the
   build, with executable scenarios and structural, coherence, and
-  conformance gates as the behavior dimension's usual checking apparatus.
+  conformance gates as the behavior lens's usual checking apparatus.
 - `plan` (protocol): supplies the decision-complete design and the
   criterion ordering this protocol executes.
 - `debug` (skill): owns root-cause investigation; hand off when a failure's

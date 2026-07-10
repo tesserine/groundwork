@@ -1,7 +1,7 @@
 # Documentation Review
 
 Reference for verify step 4: auditing the change against the declared
-**documentation contract** (the contract skill's documentation dimension),
+**documentation contract** (the contract skill's documentation lens),
 and keeping existing documentation honest against drift, before the change
 is packaged for review.
 

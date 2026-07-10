@@ -138,11 +138,11 @@ def markdown_table_rows(section: str) -> list[dict[str, str]]:
     return rows
 
 
-def contract_dimension_rows(root: Path) -> dict[str, dict[str, str]]:
+def contract_lens_rows(root: Path) -> dict[str, dict[str, str]]:
     skill = read(root / "skills" / "contract" / "SKILL.md")
     return {
-        row["Dimension"]: row
-        for row in markdown_table_rows(markdown_section(skill, "The dimensions"))
+        row["Lens"]: row
+        for row in markdown_table_rows(markdown_section(skill, "The lenses"))
     }
 
 

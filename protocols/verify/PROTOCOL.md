@@ -30,16 +30,16 @@ claim-by-claim requirements, and the rationalization table:
 
 This protocol owns the aggregate gate — the moment before "done." Per-test
 cycle evidence (each test watched failing, then passing) belongs to
-`implement`. Completion here means: every contract criterion has performed
-evidence in the shape warranted by its `check_kind`, the work-unit's
+`implement`. Completion here means: every contract criterion has one performed
+result recording its stated operational check, the work-unit's
 criteria are covered, and the documentation still tells the truth.
 
 ## Steps
 
 1. **Identify the gate.** Read `contract.criteria[]` and name what proves
-   each criterion complete: the fresh verification command, artifact
-   inspection, or reviewer attestation warranted by that criterion's
-   `check_kind`. The contract is the source of coverage; do not derive
+   each criterion complete: perform the operational check the criterion
+   itself states — its actor, procedure, and observable. The contract is
+   the source of coverage; do not derive
    scenario or gate lists outside the criterion records.
 
 2. **Run fresh.** Execute the full command. Read the entire output; check
@@ -50,9 +50,9 @@ criteria are covered, and the documentation still tells the truth.
    results. Contract criteria and performed results line up when every
    `contract.criteria[].id` has exactly one
    `completion-evidence.results[]` entry with a matching `criterion_id`,
-   and the evidence shape must match the criterion's `check_kind`.
-   Executable criteria are backed by run or artifact evidence; attested
-   criteria are backed by reviewer attestation. If verification surfaces a
+   and each entry records the criterion's stated check performed — the
+   run, produced artifact, or recorded finding its procedure yields, with
+   its observable read. If verification surfaces a
    failure, stop and invoke `debug` — root cause before fixes. A fix to
    this work-unit's own increment applies `implement`'s cycle discipline
    (failing test first, minimal change), then the gate re-runs fresh from
@@ -60,7 +60,7 @@ criteria are covered, and the documentation still tells the truth.
    criterion, with no invented coverage rows.
 
 4. **Review the declared contracts.** Audit the change against each
-   dimension the contract declared beyond the behavior coverage assessment.
+   lens the contract declared beyond the behavior coverage assessment.
    For **documentation**:
    confirm each declared pillar's outcome is met, and keep existing docs
    honest against drift — classify each mapped document as accurate,
@@ -139,7 +139,7 @@ uncovered criterion shipped to review is a blocking finding, not a secret.
 - `drift-tolerance`: documentation known stale but recorded as accurate, or
   deferred without a tracking work-unit.
 - `invented-coverage`: deriving scenario or gate coverage beside the
-  dimension-agnostic contract criteria instead of recording one performed
+  lens-agnostic contract criteria instead of recording one performed
   result per `contract.criteria[].id`.
 - `lifecycle-modeling`: re-encoding the behavior lifecycle in `verify`
   instead of consuming the contract criteria as the single coverage source.

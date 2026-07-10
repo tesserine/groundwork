@@ -72,7 +72,7 @@ def code_quality_criteria(contract: dict) -> list[dict]:
     return [
         criterion
         for criterion in contract["criteria"]
-        if criterion["dimension"] == "code-quality"
+        if criterion["lens"] == "code-quality"
     ]
 
 
@@ -150,30 +150,31 @@ class ImportDirectionFitnessTests(unittest.TestCase):
 
 
 class ProjectionExemplarTests(unittest.TestCase):
-    """The projection exemplar inhabits both check kinds in the uniform
-    surfaces: an executable structural projection evidenced by a run, and
-    attested judgment projections evidenced by per-universal findings."""
+    """The projection exemplar inhabits both content kinds in the uniform
+    surfaces: a behavior-kind structural projection evidenced by a fitness
+    run, and meaning-kind judgment projections evidenced by per-universal
+    reconstruction findings."""
 
-    def test_exemplar_carries_one_executable_and_two_attested_projections(
+    def test_exemplar_carries_one_behavior_and_two_meaning_projections(
         self,
     ) -> None:
         criteria = code_quality_criteria(projection_contract())
 
         self.assertEqual(
-            {"executable": 1, "attested": 2},
+            {"behavior": 1, "meaning": 2},
             {
                 kind: len(
-                    [c for c in criteria if c["check_kind"] == kind]
+                    [c for c in criteria if c["kind"] == kind]
                 )
-                for kind in ("executable", "attested")
+                for kind in ("behavior", "meaning")
             },
         )
 
-    def test_attested_projections_consult_the_embedded_corpus(self) -> None:
+    def test_meaning_projections_consult_the_embedded_corpus(self) -> None:
         attested = [
             criterion
             for criterion in code_quality_criteria(projection_contract())
-            if criterion["check_kind"] == "attested"
+            if criterion["kind"] == "meaning"
         ]
 
         titles = embedded_corpus_titles()
@@ -185,13 +186,13 @@ class ProjectionExemplarTests(unittest.TestCase):
             with self.subTest(criterion=criterion["id"]):
                 self.assertIn(criterion["acceptance_criterion"], titles)
 
-    def test_executable_projection_is_evidenced_by_a_recorded_run(self) -> None:
+    def test_behavior_projection_is_evidenced_by_a_recorded_run(self) -> None:
         contract = projection_contract()
         evidence = projection_evidence()
         executable_ids = {
             criterion["id"]
             for criterion in code_quality_criteria(contract)
-            if criterion["check_kind"] == "executable"
+            if criterion["kind"] == "behavior"
         }
 
         for result in evidence["results"]:
@@ -210,7 +211,7 @@ class ProjectionExemplarTests(unittest.TestCase):
         validate_contract_evidence(
             projection_contract(),
             evidence,
-            warranted_dimensions={"code-quality"},
+            warranted_lenses={"code-quality"},
             warranted_acceptance_criteria={"code-quality": PROJECTED_UNIVERSALS},
         )
 
@@ -227,7 +228,7 @@ class ProjectionExemplarTests(unittest.TestCase):
 
 class HollowCodeQualityTests(unittest.TestCase):
     """A hollow code-quality criterion fails the same shared mechanism that
-    judges every dimension — never a code-quality-only detector."""
+    judges every lens — never a code-quality-only detector."""
 
     def test_hollow_exemplar_is_schema_valid_but_hollow(self) -> None:
         contract = hollow_contract()
@@ -249,14 +250,14 @@ class HollowCodeQualityTests(unittest.TestCase):
 
         messages = {message for _path, message in defects}
         self.assertIn(
-            f"dimension 'code-quality' does not declare"
+            f"lens 'code-quality' does not declare"
             f" warranted criterion {EARNS_ITS_PLACE!r}",
             messages,
         )
 
-        # Same detector, same message shape as the sibling dimension: a
+        # Same detector, same message shape as the sibling lens: a
         # warranted miss for documentation templates to the identical string
-        # once dimension and criterion are substituted.
+        # once lens and criterion are substituted.
         sentinel = "A new user completes the primary task from the README alone"
         sibling = detect_contract_evidence_defects(
             hollow_contract(),
@@ -264,13 +265,13 @@ class HollowCodeQualityTests(unittest.TestCase):
             warranted_acceptance_criteria={"documentation": {sentinel}},
         )
         sibling_shape = {
-            message.replace("documentation", "<dimension>").replace(
+            message.replace("documentation", "<lens>").replace(
                 sentinel, "<criterion>"
             )
             for _path, message in sibling
         }
         code_quality_shape = {
-            message.replace("code-quality", "<dimension>").replace(
+            message.replace("code-quality", "<lens>").replace(
                 EARNS_ITS_PLACE, "<criterion>"
             )
             for _path, message in defects
@@ -279,8 +280,8 @@ class HollowCodeQualityTests(unittest.TestCase):
 
 
 class ProjectionParityTests(unittest.TestCase):
-    """Code-quality projections answer to the same coverage and
-    evidence-shape checks as every dimension."""
+    """Code-quality projections answer to the same coverage check as every
+    lens."""
 
     def test_declared_projection_left_unevidenced_is_flagged_identically(
         self,
@@ -301,47 +302,21 @@ class ProjectionParityTests(unittest.TestCase):
             context.exception.errors,
         )
 
-    def test_executable_projection_without_a_run_is_flagged(self) -> None:
-        contract = projection_contract()
-        evidence = projection_evidence()
-        executable_ids = {
-            criterion["id"]
-            for criterion in code_quality_criteria(contract)
-            if criterion["check_kind"] == "executable"
-        }
-        for result in evidence["results"]:
-            if result["criterion_id"] in executable_ids:
-                result["evidence"] = {
-                    "summary": "An attestation cannot satisfy an executable projection.",
-                    "attestation": {
-                        "reviewer": "core",
-                        "finding": "The layer edge looked absent.",
-                    },
-                }
-
-        with self.assertRaises(ArtifactSchemaError) as context:
-            validate_contract_evidence(contract, evidence)
-        self.assertTrue(
-            any(
-                "executable criterion requires run or artifact evidence" in message
-                for _path, message in context.exception.errors
-            )
-        )
-
 
 class CanonicalExemplarTests(unittest.TestCase):
     """The canonical exemplar's code-quality criterion is honestly
-    executable and wired into the warranted mechanism."""
+    behavior-kind — a fitness function over the tree — and wired into the
+    warranted mechanism."""
 
-    def test_canonical_code_quality_criterion_declares_an_automated_check(
+    def test_canonical_code_quality_criterion_declares_a_fitness_check(
         self,
     ) -> None:
         criteria = code_quality_criteria(canonical_contract())
 
         self.assertEqual(1, len(criteria))
         criterion = criteria[0]
-        self.assertEqual("executable", criterion["check_kind"])
-        self.assertNotEqual("", criterion["check"])
+        self.assertEqual("behavior", criterion["kind"])
+        self.assertIn("fitness function", criterion["check"]["actor"])
 
     def test_canonical_code_quality_evidence_is_a_recorded_run(self) -> None:
         results = {
@@ -359,7 +334,7 @@ class CanonicalExemplarTests(unittest.TestCase):
         validate_contract_evidence(
             canonical_contract(),
             canonical_evidence(),
-            warranted_dimensions={"code-quality"},
+            warranted_lenses={"code-quality"},
             warranted_acceptance_criteria={
                 "code-quality": {CANONICAL_CQ_CRITERION}
             },

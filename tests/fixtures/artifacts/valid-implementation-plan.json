@@ -33,6 +33,12 @@
       ]
     },
     {
+      "criterion_id": "documentation-error-taxonomy-transmits",
+      "steps": [
+        "Author the reference's failure-taxonomy section so each class states its discriminator and recovery rather than worked examples alone"
+      ]
+    },
+    {
       "criterion_id": "code-quality-single-validation-path",
       "steps": [
         "Route the endpoint through the shared validator path"

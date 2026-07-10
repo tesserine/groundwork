@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/completion-evidence.schema.json",
   "title": "Completion Evidence",
-  "description": "Validates the content of a completion-evidence artifact. Records performed evidence for every contract criterion in one dimension-agnostic result shape.",
+  "description": "Validates the content of a completion-evidence artifact. Records performed evidence for every contract criterion in one lens-agnostic result shape.",
   "type": "object",
   "required": ["work_unit", "results", "documentation"],
   "additionalProperties": false,
@@ -33,7 +33,7 @@
           },
           "evidence": {
             "type": "object",
-            "description": "Performed evidence. Executable criteria use run or artifact evidence; attested criteria use reviewer attestation.",
+            "description": "Performed evidence: the criterion's stated check performed - a recorded run, a produced artifact, or a recorded finding (attestation), whichever its procedure yields.",
             "required": ["summary"],
             "additionalProperties": false,
             "anyOf": [

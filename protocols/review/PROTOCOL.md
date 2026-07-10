@@ -1,7 +1,7 @@
 ---
 name: review
 description: >-
-  Review a submitted change proposal against the multidimensional contract
+  Review a submitted change proposal against the multi-lens contract
   and evidence, and produce exactly one disposition outcome. Routes approval
   through `change-approved` and blocking findings through
   `change-needs-revision`.
@@ -14,14 +14,14 @@ metadata:
 
 Review is the judgment gate between a submitted change proposal and
 landing. It is where the pipeline's one act of independent judgment about
-the change happens: the proposal is examined against the multidimensional
+the change happens: the proposal is examined against the multi-lens
 contract, the work-unit, and the evidence — then the decision is recorded as
 exactly one typed outcome artifact.
 
 The protocol is not a forge operation. The `code-review` skill supplies the
 evaluation discipline; this protocol supplies the routing obligation.
 It consults the `contract` skill (`skills/contract/SKILL.md`) for the
-lifecycle, and judges every declared dimension through the same join:
+lifecycle, and judges every declared lens through the same join:
 `contract.criteria[]` against `completion-evidence.results[]`, one
 performed result per criterion.
 
@@ -34,16 +34,16 @@ performed result per criterion.
 2. **Inspect against the contract.** Evaluate the proposed change with the
    `code-review` skill's discipline: scope honesty against the work-unit,
    correctness, semantic-shift detection, and evidence quality against the
-   multidimensional contract and completion evidence. The contract is the
-   measure — a change is judged by whether every declared dimension's
+   multi-lens contract and completion evidence. The contract is the
+   measure — a change is judged by whether every declared lens's
    performed validation is delivered and proven, not by whether commands
    passed. Join `contract.criteria[]` with `completion-evidence.results[]`
-   and judge each criterion by the evidence its `check_kind` warrants: run
-   or artifact evidence for executable criteria — scenario tests and
-   structural, coherence, and conformance gates among them — and reviewer
-   attestations with substantive findings for attested criteria, the
-   documentation dimension's audience-outcome findings and the code-quality
-   dimension's diff loci among them. The same join judges every dimension.
+   and judge each criterion by whether its own stated check was performed
+   and its observable read: scenario runs and
+   structural, coherence, and conformance gates among them, and recorded
+   findings with substance where the actor is a recipient or reviewer, the
+   documentation lens's audience-outcome findings and the code-quality
+   lens's diff loci among them. The same join judges every lens.
    Consult the `contract` skill for the lifecycle; this protocol judges it,
    it does not restate it.
 
@@ -66,7 +66,7 @@ performed result per criterion.
    Judge the close path through the existing proposal, completion evidence,
    and review disposition context: the per-criterion results in
    `completion-evidence.results[]` are the committed, reviewable evidence
-   for every declared dimension — behavior, documentation, and code quality
+   for every declared lens — behavior, documentation, and code quality
    in the same surface.
 
 ## The Independence of the Gate
@@ -90,7 +90,7 @@ reviewer is independent of the author is the invariant.
   asking later steps to infer approval from fields instead of routing by
   outcome type.
 - `rubber-stamp-review`: approving because commands passed without checking
-  whether the evidence proves every declared dimension. A behavior-only
+  whether the evidence proves every declared lens. A behavior-only
   approval that ignores documentation or code-quality validation is a rubber
   stamp even when the behavior evidence passes.
 - `semantic-shift-dismissal`: treating meaning changes as harmless cleanup
@@ -103,7 +103,7 @@ reviewer is independent of the author is the invariant.
 - `workflow-contracts/review.toml` defines the C-2 review flow and its two
   disposition terminals.
 - `skills/code-review/SKILL.md` defines the evaluation discipline.
-- `contract` (skill): owns the lifecycle and dimensions this protocol
+- `contract` (skill): owns the lifecycle and lenses this protocol
   consults while judging validation-performed.
 - `schemas/change-approved.schema.json` and
   `schemas/change-needs-revision.schema.json` define the typed disposition
