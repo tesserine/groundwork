@@ -16,6 +16,12 @@ result after a change; this discipline governs the writing as it happens.
 | work-unit-model.md | Contributors, agents working from the work-unit graph | When work-unit states, graph format, or maintenance rules change |
 | API reference | API consumers, agents calling functions | During implementation, alongside code |
 | Inline comments | Future maintainers, agents modifying code | At non-obvious decision points during implementation |
+| Command help (invocation surface) | Operators and agents meeting a command cold — `--help`, subcommand help, usage | Any change shipping or altering a command's invocation |
+| Error output (failure surface) | Recipients mid-failure, acting from the error alone | Any change shipping or altering a failure path a recipient meets |
+| Machine self-description | Agents discovering a surface programmatically — MCP tool descriptions, schemas, manifest entries | Any change shipping or altering a machine-discoverable surface |
+
+Interactive prompt flows are invocation-surface kin: the prompts are where
+the recipient is met mid-act.
 
 ## Constraints
 

@@ -57,9 +57,11 @@ The authoring pass must **consider every lens**:
 - **Behavior:** write acceptance criteria as positive, observable outcomes.
   These are the behavior input the later contract sharpens into executable
   checks.
-- **Documentation:** consult `orient`'s audience taxonomy and record any
-  recipient outcomes the work must make true. When documentation risk is
-  light, one simple recipient outcome is enough.
+- **Documentation:** consult `orient`'s audience taxonomy and surface
+  classes, ask *where does each recipient first meet this change?*, and
+  record the recipient outcomes the work must make true — a first-contact
+  surface the change ships or alters always carries one. When
+  documentation risk is light, one simple recipient outcome is enough.
 - **Code quality:** point to the principles corpus and name any stressed
   universals the work puts under unusual pressure. The code quality input can
   be one projected universal when internal-form risk is light.
