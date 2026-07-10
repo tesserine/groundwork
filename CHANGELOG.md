@@ -19,6 +19,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   at run time and asserts it occurs in exactly one tracked file
   repository-wide; ADR-0010 now consults the home in place of its former
   inline statement.
+- **Binding-stamped completion evidence** (#585). `completion-evidence.schema.json`
+  v-next requires an execution-binding stamp (`ci` | `harness` | `manual`,
+  ADR-0010) on every performed result and binds the evidence form to the
+  stamp — a `manual` result carries the signed performance and cannot carry
+  machine evidence; a `ci`/`harness` result carries machine evidence and
+  cannot ride a bare sign-off — so a manually-discharged criterion is never
+  presentable as machine-verified. The binding profile is queryable at
+  contract and repository grain; worked queries live at `schemas/README.md`.
 
 - **The meeting-surface axis of the documentation lens** (#573).
   Documentation outcomes are declared at recipient × meeting surface: a

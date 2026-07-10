@@ -4,6 +4,7 @@
     {
       "criterion_id": "behavior-api-validates-records",
       "result": "pass",
+      "binding": "ci",
       "evidence": {
         "summary": "A bare summary with no run, artifact, or attestation is not performed evidence."
       }

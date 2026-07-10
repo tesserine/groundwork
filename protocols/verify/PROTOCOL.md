@@ -88,6 +88,7 @@ criteria are covered, and the documentation still tells the truth.
      results: [{
        criterion_id: "<contract criterion id>",
        result: "pass" | "fail",
+       binding: "ci" | "harness",
        evidence: {
          summary: "<what the evidence proves>",
          run: {
@@ -99,6 +100,7 @@ criteria are covered, and the documentation still tells the truth.
      }, {
        criterion_id: "<attested contract criterion id>",
        result: "pass" | "fail",
+       binding: "manual",
        evidence: {
          summary: "<what the reviewer found>",
          attestation: {

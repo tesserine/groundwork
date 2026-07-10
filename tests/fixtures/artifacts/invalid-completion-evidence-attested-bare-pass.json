@@ -4,14 +4,19 @@
     {
       "criterion_id": "documentation-api-reference",
       "result": "pass",
+      "binding": "manual",
       "evidence": {
         "summary": "Documentation passed."
       }
     }
   ],
   "documentation": {
-    "updated": ["schemas/README.md"],
-    "verified_accurate": ["schemas/completion-evidence.schema.json"],
+    "updated": [
+      "schemas/README.md"
+    ],
+    "verified_accurate": [
+      "schemas/completion-evidence.schema.json"
+    ],
     "follow_up_work_units": []
   }
 }

@@ -4,6 +4,7 @@
     {
       "criterion_id": "documentation-api-reference",
       "result": "pass",
+      "binding": "manual",
       "evidence": {
         "summary": "Reviewer performed the submission and a failure recovery from the API reference alone.",
         "attestation": {

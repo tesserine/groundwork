@@ -1,0 +1,22 @@
+{
+  "work_unit": "work-unit-585-binding-stamps",
+  "results": [
+    {
+      "criterion_id": "behavior-api-validates-records",
+      "result": "pass",
+      "evidence": {
+        "summary": "A performed result with no binding stamp.",
+        "run": {
+          "command": "python -m unittest tests.test_ingestion",
+          "result": "pass",
+          "output_summary": "tests passed"
+        }
+      }
+    }
+  ],
+  "documentation": {
+    "updated": [],
+    "verified_accurate": [],
+    "follow_up_work_units": []
+  }
+}

@@ -1,15 +1,15 @@
 {
-  "work_unit": "work-unit-485-hollow-refactor",
+  "work_unit": "work-unit-585-binding-stamps",
   "results": [
     {
-      "criterion_id": "code-quality-generic-review",
+      "criterion_id": "behavior-api-validates-records",
       "result": "pass",
-      "binding": "manual",
+      "binding": "ci",
       "evidence": {
-        "summary": "Reviewer marked code quality as reviewed.",
+        "summary": "A machine stamp riding a bare sign-off is a lying surface.",
         "attestation": {
           "reviewer": "core",
-          "finding": "Code quality reviewed."
+          "finding": "Looks fine."
         }
       }
     }
