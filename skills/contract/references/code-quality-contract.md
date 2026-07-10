@@ -1,24 +1,25 @@
 # Code-Quality Contract
 
-The code-quality dimension of the uniform contract machine declares what
+The code-quality lens of the uniform contract machine declares what
 must hold of the change's **internal form**.
 
 Its teeth come from the resolved **principles corpus**, not from an invented
 style rulebook: the universals that bear on a change, consulted from the
-corpus and projected onto the diff as typed criteria in
-`contract.criteria[]`. The checking apparatus follows the projection's
-shape: a **structurally-checkable** projection — dependency direction,
-layering, coupling, import direction — is `check_kind: "executable"`, its
-check an automated fitness function whose run is recorded in
-`completion-evidence.results[]`; a **judgment-shaped** projection is
-`check_kind: "attested"`, its performed evidence a reviewer finding in the
-same surface.
+corpus and projected onto the diff as kind-typed criteria in
+`contract.criteria[]`. The content kind follows the projection's
+shape by the ADR-0010 discriminator: a **structurally-checkable**
+projection — dependency direction, layering, coupling, import direction —
+is **behavior**-kind, its check a fitness function run over the tree and
+recorded in `completion-evidence.results[]`; a **judgment-shaped**
+projection is **meaning**-kind — the soundness shape — its check a reviewer
+reconstructing the diff's ground against the universal and recording the
+finding in the same surface.
 
 ## Why the corpus, not a rulebook
 
 A separate code-quality rulebook would be a second home for invariants the
 corpus already owns — and a second home drifts from the first. So this
-dimension consults the corpus rather than restating it (consult, do not
+lens consults the corpus rather than restating it (consult, do not
 model). The corpus owns each universal's content; this module owns only how
 a universal lands on a diff and how the projection is generated as typed
 criteria for the uniform surface. When the two would disagree, the corpus
@@ -34,7 +35,7 @@ landed change is one more place a universal is enforced). The spiral runs on
 the corpus as its bounded asset — a projection that keeps misfiring, or a
 change that stresses a universal not yet projected, is friction that becomes
 corpus change material. Sharpen a universal and every future contract's
-code-quality dimension sharpens with it.
+code-quality lens sharpens with it.
 
 ## The teeth of a code-quality contract
 
@@ -45,20 +46,20 @@ diff where the universal holds, or the **place** it fails. A finding is
 evidence; "looks fine" is not (**Verifiable Completion**, **Honest
 Signal**).
 
-## Structurally-checkable projections are executable
+## Structurally-checkable projections are behavior-kind
 
 Where a projection's failing tell is a structural fact of the tree — a
 forbidden layer edge, an import direction, a dependency cycle — the
-criterion is typed `executable` and its check is a **fitness function**: an
+criterion is **behavior**-kind and its check is a **fitness function**: an
 automated check that a seeded violating change fails and whose run (or
 produced artifact) is the recorded evidence. `tooling/import_direction.py`
 is the shipped reference implementation: it fails a module in one layer
 that imports from a forbidden layer, groundwork's own tree answers to it
 (the `tooling → tests` edge is forbidden), and
 `tests/test_code_quality_dimension.py` proves the seeded violation goes
-red. A structural invariant left as an attested item asks a reviewer to
-eyeball what a run can decide; a manual inspection wearing
-`check_kind: "executable"` is a lying surface. Type each projection by
+red. A structural invariant left to reviewer judgment asks a reviewer to
+eyeball what a run can decide; a manual inspection presented as
+machine-verified is a lying surface. Type each projection by
 what its check actually is.
 
 ## Projecting the corpus
@@ -74,7 +75,7 @@ statement carries one shape:
 - the condition under which it **holds** — a locus a reviewer can point at.
 
 Selecting from the resolved corpus, rather than a list frozen here, is what
-keeps the dimension honest as the corpus evolves and across deployments that
+keeps the lens honest as the corpus evolves and across deployments that
 resolve a different corpus. The items below illustrate the shape; they are
 not the set — the set is whatever the resolved corpus and the change at hand
 demand.
@@ -103,7 +104,7 @@ demand.
 universals as inputs to validation. `define` turns those inputs into
 validation defined: the subset of universals the change puts under real
 pressure, named from the resolved corpus, not a ritual recital, and emitted
-as typed criteria into the uniform contract surface. `verify` performs
+as kind-typed criteria into the uniform contract surface. `verify` performs
 validation by auditing the diff against each projected criterion and
 recording a reviewer finding in the uniform evidence surface. A subset is
 legitimate; under-declaration is not. A change that touches a shared asset
@@ -112,12 +113,12 @@ without the one that governs earning a place, or moves a public surface
 without the one that governs honest surfaces, has left its risk outside
 validation. Mechanically, the stressed universals selected for a change
 enter the warranted acceptance-criteria set the shared contract/evidence
-detector checks — the same under-declaration flag every dimension answers
+detector checks — the same under-declaration flag every lens answers
 to. The exemplar fixtures under `tests/fixtures/artifacts/` model both
-sides: the projection pair that inhabits both check kinds and passes that
+sides: the projection pair that inhabits both content kinds and passes that
 gate, and the generic "code quality is reviewed" form it catches
 (`tests/test_code_quality_dimension.py` pins the pair, and pins each
-attested exemplar universal to the resolved corpus by name).
+meaning-kind exemplar universal to the resolved corpus by name).
 
 ## Verifying the contract
 
@@ -138,7 +139,7 @@ onto a diff, regenerated per change.
 
 ## Cross-references
 
-- principles corpus (`~/.groundwork/principles/`) — the home this dimension
+- principles corpus (`~/.groundwork/principles/`) — the home this lens
   consults and projects; each universal's full content lives there.
 - `protocols/verify/references/code-quality-review.md` — the audit that
   verifies this contract.

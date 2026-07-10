@@ -46,14 +46,22 @@ workspace. Placement in `schemas/` alone registers it with the conformance
 sweep; the acquire surface renders the set, elements, and facets as projections
 gate-bound to this schema.
 
-The scoped contract spine is dimension-agnostic. `contract.schema.json`
-declares criteria for any dimension; each criterion names its dimension,
+The scoped contract spine is lens-agnostic. `contract.schema.json`
+declares criteria for any lens; each criterion names its `lens` — the
+source-and-coverage grouping its content comes from, per
+[ADR-0010](../docs/architecture/decisions/0010-content-kinds-behavior-and-meaning.md) —
 the numbered work-unit acceptance criterion or explicit body-ground obligation
 source it refines, the statement that defines done, the hollow delivery that
-would fail it, the criterion-level `check_kind`, and the check descriptor.
+would fail it, its content `kind`, and its `check`. What determines how a
+criterion is checked is its `kind`, never its lens: `behavior` content is
+checked by executing its procedure and reading the stated observable;
+`meaning` content is checked by grading a reconstruction against its stated
+proposition. The `check` object carries the operational procedure either
+way — `actor`, `procedure`, `observable`, and declared `conforming_case`
+and `falsifying_case` — whether or not today's environment runs it
+mechanically; where a check runs is binding policy, not contract content.
 `completion-evidence.schema.json` records one
-performed result shape per contract criterion. Executable criteria carry run
-or artifact evidence; attested criteria carry reviewer identity and finding.
+performed result shape per contract criterion.
 Root schemas remain ordinary top-level object schemas with no root `oneOf`,
 `anyOf`, `allOf`, or `$ref`, so runtime tool advertisement continues to expose
 them as MCP artifact tools.

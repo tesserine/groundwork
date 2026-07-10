@@ -1,16 +1,16 @@
 {
   "work_unit": "work-unit-492-contract-machine",
-  "title": "Missing hollow delivery",
+  "title": "Check missing procedure",
   "criteria": [
     {
       "id": "behavior-api-validates-records",
       "lens": "behavior",
       "acceptance_criterion": "Valid records pass through unchanged",
       "statement": "The ingestion endpoint forwards a valid record without changing its fields.",
+      "hollow_delivery": "The endpoint accepts the request but silently drops or rewrites a field.",
       "kind": "behavior",
       "check": {
         "actor": "ingestion behavior test (tests/test_ingestion.py)",
-        "procedure": "Submit a valid record to the ingestion endpoint and read the forwarded record.",
         "observable": "The forwarded record equals the submitted record field for field.",
         "conforming_case": "A valid record is forwarded with every field unchanged.",
         "falsifying_case": "A valid record is forwarded with a field dropped or rewritten."

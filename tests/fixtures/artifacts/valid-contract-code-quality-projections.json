@@ -1,33 +1,51 @@
 {
   "work_unit": "work-unit-485-code-quality-projections",
-  "title": "Code-quality projections inhabit both check kinds",
+  "title": "Code-quality projections inhabit both content kinds",
   "criteria": [
     {
       "id": "code-quality-layer-import-direction",
-      "dimension": "code-quality",
+      "lens": "code-quality",
       "acceptance_criterion": "Source layers keep their import direction",
       "statement": "Every import under src/ resolves within the source layers; the src-to-tests edge stays absent under the import-direction fitness function.",
       "hollow_delivery": "A module under src/ imports a helper from tests/ and the change lands green.",
-      "check_kind": "executable",
-      "check": "Run `python -m tooling.import_direction --root . --forbid src:tests`; the run reports zero violations."
+      "kind": "behavior",
+      "check": {
+        "actor": "import-direction fitness function (tooling/import_direction.py)",
+        "procedure": "Run `python -m tooling.import_direction --root . --forbid src:tests` over the tree.",
+        "observable": "The run reports zero violations.",
+        "conforming_case": "Every src/ import resolves within the source layers.",
+        "falsifying_case": "A src/ module imports a tests/ helper and the run reports it."
+      }
     },
     {
       "id": "code-quality-earns-its-place",
-      "dimension": "code-quality",
+      "lens": "code-quality",
       "acceptance_criterion": "Keep it as simple as the need allows",
       "statement": "Asked of the diff: does every element added or kept trace to a need this change verifies? It holds when the constraint each new element serves is nameable at its locus.",
       "hollow_delivery": "A defensive abstraction, speculative parameter, or compatibility shim lands with no constraint that demands it.",
-      "check_kind": "attested",
-      "check": "Reviewer audits the diff against the universal, recording the locus where it holds or the finding where it fails."
+      "kind": "meaning",
+      "check": {
+        "actor": "reviewer as reconstruction instrument",
+        "procedure": "Enumerate the diff's added or kept elements; for each, reconstruct the chain to the constraint it serves; flag any element whose constraint cannot be named at its locus.",
+        "observable": "Every element traces to a named constraint \u2014 pass; any unearned element \u2014 fail.",
+        "conforming_case": "Each new element's constraint is named at its locus in the finding.",
+        "falsifying_case": "A speculative parameter lands justified only by 'might need it'."
+      }
     },
     {
       "id": "code-quality-fail-loudly",
-      "dimension": "code-quality",
+      "lens": "code-quality",
       "acceptance_criterion": "Fail loudly, early, and exactly once",
       "statement": "Asked of the diff: does each failure path the change adds surface its error where it occurs, named, exactly once? It holds when every new failure path has a loud, pointable locus.",
       "hollow_delivery": "A fallback introduced by the change silently masks an error and downstream code builds on the false success.",
-      "check_kind": "attested",
-      "check": "Reviewer traces each failure path the diff adds, recording its loud locus or the silent spot where it fails."
+      "kind": "meaning",
+      "check": {
+        "actor": "reviewer as reconstruction instrument",
+        "procedure": "Enumerate the failure paths the diff adds; for each, reconstruct where its error surfaces and how often; flag any path whose error is masked or re-raised beyond once.",
+        "observable": "Every new failure path has one loud, pointable locus \u2014 pass; any silent or duplicated path \u2014 fail.",
+        "conforming_case": "Each new failure path's loud locus is pointed at in the finding.",
+        "falsifying_case": "A new fallback swallows an error and the finding cannot point at a loud locus."
+      }
     }
   ]
 }

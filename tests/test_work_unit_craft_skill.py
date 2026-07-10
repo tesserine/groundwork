@@ -151,7 +151,7 @@ class WorkUnitCraftSkillTests(unittest.TestCase):
             section_between(body, "Author Contract Inputs", "The Sovereignty Test")
         )
 
-        self.assertRegex(contract_inputs, r"\bevery dimension\b")
+        self.assertRegex(contract_inputs, r"\bevery lens\b")
         self.assertRegex(contract_inputs, r"\bcoverage is never zero\b")
         self.assertRegex(contract_inputs, r"\bhollow delivery\b")
         forbidden = re.compile(

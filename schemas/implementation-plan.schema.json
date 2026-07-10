@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/tesserine/groundwork/main/schemas/implementation-plan.schema.json",
   "title": "Implementation Plan",
-  "description": "Validates the content of an implementation-plan artifact. Bridges the contract to the change with design decisions and criterion-to-step mappings keyed by contract criterion id; each criterion's dimension, statement, and check live on the contract artifact.",
+  "description": "Validates the content of an implementation-plan artifact. Bridges the contract to the change with design decisions and criterion-to-step mappings keyed by contract criterion id; each criterion's lens, kind, statement, and check live on the contract artifact.",
   "type": "object",
   "required": ["work_unit", "summary", "design_decisions", "affected_files", "criterion_mapping"],
   "additionalProperties": false,

@@ -78,12 +78,13 @@ def documentation_criteria(contract: dict) -> list[dict]:
     return [
         criterion
         for criterion in contract["criteria"]
-        if criterion["dimension"] == "documentation"
+        if criterion["lens"] == "documentation"
     ]
 
 
 class PillarExemplarTests(unittest.TestCase):
-    """The three recipient pillars are expressed as machine-touched criteria."""
+    """The three recipient pillars are behavior-kind criteria: a cold
+    recipient's procedure reproduces each stated outcome."""
 
     def test_pillar_exemplar_declares_the_three_recipient_outcomes(self) -> None:
         criteria = documentation_criteria(pillar_contract())
@@ -94,8 +95,9 @@ class PillarExemplarTests(unittest.TestCase):
         )
         for criterion in criteria:
             with self.subTest(criterion=criterion["id"]):
-                self.assertEqual("documentation", criterion["dimension"])
-                self.assertEqual("attested", criterion["check_kind"])
+                self.assertEqual("documentation", criterion["lens"])
+                self.assertEqual("behavior", criterion["kind"])
+                self.assertIn("cold recipient", criterion["check"]["actor"])
 
     def test_rich_pillar_pair_passes_the_shared_gate_with_warranted_outcomes(
         self,
@@ -106,7 +108,7 @@ class PillarExemplarTests(unittest.TestCase):
         validate_contract_evidence(
             contract,
             evidence,
-            warranted_dimensions={"documentation"},
+            warranted_lenses={"documentation"},
             warranted_acceptance_criteria={"documentation": PILLAR_OUTCOMES},
         )
 
@@ -119,7 +121,7 @@ class PillarExemplarTests(unittest.TestCase):
 
 class HollowDocumentationTests(unittest.TestCase):
     """A hollow documentation criterion fails the same shared mechanism that
-    judges every dimension — never a documentation-only detector."""
+    judges every lens — never a documentation-only detector."""
 
     def test_hollow_exemplar_is_schema_valid_but_hollow(self) -> None:
         contract = hollow_contract()
@@ -144,14 +146,14 @@ class HollowDocumentationTests(unittest.TestCase):
         for outcome in sorted(warranted):
             with self.subTest(outcome=outcome):
                 self.assertIn(
-                    f"dimension 'documentation' does not declare"
+                    f"lens 'documentation' does not declare"
                     f" warranted criterion {outcome!r}",
                     messages,
                 )
 
-        # Same detector, same message shape as every other dimension: a
+        # Same detector, same message shape as every other lens: a
         # warranted miss for code-quality on the canonical pair templates to
-        # the identical string once dimension and criterion are substituted.
+        # the identical string once lens and criterion are substituted.
         sentinel = "Public APIs stay typed"
         sibling = detect_contract_evidence_defects(
             canonical_contract(),
@@ -159,13 +161,13 @@ class HollowDocumentationTests(unittest.TestCase):
             warranted_acceptance_criteria={"code-quality": {sentinel}},
         )
         sibling_shape = {
-            message.replace("code-quality", "<dimension>").replace(
+            message.replace("code-quality", "<lens>").replace(
                 sentinel, "<criterion>"
             )
             for _path, message in sibling
         }
         documentation_shape = {
-            message.replace("documentation", "<dimension>").replace(
+            message.replace("documentation", "<lens>").replace(
                 outcome, "<criterion>"
             )
             for _path, message in defects
@@ -176,8 +178,8 @@ class HollowDocumentationTests(unittest.TestCase):
 
 
 class PillarParityTests(unittest.TestCase):
-    """Documentation pillars answer to the same coverage and evidence-shape
-    checks as every dimension."""
+    """Documentation pillars answer to the same coverage check as every
+    lens."""
 
     def test_declared_pillar_left_unevidenced_is_flagged_identically(self) -> None:
         contract = pillar_contract()
@@ -196,41 +198,20 @@ class PillarParityTests(unittest.TestCase):
             context.exception.errors,
         )
 
-    def test_attested_pillar_without_attestation_is_flagged(self) -> None:
-        contract = pillar_contract()
-        evidence = pillar_evidence()
-        evidence["results"][0]["evidence"] = {
-            "summary": "A run cannot satisfy an attested pillar.",
-            "run": {
-                "command": "python -m unittest",
-                "result": "pass",
-                "output_summary": "tests passed",
-            },
-        }
-
-        with self.assertRaises(ArtifactSchemaError) as context:
-            validate_contract_evidence(contract, evidence)
-        self.assertIn(
-            (
-                "results/0/evidence",
-                "attested criterion requires reviewer attestation",
-            ),
-            context.exception.errors,
-        )
-
 
 class CanonicalExemplarTests(unittest.TestCase):
     """The canonical exemplar's documentation criterion is an audience
     outcome wired into the warranted mechanism."""
 
-    def test_canonical_documentation_criterion_is_the_user_pillar_outcome(
-        self,
-    ) -> None:
+    def test_canonical_documentation_lens_inhabits_both_kinds(self) -> None:
         criteria = documentation_criteria(canonical_contract())
 
-        self.assertEqual(1, len(criteria))
+        self.assertEqual(2, len(criteria))
         self.assertEqual(
             CANONICAL_USER_OUTCOME, criteria[0]["acceptance_criterion"]
+        )
+        self.assertEqual(
+            {"behavior", "meaning"}, {criterion["kind"] for criterion in criteria}
         )
 
     def test_canonical_pair_passes_the_shared_gate_with_its_outcome_warranted(
@@ -239,7 +220,7 @@ class CanonicalExemplarTests(unittest.TestCase):
         validate_contract_evidence(
             canonical_contract(),
             canonical_evidence(),
-            warranted_dimensions={"documentation"},
+            warranted_lenses={"documentation"},
             warranted_acceptance_criteria={
                 "documentation": {CANONICAL_USER_OUTCOME}
             },

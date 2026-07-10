@@ -4,12 +4,18 @@
   "criteria": [
     {
       "id": "code-quality-generic-review",
-      "dimension": "code-quality",
+      "lens": "code-quality",
       "acceptance_criterion": "Code quality is reviewed",
       "statement": "The code was reviewed for quality.",
       "hollow_delivery": "The reviewer marks code quality as reviewed while no universal was checked against the diff.",
-      "check_kind": "attested",
-      "check": "Reviewer notes code quality as reviewed."
+      "kind": "behavior",
+      "check": {
+        "actor": "reviewer",
+        "procedure": "Note code quality as reviewed.",
+        "observable": "A reviewed note exists.",
+        "conforming_case": "A note saying code quality was reviewed.",
+        "falsifying_case": "No reviewed note exists."
+      }
     }
   ]
 }

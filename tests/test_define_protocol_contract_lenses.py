@@ -5,7 +5,7 @@ from pathlib import Path
 
 from tooling.prose_conformance import (
     artifact_schema,
-    contract_dimension_rows,
+    contract_lens_rows,
     delivery_boundaries,
     manifest_protocols,
     markdown_section,
@@ -19,7 +19,7 @@ CONTRACT_SKILL = ROOT / "skills" / "contract" / "SKILL.md"
 PRINCIPLE_DERIVED_CONTRACTS = (
     ROOT / "skills" / "contract" / "references" / "principle-derived-contracts.md"
 )
-EXPECTED_CONTRACT_DIMENSIONS = {
+EXPECTED_CONTRACT_LENSES = {
     "**Behavior**",
     "**Documentation**",
     "**Code quality**",
@@ -38,14 +38,23 @@ class DefineProtocolContractDimensionTests(unittest.TestCase):
         self.assertEqual(["work-unit"], define["requires"])
         self.assertEqual(["contract"], define["produces"])
 
-    def test_contract_schema_requires_dimension_agnostic_teeth_fields(self) -> None:
+    def test_contract_schema_requires_kind_lens_and_operational_check(self) -> None:
         schema = artifact_schema(ROOT, "contract")
         criterion = schema["properties"]["criteria"]["items"]
 
-        self.assertIn("dimension", criterion["required"])
+        self.assertIn("lens", criterion["required"])
         self.assertIn("hollow_delivery", criterion["required"])
-        self.assertIn("check_kind", criterion["required"])
-        self.assertEqual(["executable", "attested"], criterion["properties"]["check_kind"]["enum"])
+        self.assertIn("kind", criterion["required"])
+        self.assertEqual(["behavior", "meaning"], criterion["properties"]["kind"]["enum"])
+        check = criterion["properties"]["check"]
+        self.assertEqual("object", check["type"])
+        self.assertEqual(
+            ["actor", "procedure", "observable", "conforming_case", "falsifying_case"],
+            check["required"],
+        )
+        self.assertFalse(check["additionalProperties"])
+        self.assertNotIn("check_kind", criterion["properties"])
+        self.assertNotIn("dimension", criterion["properties"])
         self.assertNotIn("behavior_form", criterion["properties"])
 
     def test_acceptance_criterion_source_mapping_exposes_dual_use(self) -> None:
@@ -77,11 +86,11 @@ class DefineProtocolContractDimensionTests(unittest.TestCase):
         self.assertTrue(define.scoped)
         self.assertTrue(define.schema_requires_work_unit)
 
-    def test_define_consults_contract_dimension_authorities(self) -> None:
+    def test_define_consults_contract_lens_authorities(self) -> None:
         body = read(DEFINE_PROTOCOL)
-        rows = contract_dimension_rows(ROOT)
+        rows = contract_lens_rows(ROOT)
 
-        self.assertEqual(EXPECTED_CONTRACT_DIMENSIONS, set(rows))
+        self.assertEqual(EXPECTED_CONTRACT_LENSES, set(rows))
         for relative in [
             "skills/contract/references/documentation-contract.md",
             "skills/contract/references/code-quality-contract.md",
@@ -90,8 +99,8 @@ class DefineProtocolContractDimensionTests(unittest.TestCase):
                 self.assertTrue((ROOT / relative).is_file())
                 self.assertIn(relative, body)
 
-    def test_contract_dimension_gate_flips_when_skill_table_changes(self) -> None:
-        self.assertEqual(EXPECTED_CONTRACT_DIMENSIONS, set(contract_dimension_rows(ROOT)))
+    def test_contract_lens_gate_flips_when_skill_table_changes(self) -> None:
+        self.assertEqual(EXPECTED_CONTRACT_LENSES, set(contract_lens_rows(ROOT)))
 
         with tempfile.TemporaryDirectory() as tmp:
             tree = Path(tmp) / "tree"
@@ -104,12 +113,12 @@ class DefineProtocolContractDimensionTests(unittest.TestCase):
             )
             skill.write_text(body, encoding="utf-8")
 
-            mutated_dimensions = set(contract_dimension_rows(tree))
+            mutated_lenses = set(contract_lens_rows(tree))
 
-        self.assertNotEqual(EXPECTED_CONTRACT_DIMENSIONS, mutated_dimensions)
+        self.assertNotEqual(EXPECTED_CONTRACT_LENSES, mutated_lenses)
         self.assertEqual(
             {"**Behavior**", "**Release notes**", "**Code quality**"},
-            mutated_dimensions,
+            mutated_lenses,
         )
 
     def test_define_ends_at_contract_capstone_with_named_corruption_modes(self) -> None:
@@ -118,7 +127,7 @@ class DefineProtocolContractDimensionTests(unittest.TestCase):
 
         self.assertIsNone(re.search(r"^6\. \*\*", steps, flags=re.MULTILINE))
         self.assertIn("contract-after-code", corruption_modes)
-        self.assertIn("dimension-declaration-only", corruption_modes)
+        self.assertIn("lens-declaration-only", corruption_modes)
         self.assertIn("lifecycle-modeling", corruption_modes)
 
 

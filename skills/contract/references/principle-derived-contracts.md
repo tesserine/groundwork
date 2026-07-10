@@ -8,7 +8,7 @@ the governing principles instead of enumerating a checklist that already
 chooses the mechanism.
 
 This reference is part of the [contract skill](../SKILL.md). It extends the
-same teeth principle, dimensions, and evidence lifecycle; it does not create
+same teeth principle, lenses, and evidence lifecycle; it does not create
 a second rulebook.
 
 ## Trigger and Boundary
@@ -37,18 +37,19 @@ the delivery holds or fails.
    desired outcome, non-goals, and explicit contract inputs.
 2. Select and read the governing principles at the resolved principles
    corpus, such as `~/.groundwork/principles/` in an installed environment.
-3. For each contract dimension the work has, derive what must be true of
+3. For each contract lens the work has, derive what must be true of
    any acceptable answer. Keep the mechanism open and close the quality
    bar.
 4. Author each criterion in the existing schema: `statement` names the
    required product state, `hollow_delivery` names the plausible lazy
-   delivery, `check_kind` selects executable or attested evidence,
-   `check` names the performed act, and `acceptance_criterion` carries the
-   criterion's work-unit source.
+   delivery, `kind` routes the content by the ADR-0010 discriminator,
+   `check` states the operational procedure — actor, procedure, observable,
+   and declared conforming and falsifying cases — and `acceptance_criterion`
+   carries the criterion's work-unit source.
 5. Run the completeness pass: no criterion may prescribe the mechanism, no
    criterion may be unfailable, every numbered acceptance criterion or
    explicit body-ground obligation under pressure is mapped, and every
-   present dimension has a teeth-bearing criterion.
+   present lens has a teeth-bearing criterion.
 
 The principles corpus owns the universals. This reference names the
 principles that bear on a derivation by their corpus names and consults
@@ -189,30 +190,48 @@ Schema-valid example:
   "criteria": [
     {
       "id": "behavior-routing-decidable",
-      "dimension": "behavior",
+      "lens": "behavior",
       "acceptance_criterion": "AC1 — Trigger and boundary are named",
       "statement": "A cold author can decide whether the handoff unit needs a principle-derived contract or ordinary behavior refinement.",
       "hollow_delivery": "The guidance sends every workflow update through derivation, including narrow behavior fixes that already have concrete outcomes.",
-      "check_kind": "attested",
-      "check": "Reviewer walks one open-ended handoff re-derivation and one well-scoped behavior fix through the routing question and records the deciding source sentence for each."
+      "kind": "behavior",
+      "check": {
+        "actor": "cold author equipped only with the delivered guidance",
+        "procedure": "Walk one open-ended handoff re-derivation and one well-scoped behavior fix through the routing question, recording the deciding source sentence for each.",
+        "observable": "Both units route correctly with a deciding sentence named.",
+        "conforming_case": "The re-derivation routes to the derived pattern and the behavior fix to ordinary refinement, each with its sentence.",
+        "falsifying_case": "The narrow behavior fix routes into derivation, or no deciding sentence can be named."
+      }
     },
     {
       "id": "documentation-future-friction-routable",
-      "dimension": "documentation",
+      "lens": "documentation",
       "acceptance_criterion": "Body ground (Desired outcome: future friction has a concrete change-vector home)",
       "statement": "A maintainer who finds later handoff friction can name the live home for changing the guidance and the bounded asset surface to inspect.",
       "hollow_delivery": "The document gives a generic feedback link but no asset boundary or home that owns the method.",
-      "check_kind": "attested",
-      "check": "Reviewer files a hypothetical friction note on paper, names the target work-unit home and asset boundary from the delivered text, and records any missing route as the failing finding."
+      "kind": "behavior",
+      "check": {
+        "actor": "cold recipient (maintainer) reading the delivered text",
+        "procedure": "Draft a hypothetical friction note and name the target work-unit home and asset boundary from the delivered text alone.",
+        "observable": "Both the home and the boundary are named from the text.",
+        "conforming_case": "The note names the owning home and the asset surface the text points at.",
+        "falsifying_case": "The maintainer can name only a generic feedback route."
+      }
     },
     {
       "id": "code-quality-authority-single-homed",
-      "dimension": "code-quality",
+      "lens": "code-quality",
       "acceptance_criterion": "AC8 — Existing contract discipline remains single-homed and coherent",
       "statement": "New handoff-contract guidance lives in one contract reference and every principle or verification fact is consulted at its owning home.",
       "hollow_delivery": "The change duplicates principle definitions or verification-craft gate rules locally, creating a second editable authority.",
-      "check_kind": "attested",
-      "check": "Reviewer inventories each principle and verification-craft claim in the diff, maps it to consultation or local restatement, and fails any editable second home."
+      "kind": "meaning",
+      "check": {
+        "actor": "reviewer as reconstruction instrument",
+        "procedure": "Inventory each principle and verification-craft claim in the diff and reconstruct whether it consults its owning home or restates it locally.",
+        "observable": "Every claim maps to consultation — pass; any editable second home — fail.",
+        "conforming_case": "Each claim's owning home is named and consulted at its locus.",
+        "falsifying_case": "A principle definition is restated locally as an editable copy."
+      }
     }
   ]
 }
@@ -246,9 +265,9 @@ their homes.
 ## Cross-References
 
 - [../SKILL.md](../SKILL.md) — the contract skill, teeth principle,
-  dimensions, and lifecycle this pattern extends.
+  lenses, and lifecycle this pattern extends.
 - [code-quality-contract.md](code-quality-contract.md) — corpus projection
-  for the code-quality dimension.
+  for the code-quality lens.
 - [documentation-contract.md](documentation-contract.md) — recipient outcome
   form for documentation criteria.
 - [../../verification-craft/SKILL.md](../../verification-craft/SKILL.md) —

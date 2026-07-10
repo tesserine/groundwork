@@ -1,7 +1,7 @@
 # Code-Quality Review
 
 Reference for verify step 4: auditing the change against the declared
-**code-quality contract** (the contract skill's code-quality dimension)
+**code-quality contract** (the contract skill's code-quality lens)
 before the change is packaged for review.
 
 The contract declared, at `define`, the principles-corpus universals this
@@ -12,11 +12,14 @@ review is the gate; a self-report of cleanliness is not the evidence
 ## Method
 
 Begin from the declared contract, splitting its code-quality criteria by
-`check_kind`. An **executable** criterion — a structural projection whose
-check is a fitness function — is verified by running its declared check
-and recording the run in `completion-evidence.results[]`; the reference
+content `kind`. A **behavior**-kind criterion — a structural projection
+whose check's actor is a fitness function — is verified by running its
+stated procedure and recording the run in
+`completion-evidence.results[]`; the reference
 implementation for layer edges is `tooling/import_direction.py`. The
-audit below is the **attested** criteria's method. List the universals
+audit below is the **meaning**-kind criteria's method — the soundness
+shape, the reviewer reconstructing the diff's ground against each
+universal. List the universals
 those declared for this change; they are what the audit decides.
 
 1. **Read the diff as the substrate.** Audit the committed change, not the
@@ -39,8 +42,9 @@ those declared for this change; they are what the audit decides.
    grow. The corpus is the bounded asset the spiral acts on.
 
 The declared code-quality criterion's performed result is recorded in
-`completion-evidence.results[]` shaped by its `check_kind`: run (or
-produced-artifact) evidence for an executable projection; for an attested
+`completion-evidence.results[]` as its stated check performed: run (or
+produced-artifact) evidence for a behavior-kind projection; for a
+meaning-kind
 one, reviewer identity plus the per-universal disposition and finding for
 each selected universal or projection. The verify report remains the review narrative, and the
 `documentation` section remains the document-impact index — updated
@@ -54,4 +58,4 @@ evidence home for a declared code-quality criterion.
 - principles corpus (`~/.groundwork/principles/`) — the home of each
   universal's full content.
 - [documentation-review.md](documentation-review.md) — the sibling audit for
-  the documentation dimension.
+  the documentation lens.

@@ -66,7 +66,7 @@ class CloseProtocolContractDimensionTests(unittest.TestCase):
         self.assertIn("## The Independence of the Gate", read(REVIEW_PROTOCOL))
         self.assertIn("## Failure Policy", read(LAND_PROTOCOL))
         self.assertIn("## Corruption Modes", read(SUBMIT_PROTOCOL))
-        self.assertIn("dimension-drop", markdown_section(read(LAND_PROTOCOL), "Corruption Modes"))
+        self.assertIn("lens-drop", markdown_section(read(LAND_PROTOCOL), "Corruption Modes"))
 
 
 if __name__ == "__main__":

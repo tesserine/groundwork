@@ -25,6 +25,17 @@
       }
     },
     {
+      "criterion_id": "documentation-error-taxonomy-transmits",
+      "result": "pass",
+      "evidence": {
+        "summary": "A reference-only reader classified a novel validation failure into the documented taxonomy.",
+        "attestation": {
+          "reviewer": "core",
+          "finding": "Instantiated a fresh reader with the API reference alone; presented a missing-field failure absent from the worked examples; the reader classified it under the documented required-field class and named the documented recovery."
+        }
+      }
+    },
+    {
       "criterion_id": "code-quality-single-validation-path",
       "result": "pass",
       "evidence": {

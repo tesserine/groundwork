@@ -217,7 +217,7 @@ def validate_contract_evidence(
     contract: dict[str, Any],
     completion_evidence: dict[str, Any],
     *,
-    warranted_dimensions: set[str] | None = None,
+    warranted_lenses: set[str] | None = None,
     warranted_acceptance_criteria: dict[str, set[str]] | None = None,
 ) -> None:
     """Validate completion evidence against its contract artifact."""
@@ -226,7 +226,7 @@ def validate_contract_evidence(
     errors = detect_contract_evidence_defects(
         contract,
         completion_evidence,
-        warranted_dimensions=warranted_dimensions,
+        warranted_lenses=warranted_lenses,
         warranted_acceptance_criteria=warranted_acceptance_criteria,
     )
     if errors:
@@ -240,7 +240,7 @@ def detect_contract_traceability_defects(
 ) -> list[tuple[str, str]]:
     """Return criterion-traceability defects joining a downstream artifact to its contract.
 
-    The same mechanism serves every dimension: entries key off contract
+    The same mechanism serves every lens: entries key off contract
     criteria by ``criterion_id``, an unknown criterion is rejected, and an
     implementation plan covers every contract criterion with a mapping.
     """
@@ -304,10 +304,10 @@ def detect_contract_evidence_defects(
     contract: dict[str, Any],
     completion_evidence: dict[str, Any],
     *,
-    warranted_dimensions: set[str] | None = None,
+    warranted_lenses: set[str] | None = None,
     warranted_acceptance_criteria: dict[str, set[str]] | None = None,
 ) -> list[tuple[str, str]]:
-    """Return generic contract/evidence defects without dimension-specific logic."""
+    """Return generic contract/evidence defects; coverage warrants key off the criterion lens."""
     errors: list[tuple[str, str]] = []
     contract_work_unit = contract.get("work_unit")
     evidence_work_unit = completion_evidence.get("work_unit")
@@ -330,27 +330,27 @@ def detect_contract_evidence_defects(
         if isinstance(criterion, dict) and isinstance(criterion.get("id"), str)
     ]
     criteria_by_id = {criterion["id"]: criterion for criterion in criteria}
-    criteria_by_dimension: dict[str, list[dict[str, Any]]] = {}
+    criteria_by_lens: dict[str, list[dict[str, Any]]] = {}
     for criterion in criteria:
-        dimension = criterion.get("dimension")
-        if isinstance(dimension, str):
-            criteria_by_dimension.setdefault(dimension, []).append(criterion)
+        lens = criterion.get("lens")
+        if isinstance(lens, str):
+            criteria_by_lens.setdefault(lens, []).append(criterion)
 
-    for dimension in sorted(warranted_dimensions or set()):
-        if dimension not in criteria_by_dimension:
-            errors.append(("criteria", f"warranted dimension {dimension!r} has no contract criteria"))
+    for lens in sorted(warranted_lenses or set()):
+        if lens not in criteria_by_lens:
+            errors.append(("criteria", f"warranted lens {lens!r} has no contract criteria"))
 
-    for dimension, warranted_criteria in sorted((warranted_acceptance_criteria or {}).items()):
+    for lens, warranted_criteria in sorted((warranted_acceptance_criteria or {}).items()):
         declared = {
             criterion.get("acceptance_criterion")
-            for criterion in criteria_by_dimension.get(dimension, [])
+            for criterion in criteria_by_lens.get(lens, [])
             if isinstance(criterion.get("acceptance_criterion"), str)
         }
         for acceptance_criterion in sorted(warranted_criteria - declared):
             errors.append(
                 (
                     "criteria",
-                    f"dimension {dimension!r} does not declare warranted criterion {acceptance_criterion!r}",
+                    f"lens {lens!r} does not declare warranted criterion {acceptance_criterion!r}",
                 )
             )
 
@@ -369,16 +369,6 @@ def detect_contract_evidence_defects(
         if criterion is None:
             errors.append((f"results/{index}/criterion_id", f"unknown contract criterion {criterion_id!r}"))
             continue
-        evidence = result.get("evidence")
-        if not isinstance(evidence, dict):
-            continue
-        check_kind = criterion.get("check_kind")
-        has_executable_evidence = "run" in evidence or "artifact" in evidence
-        has_attestation = "attestation" in evidence
-        if check_kind == "executable" and not has_executable_evidence:
-            errors.append((f"results/{index}/evidence", "executable criterion requires run or artifact evidence"))
-        if check_kind == "attested" and not has_attestation:
-            errors.append((f"results/{index}/evidence", "attested criterion requires reviewer attestation"))
 
     for criterion in criteria:
         criterion_id = criterion["id"]
