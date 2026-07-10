@@ -1,0 +1,20 @@
+{
+  "acceptance_criteria": [
+    "A Radicle 1.9.x node runs persistently on the designated host(s) and survives reboot under ordinary service lifecycle.",
+    "The operator's delegate identity is created and held only on its key-holding device; provisioning never copies key material off that device; `RAD_PASSPHRASE`-in-environment is not used as a custody mechanism.",
+    "A declared seeding policy names which node(s) seed the working repositories and with what scope (followed vs all), such that state authored by per-session contributor DIDs replicates to project-controlled node(s); the policy lives at a durable home that Groundwork's verification mechanics can consult.",
+    "Replication is demonstrated: state authored by a non-delegate peer reaches the declared node(s), observed by replication read-back.",
+    "A runbook documents provisioning and the custody boundary."
+  ],
+  "description": "## Summary\n\nFor agent-authored Radicle state to be durable and verifiable, project-controlled node infrastructure must hold it. Deliver a persistent Radicle node — and/or a project-controlled always-on seed — on the operator's key-holding device and/or host, with a declared seeding policy under which the Tesserine working repositories and their collaboration state (including issues and patches authored by per-session contributor identities) verifiably replicate.\n\nPart of: tesserine/groundwork#538 (execution-boundary enablement for the Radicle-native replacement). Kin: tesserine/commons#109 (repository homes migrating to Radicle), #64 (the connector-era forge-credential separation this topology supersedes for Radicle operations).\n\n## Scope\n\n- Host provisioning for the Radicle node/seed (service lifecycle, reboot survival)\n- The declared seeding policy and its durable home\n- Custody runbook (delegate identity boundary)\n\n## Acceptance criteria\n\n- [ ] A Radicle 1.9.x node runs persistently on the designated host(s) and survives reboot under ordinary service lifecycle.\n- [ ] The operator's delegate identity is created and held only on its key-holding device; provisioning never copies key material off that device; `RAD_PASSPHRASE`-in-environment is not used as a custody mechanism.\n- [ ] A declared seeding policy names which node(s) seed the working repositories and with what scope (followed vs all), such that state authored by per-session contributor DIDs replicates to project-controlled node(s); the policy lives at a durable home that Groundwork's verification mechanics can consult.\n- [ ] Replication is demonstrated: state authored by a non-delegate peer reaches the declared node(s), observed by replication read-back.\n- [ ] A runbook documents provisioning and the custody boundary.\n\n## Dependencies\n\nNone — operator-led host enablement; may proceed independently of the ADR gate (it also serves tesserine/commons#109). Consumed by tesserine/groundwork#538's topology, end-to-end, and terminal units.",
+  "handle": {
+    "display": "pentaxis93/babbie-ops#105",
+    "id": "github:pentaxis93/babbie-ops:issue:105"
+  },
+  "scope": [
+    "Host provisioning for the Radicle node/seed (service lifecycle, reboot survival)",
+    "The declared seeding policy and its durable home",
+    "Custody runbook (delegate identity boundary)"
+  ],
+  "title": "feat(radicle): persistent Radicle node and seeding for the Tesserine repositories on babbie"
+}

@@ -1,0 +1,23 @@
+{
+  "acceptance_criteria": [
+    "A session can be dispatched on a Radicle-sourced working copy: the repo-URL surface admits the Radicle form and the runner materializes a working copy from it.",
+    "Each session operates as its own Radicle identity created inside the session boundary, holding contributor authority only; no operator or delegate key material is mounted, copied, or injected; `RAD_PASSPHRASE`-in-environment is not used as a custody mechanism.",
+    "State authored by a session replicates per the declared seeding policy, verified by read-back from a project-controlled node.",
+    "Existing non-Radicle transports keep working unchanged; runbooks/docs cover the provisioning pattern alongside the per-agent SSH identity runbook."
+  ],
+  "dependencies": [
+    "work-unit-865764fb78f10d4825e5fce94f40ff241346ae3165f445b5027b41e7154d097a",
+    "work-unit-05882295d2e033ec1143e8eff0439a211febf43b05fcba261234ea9f6342b5b5"
+  ],
+  "description": "## Summary\n\nThe runner today admits https/ssh/git working copies and injects forge credentials into containers under connector-era assumptions. Radicle-native Groundwork needs sessions that hold a Radicle working copy and act as their own bounded contributor identity, created inside the session boundary — the operator's delegate key never enters a session. This mirrors the existing per-agent SSH identity discipline, with the key generated in-boundary instead of mounted into it.\n\nPart of: tesserine/groundwork#538 (execution-boundary enablement).\n\n## Scope\n\n- Runner repo-URL validation surface\n- Session identity provisioning (per-session/per-agent Radicle profile inside the container)\n- Runbooks and docs\n\n## Acceptance criteria\n\n- [ ] A session can be dispatched on a Radicle-sourced working copy: the repo-URL surface admits the Radicle form and the runner materializes a working copy from it.\n- [ ] Each session operates as its own Radicle identity created inside the session boundary, holding contributor authority only; no operator or delegate key material is mounted, copied, or injected; `RAD_PASSPHRASE`-in-environment is not used as a custody mechanism.\n- [ ] State authored by a session replicates per the declared seeding policy, verified by read-back from a project-controlled node.\n- [ ] Existing non-Radicle transports keep working unchanged; runbooks/docs cover the provisioning pattern alongside the per-agent SSH identity runbook.\n\n## Contract inputs\n\n- **Behavior:** a dispatched session on a Radicle working copy authors an issue or patch that a project-controlled node then holds — demonstrated end to end.\n- **Documentation:** the runbook is where a deployer first meets Radicle session provisioning; it states the custody boundary explicitly.\n- **Code quality:** the custody mandate is a hard boundary — no weakening for convenience (tesserine/groundwork#538 standing constraints).\n\n## Dependencies\n\nDepends on: tesserine/groundwork#599 (the custody and replication policy this enforces), tesserine/base#26 (the toolchain sessions run). Kin: the babbie-ops node unit (the network sessions replicate to).",
+  "handle": {
+    "display": "tesserine/agentd#183",
+    "id": "github:tesserine/agentd:issue:183"
+  },
+  "scope": [
+    "Runner repo-URL validation surface",
+    "Session identity provisioning (per-session/per-agent Radicle profile inside the container)",
+    "Runbooks and docs"
+  ],
+  "title": "feat(runner): Radicle-capable sessions — rad working copies and in-boundary session identity"
+}

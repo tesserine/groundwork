@@ -1,0 +1,23 @@
+{
+  "acceptance_criteria": [
+    "A prepared commit is delivered as a native Radicle patch with deterministic titling; the change-proposal handle carries the patch identity per the Groundwork identity grammar.",
+    "Each delivered version records the revision it delivered; a revision round publishes a new immutable patch revision bound to the next version; previously delivered versions remain immutable.",
+    "`submit.toml` names only manifest-registered mechanics — no forge operations; delivery and revision are verified by durable patch read-back.",
+    "Tests and fixtures cover first delivery, a revision round, and verification failure paths; the protocol rendering documents the native patch flow where the submitting agent first meets it."
+  ],
+  "dependencies": [
+    "work-unit-405907d92ca96ad39f1755c77d1b1bafb621301f4d119740111ee452619baf6e",
+    "work-unit-b948d4c30096896f9c5c162942f627cbc0669198b5de702409f89c326a707bce"
+  ],
+  "description": "## Summary\n\nsubmit delivers a change-proposal through Radicle's native patch flow: the artifact binds the patch identity in its handle, and each immutable submission round (version) binds the specific patch revision it delivered, so review and land bind to (patch, revision) — never to a mutable branch tip. Revision rounds publish as new immutable patch revisions. This replaces `deliver-change-proposal`.\n\nPart of: #538.\n\n## Scope\n\n- `protocols/submit` and `workflow-contracts/submit.toml`\n- change-proposal version-to-revision binding semantics (schema envelope)\n- Submission/revision mechanics; tests and fixtures\n\n## Acceptance criteria\n\n- [ ] A prepared commit is delivered as a native Radicle patch with deterministic titling; the change-proposal handle carries the patch identity per the Groundwork identity grammar.\n- [ ] Each delivered version records the revision it delivered; a revision round publishes a new immutable patch revision bound to the next version; previously delivered versions remain immutable.\n- [ ] `submit.toml` names only manifest-registered mechanics — no forge operations; delivery and revision are verified by durable patch read-back.\n- [ ] Tests and fixtures cover first delivery, a revision round, and verification failure paths; the protocol rendering documents the native patch flow where the submitting agent first meets it.\n\n## Contract inputs\n\n- **Behavior:** a delivered version resolves to exactly one immutable patch revision; review of that version can name it unambiguously.\n- **Documentation:** the submit protocol rendering carries the patch-flow semantics standalone.\n- **Code quality:** Traceability — version → revision → commit is one unbroken chain (`~/.groundwork/principles/`).\n\n## Dependencies\n\nDepends on: #598, #600.",
+  "handle": {
+    "display": "tesserine/groundwork#602",
+    "id": "github:tesserine/groundwork:issue:602"
+  },
+  "scope": [
+    "`protocols/submit` and `workflow-contracts/submit.toml`",
+    "change-proposal version-to-revision binding semantics (schema envelope)",
+    "Submission/revision mechanics; tests and fixtures"
+  ],
+  "title": "task(submit): change-proposals delivered as native Radicle patches — versions bind immutable revisions"
+}

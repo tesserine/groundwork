@@ -1,0 +1,21 @@
+{
+  "acceptance_criteria": [
+    "A session in the built image can run `rad` (1.9.x line) and fetch/push over the Radicle remote (the remote helper resolves on PATH).",
+    "The toolchain version is pinned and verifiable per the image's existing dependency conventions; image build and the existing runner-contract checks stay green.",
+    "No identity or credential material is baked into the image — identity creation happens inside the session boundary at runtime (the runner's concern, not the image's).",
+    "README and CHANGELOG record the new session capability and its version policy."
+  ],
+  "dependencies": [
+    "work-unit-edcb13d378d606e24b351731a0467729a42765e14fa5bdefcc7f2081bce32b20"
+  ],
+  "description": "## Summary\n\nAgent sessions run in containers built from this image; Radicle-native Groundwork requires that a session can operate a Radicle working copy and the native `rad` command surface. The image must carry the Radicle toolchain the same way it carries git and the runa binaries today.\n\nPart of: tesserine/groundwork#538 (execution-boundary enablement).\n\n## Scope\n\n- Image content (Dockerfile / build)\n- Image documentation and CHANGELOG\n\n## Acceptance criteria\n\n- [ ] A session in the built image can run `rad` (1.9.x line) and fetch/push over the Radicle remote (the remote helper resolves on PATH).\n- [ ] The toolchain version is pinned and verifiable per the image's existing dependency conventions; image build and the existing runner-contract checks stay green.\n- [ ] No identity or credential material is baked into the image — identity creation happens inside the session boundary at runtime (the runner's concern, not the image's).\n- [ ] README and CHANGELOG record the new session capability and its version policy.\n\n## Contract inputs\n\n- **Behavior:** a container from the built image demonstrates the `rad` surface without network-independent failures.\n- **Documentation:** the image README is where a deployer first learns what sessions can do — it names the Radicle capability.\n- **Code quality:** match the image's existing pinning/verification idiom; no ad-hoc install path.\n\n## Dependencies\n\nDepends on: tesserine/commons#108 (implementation-arc gate). Kin: the agentd Radicle-session unit (consumes this), the babbie-ops node unit (network topology sessions reach).",
+  "handle": {
+    "display": "tesserine/base#26",
+    "id": "github:tesserine/base:issue:26"
+  },
+  "scope": [
+    "Image content (Dockerfile / build)",
+    "Image documentation and CHANGELOG"
+  ],
+  "title": "feat(image): the session image carries the Radicle toolchain"
+}

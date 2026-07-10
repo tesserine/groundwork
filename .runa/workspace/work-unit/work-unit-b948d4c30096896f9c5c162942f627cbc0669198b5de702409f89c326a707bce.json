@@ -1,0 +1,23 @@
+{
+  "acceptance_criteria": [
+    "Each required mutation class has a defined read-back verification: issue mutations read back from the issue's durable state; patch mutations from the patch's durable state (state, revisions, reviews, merged); canonical publication from the canonical head; propagation from replication status against the declared policy.",
+    "By the mechanics' own definition, local COB or ref creation alone never satisfies a durable-mutation criterion, and a refused, failed, or unpropagated mutation fails the invoking protocol step.",
+    "The verification mechanics are ordinary manifest-registered mechanics referenceable from C-2 workflow contracts; tests cover both pass and fail paths (including the unpropagated case).",
+    "The verify station's evidence discipline (execution-binding stamps per `policy.toml`) applies unchanged to the new mechanics — no weakening of the evidence register."
+  ],
+  "dependencies": [
+    "work-unit-405907d92ca96ad39f1755c77d1b1bafb621301f4d119740111ee452619baf6e",
+    "work-unit-865764fb78f10d4825e5fce94f40ff241346ae3165f445b5027b41e7154d097a"
+  ],
+  "description": "## Summary\n\nRadicle is local-first: a created COB or pushed ref proves nothing about propagation. Every required Git/Radicle mutation must therefore be verified by reading back the resulting durable state under the declared replication policy, and a refused, failed, or unpropagated mutation must fail the invoking protocol. These verification moves become Groundwork-owned, manifest-registered mechanics that workflow contracts and protocol prose reference. This closes, for the successor architecture, the defect class tesserine/runa#244 records for the connector era (protocols reporting success after refused forge mutations).\n\nPart of: #538.\n\n## Scope\n\n- Mechanics home: manifest `[[mechanics]]` declarations plus the mechanics' normative recipes\n- Conformance/test coverage of the verification discipline\n- `policy.toml` execution-binding register (consumed unchanged)\n\n## Acceptance criteria\n\n- [ ] Each required mutation class has a defined read-back verification: issue mutations read back from the issue's durable state; patch mutations from the patch's durable state (state, revisions, reviews, merged); canonical publication from the canonical head; propagation from replication status against the declared policy.\n- [ ] By the mechanics' own definition, local COB or ref creation alone never satisfies a durable-mutation criterion, and a refused, failed, or unpropagated mutation fails the invoking protocol step.\n- [ ] The verification mechanics are ordinary manifest-registered mechanics referenceable from C-2 workflow contracts; tests cover both pass and fail paths (including the unpropagated case).\n- [ ] The verify station's evidence discipline (execution-binding stamps per `policy.toml`) applies unchanged to the new mechanics — no weakening of the evidence register.\n\n## Contract inputs\n\n- **Behavior:** a mutation whose read-back does not confirm the required durable state fails the step, proven by a negative-path test.\n- **Documentation:** the mechanics' recipes are where an implementing agent first meets the verification discipline; each states its read-back and failure semantics standalone.\n- **Code quality:** Honest Signal — command invocation is never completion evidence (`~/.groundwork/principles/`).\n\n## Dependencies\n\nDepends on: #598 (what a verification names), #599 (the policy verification checks against).",
+  "handle": {
+    "display": "tesserine/groundwork#600",
+    "id": "github:tesserine/groundwork:issue:600"
+  },
+  "scope": [
+    "Mechanics home: manifest `[[mechanics]]` declarations plus the mechanics' normative recipes",
+    "Conformance/test coverage of the verification discipline",
+    "`policy.toml` execution-binding register (consumed unchanged)"
+  ],
+  "title": "task(mechanics): durable-mutation verification — read-back of replicated state as first-class mechanics"
+}

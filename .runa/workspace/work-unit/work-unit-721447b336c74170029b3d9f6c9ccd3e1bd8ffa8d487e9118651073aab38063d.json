@@ -1,0 +1,24 @@
+{
+  "acceptance_criteria": [
+    "`FORGE-CAPABILITY.md` carries an explicit superseded/historical marking that points at the Radicle-substrate ADR and at the Groundwork-owned Radicle identity definition; no commons surface links it as current operational guidance.",
+    "ADR-0016 and ADR-0017 statuses record supersession per the ADR conventions, naming where the surviving identity discipline (completeness-and-scope) lives on.",
+    "The forge-capability schema directories are explicitly marked historical — retained as provenance, not presented as a live contract.",
+    "ROADMAP and README present the connector quest as completed-then-superseded and the Radicle arc as current; no commons surface presents connector configuration as a current integration path."
+  ],
+  "dependencies": [
+    "work-unit-edcb13d378d606e24b351731a0467729a42765e14fa5bdefcc7f2081bce32b20",
+    "work-unit-339385c3b6ce20c125fc4dea66fa7d4f26a42fa4d4cad89d677aa4ecc43db7db"
+  ],
+  "description": "## Summary\n\nOnce the Radicle-native groundwork release exists, the connector-era normative surfaces in commons must stop presenting themselves as current: the Forge Capability contract, its schema realizations, the connector-layer ADRs, and the roadmap/README links. Provenance is preserved; authority is removed. Nothing in commons may remain linked as current operational guidance for a connector integration.\n\nPart of: tesserine/groundwork#538 (owning-home documentation consequence — commons owns the contract and its ADRs; groundwork does not unilaterally rewrite them).\n\n## Scope\n\n- `FORGE-CAPABILITY.md`\n- `schemas/forge-capability/` (v1 and v2)\n- `adr/0016` and `adr/0017` statuses\n- `ROADMAP.md` / `README.md` link and status currency\n\n## Acceptance criteria\n\n- [ ] `FORGE-CAPABILITY.md` carries an explicit superseded/historical marking that points at the Radicle-substrate ADR and at the Groundwork-owned Radicle identity definition; no commons surface links it as current operational guidance.\n- [ ] ADR-0016 and ADR-0017 statuses record supersession per the ADR conventions, naming where the surviving identity discipline (completeness-and-scope) lives on.\n- [ ] The forge-capability schema directories are explicitly marked historical — retained as provenance, not presented as a live contract.\n- [ ] ROADMAP and README present the connector quest as completed-then-superseded and the Radicle arc as current; no commons surface presents connector configuration as a current integration path.\n\n## Contract inputs\n\n- **Behavior:** a reader resolving any current commons link about collaboration integration reaches Radicle-native guidance or an explicit supersession notice.\n- **Documentation:** this unit is documentation; the recipient outcome above is its criterion.\n- **Code quality:** provenance without authority — history is kept, currency is truthful (Honest Signal).\n\n## Dependencies\n\nDepends on: tesserine/commons#108 (the superseding decision), tesserine/groundwork#609 (the contract stops being live only when no released, deployable groundwork consumes it).",
+  "handle": {
+    "display": "tesserine/commons#115",
+    "id": "github:tesserine/commons:issue:115"
+  },
+  "scope": [
+    "`FORGE-CAPABILITY.md`",
+    "`schemas/forge-capability/` (v1 and v2)",
+    "`adr/0016` and `adr/0017` statuses",
+    "`ROADMAP.md` / `README.md` link and status currency"
+  ],
+  "title": "docs(forge-capability): mark the connector-era contract superseded — statuses and links current"
+}

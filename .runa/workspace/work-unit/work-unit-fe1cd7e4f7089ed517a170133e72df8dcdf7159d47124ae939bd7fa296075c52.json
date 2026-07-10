@@ -1,0 +1,26 @@
+{
+  "acceptance_criteria": [
+    "Every lifecycle station executes against a real rad-initialized repository reachable from the declared node topology.",
+    "Every required mutation class — issue open/comment/claim/close; patch open/revise/review/merge; canonical publication; replication — has read-back durable-state evidence recorded at a durable home.",
+    "The full run executes on a runa project with no `[forge]` section.",
+    "The failure discipline is exercised, not just documented: at least one refused or unpropagated mutation is demonstrated to fail its protocol step during the run.",
+    "Friction surfaced by the run is resolved in-unit or filed as work-units — not routed around."
+  ],
+  "dependencies": [
+    "work-unit-bb7011e64bab20af6fd7b0fb578b64111dc5eedb70343f6700eacd46038e7aeb",
+    "work-unit-443e0e06f137bc819a5461b98ecb142ef4ab644b2b3cf8ed6c33152a6fdbd6e7",
+    "work-unit-b948d4c30096896f9c5c162942f627cbc0669198b5de702409f89c326a707bce",
+    "work-unit-0ba62d304fae0f636c9fd91edd506e797afe1eed161b0fbea6f37a84fc5e4f1f"
+  ],
+  "description": "## Summary\n\nThe replacement is exercised as one arc on a rad-initialized repository: work identified → issue lifecycle → ordinary branch and commits → native patch → review → revision → merge → canonical publication → disposition and closure — with recorded durable-state evidence for every required mutation class, on a runa project with **no `[forge]` configuration**. This is the \"the workflow works\" half of the epic's completion, produced before release; the terminal zero-residue unit re-proves it on the released, installed surfaces.\n\nPart of: #538.\n\n## Scope\n\n- An end-to-end verification run against a real rad-initialized repository\n- The recorded evidence and its durable home\n- No new architecture — this unit exercises what the station units built\n\n## Acceptance criteria\n\n- [ ] Every lifecycle station executes against a real rad-initialized repository reachable from the declared node topology.\n- [ ] Every required mutation class — issue open/comment/claim/close; patch open/revise/review/merge; canonical publication; replication — has read-back durable-state evidence recorded at a durable home.\n- [ ] The full run executes on a runa project with no `[forge]` section.\n- [ ] The failure discipline is exercised, not just documented: at least one refused or unpropagated mutation is demonstrated to fail its protocol step during the run.\n- [ ] Friction surfaced by the run is resolved in-unit or filed as work-units — not routed around.\n\n## Contract inputs\n\n- **Behavior:** the recorded evidence chain reads from work identification to closure with no gap a reviewer must take on faith.\n- **Documentation:** the evidence record is the first-contact proof surface for \"does this actually work?\" — organized by mutation class.\n- **Code quality:** evidence over assertion, per the execution-binding register (`policy.toml`).\n\n## Dependencies\n\nDepends on: #603, #605, #600, pentaxis93/babbie-ops#105. External: tesserine/commons#109 (rad-initialized working repositories — beginning with tesserine/groundwork itself).",
+  "handle": {
+    "display": "tesserine/groundwork#607",
+    "id": "github:tesserine/groundwork:issue:607"
+  },
+  "scope": [
+    "An end-to-end verification run against a real rad-initialized repository",
+    "The recorded evidence and its durable home",
+    "No new architecture — this unit exercises what the station units built"
+  ],
+  "title": "task(verification): the full lifecycle end-to-end on stock Radicle with durable evidence"
+}

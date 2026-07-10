@@ -1,0 +1,23 @@
+{
+  "acceptance_criteria": [
+    "Acquisition reads an existing Radicle issue (body plus comment log) and materializes the work-unit artifact with its Radicle handle and a stable instance identity derived from it.",
+    "The closed-state vocabulary is Radicle's: closed/solved replace the GitHub `closed` / SourceHut `resolved` terminal states.",
+    "Cold-start entry is reachable through an intent statement carrying the issue identity, without connector mediation (the runa promised-entry extension is kin, not a prerequisite).",
+    "Each freshen facet (blockers, blocked, epic_membership, siblings, milestone, labels) either has a Radicle-native derivation (labels, DID assignees, body/comment conventions) or is deliberately retired with recorded rationale; the freshen-record schema and the acquire prose agree; GitHub tracker concepts are not reproduced by convention for their own sake.",
+    "Tests cover materialization from Radicle issue payloads, the state mapping, and every facet's derivation or retirement."
+  ],
+  "dependencies": [
+    "work-unit-2038fc6f51f9a023e1c2754e12442cc55294ad74e0f2f9172b152b9a309fee1a"
+  ],
+  "description": "## Summary\n\nAcquisition materializes a work-unit artifact from an existing Radicle issue reference and freshens it against current substrate — without connector mediation. The freshen-record's tracker-graph facets, which encode GitHub-era tracker concepts, are re-derived from what stock Radicle actually provides: labels and DID assignees exist natively; milestones and native issue relations do not.\n\nPart of: #538.\n\n## Scope\n\n- `skills/acquire` (SKILL prose and the materialize script)\n- `schemas/freshen-record.schema.json`\n- Tests and fixtures\n\n## Acceptance criteria\n\n- [ ] Acquisition reads an existing Radicle issue (body plus comment log) and materializes the work-unit artifact with its Radicle handle and a stable instance identity derived from it.\n- [ ] The closed-state vocabulary is Radicle's: closed/solved replace the GitHub `closed` / SourceHut `resolved` terminal states.\n- [ ] Cold-start entry is reachable through an intent statement carrying the issue identity, without connector mediation (the runa promised-entry extension is kin, not a prerequisite).\n- [ ] Each freshen facet (blockers, blocked, epic_membership, siblings, milestone, labels) either has a Radicle-native derivation (labels, DID assignees, body/comment conventions) or is deliberately retired with recorded rationale; the freshen-record schema and the acquire prose agree; GitHub tracker concepts are not reproduced by convention for their own sake.\n- [ ] Tests cover materialization from Radicle issue payloads, the state mapping, and every facet's derivation or retirement.\n\n## Contract inputs\n\n- **Behavior:** an agent given only a Radicle issue identity ends holding a valid work-unit artifact whose freshen record reflects current substrate.\n- **Documentation:** the acquire skill is the cold-start first-contact surface — its reading path must be complete standalone.\n- **Code quality:** no facet survives by inertia — each earns its derivation or records its retirement (Honest Signal).\n\n## Dependencies\n\nDepends on: #601. Kin: tesserine/runa#243 (re-entry bypasses acquisition — runa-owned), the runa promised-entry unit.",
+  "handle": {
+    "display": "tesserine/groundwork#603",
+    "id": "github:tesserine/groundwork:issue:603"
+  },
+  "scope": [
+    "`skills/acquire` (SKILL prose and the materialize script)",
+    "`schemas/freshen-record.schema.json`",
+    "Tests and fixtures"
+  ],
+  "title": "task(acquire): acquisition and freshen from native Radicle issues — cold-start without connector mediation"
+}

@@ -1,0 +1,27 @@
+{
+  "acceptance_criteria": [
+    "A Groundwork-owned normative definition of work-unit and change-proposal identity exists: complete (repository RID plus COB OID; revision-qualified where a specific revision is the referent) and scoped (identity is validated for completeness and scope before any operation consumes it).",
+    "The work-unit and change-proposal schemas' handle semantics reference the Groundwork home as authority; no schema or prose names FORGE-CAPABILITY.md as the governing contract.",
+    "Conformance validates artifact handles against the new grammar — the handle-drift gate protects agreement with the Groundwork definition instead of the vendored contract — and valid/invalid fixtures cover acceptance of well-formed Radicle identities and rejection of malformed or foreign ones.",
+    "The schema index and the docs that describe the handle seam state the new authority."
+  ],
+  "dependencies": [
+    "work-unit-e05096230f6519351f6e2ff4c7c2380a00a3fa66f475acc4d174e74e326e79d0",
+    "work-unit-f9c80dcb147a3effcb2f7e87d16fb268728f38454027d346f8a2efdef3fbf18c"
+  ],
+  "description": "## Summary\n\nThe opaque `{id, display}` handle shape is retained, but its semantics move from the commons FORGE-CAPABILITY.md contract to a Groundwork-owned Radicle identity definition: a complete, scoped identity naming the repository (RID) and the collaborative-object OID it refers to. The completeness-and-scope identity discipline established by commons ADR-0017 survives, re-homed here. This is the contract seam every other unit in the arc references.\n\nPart of: #538.\n\n## Scope\n\n- The normative home of the Radicle identity definition (docs/schemas)\n- `schemas/work-unit.schema.json` and `schemas/change-proposal.schema.json` handle semantics\n- Conformance handle validation; fixtures and tests\n\n## Acceptance criteria\n\n- [ ] A Groundwork-owned normative definition of work-unit and change-proposal identity exists: complete (repository RID plus COB OID; revision-qualified where a specific revision is the referent) and scoped (identity is validated for completeness and scope before any operation consumes it).\n- [ ] The work-unit and change-proposal schemas' handle semantics reference the Groundwork home as authority; no schema or prose names FORGE-CAPABILITY.md as the governing contract.\n- [ ] Conformance validates artifact handles against the new grammar — the handle-drift gate protects agreement with the Groundwork definition instead of the vendored contract — and valid/invalid fixtures cover acceptance of well-formed Radicle identities and rejection of malformed or foreign ones.\n- [ ] The schema index and the docs that describe the handle seam state the new authority.\n\n## Contract inputs\n\n- **Behavior:** validation accepts complete scoped Radicle identities and rejects incomplete/foreign ones, proven by fixtures.\n- **Documentation:** the schema index is where an artifact author first meets handle semantics — it must answer standalone.\n- **Code quality:** Traceability — one authority for identity, no second home (`~/.groundwork/principles/`).\n\n## Dependencies\n\nDepends on: #597 (decision home), #596 (identity/OID semantics verified on the installed surface).\n\n## Out of scope\n\n- Submission version-to-revision binding semantics (the submit unit)\n- Acquisition state vocabulary (the acquire unit)",
+  "handle": {
+    "display": "tesserine/groundwork#598",
+    "id": "github:tesserine/groundwork:issue:598"
+  },
+  "out_of_scope": [
+    "Submission version-to-revision binding semantics (the submit unit)",
+    "Acquisition state vocabulary (the acquire unit)"
+  ],
+  "scope": [
+    "The normative home of the Radicle identity definition (docs/schemas)",
+    "`schemas/work-unit.schema.json` and `schemas/change-proposal.schema.json` handle semantics",
+    "Conformance handle validation; fixtures and tests"
+  ],
+  "title": "task(identity): work-unit and change-proposal identity re-homed to Radicle — the Groundwork-owned handle grammar"
+}

@@ -235,6 +235,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **ADR-0009 revision: `.runa/` is never excluded wholesale.** The runtime-state
+  commit policy now prohibits directory-wide `.runa/` ignore patterns on every
+  ignore surface — committed `.gitignore`, machine-local `.git/info/exclude`,
+  and global excludes — because they silently hide the committed artifact
+  workspace from `git status` while the declared policy reads as adopted. The
+  published stanza remains entry-wise by design (commit `workspace/`; ignore
+  `config.toml`, `state.toml`, `store/`). Grounded by a live incident: a
+  machine-local exclude masked the Radicle-native planning workspace on a
+  development host. Operators and agents remove such exclusions as policy
+  defects rather than working around them.
+
 - **Contract schema v-next: criteria carry kind and an operational check** (#583).
   `schemas/contract.schema.json` now requires each criterion to carry one
   content `kind` (`behavior` | `meaning`) and a `check` object stating the

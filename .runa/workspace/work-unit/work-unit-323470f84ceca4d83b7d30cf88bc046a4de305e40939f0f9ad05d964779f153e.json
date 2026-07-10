@@ -1,0 +1,22 @@
+{
+  "acceptance_criteria": [
+    "An ecosystem release manifest is published composing the post-replacement tags of the changed components (groundwork, runa, and agentd/base as changed), verified per `ECOSYSTEM-RELEASE.md`.",
+    "Publication follows the integration-verification discipline the release authority requires for a capability release; components unchanged since the prior ecosystem release keep their prior tag and commit."
+  ],
+  "dependencies": [
+    "work-unit-339385c3b6ce20c125fc4dea66fa7d4f26a42fa4d4cad89d677aa4ecc43db7db",
+    "work-unit-fa32ae97c3d0756b5765a5ec931b113abf91f2c51bfa526d85808c517bf29976",
+    "work-unit-d39900281f49bfe97bc2488e21360bf8c7dab75a5292ed10cc01b226ac86f2e9",
+    "work-unit-a288acf0b5d8b4322965e8f36efceebb8c757016f0242d4a9ba5b62472023063",
+    "work-unit-05882295d2e033ec1143e8eff0439a211febf43b05fcba261234ea9f6342b5b5"
+  ],
+  "description": "## Summary\n\nPer the release authority (ADR-0011, ADR-0012, ADR-0014, `ECOSYSTEM-RELEASE.md`), the Radicle-native capability becomes public fact only as an ecosystem release: a manifest that composes the post-replacement component tags. This unit requires that terminal step; the manifest schema, version choice, verification, and publication procedure belong to the release authority and are not defined here.\n\nPart of: tesserine/groundwork#538 (terminal release step of the capability epic). Kin: commons#48 (the M1 predecessor of this pattern).\n\n## Scope\n\n- `releases/ecosystem/` manifest and ceremony per `ECOSYSTEM-RELEASE.md`\n\n## Acceptance criteria\n\n- [ ] An ecosystem release manifest is published composing the post-replacement tags of the changed components (groundwork, runa, and agentd/base as changed), verified per `ECOSYSTEM-RELEASE.md`.\n- [ ] Publication follows the integration-verification discipline the release authority requires for a capability release; components unchanged since the prior ecosystem release keep their prior tag and commit.\n\n## Contract inputs\n\n- **Behavior:** the published manifest resolves to deployable immutable refs whose composed stack is the Radicle-native one.\n- **Documentation:** the manifest is the ecosystem's public release record — its verification is the release authority's own.\n- **Code quality:** ceremony conformance — the release authority's checks are the register.\n\n## Dependencies\n\nDepends on: tesserine/groundwork#609, tesserine/runa#246 (its release), tesserine/agentd#184, tesserine/agentd#183, tesserine/base#26.",
+  "handle": {
+    "display": "tesserine/commons#116",
+    "id": "github:tesserine/commons:issue:116"
+  },
+  "scope": [
+    "`releases/ecosystem/` manifest and ceremony per `ECOSYSTEM-RELEASE.md`"
+  ],
+  "title": "release(ecosystem): publish the ecosystem release composing the Radicle-native component tags"
+}

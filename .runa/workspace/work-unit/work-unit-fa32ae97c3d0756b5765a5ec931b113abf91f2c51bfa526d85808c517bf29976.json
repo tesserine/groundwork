@@ -1,0 +1,25 @@
+{
+  "acceptance_criteria": [
+    "No forge connector crate remains a workspace member; `runa-mcp` composes no forge tools under any configuration.",
+    "The `[forge]` configuration surface and the `RUNA_FORGE_*` environment atoms are gone; a config or environment that supplies them is rejected loudly (or fails to parse with an accurate diagnostic) — never silently accepted.",
+    "The engine carries no forge/provider modeling (resolved forge identity, provider branching): runa#226's remaining scope lands here or before this unit.",
+    "No GitHub/SourceHut reference-parsing path remains capable of influencing execution; the promised-entry surface's disposition (removal, or replacement by Radicle-native references — kin the Radicle promised-entry unit) is implemented truthfully with accurate diagnostics.",
+    "Docs and tests reflect the retirement; a runa release carries it."
+  ],
+  "dependencies": [
+    "work-unit-edcb13d378d606e24b351731a0467729a42765e14fa5bdefcc7f2081bce32b20",
+    "work-unit-fd5c38f642de28bd274686489bf089338b4ccb15df9b7cb34663060588fd04aa"
+  ],
+  "description": "## Summary\n\nWith Groundwork — the sole consuming methodology — no longer naming forge operations, the connector layer's reason to exist ends. Remove the forge connector crates, the `[forge]` configuration surface, the `RUNA_FORGE_*` environment atoms, the MCP forge tool composition, and the engine's forge modeling, so that no provider path remains capable of influencing execution. On landing this absorbs the remaining scope of runa#226 (engine forge-modeling retirement).\n\nPart of: tesserine/groundwork#538 (owning-home removal — the connector system's dispatch and provider code live here, not in groundwork).\n\n## Scope\n\n- Workspace membership: the forge connector crates (contract, providers, composition)\n- `libagent`: `[forge]` config parsing, scoped-identity forge atoms, engine forge modeling, the promised-entry grammar's forge-provider forms\n- `runa-mcp`: forge tool composition\n- Docs (README, cli-reference, interface-contract, ARCHITECTURE; kin runa#208), tests; release consequence\n\n## Acceptance criteria\n\n- [ ] No forge connector crate remains a workspace member; `runa-mcp` composes no forge tools under any configuration.\n- [ ] The `[forge]` configuration surface and the `RUNA_FORGE_*` environment atoms are gone; a config or environment that supplies them is rejected loudly (or fails to parse with an accurate diagnostic) — never silently accepted.\n- [ ] The engine carries no forge/provider modeling (resolved forge identity, provider branching): runa#226's remaining scope lands here or before this unit.\n- [ ] No GitHub/SourceHut reference-parsing path remains capable of influencing execution; the promised-entry surface's disposition (removal, or replacement by Radicle-native references — kin the Radicle promised-entry unit) is implemented truthfully with accurate diagnostics.\n- [ ] Docs and tests reflect the retirement; a runa release carries it.\n\n## Contract inputs\n\n- **Behavior:** a project configured with `[forge]` fails loudly at the config boundary; the MCP tool list contains no forge operation under any input.\n- **Documentation:** README/cli-reference describe the post-connector configuration surface truthfully.\n- **Code quality:** no dormant dispatch, no dead crates retained (Simplicity, Honest Signal).\n\n## Dependencies\n\nDepends on: tesserine/commons#108 (decision authority), tesserine/groundwork#606 (consumer before provider: groundwork stops consuming the capability before runa removes it). Kin: runa#226 (absorbed on landing), runa#244 (the defect class the successor's verification discipline closes), runa#208 (connector operator docs retired with the surface).",
+  "handle": {
+    "display": "tesserine/runa#246",
+    "id": "github:tesserine/runa:issue:246"
+  },
+  "scope": [
+    "Workspace membership: the forge connector crates (contract, providers, composition)",
+    "`libagent`: `[forge]` config parsing, scoped-identity forge atoms, engine forge modeling, the promised-entry grammar's forge-provider forms",
+    "`runa-mcp`: forge tool composition",
+    "Docs (README, cli-reference, interface-contract, ARCHITECTURE; kin runa#208), tests; release consequence"
+  ],
+  "title": "task(connectors): retire the forge connector layer — runa carries no forge capability"
+}

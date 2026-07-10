@@ -1,0 +1,30 @@
+{
+  "acceptance_criteria": [
+    "The vendored forge-capability schema and its loader are gone; the forge-operation registry injection is gone; the mechanic registry contains only manifest-declared mechanics.",
+    "Connector-era conformance gates (capability provenance pin, exactly-eight-operations, handle-drift-to-vendored-contract, forge-leakage token scan, retired-asset list) are replaced by Radicle-era gates protecting the new invariants: handle-grammar validation, mechanics-registry integrity, and asserted absence of connector-era surfaces (no vendored capability contract, no forge-operation names in the registry, no connector-model documentation obligations).",
+    "A manifest or configuration that declares connector-era surfaces (forge operations as mechanics, forge tags) is rejected loudly by conformance, not silently accepted.",
+    "Connector-model test assertions are retired; provider-named and retired-era fixtures are gone; orphaned retired-era bytecode residue is gone from the tree.",
+    "Installer output and the installed runtime bundle carry no adapter-era surfaces; upgrading a connector-era install converges cleanly, pruning stale surfaces.",
+    "Conformance and the full test suite are green after removal."
+  ],
+  "dependencies": [
+    "work-unit-2038fc6f51f9a023e1c2754e12442cc55294ad74e0f2f9172b152b9a309fee1a",
+    "work-unit-bb7011e64bab20af6fd7b0fb578b64111dc5eedb70343f6700eacd46038e7aeb",
+    "work-unit-4ca0e4af42737a1226d38e6b9d371da85fb51cf168824d001b115675e7f95552",
+    "work-unit-aa807db0d1e29c0afb2f11b5db17ebe496bf3f9f41cad342328b51fc6c776fc8",
+    "work-unit-443e0e06f137bc819a5461b98ecb142ef4ab644b2b3cf8ed6c33152a6fdbd6e7"
+  ],
+  "description": "## Summary\n\nWith every invocation point re-homed to Radicle mechanics, the connector-era surface is removed and conformance is re-pointed: the gates that policed the connector model are replaced by Radicle-era gates that protect the new invariants — including the mechanically checked absence of the old surface. After this unit, the forge/non-forge mechanic split no longer exists: all mechanics are ordinary manifest-registered runtime actions.\n\nPart of: #538.\n\n## Scope\n\n- `schemas/forge-capability/` (vendored contract) and its loader tooling\n- The forge-operation registry injection in the workflow-contract tooling\n- `tooling/conformance.py` gate set; `tests/` connector-model tests, provider-named fixtures, retired-era bytecode residue\n- Installer / runtime-bundle content and upgrade convergence\n- `manifest.toml` comments\n\n## Acceptance criteria\n\n- [ ] The vendored forge-capability schema and its loader are gone; the forge-operation registry injection is gone; the mechanic registry contains only manifest-declared mechanics.\n- [ ] Connector-era conformance gates (capability provenance pin, exactly-eight-operations, handle-drift-to-vendored-contract, forge-leakage token scan, retired-asset list) are replaced by Radicle-era gates protecting the new invariants: handle-grammar validation, mechanics-registry integrity, and asserted absence of connector-era surfaces (no vendored capability contract, no forge-operation names in the registry, no connector-model documentation obligations).\n- [ ] A manifest or configuration that declares connector-era surfaces (forge operations as mechanics, forge tags) is rejected loudly by conformance, not silently accepted.\n- [ ] Connector-model test assertions are retired; provider-named and retired-era fixtures are gone; orphaned retired-era bytecode residue is gone from the tree.\n- [ ] Installer output and the installed runtime bundle carry no adapter-era surfaces; upgrading a connector-era install converges cleanly, pruning stale surfaces.\n- [ ] Conformance and the full test suite are green after removal.\n\n## Contract inputs\n\n- **Behavior:** the absence gates fail on a tree that reintroduces any connector-era surface — proven by negative fixtures.\n- **Documentation:** the schema index and conformance docs describe the Radicle-era gate set as current.\n- **Code quality:** no dormant path, no dead tooling retained \"just in case\" (Simplicity; `~/.groundwork/principles/`).\n\n## Dependencies\n\nDepends on: #601, #603, #602, #604, #605 (every invocation point re-homed before the contract they invoke is removed).",
+  "handle": {
+    "display": "tesserine/groundwork#606",
+    "id": "github:tesserine/groundwork:issue:606"
+  },
+  "scope": [
+    "`schemas/forge-capability/` (vendored contract) and its loader tooling",
+    "The forge-operation registry injection in the workflow-contract tooling",
+    "`tooling/conformance.py` gate set; `tests/` connector-model tests, provider-named fixtures, retired-era bytecode residue",
+    "Installer / runtime-bundle content and upgrade convergence",
+    "`manifest.toml` comments"
+  ],
+  "title": "task(deletion): remove the connector-era surface — Radicle-era gates protect the absence"
+}
