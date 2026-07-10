@@ -1,0 +1,24 @@
+{
+  "acceptance_criteria": [
+    "README and the architecture docs describe the Radicle-native collaboration surface (identity grammar, mechanics, verification discipline) where they described the connector handle seam and the eight canonical operations.",
+    "Operator-facing documentation states the workflow's prerequisites — rad CLI, node, identity, seeding — in place of connector and PAT configuration.",
+    "The schema index and skill prose are re-grounded in the Radicle surface; no skill or protocol document names a connector operation or the vendored contract as current.",
+    "Connector-era design documents that remain for provenance are explicitly marked historical/superseded and are not linked as current operational guidance.",
+    "CHANGELOG carries the user-visible surface change for the arc."
+  ],
+  "dependencies": [
+    "work-unit-fd5c38f642de28bd274686489bf089338b4ccb15df9b7cb34663060588fd04aa"
+  ],
+  "description": "## Summary\n\nAfter removal, every normative surface in this repository describes only the current architecture, and operator-facing documentation describes the git+rad workflow and its prerequisites in place of connector and PAT configuration. Connector-era design prose survives only as explicitly marked history.\n\nPart of: #538.\n\n## Scope\n\n- `README.md`; `docs/architecture/` (the connector-handle seam and related design docs); `schemas/README.md`\n- Skill prose that documents the connector model (work-unit-craft forge examples, acquire operation notes)\n- Historical design documents' status markings\n- `CHANGELOG.md`\n\n## Acceptance criteria\n\n- [ ] README and the architecture docs describe the Radicle-native collaboration surface (identity grammar, mechanics, verification discipline) where they described the connector handle seam and the eight canonical operations.\n- [ ] Operator-facing documentation states the workflow's prerequisites — rad CLI, node, identity, seeding — in place of connector and PAT configuration.\n- [ ] The schema index and skill prose are re-grounded in the Radicle surface; no skill or protocol document names a connector operation or the vendored contract as current.\n- [ ] Connector-era design documents that remain for provenance are explicitly marked historical/superseded and are not linked as current operational guidance.\n- [ ] CHANGELOG carries the user-visible surface change for the arc.\n\n## Contract inputs\n\n- **Behavior:** a reader following any current documentation link reaches only Radicle-native guidance.\n- **Documentation:** this unit is documentation; its criterion is the recipient outcome above.\n- **Code quality:** Transmission — each surface teaches at the point of first contact (`~/.groundwork/principles/`).\n\n## Dependencies\n\nDepends on: #606 (documentation converges on the state that exists).",
+  "handle": {
+    "display": "tesserine/groundwork#608",
+    "id": "github:tesserine/groundwork:issue:608"
+  },
+  "scope": [
+    "`README.md`; `docs/architecture/` (the connector-handle seam and related design docs); `schemas/README.md`",
+    "Skill prose that documents the connector model (work-unit-craft forge examples, acquire operation notes)",
+    "Historical design documents' status markings",
+    "`CHANGELOG.md`"
+  ],
+  "title": "docs(architecture): documentation converges on the Radicle-native architecture"
+}

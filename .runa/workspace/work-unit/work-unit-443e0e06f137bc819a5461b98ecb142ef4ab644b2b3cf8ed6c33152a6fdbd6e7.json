@@ -1,0 +1,23 @@
+{
+  "acceptance_criteria": [
+    "The approved revision's commit is applied by ordinary Git merge to the canonical default branch and published through the Radicle remote; read-back confirms the patch is marked merged and the canonical head advanced to the published state.",
+    "`completion-record.merge_reference` derives from the applied result — the resulting canonical head / merge commit — never from the proposal reference (kin #575's sourcing law).",
+    "Close-out records completion context as an issue comment plus the terminal state transition (solved, or closed with reason), verified by read-back.",
+    "`land.toml` names only manifest-registered mechanics; failure of any required mutation fails the station at the point of refusal; tests cover apply, publish, close-out, and failure paths."
+  ],
+  "dependencies": [
+    "work-unit-aa807db0d1e29c0afb2f11b5db17ebe496bf3f9f41cad342328b51fc6c776fc8",
+    "work-unit-2038fc6f51f9a023e1c2754e12442cc55294ad74e0f2f9172b152b9a309fee1a"
+  ],
+  "description": "## Summary\n\nLanding happens through ordinary Git merge mechanics: the approved revision's commit is merged into the canonical default branch and published through the Radicle remote; the substrate marks the patch merged and updates the canonical head on that push. The completion record binds the applied result, and close-out completes the corresponding issue. This replaces `apply-approved-change` and `close-out` (with the disposition-reflection seam disposed by the review unit's design).\n\nPart of: #538.\n\n## Scope\n\n- `protocols/land` and `workflow-contracts/land.toml`\n- Completion-record sourcing (merge_reference)\n- Apply/publish/close-out mechanics; tests\n\n## Acceptance criteria\n\n- [ ] The approved revision's commit is applied by ordinary Git merge to the canonical default branch and published through the Radicle remote; read-back confirms the patch is marked merged and the canonical head advanced to the published state.\n- [ ] `completion-record.merge_reference` derives from the applied result — the resulting canonical head / merge commit — never from the proposal reference (kin #575's sourcing law).\n- [ ] Close-out records completion context as an issue comment plus the terminal state transition (solved, or closed with reason), verified by read-back.\n- [ ] `land.toml` names only manifest-registered mechanics; failure of any required mutation fails the station at the point of refusal; tests cover apply, publish, close-out, and failure paths.\n\n## Contract inputs\n\n- **Behavior:** after land, the canonical branch on the network contains the approved commit, the patch reads merged, and the issue reads its terminal state with completion context.\n- **Documentation:** the land protocol rendering carries the apply-and-close semantics standalone.\n- **Code quality:** Honest Signal — the record binds what actually landed (`~/.groundwork/principles/`).\n\n## Dependencies\n\nDepends on: #604, #601. Kin: #574, #575, #577 (in-flight connector-era land-station work whose landed semantics this unit carries forward).",
+  "handle": {
+    "display": "tesserine/groundwork#605",
+    "id": "github:tesserine/groundwork:issue:605"
+  },
+  "scope": [
+    "`protocols/land` and `workflow-contracts/land.toml`",
+    "Completion-record sourcing (merge_reference)",
+    "Apply/publish/close-out mechanics; tests"
+  ],
+  "title": "task(land): landing through ordinary Git merge — canonical publication, completion record, close-out"
+}

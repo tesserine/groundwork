@@ -1,0 +1,20 @@
+{
+  "acceptance_criteria": [
+    "`intent.target` accepts a Radicle work-unit reference (repository RID plus issue COB OID, per Groundwork's Radicle identity definition) and resolves it to the entry surface exactly as recognized references resolve today.",
+    "Rejection diagnostics name the accepted forms truthfully.",
+    "Tests cover acceptance and rejection; the interface docs state the accepted forms."
+  ],
+  "dependencies": [
+    "work-unit-405907d92ca96ad39f1755c77d1b1bafb621301f4d119740111ee452619baf6e"
+  ],
+  "description": "## Summary\n\nruna's `intent.target` promised-entry grammar admits only GitHub/SourceHut reference forms; a Radicle-native methodology enters on Radicle issue identities. Extend the grammar so promised entry resolves a Radicle work-unit reference the way forge references resolve today.\n\n**Non-blocking for the replacement epic:** acquisition remains reachable through an intent statement carrying the issue identity. Filed so the gap is owned rather than silently absorbed by the epic.\n\nPart of: tesserine/groundwork#538 (named runa follow-up).\n\n## Scope\n\n- The promised-entry reference grammar and its resolution path\n- Diagnostics, tests, docs\n\n## Acceptance criteria\n\n- [ ] `intent.target` accepts a Radicle work-unit reference (repository RID plus issue COB OID, per Groundwork's Radicle identity definition) and resolves it to the entry surface exactly as recognized references resolve today.\n- [ ] Rejection diagnostics name the accepted forms truthfully.\n- [ ] Tests cover acceptance and rejection; the interface docs state the accepted forms.\n\n## Contract inputs\n\n- **Behavior:** an intent whose target is a Radicle issue identity enters the pipeline without connector mediation.\n- **Documentation:** the interface contract is where a methodology author first meets the target grammar; it must state the Radicle form.\n- **Code quality:** diagnostics tell the truth about what is accepted (Honest Signal).\n\n## Dependencies\n\nDepends on: tesserine/groundwork#598 (the identity grammar this parses). Explicitly not a predecessor of the epic's terminal zero-residue unit.",
+  "handle": {
+    "display": "tesserine/runa#245",
+    "id": "github:tesserine/runa:issue:245"
+  },
+  "scope": [
+    "The promised-entry reference grammar and its resolution path",
+    "Diagnostics, tests, docs"
+  ],
+  "title": "feat(entry): promised entry accepts Radicle work-unit references"
+}

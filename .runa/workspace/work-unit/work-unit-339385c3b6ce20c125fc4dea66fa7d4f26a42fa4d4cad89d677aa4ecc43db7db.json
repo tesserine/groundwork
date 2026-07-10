@@ -1,0 +1,23 @@
+{
+  "acceptance_criteria": [
+    "A groundwork component release is cut per `RELEASING.md` and the release-versioning conventions, from a state where conformance and the full test suite are green.",
+    "The CHANGELOG presents the Radicle-native surface as current and the connector era as historical at the release boundary.",
+    "The upgrade path from the final connector-era release to this release is exercised as part of release verification: the converged install carries no adapter-era surfaces."
+  ],
+  "dependencies": [
+    "work-unit-fd5c38f642de28bd274686489bf089338b4ccb15df9b7cb34663060588fd04aa",
+    "work-unit-6ee02d910cfdf0a3e06a892d59c04fc947411b16b0153910d6e5a4eb2a3c3ba9",
+    "work-unit-fe1cd7e4f7089ed517a170133e72df8dcdf7159d47124ae939bd7fa296075c52"
+  ],
+  "description": "## Summary\n\nThe component release that carries the replacement: the first groundwork release whose installed surface is Radicle-native and carries no adapter-era content. Release identity and ceremony follow the commons release authority; this unit is the arc's in-repo release consequence.\n\nPart of: #538.\n\n## Scope\n\n- Release ceremony per `RELEASING.md` and the release grammar\n- `CHANGELOG.md` release section\n- From-connector-era upgrade verification as part of release checks\n\n## Acceptance criteria\n\n- [ ] A groundwork component release is cut per `RELEASING.md` and the release-versioning conventions, from a state where conformance and the full test suite are green.\n- [ ] The CHANGELOG presents the Radicle-native surface as current and the connector era as historical at the release boundary.\n- [ ] The upgrade path from the final connector-era release to this release is exercised as part of release verification: the converged install carries no adapter-era surfaces.\n\n## Contract inputs\n\n- **Behavior:** the released ref installs cleanly and the installed bundle matches the Radicle-native runtime layout.\n- **Documentation:** release notes/CHANGELOG are the operator's first contact with the surface change.\n- **Code quality:** the release ceremony's own checks are the register — no bypass.\n\n## Dependencies\n\nDepends on: #606, #608, #607.",
+  "handle": {
+    "display": "tesserine/groundwork#609",
+    "id": "github:tesserine/groundwork:issue:609"
+  },
+  "scope": [
+    "Release ceremony per `RELEASING.md` and the release grammar",
+    "`CHANGELOG.md` release section",
+    "From-connector-era upgrade verification as part of release checks"
+  ],
+  "title": "release(groundwork): the first Radicle-native groundwork release"
+}

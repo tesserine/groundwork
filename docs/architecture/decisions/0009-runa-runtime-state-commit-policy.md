@@ -1,6 +1,7 @@
 # ADR-0009: Runa Runtime State Commit Policy
 
-**Status:** Proposed — delivered for operator review with groundwork#238 \
+**Status:** Proposed — delivered for operator review with groundwork#238;
+revised 2026-07-10 (wholesale-exclusion prohibition) \
 **Date:** 2026-07-05
 
 ## Context
@@ -77,6 +78,22 @@ This document is the single home of the policy and its rationale; the stanza
 above is its canonical form. groundwork's own `.gitignore` adopts it (this
 methodology is itself runa-managed when it dogfoods its own protocols); a
 consuming project copies it.
+
+**`.runa/` is never excluded wholesale — on any ignore surface.** The stanza
+is deliberately entry-wise: a directory-wide `.runa/` pattern — whether in the
+committed `.gitignore`, the machine-local `.git/info/exclude`, or a global
+`core.excludesFile` — silently defeats the policy. It hides the committed
+workspace from `git status` while the repository's declared policy reads as
+adopted, so durable project state accumulates uncommitted and invisible, and
+every property this policy exists for (auditability, cross-session
+visibility, clean-safety) fails without a signal. This is the same
+convention the wider ecosystem applies to dot-directories that carry project
+state (`.github/`, `.cargo/`, selective `.vscode/`): they are preserved, not
+reflexively ignored — ignore reflexes apply to caches, not to state. The
+machine-local ignore surfaces are outside the repository's ability to
+enforce, so the prohibition is normative: an operator or agent finding a
+wholesale `.runa/` exclusion removes it as a policy defect rather than
+working around it.
 
 ## Consequences
 

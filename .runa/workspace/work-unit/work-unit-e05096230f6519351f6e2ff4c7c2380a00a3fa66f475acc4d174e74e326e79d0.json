@@ -1,0 +1,22 @@
+{
+  "acceptance_criteria": [
+    "An ADR exists per groundwork's ADR conventions deciding: Groundwork's collaboration surface is realized directly on stock Radicle (ordinary Git plus native `rad` issue, patch, review, identity, and synchronization commands); the vendored forge-capability contract and its invocation points are removed; the decision traces to the commons Radicle-substrate ADR.",
+    "It records the identity boundary (delegate identity device-bound; per-session contributor identities created inside the session boundary; custody prohibitions), the durable-verification requirement (read-back of replicated state under the declared replication policy; refused, failed, or unpropagated mutations fail the protocol), and the explicit custom-COB deferral (stock facilities only until inhabitation proves a concrete unmet need).",
+    "ADR-0002's forge-capability layer and other connector-era ADR statements carry superseded/revised status pointing at the new ADR; surviving principles (methodology sovereignty; identity completeness-and-scope) are restated with their new homes.",
+    "CHANGELOG records the decision as the arc's entry point."
+  ],
+  "dependencies": [
+    "work-unit-edcb13d378d606e24b351731a0467729a42765e14fa5bdefcc7f2081bce32b20"
+  ],
+  "description": "## Summary\n\nGroundwork implements the commons substrate decision (tesserine/commons#108) in its own substrate; its own ADR must record the replacement so every implementation unit traces to a decision home inside this repository. The ADR supersedes the forge-capability layer established by ADR-0002 as current guidance and carries the constraints the arc holds throughout.\n\nPart of: #538.\n\n## Scope\n\n- Groundwork's ADR corpus (new ADR per the repo's ADR conventions)\n- Status updates on the ADRs whose forge-capability statements are superseded (ADR-0002's capability layer; forge-facing statements in ADR-0004/ADR-0006)\n- CHANGELOG\n\n## Acceptance criteria\n\n- [ ] An ADR exists per groundwork's ADR conventions deciding: Groundwork's collaboration surface is realized directly on stock Radicle (ordinary Git plus native `rad` issue, patch, review, identity, and synchronization commands); the vendored forge-capability contract and its invocation points are removed; the decision traces to the commons Radicle-substrate ADR.\n- [ ] It records the identity boundary (delegate identity device-bound; per-session contributor identities created inside the session boundary; custody prohibitions), the durable-verification requirement (read-back of replicated state under the declared replication policy; refused, failed, or unpropagated mutations fail the protocol), and the explicit custom-COB deferral (stock facilities only until inhabitation proves a concrete unmet need).\n- [ ] ADR-0002's forge-capability layer and other connector-era ADR statements carry superseded/revised status pointing at the new ADR; surviving principles (methodology sovereignty; identity completeness-and-scope) are restated with their new homes.\n- [ ] CHANGELOG records the decision as the arc's entry point.\n\n## Contract inputs\n\n- **Behavior:** the ADR text read against this spec and the repo's ADR conventions.\n- **Documentation:** the ADR is the first-contact surface for any agent asking \"why is there no connector?\" — it must answer standalone (Transmission).\n- **Code quality:** Honest Signal — no ADR left claiming currency for a retired layer (`~/.groundwork/principles/`).\n\n## Dependencies\n\nDepends on: tesserine/commons#108 (the constitutional decision this ADR implements — must be landed).",
+  "handle": {
+    "display": "tesserine/groundwork#597",
+    "id": "github:tesserine/groundwork:issue:597"
+  },
+  "scope": [
+    "Groundwork's ADR corpus (new ADR per the repo's ADR conventions)",
+    "Status updates on the ADRs whose forge-capability statements are superseded (ADR-0002's capability layer; forge-facing statements in ADR-0004/ADR-0006)",
+    "CHANGELOG"
+  ],
+  "title": "docs(adr): record the Radicle-native substrate replacement — supersede the forge-capability layer"
+}

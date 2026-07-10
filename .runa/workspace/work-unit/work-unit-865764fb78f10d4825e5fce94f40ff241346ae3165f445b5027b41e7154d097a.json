@@ -1,0 +1,22 @@
+{
+  "acceptance_criteria": [
+    "A declared identity-authority policy exists: the delegate identity remains on the physical device where it was created; agent sessions operate as per-session or per-agent contributor identities created inside the session boundary, holding contributor authority only; canonical acts (canonical-branch publication, identity-document changes, delegate-gated operations) execute only where delegate authority lives, or through canonical-reference rules granting a named session identity exactly the refs it needs; custody prohibitions are stated (no key copying into repositories, containers, environment variables, secret stores, prompts, or agent workspaces; no `RAD_PASSPHRASE` custody).",
+    "A declared replication policy exists: which node(s) must hold working-repository state, with what scope (followed vs all) and minimum-replica semantics, such that per-session DIDs' issues and patches verifiably reach project-controlled node(s).",
+    "Both policies live where mechanics and verification consult them normatively — a criterion or mechanic can name the policy, not a narrative doc.",
+    "An operator-facing statement covers the topology and its prerequisites (node, identities, seeding) as the first-contact surface for deploying the Radicle-native workflow."
+  ],
+  "dependencies": [
+    "work-unit-e05096230f6519351f6e2ff4c7c2380a00a3fa66f475acc4d174e74e326e79d0",
+    "work-unit-f9c80dcb147a3effcb2f7e87d16fb268728f38454027d346f8a2efdef3fbf18c"
+  ],
+  "description": "## Summary\n\nTwo topologies are load-bearing parts of the replacement, not ops afterthoughts: **identity-authority** (which authority executes which operation, and where) and **propagation** (which nodes must hold agent-authored state). Both must be declared as normative policy that the workflow's mechanics and verification consult — the workflow design cannot route around identity custody because the substrate admits no unauthenticated mutation path.\n\nPart of: #538.\n\n## Scope\n\n- The declared policy home(s) consumable by mechanics and verification\n- Operator-facing statement of the topology and its prerequisites\n\n## Acceptance criteria\n\n- [ ] A declared identity-authority policy exists: the delegate identity remains on the physical device where it was created; agent sessions operate as per-session or per-agent contributor identities created inside the session boundary, holding contributor authority only; canonical acts (canonical-branch publication, identity-document changes, delegate-gated operations) execute only where delegate authority lives, or through canonical-reference rules granting a named session identity exactly the refs it needs; custody prohibitions are stated (no key copying into repositories, containers, environment variables, secret stores, prompts, or agent workspaces; no `RAD_PASSPHRASE` custody).\n- [ ] A declared replication policy exists: which node(s) must hold working-repository state, with what scope (followed vs all) and minimum-replica semantics, such that per-session DIDs' issues and patches verifiably reach project-controlled node(s).\n- [ ] Both policies live where mechanics and verification consult them normatively — a criterion or mechanic can name the policy, not a narrative doc.\n- [ ] An operator-facing statement covers the topology and its prerequisites (node, identities, seeding) as the first-contact surface for deploying the Radicle-native workflow.\n\n## Contract inputs\n\n- **Behavior:** a verification mechanic can resolve, from the declared policy alone, which nodes must confirm replication for a given mutation.\n- **Documentation:** the operator-facing statement answers \"where do canonical acts run and what must be running for state to be durable?\" standalone.\n- **Code quality:** sovereignty — the policy states outcomes and authority boundaries, not command scripts (`~/.groundwork/principles/`).\n\n## Dependencies\n\nDepends on: #597, #596. Kin: the babbie-ops node unit (provides the node(s) the policy names), the agentd session unit (enforces the boundary at session provisioning).",
+  "handle": {
+    "display": "tesserine/groundwork#599",
+    "id": "github:tesserine/groundwork:issue:599"
+  },
+  "scope": [
+    "The declared policy home(s) consumable by mechanics and verification",
+    "Operator-facing statement of the topology and its prerequisites"
+  ],
+  "title": "task(topology): identity-authority and replication policy — where canonical acts run and which state must replicate"
+}

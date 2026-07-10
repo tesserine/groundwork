@@ -273,22 +273,28 @@ def runa_mcp_bin(runa: Path) -> Path | None:
 
 @unittest.skipUnless(runa_bin() is not None, "runa binary not available")
 class AcquisitionEntryEndToEndTests(unittest.TestCase):
-    def test_work_unit_entry_dry_run_reaches_acquisition_and_projects_take(self) -> None:
+    def test_intent_target_entry_dry_run_reaches_acquisition_and_projects_define(self) -> None:
+        # Cold-start reference entry is the intent.target route: runa retired
+        # the flag-based reference entry (runa#222/#224), and `--work-unit`
+        # takes a canonical instance id, never a forge reference.
         runa = runa_bin()
         self.assertIsNotNone(runa)
 
         with tempfile.TemporaryDirectory(prefix="groundwork-acquire-entry-") as tmp:
             project = init_groundwork_project(Path(tmp), runa)
+            write_workspace_artifact(
+                project,
+                "intent",
+                "intent-entry",
+                {
+                    "statement": "Enter on the referenced work-unit.",
+                    "source": "operator",
+                    "target": "tesserine/groundwork#499",
+                },
+            )
 
             output = subprocess.run(
-                [
-                    str(runa),
-                    "run",
-                    "--work-unit",
-                    "tesserine/groundwork#499",
-                    "--dry-run",
-                    "--json",
-                ],
+                [str(runa), "run", "--dry-run", "--json"],
                 cwd=project,
                 capture_output=True,
                 text=True,

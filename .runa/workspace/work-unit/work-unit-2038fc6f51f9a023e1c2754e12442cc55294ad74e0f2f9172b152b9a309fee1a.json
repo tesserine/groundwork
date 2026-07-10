@@ -1,0 +1,26 @@
+{
+  "acceptance_criteria": [
+    "decompose opens tracker-backed work-units as native Radicle issues carrying title, description, and labels, and its delivery procedure carries the Radicle handle into the delivered artifact — creation verified by durable read-back.",
+    "Work-unit reading includes the comment log; progress is recorded as issue comments, satisfying the resumption obligation's surface (work-unit-craft).",
+    "Claiming is reflected as DID assignment, or by the documented comment convention if the spike found non-delegate assignment unavailable — exactly one documented claim mechanic, grounded in the spike's finding.",
+    "Issue states (open/closed/solved) are the state vocabulary the protocol prose uses; every issue mutation class verifies by read-back per the verification mechanics.",
+    "No connector operation is invoked from decompose or define prose; all referenced mechanics are manifest-registered; tests cover the lifecycle including failure paths.",
+    "The decompose and define protocol renderings describe the Radicle lifecycle where implementing agents first meet it."
+  ],
+  "dependencies": [
+    "work-unit-405907d92ca96ad39f1755c77d1b1bafb621301f4d119740111ee452619baf6e",
+    "work-unit-b948d4c30096896f9c5c162942f627cbc0669198b5de702409f89c326a707bce"
+  ],
+  "description": "## Summary\n\nThe work-unit lifecycle — open, read (including the comment log), progress comments, claim, state transitions — is realized on native Radicle issues, replacing the connector operations that decompose and define prose invoke today (`create-work-unit`, `read-work-unit`, `claim-work-unit`, `record-progress`). Groundwork's planning home becomes the Radicle issue store itself.\n\nPart of: #538.\n\n## Scope\n\n- `protocols/decompose` (the deliver-work-unit procedure and creation/refinement prose)\n- `protocols/define` (entry reading; the claim seam in its workspace references)\n- Issue-lifecycle mechanics (manifest-registered)\n- Tests\n\n## Acceptance criteria\n\n- [ ] decompose opens tracker-backed work-units as native Radicle issues carrying title, description, and labels, and its delivery procedure carries the Radicle handle into the delivered artifact — creation verified by durable read-back.\n- [ ] Work-unit reading includes the comment log; progress is recorded as issue comments, satisfying the resumption obligation's surface (work-unit-craft).\n- [ ] Claiming is reflected as DID assignment, or by the documented comment convention if the spike found non-delegate assignment unavailable — exactly one documented claim mechanic, grounded in the spike's finding.\n- [ ] Issue states (open/closed/solved) are the state vocabulary the protocol prose uses; every issue mutation class verifies by read-back per the verification mechanics.\n- [ ] No connector operation is invoked from decompose or define prose; all referenced mechanics are manifest-registered; tests cover the lifecycle including failure paths.\n- [ ] The decompose and define protocol renderings describe the Radicle lifecycle where implementing agents first meet it.\n\n## Contract inputs\n\n- **Behavior:** a work-unit opened by decompose is readable back (title, body, labels, comments) from the durable issue state; a refused creation fails the delivery.\n- **Documentation:** the deliver-work-unit procedure is the first-contact surface for every future decompose run — it must be complete standalone.\n- **Code quality:** sovereignty — protocol prose passes outcomes; mechanics carry the how (`~/.groundwork/principles/`).\n\n## Dependencies\n\nDepends on: #598, #600.",
+  "handle": {
+    "display": "tesserine/groundwork#601",
+    "id": "github:tesserine/groundwork:issue:601"
+  },
+  "scope": [
+    "`protocols/decompose` (the deliver-work-unit procedure and creation/refinement prose)",
+    "`protocols/define` (entry reading; the claim seam in its workspace references)",
+    "Issue-lifecycle mechanics (manifest-registered)",
+    "Tests"
+  ],
+  "title": "task(work-unit-lifecycle): work-units live on native Radicle issues — decompose and define operate them directly"
+}

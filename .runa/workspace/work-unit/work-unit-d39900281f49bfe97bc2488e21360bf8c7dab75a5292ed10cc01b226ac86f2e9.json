@@ -1,0 +1,22 @@
+{
+  "acceptance_criteria": [
+    "`GROUNDWORK_FORGE_TYPE` — environment injection and config field — is gone; a config that sets it is rejected or flagged loudly, never silently accepted.",
+    "No groundwork-session forge-credential seam remains (no PAT wiring whose purpose is forge operations for groundwork sessions); generic git-transport credentials for non-groundwork workloads are unaffected.",
+    "Docs, examples, and reserved-name lists are current; tests cover the loud-rejection path."
+  ],
+  "dependencies": [
+    "work-unit-edcb13d378d606e24b351731a0467729a42765e14fa5bdefcc7f2081bce32b20",
+    "work-unit-fd5c38f642de28bd274686489bf089338b4ccb15df9b7cb34663060588fd04aa"
+  ],
+  "description": "## Summary\n\nagentd injects `GROUNDWORK_FORGE_TYPE` and forge credentials into groundwork sessions for the connector era; Radicle-native groundwork sessions need neither. Retire the groundwork forge-type surface and the groundwork-session forge-credential seam so no forge-provider selection or PAT path remains capable of influencing a groundwork session.\n\nPart of: tesserine/groundwork#538 (owning-home removal).\n\n## Scope\n\n- Runner-managed environment (the forge-type injection) and its reserved-name registry\n- Agent-config surface (`forge_type` and groundwork forge-credential wiring)\n- Docs, examples, tests\n\n## Acceptance criteria\n\n- [ ] `GROUNDWORK_FORGE_TYPE` — environment injection and config field — is gone; a config that sets it is rejected or flagged loudly, never silently accepted.\n- [ ] No groundwork-session forge-credential seam remains (no PAT wiring whose purpose is forge operations for groundwork sessions); generic git-transport credentials for non-groundwork workloads are unaffected.\n- [ ] Docs, examples, and reserved-name lists are current; tests cover the loud-rejection path.\n\n## Contract inputs\n\n- **Behavior:** a groundwork session's managed environment contains no forge-type or forge-credential atom; a legacy config fails visibly.\n- **Documentation:** the environment reference and example configs describe only the current surface.\n- **Code quality:** Honest Signal at the config boundary — removed keys are errors, not no-ops.\n\n## Dependencies\n\nDepends on: tesserine/commons#108, tesserine/groundwork#606 (groundwork sessions stop consuming the seam before agentd removes it).",
+  "handle": {
+    "display": "tesserine/agentd#184",
+    "id": "github:tesserine/agentd:issue:184"
+  },
+  "scope": [
+    "Runner-managed environment (the forge-type injection) and its reserved-name registry",
+    "Agent-config surface (`forge_type` and groundwork forge-credential wiring)",
+    "Docs, examples, tests"
+  ],
+  "title": "task(config): agentd carries no groundwork forge-type or forge-credential seam"
+}

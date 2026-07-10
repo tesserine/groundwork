@@ -1,0 +1,22 @@
+{
+  "acceptance_criteria": [
+    "The reviewer inspects the delivered revision through native patch inspection, with per-revision base..head ranges available for comparing revision rounds.",
+    "The typed disposition artifacts remain the judgment record, unchanged as artifact types; the substrate reflection is a native review (accept/reject with message) addressed to the exact reviewed revision, verified by durable read-back.",
+    "Judgment binds to (patch, revision): a review addressed to a superseded revision cannot be read as covering a later one, by the protocol's own words.",
+    "No forge operation is named anywhere in the review/reflection path; tests cover reflection of both dispositions and the revision-addressing property."
+  ],
+  "dependencies": [
+    "work-unit-4ca0e4af42737a1226d38e6b9d371da85fb51cf168824d001b115675e7f95552"
+  ],
+  "description": "## Summary\n\nThe review station inspects the delivered patch revision directly, and the typed disposition artifacts (change-approved / change-needs-revision) remain the methodology's judgment record. Reflecting the disposition onto the collaboration substrate becomes a native patch review addressed to the exact reviewed revision — replacing `reflect-disposition`. Where in the station sequence the reflection is invoked is this unit's design decision, made against the protocol semantics rather than inherited from the connector-era contract placement.\n\nPart of: #538.\n\n## Scope\n\n- `protocols/review` prose and the reflection seam (today invoked from the land contract)\n- Workflow contracts as the chosen design requires\n- Review/inspection mechanics; tests\n\n## Acceptance criteria\n\n- [ ] The reviewer inspects the delivered revision through native patch inspection, with per-revision base..head ranges available for comparing revision rounds.\n- [ ] The typed disposition artifacts remain the judgment record, unchanged as artifact types; the substrate reflection is a native review (accept/reject with message) addressed to the exact reviewed revision, verified by durable read-back.\n- [ ] Judgment binds to (patch, revision): a review addressed to a superseded revision cannot be read as covering a later one, by the protocol's own words.\n- [ ] No forge operation is named anywhere in the review/reflection path; tests cover reflection of both dispositions and the revision-addressing property.\n\n## Contract inputs\n\n- **Behavior:** an approved disposition is observable on the substrate as a review of the approved revision; a needs-revision disposition likewise, against its revision.\n- **Documentation:** the review protocol rendering states what the reviewer inspects and how the disposition reaches the substrate, standalone.\n- **Code quality:** the disposition's artifact home does not move — one home per judgment (`~/.groundwork/principles/`, Traceability).\n\n## Dependencies\n\nDepends on: #602.",
+  "handle": {
+    "display": "tesserine/groundwork#604",
+    "id": "github:tesserine/groundwork:issue:604"
+  },
+  "scope": [
+    "`protocols/review` prose and the reflection seam (today invoked from the land contract)",
+    "Workflow contracts as the chosen design requires",
+    "Review/inspection mechanics; tests"
+  ],
+  "title": "task(review): review judges the delivered patch revision and reflects the disposition natively"
+}

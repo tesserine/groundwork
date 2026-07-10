@@ -1,0 +1,69 @@
+{
+  "findings": [
+    "Current stable is Radicle 1.9.1 (built 2026-05-21, confirmed via files.radicle.dev releases manifest); the project moved domains in April 2026 — radicle.xyz now redirects to radicle.dev; radicle-httpd is separately versioned at 0.25.0.",
+    "Identity: rad auth creates an Ed25519 keypair under ~/.radicle/keys with a did:key DID that 'identifies your device'; every published artifact is signed; the CLI signs via ssh-agent (OpenSSH >= 9.1), with RAD_PASSPHRASE / --stdin documented as insecure bypasses; official docs state identities must not be shared across devices — the multi-device model is one DID per device, added as repository delegates via rad id update.",
+    "Repository identity: rad init mints a stable RID (rad:z...); the identity document at refs/rad/id carries delegates (DIDs), threshold, default branch, visibility, and optional canonical-reference rules; refs/rad/sigrefs self-certifies each node's published refs.",
+    "Issues: rad issue open/list/show/comment/edit/state/assign/label/react/delete; assignment targets DIDs; states are open/closed/solved; issue IDs are COB OIDs resolvable by unambiguous prefix; mutations announce to the network by default (--no-announce exists).",
+    "Patches: opened by pushing to the magic ref (git push rad HEAD:refs/patches; -o patch.message / patch.draft / patch.base push options); the patch ID is a COB OID; subsequent pushes to the auto-set upstream rad/patches/<id> create immutable revisions (force-push safe); anyone — not only the author — can publish a new revision; states are draft/open/archived/merged.",
+    "Review: rad patch review --accept | --reject --message, addressable to a specific revision, with hunk-level review via --patch/--hunk; rad patch show exposes each revision's base..head range for git range-diff (the narrative guide lags the CLI here; man page and source are authoritative).",
+    "Merging: there is no rad patch merge — a delegate merges with plain git (git merge patch/<id>) and pushes the default branch (git push rad main); Radicle detects the merged revision, marks the patch merged, and updates the canonical head; push output reports both.",
+    "Canonical state: each peer pushes only to its own namespace (the rad remote's push URL embeds the pusher's NID); the canonical branch is computed from delegate threshold agreement; canonical-reference rules (payload.xyz.radicle.crefs) can grant named DIDs — including non-delegates — authority over specific ref patterns.",
+    "Sync and verification: rad sync (--fetch/--announce, --replicas MIN, preferred-seed semantics) defines success by replication counts; rad sync status reports which nodes have replicated; push options -o sync / -o no-sync control waiting for network sync; Radicle is local-first — offline mutations propagate on reconnect, so durable-state verification must check replication, not local creation.",
+    "COBs: issues, patches, and identity are built-in COB types stored under refs/cobs/; rad cob list/log/show/create/update exists in 1.9.x, and create/update accepts arbitrary external reverse-domain type names with JSONL action streams (identity COBs excluded) — custom COBs are therefore possible in stock Radicle but have no high-level UX and no end-user documentation.",
+    "Automation: RAD_HOME selects the profile; headless operation is documented (RAD_PASSPHRASE with security caveat, systemd credentials, rad node events over the control socket, rad-<ext> PATH extensions); the HTTP API (radicle-httpd 0.25.0, apiVersion 6.1.0) is read-only — no authenticated mutation endpoints are advertised or documented.",
+    "Packaging: official install script (curl https://radicle.dev/install | sh) with signature verification, apt repo, AUR, and Nixpkgs; installs rad, git-remote-rad, radicle-node into ~/.radicle/bin; Linux musl and macOS builds; no Windows support.",
+    "Multiple profiles per machine use RAD_HOME (the seeder guide's dedicated-OS-user pattern is the official example); a second machine contributes either as its own delegate DID or as an ordinary peer pushing to its own namespace and opening patches.",
+    "Facts flagged UNCONFIRMED in official sources: ssh-agent socket forwarding practice; the non-delegate permission matrix for issue assignment/labels; hidden HTTP write endpoints (none advertised); external-COB validation semantics; concurrent multi-node single-host operation."
+  ],
+  "sources": [
+    {
+      "title": "Radicle User Guide",
+      "url": "https://radicle.dev/guides/user"
+    },
+    {
+      "title": "Radicle Protocol Guide",
+      "url": "https://radicle.dev/guides/protocol"
+    },
+    {
+      "title": "Radicle Seeder Guide",
+      "url": "https://radicle.dev/guides/seeder"
+    },
+    {
+      "title": "Radicle FAQ",
+      "url": "https://radicle.dev/faq"
+    },
+    {
+      "title": "Radicle download and packaging",
+      "url": "https://radicle.dev/download"
+    },
+    {
+      "title": "Radicle 1.9.0 'Hawthorn' release notes",
+      "url": "https://radicle.dev/2026/05/19/radicle-1.9.0"
+    },
+    {
+      "title": "Radicle 1.9.1 release notes",
+      "url": "https://radicle.dev/2026/05/22/radicle-1.9.1"
+    },
+    {
+      "title": "Canonical references blog post",
+      "url": "https://radicle.dev/2025/08/12/canonical-references.html"
+    },
+    {
+      "title": "Using Radicle CI for development",
+      "url": "https://radicle.dev/2025/07/23/using-radicle-ci-for-development.html"
+    },
+    {
+      "title": "Radicle latest release manifest (version anchor)",
+      "url": "https://files.radicle.dev/releases/latest/radicle.json"
+    },
+    {
+      "title": "Radicle heartwood repository (man pages: rad.1, rad-patch.1, rad-id.1, git-remote-rad.1; CLI source for issue/cob/sync/auth/node)",
+      "url": "https://github.com/radicle-dev/heartwood"
+    },
+    {
+      "title": "Live radicle-httpd 0.25.0 API root (read-only endpoint inventory)",
+      "url": "https://seed.radicle.dev/api/v1"
+    }
+  ],
+  "topic": "radicle-stock-collaboration-mechanics"
+}
